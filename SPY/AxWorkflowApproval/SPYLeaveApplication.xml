@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYLeaveApplication</Name>
+	<CanceledEventHandler>SPYLeaveApplicationEventHandler1</CanceledEventHandler>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DelegateMenuItem>SPYLeaveApplicationDelegateMenuItem</DelegateMenuItem>
+	<Document>SPYLeaveApplicationDocument</Document>
+	<DocumentMenuItem>SPYLeaveApplication</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>Details</DocumentPreviewFieldGroup>
+	<HelpText>@SPY844</HelpText>
+	<Label>@SPY843</Label>
+	<ResubmitMenuItem>SPYLeaveApplicationResubmitMenuItem</ResubmitMenuItem>
+	<StartedEventHandler>SPYLeaveApplicationEventHandler1</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYLeaveApplicationEventHandler1</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYLeaveApplicationApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYLeaveApplicationEventHandler1</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<Enabled xmlns="">No</Enabled>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYLeaveApplicationReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYLeaveApplicationEventHandler1</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYLeaveApplicationRequestChange</ActionMenuItem>
+		<EventHandler xmlns="">SPYLeaveApplicationEventHandler1</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

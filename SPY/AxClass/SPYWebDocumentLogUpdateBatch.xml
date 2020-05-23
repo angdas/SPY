@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebDocumentLogUpdateBatch</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWebDocumentLogUpdateBatch extends RunBaseBatch
+{
+    // Packed variables
+    TransDate       transDate;
+    boolean worker;
+    boolean workerBalance;
+    boolean leaveApplication;
+    boolean project;
+    boolean timesheet;
+    boolean hrRequestSetup;
+    boolean hrRequest;
+    boolean payslip;
+    boolean absenceConfig;
+
+    // Dialog fields
+    DialogField     dlgTransDate;
+    DialogField     dlgWorker;
+    DialogField     dlgWorkerBalance;
+    DialogField     dlgAbsenceConfig;
+    DialogField     dlgLeaveApplication;
+    DialogField     dlgProject;
+    DialogField     dlgTimesheet;
+    DialogField     dlgHrRequestSetup;
+    DialogField     dlgHrRequest;
+    DialogField     dlgPayslip;
+
+    #define.CurrentVersion(1)
+    #localmacro.CurrentList
+        transDate
+    #endmacro
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public Object dialog()
+    {
+        DialogRunbase       dialog = super();
+        #resAppl
+
+        dlgWorker = dialog.addFieldValue(extendedTypeStr(NoYesId),worker, "Worker");
+        dlgAbsenceConfig = dialog.addFieldValue(extendedTypeStr(NoYesId),absenceConfig, "Absence config");
+        dlgWorkerBalance = dialog.addFieldValue(extendedTypeStr(NoYesId),workerBalance, "Worker absence balance");
+        dlgLeaveApplication = dialog.addFieldValue(extendedTypeStr(NoYesId),leaveApplication, "Leave application");
+        dlgProject = dialog.addFieldValue(extendedTypeStr(NoYesId),project, "Project");
+        dlgTimesheet = dialog.addFieldValue(extendedTypeStr(NoYesId),timesheet, "Timesheet");
+        dlgHrRequestSetup = dialog.addFieldValue(extendedTypeStr(NoYesId),hrRequestSetup, "HR request setup");
+        dlgHrRequest = dialog.addFieldValue(extendedTypeStr(NoYesId),hrRequest, "HR request");
+        //dlgPayslip = dialog.addFieldValue(extendedTypeStr(NoYesId),payslip, "Payslip");
+
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+    ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+    ;
+        //transDate   = dlgTransDate.value();
+        worker = dlgWorker.value();
+        workerBalance = dlgWorkerBalance.value();
+        absenceConfig = dlgAbsenceConfig.value();
+        leaveApplication = dlgLeaveApplication.value();
+        project = dlgProject.value();
+        timesheet = dlgTimesheet.value();
+        hrRequestSetup = dlgHrRequestSetup.value();
+        hrRequest = dlgHrRequest.value();
+        //payslip = dlgPayslip.value();
+
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+
+        try
+        {
+            ttsbegin;
+
+            this.Update();
+
+            ttscommit;
+        }
+        catch (Exception::Deadlock)
+        {
+            retry;
+        }
+        catch (Exception::UpdateConflict)
+        {
+            if (appl.ttsLevel() == 0)
+            {
+                if (xSession::currentRetryCount() >= #RetryNum)
+                {
+                    throw Exception::UpdateConflictNotRecovered;
+                }
+                else
+                {
+                    retry;
+                }
+            }
+            else
+            {
+                throw Exception::UpdateConflict;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+    ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYWebDocumentLogUpdateBatch construct()
+    {
+        return new SPYWebDocumentLogUpdateBatch();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    // Here goes a description of the class
+    static ClassDescription description()
+    {
+        return "@SYS70984";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYWebDocumentLogUpdateBatch    webDocumentLogUpdateBatch;
+    ;
+        webDocumentLogUpdateBatch = SPYWebDocumentLogUpdateBatch::construct();
+
+        if (webDocumentLogUpdateBatch.prompt())
+            webDocumentLogUpdateBatch.runOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    protected boolean canRunInNewSession()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>update</Name>
+				<Source><![CDATA[
+    public void update()
+    {
+        HcmWorker       workerTab;
+        SPYAbsenceLedger        absenceLedger;
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        ProjPeriodEmpl      projPeriodEmpl;
+        ResourceWorkerView          resourceWorkerView;
+        ProjValEmplProjSetup    projValEmplProjSetup;
+        SPYDocumentRequestAddress   documentRequestAddress;
+        SPYDocumentRequestType      documentRequestType;
+        SPYDocumentRequestTable     documentRequestTable;
+        HRMAbsenceCode      absenceCode;
+
+        if(worker)
+        {
+            while select forupdate workerTab
+            {
+                workerTab.update();
+            }
+        }
+        if(absenceConfig)
+        {
+            while select forupdate absenceCode
+            {
+                absenceCode.update();
+            }
+        }
+        if(workerBalance)
+        {
+            while select forupdate absenceLedger
+            {
+                absenceLedger.update();
+            }
+        }
+        if(leaveApplication)
+        {
+            while select forupdate leaveApplicationTable            
+            {
+                leaveApplicationTable.update();
+            }
+        }
+        if(project)
+        {
+            while select forupdate projPeriodEmpl               
+            {
+                projPeriodEmpl.update();
+            }
+            while select forupdate projValEmplProjSetup          
+            {
+                projValEmplProjSetup.update();
+            }
+        }
+        if(timesheet)
+        {
+        }
+        if(hrRequestSetup)
+        {
+            while select forupdate documentRequestAddress
+            {
+                documentRequestAddress.update();
+            }
+            while select forupdate documentRequestType
+            {
+                documentRequestType.update();
+            }
+        }
+        if(hrRequest)
+        {
+            while select forupdate documentRequestTable
+            {
+                documentRequestTable.update();
+            }
+        }       
+
+        info("Done");
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

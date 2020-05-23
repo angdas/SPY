@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>TestLeave</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class TestLeave
+{        
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Runs the class with the specified arguments.
+    /// </summary>
+    /// <param name = "_args">The specified arguments.</param>
+    public static void main(Args _args)
+    {       
+        SPYLeaveApplicationTable        leaveApplicationTable = SPYLeaveApplicationTable::findByCode("USMF-00000299");
+        leaveApplicationTable.updateAbsenceLedger();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

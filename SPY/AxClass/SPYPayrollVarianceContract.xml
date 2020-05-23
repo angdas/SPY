@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollVarianceContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute,
+    SysOperationGroupAttribute('PayrollPeriod','Payroll period','1'),
+    SysOperationGroupAttribute('Details','Details','2')
+]
+class SPYPayrollVarianceContract
+{
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+    SPYPayrollBenefitBoth       payrollBenefitboth;
+    ForwardBackwardPrinting     direction;
+    PositiveDays                interval;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmDirection</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('direction'),
+        SysOperationLabelAttribute(literalStr('@SYS70307')),
+        SysOperationHelpTextAttribute(literalStr('@SYS70312')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('2')
+    ]
+    public ForwardBackwardPrinting  parmDirection(ForwardBackwardPrinting _direction = direction)
+    {
+        direction = _direction;
+    
+        return direction;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmInterval</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('Interval'),
+        SysOperationLabelAttribute(literalStr('@SYS41392')),
+        SysOperationHelpTextAttribute(literalStr('@SPY615')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('3')
+    ]
+    public PositiveDays parmInterval(PositiveDays _interval = interval)
+    {
+        interval = _interval;
+    
+        return interval;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollBenefitBoth</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollBenefitBoth'),
+        SysOperationLabelAttribute(literalStr('@SPY613')),
+        SysOperationHelpTextAttribute(literalStr('@SPY614')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollBenefitBoth  parmPayrollBenefitBoth(SPYPayrollBenefitBoth _payrollBenefitBoth = payrollBenefitBoth)
+    {
+        payrollBenefitBoth = _payrollBenefitBoth;
+    
+        return payrollBenefitBoth;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLine'),
+        SysOperationLabelAttribute(literalStr('@SPY25')),
+        SysOperationHelpTextAttribute(literalStr('@SPY168')),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollperiodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine =_payrollperiodLine;
+    
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

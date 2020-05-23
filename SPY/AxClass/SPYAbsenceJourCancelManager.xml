@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceJourCancelManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+///    The <c>SPYAbsenceJourCancelManager</c> class is used to cancel a payroll earnings journal workflow.
+/// </summary>
+/// <remarks>
+///    This class inherits from the <c>WorkflowCancelManager</c> class and handles the update of the
+///    payroll earnings journal record when the cancel button has been pressed. The default dialog and cancel
+///    functionality from the <c>WorkflowCancelManager</c> class is reused.
+/// </remarks>
+public class    SPYAbsenceJourCancelManager
+extends         WorkflowCancelManager
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    private void  new()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDocument</Name>
+				<Source><![CDATA[
+    public void updateDocument(Args _args)
+    {
+        if (_args.record()  &&  _args.record().TableId == tablenum(SPYAbsenceJournalTable))
+            SPYAbsenceJournalTable::updateWorkflowStatus(_args.record().RecId, SPYWorkflowStatus::Cancelled);
+    
+        super(_args);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static SPYAbsenceJourCancelManager  construct()
+    {
+        return new SPYAbsenceJourCancelManager();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void  main(Args _args)
+    {
+        SPYAbsenceJourCancelManager   absenceJourCancelManager = SPYAbsenceJourCancelManager::construct();
+    
+        absenceJourCancelManager.run(_args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

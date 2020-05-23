@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEmployeeIdentificationsUIBuilder</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYEmployeeIdentificationsUIBuilder extends SrsReportDataContractUIBuilder
+{
+    SPYEmployeeIdentificationsContract    employeeIdentificationsContract;
+    container                             conDepartment, conIdentifications;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>build</Name>
+				<Source><![CDATA[
+    public void build()
+    {
+        employeeIdentificationsContract      = this.dataContractObject();
+    
+        this.addDialogField(methodStr(SPYEmployeeIdentificationsContract,parmIdentificationTypeList), employeeIdentificationsContract);
+        this.addDialogField(methodStr(SPYEmployeeIdentificationsContract,parmFromDate), employeeIdentificationsContract);
+        this.addDialogField(methodStr(SPYEmployeeIdentificationsContract,parmToDate), employeeIdentificationsContract);
+        this.addDialogField(methodStr(SPYEmployeeIdentificationsContract,parmDepartment), employeeIdentificationsContract);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>departmentLookup</Name>
+				<Source><![CDATA[
+    private void departmentLookup(FormStringControl _control)
+    {
+        Query                   query;
+        QueryBuildDataSource    qbds_OMOperatingUnit;
+        SysTableLookup          sysTableLookup;
+    
+        query                   = new Query();
+        qbds_OMOperatingUnit    = query.addDataSource(tableNum(OMOperatingUnit));
+        qbds_OMOperatingUnit.addRange(
+            fieldNum(OMOperatingUnit, OMOperatingUnitType)).value("@SYS181623");
+    
+        sysTableLookup = SysTableLookup::newParameters(tableNum(OMOperatingUnit), _control);
+        sysTableLookup.addLookupfield(fieldNum(OMOperatingUnit, Name));
+        sysTableLookup.addLookupfield(fieldNum(OMOperatingUnit, OMOperatingUnitNumber), true);
+        sysTableLookup.parmQuery(query);
+        sysTableLookup.performFormLookup();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>identificationLookup</Name>
+				<Source><![CDATA[
+    private void identificationLookup(FormStringControl _control)
+    {
+        Query query              = new Query();
+        QueryBuildDataSource       qbds;
+    
+    
+        qbds = query.addDataSource(tableNum(HcmIdentificationType));
+        qbds.fields().clearFieldList();
+        qbds.fields().addField(fieldNum(HcmIdentificationType, IdentificationTypeId));
+    
+        SysLookupMultiSelectGrid::lookup(
+        query,
+        _control,
+        _control,
+        _control,
+        conIdentifications);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postBuild</Name>
+				<Source><![CDATA[
+    public void postBuild()
+    {
+        DialogField dlgDepartment, dlgIdentification;
+    
+        super();
+    
+        employeeIdentificationsContract = this.dataContractObject() as SPYEmployeeIdentificationsContract;
+    
+        dlgDepartment = this.bindInfo().getDialogField(this.dataContractObject(),
+                    methodStr(SPYEmployeeIdentificationsContract,parmDepartment));
+    
+        dlgDepartment.registerOverrideMethod(
+              methodStr(FormStringControl, lookup),
+              methodStr(SPYEmployeeIdentificationsUIBuilder,departmentLookup),
+              this);
+    
+        dlgIdentification = this.bindInfo().getDialogField(this.dataContractObject(),
+                    methodStr(SPYEmployeeIdentificationsContract,parmIdentificationTypeList));
+    
+        dlgIdentification.registerOverrideMethod(
+              methodStr(FormStringControl, lookup),
+              methodStr(SPYEmployeeIdentificationsUIBuilder,identificationLookup),
+              this);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postRun</Name>
+				<Source><![CDATA[
+    public void postRun()
+    {
+       // super();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

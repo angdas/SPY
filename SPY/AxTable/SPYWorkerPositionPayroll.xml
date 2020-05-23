@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerPositionPayroll</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYWorkerPositionPayroll extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>updateRate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Update various rate from based on rate conversion setup
+    /// </summary>
+    /// <remarks>
+    /// Update different rates
+    /// </remarks>
+    public void updateRate(LegalEntityRecId _legalEntity)
+    {
+        SPYPayrollRateConversionSetup   payrollRateConversionSetup = SPYPayrollRateConversionSetup::find(_legalEntity);
+    
+        this.Hourly     = this.Monthly * payrollRateConversionSetup.Hourly;
+        this.Daily      = this.Monthly * payrollRateConversionSetup.Daily;
+        this.Weekly     = this.Monthly * payrollRateConversionSetup.Weekly;
+        this.BiWeekly   = this.Monthly * payrollRateConversionSetup.BiWeekly;
+        this.Quarterly  = this.Monthly * payrollRateConversionSetup.Quarterly;
+        this.SemiAnnual = this.Monthly * payrollRateConversionSetup.SemiAnnual;
+        this.Annual     = this.Monthly * payrollRateConversionSetup.Annual;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Return SPYWorkerPositionPayroll
+    /// </summary>
+    /// <param name="_recId">
+    /// Unique recordId
+    /// </param>
+    /// <param name="_forUpdate">
+    /// Update record
+    /// </param>
+    /// <param name="_concurrencyModel">
+    /// set concurrency
+    /// </param>
+    /// <returns>
+    /// SPYWorkerPositionPayroll
+    /// </returns>
+    /// <remarks>
+    /// Return SPYWorkerPositionPayroll
+    /// </remarks>
+    public static SPYWorkerPositionPayroll find(
+        SPYWorkerPayrollRecId       _recId,
+        boolean                     _forUpdate = false,
+        ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        TransDate                   validFrom;
+        TransDate                   validTo;
+    
+        validFrom = DateTimeUtil::date(DateTimeUtil::minValue());
+        validTo   = DateTimeUtil::date(DateTimeUtil::maxValue());
+    
+        workerPositionPayroll.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            workerPositionPayroll.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly ValidTimeState(validFrom, validTo) workerPositionPayroll
+             where workerPositionPayroll.RecId == _recId;
+    
+        return workerPositionPayroll;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getTotalSalary</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// For getting total salary of an employee <SRB> 1/10/2017
+    /// </summary>
+    display SPYAmount getTotalSalary()
+    {
+        SPYWorkerPositionPayroll        workerPayroll, workerPayrollDed;
+        SPYPayrollTable                 payrollTable, payrollTableDed;
+        SPYAmount                       cashSalary;
+
+        select sum( Monthly )
+            from workerPayroll join payrollTable
+            where workerPayroll.Worker == this.Worker
+            && workerPayroll.Payroll == payrollTable.RecId
+            && payrollTable.PayrollType == SPYPayrollType::Earning;
+
+        select sum( Monthly )
+            from workerPayrollDed join payrollTableDed
+            where workerPayrollDed.Worker == this.Worker
+            && workerPayrollDed.Payroll == payrollTableDed.RecId
+            && payrollTableDed.PayrollType == SPYPayrollType::Deduction;
+
+        cashSalary = workerPayroll.Monthly - workerPayrollDed.Monthly;
+        return cashSalary;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY99</DeveloperDocumentation>
+	<Label>@SPY29</Label>
+	<TableGroup>Main</TableGroup>
+	<TitleField1>Worker</TitleField1>
+	<TitleField2>Position</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>WorkerPayroll_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<ValidTimeStateFieldType>Date</ValidTimeStateFieldType>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LegalEntity</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Position</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Payroll</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Currency</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Position</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LegalEntity</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Payroll</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidFrom</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidTo</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Currency</Name>
+			<Label>@SYS180534</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Currency</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Rate</Name>
+			<Label>@SYS4193</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Hourly</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Daily</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Weekly</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>BiWeekly</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Monthly</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Quarterly</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SemiAnnual</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Annual</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>ValidDates</Name>
+			<Label>@SPY101</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ValidFrom</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidTo</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Annual</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY451</HelpText>
+			<Label>@SYS117193</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>BiWeekly</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY455</HelpText>
+			<Label>@SPY97</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Currency</Name>
+			<ExtendedDataType>SPYCurrencyCode</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Daily</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY457</HelpText>
+			<Label>@SYS13656</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Hourly</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY458</HelpText>
+			<Label>@SYS24619</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LegalEntity</Name>
+			<ExtendedDataType>LegalEntityRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Monthly</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY454</HelpText>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Payroll</Name>
+			<ExtendedDataType>SPYPayElementRecId</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollPeriod</Name>
+			<ExtendedDataType>SPYPayrollPeriodRecId</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Position</Name>
+			<ExtendedDataType>HcmPositionRecId</ExtendedDataType>
+			<Visible>No</Visible>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Quarterly</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY453</HelpText>
+			<Label>@SYS67527</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>SemiAnnual</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY452</HelpText>
+			<Label>@SPY98</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidFrom</Name>
+			<ExtendedDataType>ValidFromDate</ExtendedDataType>
+			<Label>@SYS124336</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidTo</Name>
+			<ExtendedDataType>ValidToDate</ExtendedDataType>
+			<Label>@SYS124348</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Weekly</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY456</HelpText>
+			<Label>@SYS92558</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>WorkerPayroll_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<ValidTimeStateKey>Yes</ValidTimeStateKey>
+			<ValidTimeStateMode>Gap</ValidTimeStateMode>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>Worker</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Position</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LegalEntity</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Payroll</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidFrom</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidTo</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>CompanyInfo</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>CompanyInfo</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LegalEntity</Name>
+					<Field>LegalEntity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>Currency</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>Currency</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Currency</Name>
+					<SourceEDT>SPYCurrencyCode</SourceEDT>
+					<Field>Currency</Field>
+					<RelatedField>CurrencyCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmPosition</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmPosition</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Position</Name>
+					<Field>Position</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollPeriod</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollPeriod</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollPeriod</Name>
+					<Field>PayrollPeriod</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYPayrollTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Payroll</Name>
+					<Field>Payroll</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

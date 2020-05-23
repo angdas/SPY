@@ -1,0 +1,971 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTimesheetUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+class SPYTimesheetUpload extends RunBaseBatch
+{
+    FileName                fileNameOpen;
+    //DialogField             dlgfileName;
+    AsciiStreamIo           fileIO;
+    DialogField             dlgLeave;
+    Description             journalDesc;
+    DimensionAttributeValueSetStorage   defaultDAVSStorage;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+    journalDesc
+    #endmacro
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    // Specifies whether the functionality can run in a new session window
+    public boolean canRunInNewSession()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase           dialog; //= super();
+        FormBuildButtonControl  buttonControlUpload;
+        DialogGroup             dlgGroup;
+        FormBuildGroupControl   buttonGroup;
+
+        dialog = super();
+
+        dlgGroup            = dialog.addGroup('');
+        buttonGroup         = dialog.formBuildDesign().control(dlgGroup.formBuildGroup().id());
+        buttonControlUpload = buttonGroup.addControl(FormControlType::Button, "Timesheet upload");//"@SPY:LeaveApplicationUpload");
+        buttonControlUpload.text("Upload timesheet");//"@SPY:UploadLeave");
+        buttonControlUpload.registerOverrideMethod(methodStr(FormButtonControl, clicked),
+                                        methodStr(SPYLeaveApplicationUpload, uploadClickedEvent),
+                                        this);
+
+        
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadClickedEvent</Name>
+				<Source><![CDATA[
+    private void uploadClickedEvent(FormButtonControl _formButtonControl)
+    {
+        FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+        If (result && result.getUploadStatus())
+        {
+            fileIO = AsciiStreamIo::constructForRead(result.openResult());
+            if (fileIO)
+            {
+                if (fileIO.status())
+                {
+                    throw error("@SPY:ImportingProblem");
+                }
+                fileIO.inFieldDelimiter(',');
+                fileIO.inRecordDelimiter('\r\n');
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            this.readCSV(fileIO);
+        }
+        catch(Exception::Error)
+        {
+           // ttsabort;
+            //throw error("@SPY:ImportingException");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>addItem</Name>
+				<Source><![CDATA[
+    void addItem(DimensionAttributeValue _dav)
+    {
+        if (_dav)
+            defaultDAVSStorage.addItem(_dav);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readCSV</Name>
+				<Source><![CDATA[
+    public void readCSV(AsciiStreamIo  file)
+    {
+        COMVariantType                  type;
+
+        container                       record,conDays,dimensionNames,dimensionValues;
+        int                             cnt = 0, numberofUploadedRecords, cntUpdate = 0;
+
+        SPYTimesheetUploadTmp           timesheetUploadTmp;
+        ProjTable                       projTable;
+        ResourceWorkerView              resourceWorkerView;
+        ProjPeriodLine                  projPeriodLine;
+        
+        LegalEntityRecID                legalEntityRecId;
+        str                             resourceId,legalEntityName;
+        ProjId                          projId;
+
+        Str1260                         errorRowNumber;
+
+        
+        
+        DimensionDefault                defaultDimensionRecId;
+
+      
+        
+        ProjActivityNumber              projActivityNumber;
+        ProjCategoryId                  projCategoryId;
+        ProjPeriodFrom                  projPeriodFrom;
+
+        
+        int                             tsYear,tsDay;
+
+        TSWeeklyHours                   weeklyHours;
+        int                             weeklyDays;
+
+        str                             wfStatus,tsMonth;
+        int                             i,j,errorCount;
+        str 15                          strDate;
+        System.DateTime                 dtDate;
+        date                            tsDate,tsOldDate;
+            
+        str                              delimiterStr    = SystemParameters::getChartOfAccountsDelimiter();
+        System.Globalization.CultureInfo culture = System.Globalization.CultureInfo::get_InvariantCulture();
+        
+        errorRowNumber = "-1,";
+        errorCount = 0;
+//        this.ProcessTimesheet();
+        delete_from timesheetUploadTmp;
+        while (!file.status())
+        {
+            cnt++;
+            record = file.read();
+            if (cnt == 1)
+            {
+                if ((conLen(record) < 17 ) || (this.ValidateHeader(record) == false))
+                {
+                    info("Invalid file format");
+                    return;
+                }
+                dimensionNames = this.ReadPayrollDimensions(record);
+                for (i=17;i<=conLen(record);i++)
+                {
+                    conDays +=  con2Str(conpeek(record,i));
+                }
+            }
+            if ((cnt>1) && (conLen(record) > 16))
+            {
+                resourceId         = conpeek(record,1);   // Resource Id
+                legalEntityName   = conpeek(record,2) ;//companyInfo::findDataArea(conpeek(record,2)).RecId;    // Legal Entity
+                projId             = conpeek(record,3); //Project
+                projActivityNumber = conpeek(record,4); //Activity Number
+                dimensionValues    = conpeek(record,5); //Financial Dimesion 1
+                dimensionValues   += conpeek(record,6); //Financial Dimesion 2
+                dimensionValues   += conpeek(record,7); //Financial Dimesion 3
+                dimensionValues   += conpeek(record,8); //Financial Dimesion 4
+                dimensionValues   += conpeek(record,9); //Financial Dimesion 5
+                dimensionValues   += conpeek(record,10); //Financial Dimesion 6
+                dimensionValues   += conpeek(record,11); //Financial Dimesion 7
+                dimensionValues   += conpeek(record,12); //Financial Dimesion 8
+                projCategoryId     = conpeek(record,13); // Category
+                wfStatus           = conpeek(record,14); // WFStatus
+                tsMonth            = subStr(conpeek(record,15),1,3); // tsMonth
+                tsYear             = conpeek(record,16); // tsYear
+
+                //Checking in resource exist in legal entity
+                legalEntityRecId = companyInfo::findDataArea(legalEntityName).RecId;
+                resourceWorkerView = this.GetResourceWorker(legalEntityRecId,resourceId);
+                if(resourceWorkerView.Worker)
+                {
+                    cntUpdate++;
+
+                    //Checking if Project is Valid
+                    projTable = ProjTable::findLike(projId); 
+                    if (projTable.RecId)
+                    {
+                        //Checking if Dimensions are Valid
+                        defaultDimensionRecId = this.GetProjectDimension(ProjTable,dimensionNames,dimensionValues);
+                        if (defaultDimensionRecId>0)
+                        {
+                            for (i=1;i<=conLen(conDays);i++)
+                            {
+                                if ( strLen(conpeek(conDays,i)) ==1)
+                                {
+                                    strDate = int2str(tsYear) + '-' + tsMonth   + '-0'  + con2Str(conpeek(conDays,i)) ;
+                                }
+                                else
+                                {
+                                    strDate = int2str(tsYear) + '-' + tsMonth   + '-'  + con2Str(conpeek(conDays,i)) ;
+                                }
+                                
+                                tsDay =  conpeek(conDays,i);
+                                if (tsDay <= dayOfMth(endMth(str2Date(strDate,321)) ))
+                                {
+                                    dtDate = System.DateTime::ParseExact(strDate,'yyyy-MMM-dd',culture);
+                                    tsDate = DateTimeUtil::date(Global::clrSystemDateTime2UtcDateTime(dtDate));
+                                    projPeriodLine = TSTimesheetTable::getValidResourcePeriod(resourceWorkerView.RecId, tsDate);
+
+                                    timesheetUploadTmp.clear();
+                                    timesheetUploadTmp.RowNo = cnt;
+                                    timesheetUploadTmp.Resource = resourceId;
+                                    timesheetUploadTmp.ResourceId = resourceWorkerView.RecId;
+                                    timesheetUploadTmp.Worker = resourceWorkerView.Worker;
+                                    timesheetUploadTmp.LegalEntityName = legalEntityName;
+                                    timesheetUploadTmp.Project = projId;
+                                    timesheetUploadTmp.ActivityNo = projActivityNumber;
+                                    timesheetUploadTmp.DimensionId = defaultDimensionRecId;
+                                    timesheetUploadTmp.Dimension1 = conpeek(dimensionValues,1);
+                                    timesheetUploadTmp.Dimension2 = conpeek(dimensionValues,2);
+                                    timesheetUploadTmp.Dimension3 = conpeek(dimensionValues,3);
+                                    timesheetUploadTmp.Dimension4 = conpeek(dimensionValues,4);
+                                    timesheetUploadTmp.Dimension5 = conpeek(dimensionValues,5);
+                                    timesheetUploadTmp.Dimension6 = conpeek(dimensionValues,6);
+                                    timesheetUploadTmp.Dimension7 = conpeek(dimensionValues,7);
+                                    timesheetUploadTmp.Dimension8 = conpeek(dimensionValues,8);
+                                    timesheetUploadTmp.ProjectCategory = projCategoryId;
+                                    timesheetUploadTmp.PeriodId = projPeriodLine.PeriodId;
+                                    timesheetUploadTmp.PeriodRecId = projPeriodLine.RecId;
+                                    timesheetUploadTmp.Submit = wfStatus;
+                                    timesheetUploadTmp.WorkingDate = tsDate;
+                                    timesheetUploadTmp.WorkingHrs = conpeek(record,i+16);
+                                    timesheetUploadTmp.insert();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            errorRowNumber += 'Proj : '+ int2Str(cnt)+ ',';
+                            errorCount +=1;
+                        }
+                    }
+                    else
+                    {
+                        errorRowNumber += 'Dim : '+ int2Str(cnt)+ ',';
+                        errorCount +=1;
+                    }
+                }
+                else
+                {
+                    errorRowNumber += 'ResID : '+ int2Str(cnt)+ ',';
+                    errorCount +=1;
+                }
+            }
+        }
+        
+        cntUpdate = cntUpdate - errorCount;
+        this.ProcessTimesheet();
+        info(strfmt("@SPY:UploadedRecords",cntUpdate ));
+        if(errorRowNumber != "-1,")
+        {
+            errorRowNumber = subStr(errorRowNumber,4,strlen(errorRowNumber));
+            info(strfmt("Error line no : %1",errorRowNumber));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>GetResourceWorker</Name>
+				<Source><![CDATA[
+    public ResourceWorkerView  GetResourceWorker(  LegalEntityRecID  legalEntityRecId,
+                                                str  resourceId)
+    {
+        ResourceWorkerView              resourceWorkerView;
+
+        select RecId,Worker from resourceWorkerView
+                    where resourceWorkerView.ResourceId == resourceId
+                    &&  resourceWorkerView.ResourceLegalEntity == legalEntityRecId;
+        
+        return resourceWorkerView;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>GetProjectDimension</Name>
+				<Source><![CDATA[
+    public DimensionDefault GetProjectDimension(ProjTable   projTable,container dimensionNames,container dimensionValues)
+    {
+        DimensionAttributeValueSet          dimensionAttributeValueSet;
+        DimensionAttributeValueSetStorage   storage;
+        container                           defaultDimName,defaultDimValue;
+        int                                 i,j;
+
+        defaultDAVSStorage = DimensionAttributeValueSetStorage::find(projTable.DefaultDimension);
+
+        for (i=1 ; i<= defaultDAVSStorage.elements() ; i++)
+        {
+            defaultDimName += DimensionAttribute::find(defaultDAVSStorage.getAttributeByIndex(i)).Name;
+            defaultDimValue += defaultDAVSStorage.getDisplayValueByIndex(i);
+        }
+
+        defaultDAVSStorage = new DimensionAttributeValueSetStorage();
+        for (i=1;i<=conLen(dimensionValues);i++)
+        {
+            if(conpeek(dimensionValues,i) != "")
+            {
+                this.addItem(DimensionAttributeValue::findByDimensionAttributeAndValue(DimensionAttribute::findByName(conpeek(dimensionNames,i)), conpeek(dimensionValues,i)));
+            }
+            else
+            {
+                for (j=1;j<=conLen(defaultDimName);j++)
+                {
+                    if ( strUpr(conPeek(defaultDimName,j)) == strUpr(conpeek(dimensionNames,i)))
+                    {
+                        if (conpeek(defaultDimValue,j)  !="" )
+                        {
+                            this.addItem(DimensionAttributeValue::findByDimensionAttributeAndValue(DimensionAttribute::findByName(conpeek(defaultDimName,j)), conpeek(defaultDimValue,j)));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return defaultDAVSStorage.save();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ResetWeeklyHrs</Name>
+				<Source><![CDATA[
+    public TSWeeklyHours ResetWeeklyHrs()
+    {
+        TSWeeklyHours tsHrs;
+        int j;
+        for (j=0;j<=7;j++)
+        {
+            tsHrs[j] = 0;
+        }
+        return tsHrs;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ProcessTimesheet</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","Outer loop we have AOT query loop , some calculattions are there, on the basis of which other records get selected for different operations")]
+    public void ProcessTimesheet()
+    {
+        TSTimesheetTable                                timesheetTable;
+        ProjPeriodLine                                  projPeriodLine;
+        SPYTimesheetUploadTmp                           timesheetUploadTmp,timesheetUploadTmpWeek,timesheetUploadTmp1;
+        TSWeeklyHours                                   weeklyHours;
+        ProjId                                          projId;
+        Date                                            periodDate;
+        int                                             i,j; 
+        boolean                                         bHours;
+        
+        ProjActivityNumber                              activityNumber;
+        str                                             WFStatus,projCategory;
+        DimensionDefault                                defaultDimensionRecId;
+
+        QueryRun                                        qRun;
+        Query                                           qry;
+        QueryBuildDataSource                            qbr1;
+        QueryBuildRange                                 range;
+        QueryBuildFieldList                             qbdsFieldList;
+        ;
+    
+        qry = new Query();
+        qbr1 = qry.addDataSource(tablenum(SPYTimesheetUploadTmp));
+        qbr1.addGroupByField(fieldnum(SPYTimesheetUploadTmp, LegalEntityName));
+        qbr1.addGroupByField(fieldnum(SPYTimesheetUploadTmp, ResourceId));
+        qbr1.addGroupByField(fieldnum(SPYTimesheetUploadTmp, Worker));
+        qbr1.addGroupByField(fieldnum(SPYTimesheetUploadTmp, PeriodRecId));
+        qbr1.addGroupByField(fieldnum(SPYTimesheetUploadTmp, PeriodId));
+        //qbr1.addGroupByField(fieldnum(SPYTimesheetUploadTmp, ProjectCategory));
+        qbr1.addGroupByField(fieldnum(SPYTimesheetUploadTmp, Submit));
+
+        qbdsFieldList = qbr1.fields();
+        qbdsFieldList.dynamic(false);
+        qbdsFieldList.clearFieldList();
+    
+        qbdsFieldList.addField(fieldNum(SPYTimesheetUploadTmp, LegalEntityName));
+        qbdsFieldList.addField(fieldNum(SPYTimesheetUploadTmp, ResourceId));
+        qbdsFieldList.addField(fieldNum(SPYTimesheetUploadTmp, Worker));
+        qbdsFieldList.addField(fieldNum(SPYTimesheetUploadTmp, PeriodRecId));
+        qbdsFieldList.addField(fieldNum(SPYTimesheetUploadTmp, PeriodId));
+        //qbdsFieldList.addField(fieldNum(SPYTimesheetUploadTmp, ProjectCategory));
+        qbdsFieldList.addField(fieldNum(SPYTimesheetUploadTmp, Submit));
+
+        qRun = new QueryRun(qry);
+
+        while(qRun.next())
+        {
+            timesheetUploadTmp = qRun.get(tableNum(SPYTimesheetUploadTmp));
+                i=0;
+                weeklyHours = this.ResetWeeklyHrs();
+                bHours = false;
+                while select LegalEntityName,ResourceId,PeriodRecId,Project,WorkingDate,DimensionId,ActivityNo,Submit,ProjectCategory,sum(WorkingHrs) from timesheetUploadTmpWeek
+                        group by LegalEntityName,ResourceId,PeriodRecId,Project,DimensionId,ActivityNo,Submit,ProjectCategory,WorkingDate
+                        order by LegalEntityName,ResourceId,PeriodRecId,Project,DimensionId,ActivityNo,Submit,ProjectCategory,WorkingDate
+                        where timesheetUploadTmpWeek.LegalEntityName==timesheetUploadTmp.LegalEntityName
+                             && timesheetUploadTmpWeek.ResourceId==timesheetUploadTmp.ResourceId
+                             && timesheetUploadTmpWeek.PeriodRecId==timesheetUploadTmp.PeriodRecId
+                             && timesheetUploadTmpWeek.Submit==timesheetUploadTmp.Submit
+                {
+                    i+=1;
+                    if (i==1)
+                    {
+                       projPeriodLine = projPeriodLine::findPeriod(timesheetUploadTmp.PeriodId,timesheetUploadTmpWeek.WorkingDate);
+                       projId = timesheetUploadTmpWeek.Project;
+                       periodDate = timesheetUploadTmpWeek.WorkingDate;
+                       activityNumber = timesheetUploadTmpWeek.ActivityNo;
+                       WFStatus = timesheetUploadTmpWeek.Submit;
+                       defaultDimensionRecId = timesheetUploadTmpWeek.DimensionId;
+                       projCategory = timesheetUploadTmpWeek.ProjectCategory;
+                       timesheetTable = this.CreateTimesheetHeader(timesheetUploadTmp.Worker,
+                                                timesheetUploadTmp.ResourceId,
+                                                projPeriodLine,
+                                                timesheetUploadTmpWeek.WorkingDate);
+                    }
+                    if(projId+projCategory == timesheetUploadTmpWeek.Project+timesheetUploadTmpWeek.ProjectCategory)
+                    {
+                        if(timesheetUploadTmpWeek.WorkingHrs > 0 )
+                        {   
+                            bHours = true;
+                        }
+                        weeklyHours[(timesheetUploadTmpWeek.WorkingDate - projPeriodLine.PeriodFrom)+1] = timesheetUploadTmpWeek.WorkingHrs;
+                    }
+                    else
+                    {
+                        if (bHours)
+                        {
+                            this.CreateTimesheetLines(timesheetTable,
+                                                projPeriodLine,
+                                                timesheetUploadTmp.Worker,
+                                                weeklyHours,
+                                                periodDate,
+                                                projId,
+                                                activityNumber,
+                                                WFStatus,
+                                                defaultDimensionRecId,
+                                                projCategory);
+                        }
+                        projPeriodLine = projPeriodLine::findPeriod(timesheetUploadTmp.PeriodId,timesheetUploadTmpWeek.WorkingDate);
+                        projId = timesheetUploadTmpWeek.Project;
+                        periodDate = timesheetUploadTmpWeek.WorkingDate;
+                        activityNumber = timesheetUploadTmpWeek.ActivityNo;
+                        WFStatus = timesheetUploadTmpWeek.Submit;
+                        defaultDimensionRecId = timesheetUploadTmpWeek.DimensionId;
+                        projCategory = timesheetUploadTmpWeek.ProjectCategory;
+                        weeklyHours = this.ResetWeeklyHrs();
+                        bHours = false;
+                        if(timesheetUploadTmpWeek.WorkingHrs > 0 )
+                        {
+                            bHours = true;
+                        }
+                        weeklyHours[(timesheetUploadTmpWeek.WorkingDate - projPeriodLine.PeriodFrom)+1] = timesheetUploadTmpWeek.WorkingHrs;
+                    }
+                }
+                if (bHours)
+                {
+                    this.CreateTimesheetLines(timesheetTable,
+                                                projPeriodLine,
+                                                timesheetUploadTmp.Worker,
+                                                weeklyHours,
+                                                periodDate,
+                                                projId,
+                                                activityNumber,
+                                                WFStatus,
+                                                defaultDimensionRecId,
+                                                projCategory);
+                }
+        }
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CreateTimesheetLines</Name>
+				<Source><![CDATA[
+    public void CreateTimesheetLines(TSTimesheetTable tsTimesheetTable,
+                                    ProjPeriodLine projPeriodLine,
+                                    WrkCtrWorker worker,
+                                    TSWeeklyHours  weeklyHours,
+                                    Date  tsDate,
+                                    ProjId projId,
+                                    ProjActivityNumber activityNumber,
+                                    str WFStatus,
+                                    DimensionDefault defaultDimensionRecId,
+                                    str projCategoryName)
+    {
+        
+        TSTimesheetLine                 existsTimesheetLine,newTimesheetLine,tsTimesheetLine;
+        ProjPeriodTimesheetWeek         projPeriodTimesheetWeek, periodWeek;
+        TSTimesheetLineWeek             lineWeek, existsLineWeek;
+        ProjCategory                    projCategory;
+        ProjTable                       projTable=ProjTable::find(projId);
+
+        ttsbegin;
+
+        projPeriodTimesheetWeek = ProjPeriodTimesheetWeek::findFromPeriod(projPeriodLine.PeriodId, tsDate);
+
+        existsTimesheetLine.clear();
+        select existsTimesheetLine
+                    where existsTimesheetLine.TimesheetNbr == tsTimesheetTable.TimesheetNbr
+                        && existsTimesheetLine.Worker == worker
+                        && existsTimesheetLine.ProjId   == projId
+                        && existsTimesheetLine.ActivityNumber   == activityNumber
+                        && existsTimesheetLine.ProjPeriodTimesheetWeek == ProjPeriodTimesheetWeek.RecId;
+
+        newTimesheetLine.clear();
+        newTimesheetLine.initFromTSTimesheetTable(tsTimesheetTable);
+        newTimesheetLine.initFromResource();
+        newTimesheetLine.initFromProjTable(projTable);
+        newTimesheetLine.initValue();
+        newTimesheetLine.TimesheetNbr               = tsTimesheetTable.TimesheetNbr;
+        newTimesheetLine.ApprovalStatus             = TSAppStatus::Create;
+        newTimesheetLine.Worker                     = tsTimesheetTable.worker;
+        newTimesheetLine.ProjId                     = projId;
+        newTimesheetLine.ActivityNumber             = activityNumber;
+        
+        if(projCategoryName)
+        {
+            select CategoryId from projCategory where projCategory.Name == projCategoryName;
+            newTimesheetLine.CategoryId                 = projCategory.CategoryId;
+        }
+        else
+        {
+            newTimesheetLine.CategoryId              =  this.GetProjCategory(projTable);
+            if(!newTimesheetLine.CategoryId)
+            {
+                newTimesheetLine.CategoryId              =    newTimesheetLine.setDefaultCategory();
+            }
+        }
+        
+        newTimesheetLine.ProjPeriodTimesheetWeek    = tsTimesheetTable.ProjPeriodTimesheetWeek;
+        newTimesheetLine.ProjectDataAreaId          = ProjTable::find(projId).DataAreaId;
+        newTimesheetLine.DefaultDimension           = defaultDimensionRecId;
+                
+        if(!existsTimesheetLine.RecId)
+        {
+            newTimesheetLine.insert();
+
+            if (strUpr(WFStatus) == "YES")
+            {
+                       
+                if (this.CheckWorkflowActive())
+                {
+                    workflow::activateFromWorkflowType("TSDocumentTemplate", tsTimesheetTable.RecId,
+                                        "Uploaded from system", false, curUserId());
+                }
+            }
+            }
+                    else
+                {
+            newTimesheetLine = existsTimesheetLine ;
+        }
+                
+        lineWeek.clear();
+        lineWeek.selectForUpdate(true);
+        lineWeek.TimesheetNbr   = newTimesheetLine.TimesheetNbr;
+        lineWeek.LineNum        = newTimesheetLine.LineNum;
+        lineWeek.tsTimesheetLine = newTimesheetLine.RecId;
+        lineWeek.Hours          = weeklyHours;
+                
+        while select PeriodFrom, PeriodId, PeriodTo from periodWeek
+                    where periodWeek.RecId == newTimesheetLine.ProjPeriodTimesheetWeek
+        {
+            if (!TSTimesheetLineWeek::existByTimesheetLineRecId(newTimesheetLine.RecId))
+            {
+                try
+                {
+                    lineWeek.initValue();
+                    lineWeek.ProjPeriodId   = periodWeek.PeriodId;
+                    lineWeek.DayFrom        = periodWeek.PeriodFrom;
+                    lineWeek.DayTo          = periodWeek.PeriodTo;
+                    lineWeek.insert();
+                }
+                catch (Exception::UpdateConflict)
+                {
+                    info(infolog.text());
+                    Info(strFmt('%1',Exception::Error));
+                }
+            }
+        }
+        ttscommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CreateTimesheetHeader</Name>
+				<Source><![CDATA[
+    public TSTimesheetTable CreateTimesheetHeader(WrkCtrWorker Worker,int64 ResourceID, ProjPeriodLine projPeriodLine,date tsDate)
+    {
+        TSTimesheetTable                            tsTimesheetTable;
+        TSTimesheetLine                             existsTimesheetLine;
+        ProjPeriodTimesheetWeek                     projPeriodTimesheetWeek;
+        
+        tsTimesheetTable.clear();
+        
+        if (TSTimesheetTable::checkMaxTimesheets(projPeriodLine.PeriodFrom, Worker, true))
+        {
+            tsTimesheetTable.initValue();
+            tsTimesheetTable.Resource = ResourceID;
+            tsTimesheetTable.Worker = Worker;
+            if(projPeriodLine != null && projPeriodLine.RecId != 0)
+            {
+                tsTimesheetTable.ProjPeriodId = projPeriodLine.PeriodId;
+                tsTimesheetTable.PeriodFrom = projPeriodLine.PeriodFrom;
+                tsTimesheetTable.PeriodTo = projPeriodLine.PeriodTo;
+
+                projPeriodTimesheetWeek = ProjPeriodTimesheetWeek::findFromPeriod(projPeriodLine.PeriodId, tsDate);
+                if(projPeriodTimesheetWeek.RecId == 0)
+                {
+                    warning("@SYS338882");
+                }
+                else
+                {
+                    tsTimesheetTable.ProjPeriodTimesheetWeek = projPeriodTimesheetWeek.RecId;
+                }
+            }
+            select existsTimesheetLine
+            order by RecId desc
+                where existsTimesheetLine.Worker == Worker
+                && existsTimesheetLine.ProjPeriodTimesheetWeek == projPeriodTimesheetWeek.RecId;
+            if(!existsTimesheetLine.RecId)
+            {
+                tsTimesheetTable.insert();
+                if (ProjParameters::find().TimesheetAuditTrail)
+                {
+                    TSTimesheetTableLog::createTableLog(tsTimesheetTable, '', TsTimesheetChangeType::Create);
+                }
+            }
+            else
+            {
+                tsTimesheetTable = TSTimesheetTable::find(existsTimesheetLine.TimesheetNbr);
+            }
+        }
+        return tsTimesheetTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>GetProjCategory</Name>
+				<Source><![CDATA[
+    public str 30 GetProjCategory(ProjTable _projTable)
+    {
+        ProjCategory projCategory;
+        
+
+        changecompany(_projTable.DataAreaId)
+        {
+            projCategory = TsTimesheetService::findDefaultCategoryForResource(ResourceFacade::findByCurrentWorker());
+
+            if (!projCategory)
+            {
+                projCategory = TsTimesheetService::findDefaultCategoryForLegalEntity(_projTable.DataAreaId);
+            }
+        }
+        return projCategory.CategoryId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ReadPayrollDimensions</Name>
+				<Source><![CDATA[
+    public container ReadPayrollDimensions(container record)
+    {
+        container       conAttr ;
+
+        conAttr    = conpeek(record,5);
+        conAttr    += conpeek(record,6);
+        conAttr    += conpeek(record,7);
+        conAttr    += conpeek(record,8);
+        conAttr    += conpeek(record,9);
+        conAttr    += conpeek(record,10);
+        conAttr    += conpeek(record,11);
+        conAttr    += conpeek(record,12);
+
+        return conAttr;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CheckWorkflowActive</Name>
+				<Source><![CDATA[
+    public boolean CheckWorkflowActive()
+    {
+        WorkflowVersionTable            WorkflowVersionTable;
+        WorkflowTable                   WorkflowTable;
+        boolean                         bRet=false;
+        #define.TimesheetCateory('Timesheets')
+
+        select firstonly DataArea,CategoryName,DefaultConfiguration from WorkflowTable
+                        where WorkflowTable.DataArea == curext()
+                        &&    WorkflowTable.CategoryName == #TimesheetCateory
+                        &&    WorkflowTable.DefaultConfiguration == NoYes::Yes
+                        join WorkflowTable, Enabled from WorkflowVersionTable
+                            where WorkflowVersionTable.WorkflowTable == WorkflowTable.RecId
+                            &&    WorkflowVersionTable.Enabled == NoYes::Yes;
+                        
+        if (WorkflowTable)
+        {   
+            bRet = true;
+        }
+        return bRet;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ValidateHeader</Name>
+				<Source><![CDATA[
+    public boolean ValidateHeader(container record)
+    {
+        boolean     bValid=false;
+
+        try
+        {
+            if(conpeek(record,1) != "Resource ID")
+            {
+                return false;
+            }
+            if(conpeek(record,2) != "LegalEntity")
+            {
+                return false;
+            }
+            if(conpeek(record,3) != "Project")
+            {
+                return false;
+            }
+            if(conpeek(record,4) != "ActivityNumber")
+            {
+                return false;
+            }
+            if(conpeek(record,13) != "ProjectCategory")
+            {
+                return false;
+            }
+            if(conpeek(record,14) != "Submit")
+            {
+                return false;
+            }
+            if(conpeek(record,15) != "Month")
+            {
+                return false;
+            }
+            if(conpeek(record,16) != "Year")
+            {
+                return false;
+            }
+            bValid = true;
+        }
+        catch(Exception::Error)
+        {
+            bValid = false;
+        }
+        return bValid ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    // Unpacking of parameters
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+        ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    // Validation
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYTimesheetUpload construct()
+    {
+        return new SPYTimesheetUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "Timesheet upload";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYTimesheetUpload      timesheetUpload;
+    
+        timesheetUpload = SPYTimesheetUpload::construct();
+    
+        if (timesheetUpload.prompt())
+            timesheetUpload.runOperationNow();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

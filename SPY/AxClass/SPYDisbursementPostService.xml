@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDisbursementPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYDisbursementPostService extends SPYPayService
+{
+    SPYDisbursementPostServiceContract        contract;
+    TransDate   periodStartTo,PeriodEndTo;
+    Description             journalDescription;
+    CompanyBankAccountId    companyBankAccountId;
+    SPYDisbursementJournalTable disbursementJournalTable;
+    RefRecId    disbursementRequestRecId;
+    boolean     isDisbursementCreated;
+    int counter;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>postDisbursement</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Use to generate payroll disbursement details.
+    /// </summary>
+    /// <param name = "_contract"></param>
+    public void postDisbursement(SPYDisbursementPostServiceContract _contract)
+    {
+        SPYPayrollJournalRecId  payrollJournal;
+        Query                   workerQuery;
+        boolean                 payrollParameterState;
+        ListEnumerator          workerListEnumerator;
+    
+        contract = _contract;
+        this.setLegalEntity(CompanyInfo::current());
+        this.setPayrollPeriodLine(contract.parmPayrollPeriodLine());
+        this.setTransDate(contract.parmTransDate());
+        this.initialize();
+
+        if (contract.parmPayrollParameterState().parmCalledFromMasterProcess())
+        {
+            payrollParameterState = true;
+            this.initializeWorkerList(true,contract.parmPayrollParameterState().parmWorkerContainer());
+        }
+
+        workerListEnumerator = workerList.getEnumerator();
+       
+        setPrefix("Processing disbursement details.");
+        
+        try
+        {
+            ttsBegin;
+            journalDescription = contract.parmJournalDescription();
+
+            while(workerListEnumerator.moveNext())
+            {
+                this.generateDisbursementDetails(HcmWorker::find(workerListEnumerator.current()));
+            }
+
+            ttsCommit;
+
+            if (isDisbursementCreated)
+            {
+                info("Disbursement details has been generated.");
+            }
+            else
+            {
+                throw Error("Finalised payroll is not found.");
+            }
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>generateDisbursementDetails</Name>
+				<Source><![CDATA[
+    public void generateDisbursementDetails(HcmWorker   hcmWorker)
+    {
+        SPYPayrollLedger    payrollLedger;
+        SPYDisbursementDetails  disbursementDetails;
+        
+
+        while select sum(AccountingCurrencyAmount),LedgerDimensionCredit,DefaultDimension
+            from payrollLedger group by Worker,LedgerDimensionCredit,DefaultDimension
+            where payrollLedger.Worker == hcmWorker.RecId
+            && payrollLedger.PayrollPeriodLine == payrollPeriodLine
+            && payrollLedger.IsFinalised == NoYes::Yes
+        {
+            select firstonly disbursementDetails where disbursementDetails.Worker == payrollLedger.Worker &&
+                disbursementDetails.LedgerDimension == payrollLedger.LedgerDimensionCredit &&
+                disbursementDetails.DefaultDimension == payrollLedger.DefaultDimension &&
+                disbursementDetails.PayrollPeriodLine == payrollPeriodLine;
+
+            if (!disbursementDetails)
+            {
+                disbursementDetails.clear();
+                disbursementDetails.initValue();
+
+                disbursementDetails.Worker = hcmWorker.RecId;
+                disbursementDetails.PayrollPeriodLine = payrollPeriodLine;
+                disbursementDetails.LedgerDimension = payrollLedger.LedgerDimensionCredit;
+                disbursementDetails.DefaultDimension = payrollLedger.DefaultDimension;
+                disbursementDetails.TransDate = transDate;
+                disbursementDetails.AmountCur = payrollLedger.AccountingCurrencyAmount;
+                disbursementDetails.AmountOutstanding = payrollLedger.AccountingCurrencyAmount;
+                disbursementDetails.Txt = journalDescription;
+
+                disbursementDetails.insert();
+
+                isDisbursementCreated = true;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollPeriodTo</Name>
+				<Source><![CDATA[
+    public void setPayrollPeriodTo()
+    {
+        SPYPayrollPeriodLineRecId payrollPeriodLineTo = contract.parmPayrollPeriodLineTo();
+        SPYPayrollPeriodLine payrollPeriodLineToTab = SPYPayrollPeriodLine::find(payrollPeriodLineTo);
+
+        periodStartTo = payrollPeriodLineToTab.PeriodStartDate;
+        periodEndTO = payrollPeriodLineToTab.PeriodEndDate;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postDisbursementJournals</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Use to create payroll disbursement journal
+    /// </summary>
+    /// <param name = "_contract"></param>
+    public void postDisbursementJournals(SPYDisbursementPostServiceContract _contract)
+    {
+        SPYPayrollJournalRecId  payrollJournal;
+        Query                   workerQuery;
+        boolean                 payrollParameterState;
+        ListEnumerator          workerListEnumerator;
+    
+        contract = _contract;
+        this.setLegalEntity(CompanyInfo::current());
+        this.setPayrollPeriodLine(contract.parmPayrollPeriodLine());
+        this.setPayrollPeriodTo();
+        this.setTransDate(contract.parmTransDate());
+        this.initialize();
+
+        workerQuery = new Query(queryStr(HcmWorkerLookup));
+        if (contract.parmWorkerQuery())
+        {
+            workerQuery = new Query(contract.parmWorkerQuery());
+        }
+       
+        setPrefix("Posting disbursement journal.");
+        
+        try
+        {
+            ttsBegin;
+            journalDescription = contract.parmJournalDescription();
+            companyBankAccountId = contract.parmCompBankAccountId();
+            QueryRun workerQr;
+            workerQr = new QueryRun(workerQuery);
+            HcmWorker   hcmWorker;
+            while(workerQr.next())
+            {
+                hcmWorker = workerQr.get(tableNum(HcmWorker));
+
+                //this.generateDisbursementJournals(hcmWorker);
+                this.createLedgerJournal(hcmWorker);
+            }
+
+            ttsCommit;
+            //info("Disbursement journal has been generated.");
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createDisbursementRequest</Name>
+				<Source><![CDATA[
+    public void createDisbursementRequest(HcmWorker   hcmWorker,SPYPayrollPeriodLineRecId _payrollPeriod)
+    {
+        SPYDibursementWorkerRequest disbursementWorkerRequest;
+        PayrollBankAccountDisbursement  bankDisbursement;
+        HcmWorkerBankAccount    bankAccount;
+
+        select firstonly disbursementWorkerRequest where disbursementWorkerRequest.Worker == HcmWorker.RecId
+            && disbursementWorkerRequest.PayrollPeriodLine == _payrollPeriod;
+
+        if (!disbursementWorkerRequest.RecId)
+        {
+            while select AccountingCurrencyAmount,Currency,IsRemainder from bankDisbursement
+                    join RecId, Worker from bankAccount
+                    where bankDisbursement.WorkerBankAccount  == bankAccount.RecId
+                    && bankAccount.Worker == hcmWorker.RecId
+            {
+                CurrencyExchangeHelper currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), systemDateGet());
+                Amount amountMst = currencyExchangeHelper.calculateTransactionToAccounting(bankDisbursement.Currency,bankDisbursement.AccountingCurrencyAmount,false);
+                
+                disbursementWorkerRequest.clear();
+                disbursementWorkerRequest.initValue();
+                disbursementWorkerRequest.Worker = hcmworker.RecId;
+                disbursementWorkerRequest.WorkerBankAccount = bankAccount.RecId;
+                disbursementWorkerRequest.PayrollPeriodLine = _payrollPeriod;
+                disbursementWorkerRequest.AmountCur = bankDisbursement.AccountingCurrencyAmount;
+                disbursementWorkerRequest.AmountMst = amountMst;
+                disbursementWorkerRequest.AmountRemainMST = amountMst;
+                disbursementWorkerRequest.ExchRate = bankDisbursement.AccountingCurrencyAmount ? amountMst / bankDisbursement.AccountingCurrencyAmount : 0;
+                disbursementWorkerRequest.Currency = bankDisbursement.Currency;
+                disbursementWorkerRequest.IsRemainder = bankDisbursement.IsRemainder;
+
+                disbursementWorkerRequest.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>generateDisbursementjournals</Name>
+				<Source><![CDATA[
+    public void generateDisbursementjournals()
+    {
+        SPYPayrollLedger    payrollLedger;
+        SPYDisbursementDetails  disbursementDetails;
+         
+        if (!disbursementJournalTable.RecId)
+        {
+            disbursementJournalTable.clear();
+            disbursementJournalTable.JournalId = NumberSeq::newGetNum(SPYPayrollParameters::numRefPayrollDisbursementCode()).num();
+            disbursementJournalTable.TransDate = systemDateGet();
+            disbursementJournalTable.Description = journalDescription;
+        
+            disbursementJournalTable.insert();
+
+            info(strFmt("%1 has been generated.",disbursementJournalTable.JournalId));
+        }
+        //this.createLedgerJournal(hcmWorker);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createLedgerJournal</Name>
+				<Source><![CDATA[
+    private void createLedgerJournal(HcmWorker hcmWorker)
+    {
+        SPYPayrollLedger            payrollLedger;
+        SPYDisbursementDetails      disbursementDetails;
+        Amount paymAmountCur;
+        HcmWorkerBankAccount        bankAccountRemainder, bankAccount;
+        //PayrollBankAccountDisbursement bankDisbursement, bankDisbursementRemainder;
+        SPYDibursementWorkerRequest bankDisbursement, bankDisbursementRemainder,bankDisbursementUpd;
+        AmountMST                   paymAmount;
+        LedgerJournalTransRefRecId ledgerJournalTransRefRecId;
+//        int counter;
+        CurrencyCode currency;
+        CurrencyExchangeHelper currencyExchangeHelper;
+        RefRecId    workerBankAccountRecId;
+        SPYPayrollPeriodLine    payrollPeriodLineRange;
+
+        while select forupdate disbursementDetails order by PayrollPeriodLine
+            where disbursementDetails.Worker == hcmWorker.RecId
+            //&& disbursementDetails.PayrollPeriodLine == payrollPeriodLine
+            && disbursementDetails.AmountOutstanding > 0
+            join payrollPeriodLineRange where payrollPeriodLineRange.RecId == disbursementDetails.PayrollPeriodLine
+            && payrollPeriodLineRange.PeriodStartDate >= periodStart
+            && payrollPeriodLineRange.PeriodEndDate <= PeriodEndTo
+        {
+            //AmountOutstanding is amount in company currency
+            paymAmount = disbursementDetails.AmountOutstanding;
+
+            //Generate disbursement request snapshot for worker and payrollPeriod
+            this.createDisbursementRequest(hcmWorker, disbursementDetails.PayrollPeriodLine);
+
+            while select forupdate bankDisbursement
+                join RecId, Worker from bankAccount
+                where bankDisbursement.WorkerBankAccount  == bankAccount.RecId
+                && bankAccount.Worker == hcmWorker.RecId
+                && bankDisbursement.IsRemainder == NoYes::No
+                && bankDisbursement.AmountRemainMST > 0
+            {
+                currency = bankDisbursement.Currency ? bankDisbursement.Currency : ledger::accountingCurrency();
+                //AmountRemain is amount in company currency
+                Amount disburseAmt = bankDisbursement.AmountRemainMST;
+
+                workerBankAccountRecId = bankAccount.RecId;
+                disbursementRequestRecId = bankDisbursement.RecId;
+
+                if (disburseAmt > 0 && paymAmount > 0)
+                {
+                    if (disburseAmt >= paymAmount)
+                    {
+                        counter++;
+                        
+                        this.createJournalTransLine(paymAmount, counter, workerBankAccountRecId,currency,hcmWorker.RecId,disbursementDetails.LedgerDimension,disbursementDetails.RecId,disbursementDetails.DefaultDimension);
+                        paymAmount = 0;
+                        
+                        select forupdate bankDisbursementUpd where bankDisbursementUpd.RecId == bankDisbursement.RecId;
+                        if (bankDisbursementUpd)
+                        {
+                            bankDisbursementUpd.AmountRemainMST = bankDisbursementUpd.AmountRemainMST - paymAmount;
+                            bankDisbursementUpd.update();
+                        }
+                    }
+                    else
+                    {
+                        counter++;
+                        this.createJournalTransLine(disburseAmt, counter, workerBankAccountRecId,currency,hcmWorker.RecId,disbursementDetails.LedgerDimension,disbursementDetails.RecId,disbursementDetails.DefaultDimension);
+                        paymAmount -= disburseAmt;
+
+                        select forupdate bankDisbursementUpd where bankDisbursementUpd.RecId == bankDisbursement.RecId;
+                        if (bankDisbursementUpd)
+                        {
+                            bankDisbursementUpd.AmountRemainMST = bankDisbursementUpd.AmountRemainMST - disburseAmt;
+                            bankDisbursementUpd.update();
+                        }
+                    }
+                    
+                }
+            }
+
+            if (paymAmount > 0)
+            {
+                // Check if the employee has the bank disbursements with a remainder account setup
+                select firstonly RecId,Currency from bankDisbursementRemainder
+                join RecId, Worker from bankAccountRemainder
+                where bankDisbursementRemainder.WorkerBankAccount  == bankAccountRemainder.RecId
+                && bankAccountRemainder.Worker == hcmWorker.RecId
+                && bankDisbursementRemainder.IsRemainder == NoYes::Yes;
+
+                if (bankDisbursementRemainder.RecId)
+                {
+                    currency = bankDisbursementRemainder.Currency ? bankDisbursementRemainder.Currency : ledger::accountingCurrency();
+                    currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), systemDateGet());
+                    paymAmountCur = currencyExchangeHelper.calculateAccountingToTransaction(currency,paymAmount,false);
+                    
+                    workerBankAccountRecId = bankAccountRemainder.RecId;
+                    disbursementRequestRecId = bankDisbursementRemainder.RecId;
+                    counter++;
+                    this.createJournalTransLine(paymAmount, counter, workerBankAccountRecId,currency,hcmWorker.RecId,disbursementDetails.LedgerDimension,disbursementDetails.RecId,disbursementDetails.DefaultDimension);
+
+                    select forupdate bankDisbursementUpd where bankDisbursementUpd.RecId == bankDisbursementRemainder.RecId;
+                    if (bankDisbursementUpd)
+                    {
+                        bankDisbursementUpd.AmountMst = paymAmount;
+                        bankDisbursementUpd.AmountCur = paymAmountCur;
+                        bankDisbursementUpd.ExchRate = paymAmountCur ? paymAmount / paymAmountCur : 0;
+                        bankDisbursementUpd.AmountRemainMST = 0;
+                        bankDisbursementUpd.update();
+                        paymAmount = 0;
+                    }
+                }
+            }
+            disbursementDetails.AmountOutstanding = paymAmount;
+
+            disbursementDetails.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createJournalTransLine</Name>
+				<Source><![CDATA[
+    private void createJournalTransLine(Amount _amount, 
+                                        real _counter,
+                                        HcmWorkerBankAccountRecId workerbankAccountId,
+                                        CurrencyCode currency,
+                                        RefRecId workerRecId,
+                                        LedgerDimensionDefaultAccount   ledgerDimension,
+                                        refRecId disbursementDetailsRecid,
+                                        DimensionDefault    defaultDimension)
+    {
+        this.generateDisbursementjournals();
+
+        CurrencyExchangeHelper currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), transDate);
+            
+        Amount amountCurDebit = currencyExchangeHelper.calculateAccountingToTransaction(currency,_amount,false);
+        
+        SPYDisbursementJournalLine  disbursementJournalLine;
+        disbursementJournalLine.clear();
+        disbursementJournalLine.AmountCurDebit = amountCurDebit;
+        disbursementJournalLine.ExchRate = amountCurDebit > 0 ? _amount / amountCurDebit : 0;
+        disbursementJournalLine.LedgerDimension = ledgerDimension;
+        disbursementJournalLine.DefaultDimension = defaultDimension;
+        disbursementJournalLine.OffsetBankAccount = companyBankAccountId;
+        disbursementJournalLine.Currency = currency;
+        disbursementJournalLine.Worker = workerRecId;
+        disbursementJournalLine.WorkerBankAccount = workerbankAccountId;
+        disbursementJournalLine.DisbursementRequestRecId = disbursementRequestRecId;
+        disbursementJournalLine.LineNum = _counter;
+        disbursementJournalLine.DisbursementJournal = disbursementJournalTable.RecId;
+        disbursementJournalLine.DisbursementDetailsRecId = disbursementDetailsRecid;
+        disbursementJournalLine.TransDate = transDate;
+        disbursementJournalLine.PayrollPeriodLine = payrollPeriodLine;
+        disbursementJournalLine.Txt = "Disbursement journal";
+
+        disbursementJournalLine.insert();
+
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

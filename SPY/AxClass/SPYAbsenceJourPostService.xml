@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceJourPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYAbsenceJourPostService extends SysOperationServiceBase
+{
+    SPYAbsenceJourPostContract          contract;
+    RecordInsertList                    absenceLedgerList;
+    boolean                             callFromPost;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>commitLedger</Name>
+				<Source><![CDATA[
+    private void commitLedger()
+    {
+        absenceLedgerList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2Ledger</Name>
+				<Source><![CDATA[
+    private void insert2Ledger(SPYAbsenceJournalTable _absenceJournalTable)
+    {
+        SPYAbsenceJournalTrans              absenceJournalTrans;
+        SPYAbsenceLedger                    absenceLedger;
+    
+        while select absenceJournalTrans
+            where absenceJournalTrans.AbsenceJournal == _absenceJournalTable.RecId
+        {
+            absenceLedger.clear();
+            absenceLedger.initValue();
+            absenceLedger.Worker = absenceJournalTrans.Worker;
+            absenceLedger.EntryType  = SPYAbsenceLedgerEntryType::Transaction;
+            absenceLedger.HRMAbsenceCodeId = absenceJournalTrans.HRMAbsenceCodeId;
+            absenceLedger.AbsenceDate = absenceJournalTrans.AbsenceDate;
+            absenceLedger.TransDate = absenceJournalTrans.AbsenceDate;
+            absenceLedger.AbsenceDays = absenceJournalTrans.AbsenceDays;
+            absenceLedger.AbsenceHours = absenceJournalTrans.AbsenceHours;
+            absenceLedger.Txt = absenceJournalTrans.Txt;
+            absenceLedger.SourceDocument  = tableNum(SPYAbsenceJournalTable);
+            absenceLedger.AbsenceJournalTrans  = absenceJournalTrans.RecId;
+            absenceLedgerList.add(absenceLedger);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYAbsenceJourPostContract _contract)
+    {
+        QueryRun                        absenceJournalQueryRun;
+        SPYAbsenceJournalTable          absenceJournalTable;
+    
+        absenceJournalQueryRun = new QueryRun(_contract.parmAbsenceJourTableQuery());
+        absenceLedgerList = new RecordInsertList(tableNum(SPYAbsenceLedger));
+    
+        try
+        {
+            setPrefix("@SYS125928");
+            ttsBegin;
+            callFromPost = true;
+            if(this.validate(_contract))
+            {
+                while(absenceJournalQueryRun.next())
+                {
+                    absenceJournalTable = absenceJournalQueryRun.get(tableNum(SPYAbsenceJournalTable));
+                    if(!absenceJournalTable.Posted)
+                    {
+                        this.insert2Ledger(absenceJournalTable);
+                        this.updatePayrollEarnJourHeader(absenceJournalTable);
+                        info(strFmt("@SPY1612",absenceJournalTable.JournalCode));
+                    }
+                }
+                this.commitLedger();
+            }
+            else
+                error("@SPY293");
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updatePayrollEarnJourHeader</Name>
+				<Source><![CDATA[
+    private void updatePayrollEarnJourHeader(SPYAbsenceJournalTable _absenceJournalTable)
+    {
+        SPYAbsenceJournalTable   absenceJournalTableUpdate = SPYAbsenceJournalTable::find(_absenceJournalTable.RecId,true);
+    
+        if(absenceJournalTableUpdate)
+        {
+            absenceJournalTableUpdate.Posted = true;
+            absenceJournalTableUpdate.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(SPYAbsenceJourPostContract _contract)
+    {
+        boolean                         ret = true;
+        QueryRun                        absenceJournalQueryRun;
+        SPYAbsenceJournalTable          absenceJournalTable;
+    
+        absenceJournalQueryRun = new QueryRun(_contract.parmAbsenceJourTableQuery());
+        if(!callFromPost)
+            setPrefix("@SPY1214");
+        while(absenceJournalQueryRun.next())
+        {
+            absenceJournalTable = absenceJournalQueryRun.get(tableNum(SPYAbsenceJournalTable));
+            if(!absenceJournalTable.Posted)
+            {
+                if(!this.validateAdjustment(absenceJournalTable))
+                    ret = checkFailed(strFmt("@SPY1610",absenceJournalTable.JournalCode));
+                else
+                {
+                    if(!callFromPost)
+                        info(strFmt("@SPY1611",absenceJournalTable.JournalCode));
+                }
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateAdjustment</Name>
+				<Source><![CDATA[
+    private boolean validateAdjustment(SPYAbsenceJournalTable _absenceJournalTable)
+    {
+        boolean                             ret = true;
+        SPYAbsenceJournalTrans              absenceJournalTrans;
+    
+        if(_absenceJournalTable.WorkflowStatus != SPYWorkFlowStatus::Approved)
+            ret = checkFailed(strFmt("@SPY1613",_absenceJournalTable.JournalCode));
+        while select Worker,AbsenceDate,LineNum from absenceJournalTrans
+            where absenceJournalTrans.AbsenceJournal == _absenceJournalTable.RecId
+        {
+            if(!absenceJournalTrans.Worker)
+                ret = checkFailed(strFmt("@SPY286",absenceJournalTrans.LineNum));
+            if(!absenceJournalTrans.AbsenceDate)
+                ret = checkFailed(strFmt("@SPY1595",absenceJournalTrans.LineNum));
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

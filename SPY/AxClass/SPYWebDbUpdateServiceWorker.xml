@@ -1,0 +1,874 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebDbUpdateServiceWorker</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWebDbUpdateServiceWorker extends SPYWebDbUpdateService
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(SPYWebAPI.Service _apiService, str _token, URL  _portalAPIUrl, PageNo _messagePageSize)
+    {
+        apiService = _apiService;
+        token = _token;
+        portalAPIUrl = _portalAPIUrl;
+        messagePageSize = _messagePageSize;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkers</Name>
+				<Source><![CDATA[
+    public void postWorkers()
+    {
+        HcmWorker                   hcmWorker;
+        HcmTitle                    hcmTitle;
+        HcmEmployment               hcmEmployment;
+        CLRObject                   workerList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        TransDateTime               validFrom, validTo;
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+
+        validFrom   = DateTimeUtil::newDateTime(dateNull(), 0);
+        validTo     = DateTimeUtil::newDateTime(dateMax(), 0);
+        
+        while select hcmWorker
+         join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(HcmWorker) &&
+            webDocumentLog.RefRecId == hcmWorker.RecId
+        {
+            if(pageNo <= messagePageSize)
+            {
+                select validtimestate(validFrom, validTo) hcmEmployment
+                where hcmEmployment.Worker == hcmWorker.RecId;
+
+                SPYWebAPI.Model.Worker workerModel = new SPYWebAPI.Model.Worker();
+                workerModel.Address         = hcmWorker.primaryAddress();
+                workerModel.AlternateName   = DirPerson::find(hcmWorker.Person).KnownAs;
+                workerModel.DateOfBirth     = HcmPersonPrivateDetails::findByPerson(hcmWorker.Person).BirthDate;
+                Email email = hcmWorker.email();
+                workerModel.Email           = email ? email : guid2Str(newGuid());
+                workerModel.Gender          = enum2Str(HcmPersonPrivateDetails::findByPerson(hcmWorker.Person).Gender);
+                workerModel.MaritalStatus = enum2Str(HcmPersonDetails::findByPerson(hcmWorker.Person).MaritalStatus);
+                workerModel.JobTitle        = HcmPositionDetail::findByPosition(HcmPosition::findByPosition(hcmWorker.primaryPositionId()).RecId).Description;
+                workerModel.JoiningDate     = hcmEmployment.ValidFrom;
+                workermodel.Mobile          = hcmWorker.phone();
+                workerModel.Name            = hcmWorker.name();
+                workerModel.Department = hcmWorker.primaryDepartmentName();
+                LogisticsAddressCountryRegionId     nationality = HcmPersonPrivateDetails::findByPerson(hcmWorker.person).NationalityCountryRegion;
+                if(!nationality)
+                    nationality = HcmPersonPrivateDetails::findByPerson(hcmWorker.person).CitizenshipCountryRegion;
+                workerModel.Nationality     = LogisticsAddressCountryRegionTranslation::find(nationality).ShortName;;
+                workerModel.WorkerId        = hcmWorker.PersonnelNumber;
+                workerModel.IsManager = this.IsWorkerManager(hcmWorker);
+                workerModel.ReportingManager = HcmWorker::find(HcmPosition::getReportsToWorker(HcmPosition::findByPosition(hcmWorker.primaryPositionId()).RecId)).name();
+                /*
+                SPYWorkerTeamMember     workerTeamMember;
+                select firstonly workerTeamMember
+                    where workerTeamMember.TeamMember == hcmWorker.RecId;
+                workerModel.ReportingManager = HcmWorker::find(workerTeamMember.Worker).name();
+                */
+                /*
+                //Passport
+                HcmPersonIdentificationNumber hcmPersonIdentificationNumber = HcmPersonIdentificationNumber::findByPersonAndType(hcmWorker.person,
+                    SPYPayrollParameters::find().WorkerIdentificationType1);
+                workerModel.PassportNumber = hcmPersonIdentificationNumber.IdentificationNumber;
+                workerModel.PassportExpiryDate = hcmPersonIdentificationNumber.ExpirationDate;
+                workerModel.PassportIssueDate = hcmPersonIdentificationNumber.IssuedDate;
+                //Civil ID
+                hcmPersonIdentificationNumber = HcmPersonIdentificationNumber::findByPersonAndType(hcmWorker.person,
+                    SPYPayrollParameters::find().WorkerIdentificationType2);
+                workerModel.CivilIdNumber = hcmPersonIdentificationNumber.IdentificationNumber;
+                workerModel.CivilIdExpiryDate = hcmPersonIdentificationNumber.ExpirationDate;
+                workerModel.CivilIdIssueDate = hcmPersonIdentificationNumber.IssuedDate;
+                */
+                workerModel.IsImageUpdate = false;
+                workerList.Add(workerModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerAPI(workerList);
+                workerList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerAPI(workerList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerAPI(CLRObject _workerList)
+    {
+        str calldescription = "UpdateWorkers";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_workerList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Worker sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _workerList = apiService.convertToWorkerList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoWorkerList, errorWorkerList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing worker.");
+        }
+        else
+        {
+            ClrObject workerListEnumerator = _workerList.GetEnumerator();
+            while (workerListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.Worker workerModel = workerListEnumerator.get_Current();
+                HcmWorker       hcmWorkerUpdate = HcmWorker::findByPersonnelNumber(workerModel.WorkerId);
+                if(workerModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoWorkerList += strFmt("Worker %1 synced to portal. \n", hcmWorkerUpdate.PersonnelNumber);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == hcmWorkerUpdate.TableId &&
+                        webDocumentLogUpdate.RefRecId == hcmWorkerUpdate.RecId;
+                }
+                else
+                {
+                    errorWorkerList += strFmt("Error for worker %1. %2. \n", hcmWorkerUpdate.PersonnelNumber, workerModel.ErrorMessage);
+                }
+            }
+            if(infoWorkerList)
+                info(infoWorkerList);
+            if(errorWorkerList)
+                error(errorWorkerList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoWorkerList, errorWorkerList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerImage</Name>
+				<Source><![CDATA[
+    public void postWorkerImage()
+    {
+        HcmWorker                   hcmWorker;
+        CLRObject                   workerList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        TransDateTime               validFrom, validTo;
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+
+        validFrom   = DateTimeUtil::newDateTime(dateNull(), 0);
+        validTo     = DateTimeUtil::newDateTime(dateMax(), 0);
+        
+        while select hcmWorker
+         join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(HcmPersonImage) &&
+            webDocumentLog.RefRecId == hcmWorker.RecId
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.Worker workerModel = new SPYWebAPI.Model.Worker();
+                workerModel.Email           = hcmWorker.email();
+                workerModel.WorkerId        = hcmWorker.PersonnelNumber;
+                HcmPersonImage personImage = HcmPersonImage::findByPerson(hcmWorker.Person);
+                if(personImage.Image)
+                {
+                    BinData   binData = new BinData();
+                    binData.setData(personImage.Image);
+                    workerModel.Images = binData.base64Encode();
+                }
+                workerModel.IsImageUpdate = true;
+                workerList.Add(workerModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerImageAPI(workerList);
+                workerList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerImageAPI(workerList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerImageAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerImageAPI(CLRObject _workerList)
+    {
+        str calldescription = "UpdateWorkers";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_workerList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Worker image sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _workerList = apiService.convertToWorkerList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoWorkerList, errorWorkerList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing worker image.");
+        }
+        else
+        {
+            ClrObject workerListEnumerator = _workerList.GetEnumerator();
+            while (workerListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.Worker workerModel = workerListEnumerator.get_Current();
+                HcmWorker       hcmWorkerUpdate = HcmWorker::findByPersonnelNumber(workerModel.WorkerId);
+                if(workerModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoWorkerList += strFmt("Worker %1 synced to portal. \n", hcmWorkerUpdate.PersonnelNumber);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == tableNum(HcmPersonImage) &&
+                        webDocumentLogUpdate.RefRecId == hcmWorkerUpdate.RecId;
+                }
+                else
+                {
+                    errorWorkerList += strFmt("Error for worker %1. %2. \n", hcmWorkerUpdate.PersonnelNumber, workerModel.ErrorMessage);
+                }
+            }
+            if(infoWorkerList)
+                info(infoWorkerList);
+            if(errorWorkerList)
+                error(errorWorkerList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoWorkerList, errorWorkerList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>IsWorkerManager</Name>
+				<Source><![CDATA[
+    public boolean IsWorkerManager(HcmWorker _worker)
+    {
+        HcmPositionHierarchy    hcmPositionHierarchy;
+        HcmPosition     workerPosition = HcmPosition::findByPosition(_worker.primaryPositionId());
+        HcmPositionHierarchyTypeRecId hierarchyTypeRecId = HcmPositionHierarchyType::lineHierarchyType();
+        boolean  isWorkerManager = false;
+
+        while select hcmPositionHierarchy
+            where hcmPositionHierarchy.ParentPosition == workerPosition.RecId &&
+            hcmPositionHierarchy.PositionHierarchyType == hierarchyTypeRecId
+        {
+            if(HcmPosition::getWorker(hcmPositionHierarchy.Position, today()))
+            {
+                isWorkerManager = true;
+                return isWorkerManager;
+            }
+        }        
+
+        return isWorkerManager;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerPayslip</Name>
+				<Source><![CDATA[
+    public void postWorkerPayslip()
+    {
+        SPYPayrollLedger               payrollLedger;
+        SPYDocumentRequestTable        documentRequestTable;
+        CLRObject                   workerPayslipList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select payrollLedger group by worker, PayrollPeriodLine
+            join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYPayrollLedger) &&
+            webDocumentLog.RefRecId == payrollLedger.RecId &&
+            !webDocumentLog.IsDeleted
+        {
+            if(pageNo <= messagePageSize)
+            {
+                HcmWorker worker = HcmWorker::find(payrollLedger.Worker);
+                SPYPayrollPeriodLine    payrollPeriodLine = SPYPayrollPeriodLine::find(payrollLedger.PayrollPeriodLine);
+                SPYWebAPI.Model.WorkerPayslip     workerPayslipModel = new SPYWebAPI.Model.WorkerPayslip();
+                workerPayslipModel.WorkerId = worker.PersonnelNumber;
+                workerPayslipModel.PeriodId = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+                workerPayslipModel.PeriodStartDate = payrollPeriodLine.PeriodStartDate;
+                workerPayslipModel.PeriodEndDate = payrollPeriodLine.PeriodEndDate;
+                workerPayslipModel.Payslip = this.getEmpPaySlip(worker, payrollPeriodLine);
+                workerPayslipList.Add(workerPayslipModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerPayslipAPI(workerPayslipList);
+                workerPayslipList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerPayslipAPI(workerPayslipList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerPayslipAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerPayslipAPI(CLRObject _workerPayslipList)
+    {
+        str calldescription = "UpdateWorkerPayslips";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_workerPayslipList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Worker payslip sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                    _workerPayslipList = apiService.convertToWorkerPayslipList(responseStr);
+            }
+            counter++;
+        }
+        str  infoWorkerPayslipList, errorWorkerPayslipList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing worker payslip.");
+        }
+        else
+        {
+            ClrObject workerPayslipListEnumerator = _workerPayslipList.GetEnumerator();
+            while (workerPayslipListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.WorkerPayslip workerPayslipModel = workerPayslipListEnumerator.get_Current();
+                HcmWorker  hcmWorkerUpdate = HcmWorker::findByPersonnelNumber(workerPayslipModel.WorkerId);
+                SPYPayrollLedger       payrollLedger;
+                date periodStartDate = workerPayslipModel.PeriodStartDate, periodEndDate = workerPayslipModel.PeriodEndDate;
+                if(workerPayslipModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    SPYPayrollPeriodLine    payrollPeriodLine;
+                    SPYPayrollPeriodCode    payrollPeriodCode = workerPayslipModel.PeriodId;
+                    SPYPayrollPeriod    payrollPeriod = SPYPayrollPeriod::findByCode(payrollPeriodCode);
+
+                    select firstonly payrollPeriodLine
+                    where payrollPeriodLine.PeriodStartDate == periodStartDate&&
+                    payrollPeriodLine.PeriodEndDate == periodEndDate &&
+                    payrollPeriodLine.PayrollPeriod == payrollPeriod.RecId;
+                
+                    infoWorkerPayslipList += strFmt("Payslip of worker %1, period %2 - %3 synced to portal.", hcmWorkerUpdate.PersonnelNumber,
+                     periodStartDate, periodEndDate);
+                    while select payrollLedger
+                    where payrollLedger.Worker == hcmWorkerUpdate.RecId &&
+                    payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId// &&
+                    //payrollLedger.IsFinalised
+                    {
+                        delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == payrollLedger.TableId &&
+                        webDocumentLogUpdate.RefRecId == payrollLedger.RecId;
+                    }
+                }
+                else
+                {
+                    errorWorkerPayslipList += strFmt("Error for payslip of worker %1, period %2 - %3", hcmWorkerUpdate.PersonnelNumber,
+                    periodStartDate, periodEndDate, workerPayslipModel.ErrorMessage);
+                }
+            }
+        
+            if(infoWorkerPayslipList)
+                info(infoWorkerPayslipList);
+            if(errorWorkerPayslipList)
+                error(errorWorkerPayslipList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoWorkerPayslipList, errorWorkerPayslipList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmpPaySlip</Name>
+				<Source><![CDATA[
+    public str getEmpPaySlip(HcmWorker  _worker, SPYPayrollPeriodLine  _payrollPeriodLine)
+    {
+        SPYPayslipContract                  paySlipContract = new SPYPayslipContract();
+        SPYPayslipController                payslipController = new SPYPayslipController();
+        ;
+        Query                               reportQuery;
+        QueryBuildRange                     workerRange;
+
+        Args                                args = new Args();
+        SRSPrintDestinationSettings         settings;
+        str                                 base64Str;
+            
+        SRSProxy                            srsProxy;
+        Map                                 reportParametersMap;
+        SRSReportRunService                 srsReportRunService = new SrsReportRunService();
+        SRSReportExecutionInfo              executionInfo = new SRSReportExecutionInfo();
+        System.Byte[]                       reportBytes = new System.Byte[0]();
+        Microsoft.Dynamics.AX.Framework.Reporting.Shared.ReportingService.ParameterValue[] parameterValueArray;
+        
+        payslipController.parmArgs(args);
+        payslipController.parmReportName(ssrsReportStr(SPYPayslip, SPYReport));
+        payslipController.parmShowDialog(false);
+        payslipController.parmLoadFromSysLastValue(false);
+        PaySlipContract.parmPayrollPeriodline(_payrollPeriodLine.RecId);
+        PaySlipContract.parmAmountDisplay(SPYAmountDisplay::AccountingCurrency);
+        PaySlipContract.parmShowLeave(true);
+        PaySlipContract.parmShowOvertime(true);
+
+        reportQuery = new Query(queryStr(SPYHcmWorkerNoPosition));
+        workerRange = reportQuery.dataSourceTable(tableNum(HcmWorker)).addRange(fieldNum(HcmWorker, RecId));
+        workerRange.value(queryValue(_worker.RecId));
+        payslipController.parmReportContract().parmQueryContracts().insert(payslipController.getFirstQueryContractKey(), reportQuery);
+
+        PaySlipContract.parmSendMail(false);
+        payslipController.parmReportContract().parmRdpContract(PaySlipContract);
+
+        settings = payslipController.parmReportContract().parmPrintSettings();
+        settings.printMediumType(SRSPrintMediumType::File);
+        settings.fileName("PaySlip.PDF");
+        settings.fileFormat(SRSReportFileFormat::PDF);
+
+        payslipController.parmReportContract().parmPrintSettings(settings);
+        payslipController.parmReportContract().parmReportServerConfig(SRSConfiguration::getDefaultServerConfiguration());
+        payslipController.parmReportContract().parmReportExecutionInfo(executionInfo);
+                
+        try
+        {
+            payslipController.parmReportRun().runReport();
+            executionInfo.parmIsSuccessful(true);
+            reportParametersMap = srsReportRunService.createParamMapFromContract(payslipController.parmReportContract());
+            parameterValueArray = SrsReportRunUtil::getParameterValueArray(reportParametersMap);
+            srsProxy = SRSProxy::constructWithConfiguration(payslipController.parmReportContract().parmReportServerConfig());
+            reportBytes = srsproxy.renderReportToByteArray(payslipController.parmreportcontract().parmreportpath(),
+                                                                                          parameterValueArray,
+                                                                                          settings.fileFormat(),
+                                                                                          settings.deviceinfo());
+
+            base64Str = System.Convert::ToBase64String(reportBytes);
+        }
+        catch
+        {
+            executionInfo.parmIsSuccessful(false);
+        }
+        return  base64Str;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerIdentification</Name>
+				<Source><![CDATA[
+    public void postWorkerIdentification()
+    {
+        HcmWorker                   hcmWorker;
+        HcmPersonIdentificationNumber  personIdentificationNumber;
+        CLRObject                   workerIdentificationGroupList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select hcmWorker
+            join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(HcmPersonIdentificationNumber) &&
+            webDocumentLog.RefRecId == hcmWorker.RecId
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.WorkerIdentificationGroup workerIdentificationGroupModel = new SPYWebAPI.Model.WorkerIdentificationGroup();
+                workerIdentificationGroupModel.WorkerId = hcmWorker.PersonnelNumber;
+                CLRObject  workeridentificationList    = apiService.getBlankWorkerIdentificationList();
+                while select personIdentificationNumber
+                    where personIdentificationNumber.Person == hcmWorker.Person
+                {
+                    SPYWebAPI.Model.WorkerIdentification workerIdentificationModel = new SPYWebAPI.Model.WorkerIdentification();
+                    workerIdentificationModel.WorkerId = hcmWorker.PersonnelNumber;
+                    workerIdentificationModel.IdentificationType = HcmIdentificationType::find(personIdentificationNumber.IdentificationType).Description;
+                    workerIdentificationModel.IdentificationNumber = personIdentificationNumber.IdentificationNumber;
+                    workerIdentificationModel.ValidFrom = personIdentificationNumber.IssuedDate;
+                    workerIdentificationModel.ValidTo = personIdentificationNumber.ExpirationDate;
+                    workerIdentificationList.Add(workerIdentificationModel);
+                }
+                workerIdentificationGroupModel.WorkerIdentification = workerIdentificationList;
+                workerIdentificationGroupList.Add(workerIdentificationGroupModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerIdentificationAPI(workerIdentificationGroupList);
+                workerIdentificationGroupList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerIdentificationAPI(workerIdentificationGroupList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerIdentificationAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerIdentificationAPI(CLRObject _workerIdentificationGroupList)
+    {
+        str calldescription = "UpdateWorkerIdentifications";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_workerIdentificationGroupList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Worker identification sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _workerIdentificationGroupList = apiService.convertToWorkerIdentificationGroupList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoWorkerIdentificationList, errorWorkerIdentificationList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing worker identification.");
+        }
+        else
+        {
+            ClrObject workerIdentificationGroupListEnumerator = _workerIdentificationGroupList.GetEnumerator();
+            while (workerIdentificationGroupListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.WorkerIdentificationGroup workerIdentificationGroupModel = workerIdentificationGroupListEnumerator.get_Current();
+                HcmWorker       hcmWorkerUpdate = HcmWorker::findByPersonnelNumber(workerIdentificationGroupModel.WorkerId);
+                CLRObject  workerIdentificationList = workerIdentificationGroupModel.WorkerIdentification;
+                CLRObject workerIdentificationListEnumerator =  workerIdentificationList.GetEnumerator();
+                error = false;
+                while(workerIdentificationGroupListEnumerator.MoveNext())
+                {
+                    SPYWebAPI.Model.WorkerIdentification workerIdentificationModel = workerIdentificationGroupListEnumerator.get_Current();
+                    if(workerIdentificationModel.Error == true)
+                    {
+                        error = true;
+                        errorWorkerIdentificationList += strFmt("Error for worker identification %1, %2. %3. \n", hcmWorkerUpdate.PersonnelNumber,
+                            workerIdentificationModel.IdentificationNumber, workerIdentificationModel.ErrorMessage);
+                    }
+                }
+                if(error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoWorkerIdentificationList += strFmt("Worker identification %1 synced to portal. \n", hcmWorkerUpdate.PersonnelNumber);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == tableNum(HcmPersonIdentificationNumber) &&
+                        webDocumentLogUpdate.RefRecId == hcmWorkerUpdate.RecId;
+                }
+                else
+                {
+                    
+                }
+            }
+            if(infoWorkerIdentificationList)
+                info(infoWorkerIdentificationList);
+            if(errorWorkerIdentificationList)
+                error(errorWorkerIdentificationList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoWorkerIdentificationList, errorWorkerIdentificationList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerEmployment</Name>
+				<Source><![CDATA[
+    public void postWorkerEmployment()
+    {
+        HcmWorker           hcmWorker;
+        HcmEmployment   hcmEmployment;
+        CLRObject                   workerEmploymentGroupList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        TransDateTime    startDate = DateTimeUtil::minValue(), EndDate = DateTimeUtil::maxValue();
+        
+        while select hcmWorker
+            join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(HcmEmployment) &&
+            webDocumentLog.RefRecId == hcmWorker.RecId
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.WorkerEmploymentGroup workerEmploymentGroupModel = new SPYWebAPI.Model.WorkerEmploymentGroup();
+                workerEmploymentGroupModel.WorkerId = hcmWorker.PersonnelNumber;
+                CLRObject  workerEmploymentList    = apiService.getBlankWorkerEmploymentList();
+                while select validtimestate(startDate, EndDate) hcmEmployment
+                    where hcmEmployment.Worker == hcmWorker.RecId
+                {
+                    SPYWebAPI.Model.WorkerEmployment workerEmploymentModel = new SPYWebAPI.Model.WorkerEmployment();
+                    workerEmploymentModel.WorkerId = hcmWorker.PersonnelNumber;
+                    workerEmploymentModel.DataArea = CompanyInfo::findRecId(hcmEmployment.LegalEntity).DataArea;
+                    workerEmploymentModel.ValidFrom = hcmEmployment.ValidFrom;
+                    workerEmploymentModel.ValidTo = hcmEmployment.ValidTo;
+                    workerEmploymentList.Add(workerEmploymentModel);
+                }
+                workerEmploymentGroupModel.WorkerEmployment = workerEmploymentList;
+                workerEmploymentGroupList.Add(workerEmploymentGroupModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerEmploymentAPI(workerEmploymentGroupList);
+                workerEmploymentGroupList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerEmploymentAPI(workerEmploymentGroupList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerEmploymentAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerEmploymentAPI(CLRObject _workerEmploymentGroupList)
+    {
+        str calldescription = "UpdateWorkerEmployment";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_workerEmploymentGroupList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Worker employment sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _workerEmploymentGroupList = apiService.convertToWorkerEmploymentGroupList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoWorkerEmploymentList, errorWorkerEmploymentList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing worker employment.");
+        }
+        else
+        {
+            ClrObject workerEmploymentGroupListEnumerator = _workerEmploymentGroupList.GetEnumerator();
+            while (workerEmploymentGroupListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.WorkerEmploymentGroup workerEmploymentGroupModel = workerEmploymentGroupListEnumerator.get_Current();
+                HcmWorker       hcmWorkerUpdate = HcmWorker::findByPersonnelNumber(workerEmploymentGroupModel.WorkerId);
+                CLRObject  workerEmploymentList = workerEmploymentGroupModel.WorkerEmployment;
+                CLRObject workerEmploymentListEnumerator =  workerEmploymentList.GetEnumerator();
+                error = false;
+                while(workerEmploymentListEnumerator.MoveNext())
+                {
+                    SPYWebAPI.Model.WorkerEmployment workerEmploymentModel = workerEmploymentListEnumerator.get_Current();
+                    if(workerEmploymentModel.Error == true)
+                    {
+                        error = true;
+                        errorWorkerEmploymentList += strFmt("Error for worker employment %1, %2. %3. \n", hcmWorkerUpdate.PersonnelNumber,
+                            workerEmploymentModel.DataArea, workerEmploymentModel.ErrorMessage);
+                    }
+                }
+                if(error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoWorkerEmploymentList += strFmt("Worker employment %1 synced to portal. \n", hcmWorkerUpdate.PersonnelNumber);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == tableNum(HcmEmployment) &&
+                        webDocumentLogUpdate.RefRecId == hcmWorkerUpdate.RecId;
+                }
+                else
+                {
+                    
+                }
+            }
+            if(infoWorkerEmploymentList)
+                info(infoWorkerEmploymentList);
+            if(errorWorkerEmploymentList)
+                error(errorWorkerEmploymentList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoWorkerEmploymentList, errorWorkerEmploymentList);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

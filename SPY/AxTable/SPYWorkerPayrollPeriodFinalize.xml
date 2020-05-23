@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerPayrollPeriodFinalize</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYWorkerPayrollPeriodFinalize extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>exist</Name>
+				<Source><![CDATA[
+    static boolean exist(HcmWorkerRecId _worker,LegalEntityRecId _legalEntity,SPYPayrollPeriodLineRecId _payrollPeriodLine)
+    {
+        return _worker && _legalEntity && _payrollPeriodLine &&
+                (select firstonly RecId from SPYWorkerPayrollPeriodFinalize
+                                    index hint Worker_AK
+                                    where SPYWorkerPayrollPeriodFinalize.Worker == _worker &&
+                                          SPYWorkerPayrollPeriodFinalize.LegalEntity == _legalEntity &&
+                                          SPYWorkerPayrollPeriodFinalize.PayrollPeriodLine == _payrollPeriodLine).RecId != 0;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY672</DeveloperDocumentation>
+	<Label>@SPY:FinalizedWorkerPayrollPeriod</Label>
+	<TableGroup>WorksheetHeader</TableGroup>
+	<TitleField1>Worker</TitleField1>
+	<TitleField2>PayrollPeriodLine</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ClusteredIndex>Worker_AK</ClusteredIndex>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LegalEntity</Name>
+			<ExtendedDataType>LegalEntityRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollPeriodLine</Name>
+			<ExtendedDataType>SPYPayrollPeriodLineRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>Worker_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>Worker</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>PayrollPeriodLine</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LegalEntity</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>CompanyInfo</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>CompanyInfo</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LegalEntity</Name>
+					<Field>LegalEntity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollPeriodLine</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollPeriodLine</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollPeriodLine</Name>
+					<Field>PayrollPeriodLine</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

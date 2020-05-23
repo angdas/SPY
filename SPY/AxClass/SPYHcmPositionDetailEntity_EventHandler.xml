@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYHcmPositionDetailEntity_EventHandler</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYHcmPositionDetailEntity_EventHandler
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>HcmPositionEntity_onInserting</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    [DataEventHandler(tableStr(HcmPositionEntity), DataEventType::Inserting)]
+    public static void HcmPositionEntity_onInserting(Common sender, DataEventArgs e)
+    {
+        HcmPositionDetailEntity         positionDetailEntity = sender as HcmPositionDetailEntity;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYHCPMAirFareUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYHCPMAirFareUpload extends RunBaseBatch
+{
+    FileName            fileNameOpen;
+    //DialogField         dlgfileName;
+    AsciiStreamIo       fileIO;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+    fileNameOpen
+    #endmacro
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    // Specifies whether the functionality can run in a new session window
+    public boolean canRunInNewSession()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase           dialog; //= super();
+        FormBuildButtonControl  buttonControl;
+        DialogGroup             dlgGroup;
+        FormBuildGroupControl   buttonGroup;
+
+        dialog = super();
+
+        dlgGroup = dialog.addGroup('');
+        buttonGroup    = dialog.formBuildDesign().control(dlgGroup.formBuildGroup().id());
+        buttonControl  = buttonGroup.addControl(FormControlType::Button, 'Upload Air Fare details');
+        buttonControl.text("Upload file");
+        buttonControl.registerOverrideMethod(methodStr(FormButtonControl, clicked),
+                                        methodStr(SPYHCPMAirFareUpload, uploadClickedEvent),
+                                        this);
+        /*
+        dialog.addImage(#ImageExcel_Dyn01);
+        dialog.addInfoImage();
+        dlgFileName = dialog.addFieldValue(extendedTypeStr(FileNameOpen),fileNameOpen);
+        */
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadClickedEvent</Name>
+				<Source><![CDATA[
+    private void uploadClickedEvent(FormButtonControl _formButtonControl)
+    {
+        FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+        If (result && result.getUploadStatus())
+        {
+            fileIO = AsciiStreamIo::constructForRead(result.openResult());
+            if (fileIO)
+            {
+                if (fileIO.status())
+                {
+                    throw error("Unknown problem when importing file");
+                }
+                fileIO.inFieldDelimiter(',');
+                fileIO.inRecordDelimiter('\r\n');
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            ttsbegin;
+            this.readCSV(fileIO);
+            //info("Run method has been called");
+            ttscommit;
+        }
+        catch (Exception::Deadlock)
+        {
+            retry;
+        }
+        catch (Exception::UpdateConflict)
+        {
+            if (appl.ttsLevel() == 0)
+            {
+                if (xSession::currentRetryCount() >= #RetryNum)
+                {
+                    throw Exception::UpdateConflictNotRecovered;
+                }
+                else
+                {
+                    retry;
+                }
+            }
+            else
+            {
+                throw Exception::UpdateConflict;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readCSV</Name>
+				<Source><![CDATA[
+    public void readCSV(AsciiStreamIo  file)
+    {
+        SPYAirFareCity       airfareCity;
+        SPYAirFare           airFare;
+        SPYAirClass          airClass;
+        LogisticsAddressCity destinationCity, originCity;
+        SPYAirFareType       airFareType;
+        container            record;
+        int                  cnt = 0;
+
+        ttsbegin;
+        while (!file.status())
+        {
+            cnt++;
+            record = file.read();
+            if(cnt != 1 && cnt != 0)
+            {
+                int i = conLen(record);
+                if (conLen(record))
+                {
+                    info(strfmt("%1--%2--%3--%4--%5--%6--%7",conPeek(record,1),conPeek(record,2),conPeek(record,3),conPeek(record,4),conPeek(record,5),conPeek(record,6),conPeek(record,7)));
+                    //originCity = LogisticsAddressCity::findCity(conPeek(record,2));
+                    //destinationCity = LogisticsAddressCity::findCity(conPeek(record,1));
+                    //select airClass where airClass.AirClassCode == conPeek(record,3);
+                    //select airfareCity where airfareCity.DestinationCity == destinationCity.RecId && airfareCity.OriginCity == originCity.RecId;
+                    //   
+                    //if(!airfareCity)
+                    //{
+                    //    airfareCity.clear();
+                    //    airfareCity.DestinationCity = destinationCity.RecId;
+                    //    airfareCity.OriginCity = originCity.RecId;
+                    //    airfareCity.insert();
+                    //}
+                    //
+                    //airFare.clear();
+                    //airFare.AirFareCity = airfareCity.RecId;
+                    //airFare.AirClass = airClass.RecId;
+                    //airFare.AirFareType = str2Enum(airFareType, conPeek(record,4));
+                    //airFare.CurrencyCode = conPeek(record,5);
+                    //airFare.Amount = conPeek(record,6);
+                    //str dt = conPeek(record,7);
+                    //date validFrom = str2DateDMY(dt);
+                    //airFare.ValidFrom = validFrom;
+                    //airFare.ValidTo = dateMax();
+                    //airFare.insert();
+                }
+            }
+        }
+        ttscommit;
+        info(strFmt("%1 Air fare details have been successfully uploaded.", cnt-1));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    // Unpacking of parameters
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+        ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    // Validation
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYHCPMAirFareUpload construct()
+    {
+        return new SPYHCPMAirFareUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "Air Fare Upload";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYHCPMAirFareUpload    airfareUpload;
+    
+        airfareUpload = SPYHCPMAirFareUpload::construct();
+    
+        if (airfareUpload.prompt())
+            airfareUpload.runOperationNow();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

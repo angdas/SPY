@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSTimesheetLineWeek_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[ExtensionOf(tableStr(TSTimesheetLineWeek))]
+final class SPYTSTimesheetLineWeek_Extension
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>SPYLoadFromLine</Name>
+				<Source><![CDATA[
+    static void SPYLoadFromLine(TSTimesheetLine  _rec, TSTimesheetFavorites _tTimesheetFavorites, NoYes _updateHours = NoYes::Yes)
+    {
+        TSTimesheetLine         timesheetLine = _rec;
+        TSTimesheetFavorites    tTimesheetFavorites = _tTimesheetFavorites;
+        TSTimesheetTable        timesheetTable = timesheetLine.timesheetTable();
+        TSTimesheetLineWeek     lineWeek;
+        ProjPeriodTimesheetWeek periodWeek;
+    
+        ttsbegin;
+
+        lineWeek.clear();
+        lineWeek.TimesheetNbr   = timesheetLine.TimesheetNbr;
+        lineWeek.LineNum        = timesheetLine.LineNum;
+        lineWeek.tsTimesheetLine = timesheetLine.RecId;
+
+        while select PeriodFrom, PeriodId, PeriodTo from periodWeek
+        where periodWeek.RecId == timesheetLine.ProjPeriodTimesheetWeek
+        {
+            if (!TSTimesheetLineWeek::existByTimesheetLineRecId(timesheetLine.RecId))
+            {
+                lineWeek.initValue();
+                lineWeek.ProjPeriodId   = periodWeek.PeriodId;
+                lineWeek.DayFrom        = periodWeek.PeriodFrom;
+                lineWeek.DayTo          = periodWeek.PeriodTo;
+                if (_updateHours == NoYes::Yes)
+                {
+                    TSTimesheetFavorites::SPYUpdateTimesheetLineWeekHours(lineWeek, tTimesheetFavorites);
+                }
+                lineWeek.insert();
+            }
+        }
+
+        ttscommit;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

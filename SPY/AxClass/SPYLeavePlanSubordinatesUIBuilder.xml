@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeavePlanSubordinatesUIBuilder</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLeavePlanSubordinatesUIBuilder
+    extends SysOperationAutomaticUIBuilder
+{
+    DialogField subordinates;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>lookup</Name>
+				<Source><![CDATA[
+    public void lookup(FormStringControl _control)
+    {
+        Query                   query = new Query(queryStr(SPYSubordinatesLookup));
+        QueryBuildDataSource    qbd;
+        container   cnt;
+    
+        //qbd = query.dataSourceName("HcmPositionWorkerAssignment_1");
+        //qbd.addRange(fieldNum(HcmPositionWorkerAssignment, worker)).value(SysQuery::value(SysQueryRangeUtil::currentWorker()));
+    
+        //qbd = query.dataSourceTable(tableNum(HcmPositionHierarchy));
+        //qbd.addRange(fieldNum(HcmPositionHierarchy, PositionHierarchyType)).value(SysQuery::value(HcmPositionHierarchyType::lineHierarchyType()));
+     
+        SysLookupMultiSelectGrid::lookup(query, _control, _control, _control,cnt);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postBuild</Name>
+				<Source><![CDATA[
+    public void postBuild()
+    {
+        DialogField dialogEntity;
+    
+        super();
+    
+        dialogEntity= this.bindInfo().getDialogField(this.dataContractObject(), methodStr(SPYLeavePlanSubordinatesContract, parmSubordinates));
+    
+        dialogEntity.registerOverrideMethod(methodStr(FormStringControl, lookup), methodStr(SPYLeavePlanSubordinatesUIBuilder, lookup), this);
+    
+        if (dialogEntity)
+        {
+            dialogEntity.lookupButton(2);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postRun</Name>
+				<Source><![CDATA[
+    public void postRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

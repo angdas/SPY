@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYPayAdjustmentQuery</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYPayAdjustmentQuery extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Title>@SPY276</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYPayAdjustmentTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYPayAdjustmentTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYPayAdjustmentTrans_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYPayAdjustmentTrans</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<JoinMode>ExistsJoin</JoinMode>
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>PayAdjustmentCode</Name>
+					<Field>PayAdjustmentCode</Field>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

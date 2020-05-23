@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollDisbursementLine</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayrollDisbursementLine extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>nextLineNum</Name>
+				<Source><![CDATA[
+    LineNum nextLineNum(SPYPayrollDisbursementRecId _payrollDisbursement)
+    {
+        SPYPayrollDisbursementLine      payrollDisbursementLine;
+        LineNum                         ret;
+    
+        select maxOf(LineNum) from payrollDisbursementLine
+            where payrollDisbursementLine.PayrollDisbursement == _payrollDisbursement;
+    
+        ret = payrollDisbursementLine.LineNum + 1;
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY562</DeveloperDocumentation>
+	<Label>@SPY563</Label>
+	<TableGroup>WorksheetLine</TableGroup>
+	<TitleField1>Worker</TitleField1>
+	<TitleField2>LineNum</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<ModifiedBy>Yes</ModifiedBy>
+	<ModifiedDateTime>Yes</ModifiedDateTime>
+	<ReplacementKey>Line_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayrollDisbursement</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Account</Name>
+			<Label>@SYS8343</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LedgerDimension</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>OffsetLedgerDimension</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Amount</Name>
+			<Label>@RET2692</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>AmountCurDebit</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>AmountCurCredit</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayrollDisbursement</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Dimension</Name>
+			<Label>@SYS342338</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DefaultDimension</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Log</Name>
+			<Label>@SYS2515</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>createdBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>createdDateTime</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>modifiedBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>modifiedDateTime</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SourceDocument</Name>
+			<Label>@SYS127863</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SourceDocumentLine</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Transaction</Name>
+			<Label>@SYS15191</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Txt</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>TransDate</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>AmountCurCredit</Name>
+			<ExtendedDataType>AmountCurCredit</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>AmountCurDebit</Name>
+			<ExtendedDataType>AmountCurDebit</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Currency</Name>
+			<ExtendedDataType>CurrencyCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DefaultDimension</Name>
+			<ExtendedDataType>DimensionDefault</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>ExchRate</Name>
+			<ExtendedDataType>ExchRate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LedgerDimension</Name>
+			<ExtendedDataType>LedgerDimensionDefaultAccount</ExtendedDataType>
+			<Label>@SYS24500</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>LineNum</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>LineNum</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>OffsetLedgerDimension</Name>
+			<ExtendedDataType>LedgerDimensionAccount</ExtendedDataType>
+			<Label>@SYS11162</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollDisbursement</Name>
+			<ExtendedDataType>SPYPayrollDisbursementRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SourceDocumentLine</Name>
+			<ExtendedDataType>SourceDocumentLineRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>TransDate</Name>
+			<ExtendedDataType>TransDate</ExtendedDataType>
+			<Label>@SYS128676</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Txt</Name>
+			<ExtendedDataType>SPYTransTxt</ExtendedDataType>
+			<Label>@SYS179379</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>Line_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>PayrollDisbursement</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LineNum</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation>
+			<Name>Account</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelatedTableRole>Account</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>LedgerDimension</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LedgerDimension</Name>
+					<Field>LedgerDimension</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>Currency</Name>
+			<Cardinality>ExactlyOne</Cardinality>
+			<RelatedTable>Currency</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Currency</Name>
+					<SourceEDT>CurrencyCode</SourceEDT>
+					<Field>Currency</Field>
+					<RelatedField>CurrencyCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>OffsetAccount</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelatedTableRole>OffsetAccount</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>LedgerDimension</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>OffsetLedgerDimension</Name>
+					<Field>OffsetLedgerDimension</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SourceDocumentLine</Name>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SourceDocumentLine</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SourceDocumentLine</Name>
+					<Field>SourceDocumentLine</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollDisbursementTable</Name>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollDisbursementTable</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollDisbursement</Name>
+					<Field>PayrollDisbursement</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

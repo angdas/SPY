@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxDataEntityView xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollEarningsJournalTransEntity</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayrollEarningsJournalTransEntity extends common
+{
+}
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<Label>@SPY1203</Label>
+	<DataManagementEnabled>Yes</DataManagementEnabled>
+	<DataManagementStagingTable>SPYPayrollEarningsJournalTransStaging</DataManagementStagingTable>
+	<EntityCategory>Transaction</EntityCategory>
+	<IsPublic>Yes</IsPublic>
+	<PrimaryCompanyContext>DataAreaId</PrimaryCompanyContext>
+	<PrimaryKey>EntityKey</PrimaryKey>
+	<PublicCollectionName>SPYPayrollEarningsJournalTrans</PublicCollectionName>
+	<PublicEntityName>SPYPayrollEarningsJournalTrans</PublicEntityName>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>Amount</Name>
+			<DataField>Amount</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>Currency</Name>
+			<DataField>Currency</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>DefaultDimension</Name>
+			<AccessModifier>Private</AccessModifier>
+			<DataField>DefaultDimension</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>LineNum</Name>
+			<DataField>LineNum</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>Payroll</Name>
+			<AccessModifier>Private</AccessModifier>
+			<DataField>Payroll</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>PayrollEarningsJournal</Name>
+			<AccessModifier>Private</AccessModifier>
+			<DataField>PayrollEarningsJournal</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>PayrollPeriodlLine</Name>
+			<AccessModifier>Private</AccessModifier>
+			<DataField>PayrollPeriodlLine</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>TransDate</Name>
+			<DataField>TransDate</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>Txt</Name>
+			<DataField>Txt</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>Worker</Name>
+			<AccessModifier>Private</AccessModifier>
+			<DataField>Worker</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>HcmWorker_PersonnelNumber</Name>
+			<DataField>PersonnelNumber</DataField>
+			<DataSource>HcmWorker</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPayrollEarningsJournalTable_JournalCode</Name>
+			<DataField>JournalCode</DataField>
+			<DataSource>SPYPayrollEarningsJournalTable</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPayrollPeriodLine_PayrollPeriod</Name>
+			<AccessModifier>Private</AccessModifier>
+			<DataField>PayrollPeriod</DataField>
+			<DataSource>SPYPayrollPeriodLine</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPayrollPeriodLine_PeriodEndDate</Name>
+			<Mandatory>Yes</Mandatory>
+			<DataField>PeriodEndDate</DataField>
+			<DataSource>SPYPayrollPeriodLine</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPayrollPeriodLine_PeriodStartDate</Name>
+			<Mandatory>Yes</Mandatory>
+			<DataField>PeriodStartDate</DataField>
+			<DataSource>SPYPayrollPeriodLine</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPayrollPeriod_PayrollPeriodCode</Name>
+			<DataField>PayrollPeriodCode</DataField>
+			<DataSource>SPYPayrollPeriod</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPayrollTable_PayElementCode</Name>
+			<Mandatory>Yes</Mandatory>
+			<DataField>PayElementCode</DataField>
+			<DataSource>SPYPayrollTable</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>DefaultDimensionDisplayValue</Name>
+			<DataField>DisplayValue</DataField>
+			<DataSource>DefaultDimensionDAVS</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>DistributeCost</Name>
+			<DataField>DistributeCost</DataField>
+			<DataSource>SPYPayrollEarningsJournalTrans</DataSource>
+		</AxDataEntityViewField>
+	</Fields>
+	<Keys>
+		<AxDataEntityViewKey>
+			<Name>EntityKey</Name>
+			<Fields>
+				<AxDataEntityViewKeyField>
+					<DataField>SPYPayrollEarningsJournalTable_JournalCode</DataField>
+				</AxDataEntityViewKeyField>
+				<AxDataEntityViewKeyField>
+					<DataField>LineNum</DataField>
+				</AxDataEntityViewKeyField>
+			</Fields>
+		</AxDataEntityViewKey>
+	</Keys>
+	<Mappings />
+	<Ranges />
+	<Relations>
+		<AxDataEntityViewRelation xmlns=""
+			i:type="AxDataEntityViewRelationForeignKey">
+			<Name>DefaultDimensionDimensionSet</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedDataEntity>DimensionSetEntity</RelatedDataEntity>
+			<RelatedDataEntityCardinality>ZeroOne</RelatedDataEntityCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxDataEntityViewRelationConstraint xmlns=""
+					i:type="AxDataEntityViewRelationConstraintField">
+					<Name>DefaultDimension</Name>
+					<Field>DefaultDimension</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxDataEntityViewRelationConstraint>
+			</Constraints>
+		</AxDataEntityViewRelation>
+	</Relations>
+	<StateMachines />
+	<ViewMetadata>
+		<Name>Metadata</Name>
+		<SourceCode>
+			<Methods>
+				<Method>
+					<Name>classDeclaration</Name>
+					<Source><![CDATA[
+[Query]
+public class Metadata extends QueryRun
+{
+}
+]]></Source>
+				</Method>
+			</Methods>
+		</SourceCode>
+		<DataSources>
+			<AxQuerySimpleRootDataSource>
+				<Name>SPYPayrollEarningsJournalTrans</Name>
+				<DynamicFields>Yes</DynamicFields>
+				<Table>SPYPayrollEarningsJournalTrans</Table>
+				<DataSources>
+					<AxQuerySimpleEmbeddedDataSource>
+						<Name>HcmWorker</Name>
+						<DynamicFields>Yes</DynamicFields>
+						<IsReadOnly>Yes</IsReadOnly>
+						<Table>HcmWorker</Table>
+						<DataSources />
+						<DerivedDataSources />
+						<Fields />
+						<Ranges />
+						<Relations>
+							<AxQuerySimpleDataSourceRelation>
+								<Name>HcmWorker</Name>
+								<JoinRelationName>HcmWorker</JoinRelationName>
+							</AxQuerySimpleDataSourceRelation>
+						</Relations>
+					</AxQuerySimpleEmbeddedDataSource>
+					<AxQuerySimpleEmbeddedDataSource>
+						<Name>SPYPayrollEarningsJournalTable</Name>
+						<DynamicFields>Yes</DynamicFields>
+						<IsReadOnly>Yes</IsReadOnly>
+						<Table>SPYPayrollEarningsJournalTable</Table>
+						<DataSources />
+						<DerivedDataSources />
+						<Fields />
+						<Ranges />
+						<JoinMode>OuterJoin</JoinMode>
+						<Relations>
+							<AxQuerySimpleDataSourceRelation>
+								<Name>SPYPayrollEarningsJournalTable</Name>
+								<JoinRelationName>SPYPayrollEarningsJournalTable</JoinRelationName>
+							</AxQuerySimpleDataSourceRelation>
+						</Relations>
+					</AxQuerySimpleEmbeddedDataSource>
+					<AxQuerySimpleEmbeddedDataSource>
+						<Name>SPYPayrollPeriodLine</Name>
+						<DynamicFields>Yes</DynamicFields>
+						<IsReadOnly>Yes</IsReadOnly>
+						<Table>SPYPayrollPeriodLine</Table>
+						<DataSources>
+							<AxQuerySimpleEmbeddedDataSource>
+								<Name>SPYPayrollPeriod</Name>
+								<DynamicFields>Yes</DynamicFields>
+								<IsReadOnly>Yes</IsReadOnly>
+								<Table>SPYPayrollPeriod</Table>
+								<DataSources />
+								<DerivedDataSources />
+								<Fields />
+								<Ranges />
+								<JoinMode>OuterJoin</JoinMode>
+								<Relations>
+									<AxQuerySimpleDataSourceRelation>
+										<Name>SPYPayrollPeriod</Name>
+										<JoinRelationName>SPYPayrollPeriod</JoinRelationName>
+									</AxQuerySimpleDataSourceRelation>
+								</Relations>
+							</AxQuerySimpleEmbeddedDataSource>
+						</DataSources>
+						<DerivedDataSources />
+						<Fields />
+						<Ranges />
+						<Relations>
+							<AxQuerySimpleDataSourceRelation>
+								<Name>SPYPayrollPeriodLine</Name>
+								<JoinRelationName>SPYPayrollPeriodLine</JoinRelationName>
+							</AxQuerySimpleDataSourceRelation>
+						</Relations>
+					</AxQuerySimpleEmbeddedDataSource>
+					<AxQuerySimpleEmbeddedDataSource>
+						<Name>SPYPayrollTable</Name>
+						<DynamicFields>Yes</DynamicFields>
+						<IsReadOnly>Yes</IsReadOnly>
+						<Table>SPYPayrollTable</Table>
+						<DataSources />
+						<DerivedDataSources />
+						<Fields />
+						<Ranges />
+						<Relations>
+							<AxQuerySimpleDataSourceRelation>
+								<Name>SPYPayrollTable</Name>
+								<JoinRelationName>SPYPayrollTable</JoinRelationName>
+							</AxQuerySimpleDataSourceRelation>
+						</Relations>
+					</AxQuerySimpleEmbeddedDataSource>
+					<AxQuerySimpleEmbeddedDataSource>
+						<Name>DefaultDimensionDAVS</Name>
+						<AllowAdd>No</AllowAdd>
+						<DynamicFields>Yes</DynamicFields>
+						<IsReadOnly>Yes</IsReadOnly>
+						<Table>DimensionSetEntity</Table>
+						<DataSources />
+						<DerivedDataSources />
+						<Fields />
+						<Ranges />
+						<JoinMode>OuterJoin</JoinMode>
+						<Relations>
+							<AxQuerySimpleDataSourceRelation>
+								<Name>DefaultDimensionDAVS</Name>
+								<Field>DefaultDimension</Field>
+								<JoinDataSource>SPYPayrollEarningsJournalTrans</JoinDataSource>
+								<RelatedField>RecId</RelatedField>
+							</AxQuerySimpleDataSourceRelation>
+						</Relations>
+					</AxQuerySimpleEmbeddedDataSource>
+				</DataSources>
+				<DerivedDataSources />
+				<Fields />
+				<Ranges />
+				<GroupBy />
+				<Having />
+				<OrderBy />
+			</AxQuerySimpleRootDataSource>
+		</DataSources>
+	</ViewMetadata>
+</AxDataEntityView>

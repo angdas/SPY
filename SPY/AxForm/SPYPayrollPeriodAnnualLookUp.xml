@@ -1,0 +1,762 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYPayrollPeriodAnnualLookUp</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYPayrollPeriodAnnualLookUp extends FormRun
+{
+    #HRMConstants
+
+    HcmWorkerLookup         hcmWorkerLookup;
+
+    container               imageContainer;
+
+    boolean                 okButtonClicked;
+
+    QueryBuildRange         payrollPeriodRange;
+    QueryBuildRange         periodStatusRange;
+    Form                    callerForm;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>closeSelect</Name>
+				<Source><![CDATA[
+    public void closeSelect(str _selectString)
+    {
+        super(_selectString);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>closeSelectRecord</Name>
+				<Source><![CDATA[
+    public void closeSelectRecord(Common _selectedRecord)
+    {
+        if (okButtonClicked)
+        {
+            if (callerForm.name() == formStr(SysTableBrowser))
+            {
+                element.closeSelect(int642str(_selectedRecord.RecId));
+            }
+            else
+            {
+                super(_selectedRecord);
+            }
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        SPYPayrollPeriod    payrollPeriodTable;
+    
+        callerForm = element.args().caller();
+        okButtonClicked = false;
+    
+        super();
+    
+    
+        PayrollFrequencyRange.selection(8);
+        select firstonly RecId from payrollPeriodTable
+            where payrollPeriodTable.PayrollFrequency == PayrollFrequencyRange.selection();
+        PayrollPeriod.value(payrollPeriodTable.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public void run()
+    {
+        if (element.selectTarget() is FormReferenceGroupControl)
+        {
+            this.selectRecordMode(SPYPayrollPeriodLine_1_PayrollPeriod);
+        }
+        else if (element.selectTarget() is FormInt64Control)
+        {
+            this.selectMode(SPYPayrollPeriodLine_1_RecId);
+        }
+    
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>task</Name>
+				<Source><![CDATA[
+    public int task(int _taskId)
+    {
+        #task
+        int ret;
+    
+        if (_taskId == #taskEnter)
+        {
+            okButtonClicked = true;
+        }
+    
+        ret = super(_taskId);
+    
+        return ret;
+    
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYPayrollPeriodLine</Name>
+				<Methods>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            SPYPayrollPeriodLine    payrollPeriodLineTab;
+        
+            payrollPeriodRange.value(queryValue(PayrollPeriod.value()));
+            periodStatusRange.value(queryValue(periodStatus.selection()));
+            select firstonly payrollPeriodLineTab
+                where payrollPeriodLineTab.PayrollPeriod == payrollPeriod.value() &&
+                      payrollPeriodLineTab.PeriodStartDate <= DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()) &&
+                      payrollPeriodLineTab.PeriodEndDate >= DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone());
+        
+            super();
+            SPYPayrollPeriodLine_ds.positionToRecord(payrollPeriodLineTab);
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            SPYPayrollPeriodLine    payrollPeriodLineTab;
+            super();
+        
+            payrollPeriodRange = this.query().dataSourceTable(tableNum(SPYPayrollPeriodLine)).addRange(fieldNum(SPYPayrollPeriodLine,PayrollPeriod));
+            periodStatusRange = this.query().dataSourceTable(tableNum(SPYPayrollPeriodLine)).addRange(fieldNum(SPYPayrollPeriodLine,PeriodStatus));
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>OK</Name>
+				<Type>CommandButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            okButtonClicked = true;
+            if(SPYPayrollPeriodLine.PeriodStatus != SPYPayrollPeriodStatus::Open)
+                throw error("@SPY816");
+            element.closeSelectRecord(SPYPayrollPeriodLine);
+        
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>PayrollFrequencyRange</Name>
+				<Type>ComboBox</Type>
+				<Methods>
+					<Method>
+						<Name>modified</Name>
+						<Source><![CDATA[
+        public boolean modified()
+        {
+            boolean             ret;
+            SPYPayrollPeriod    payrollPeriodTable;
+        
+            ret = super();
+            select firstonly payrollPeriodTable
+                where payrollPeriodTable.PayrollFrequency == this.selection();
+            PayrollPeriod.value(payrollPeriodTable.RecId);
+        
+            SPYPayrollPeriodLine_ds.executeQuery();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>selectionChange</Name>
+						<Source><![CDATA[
+        public int selectionChange()
+        {
+            int                 ret;
+            SPYPayrollPeriod    payrollPeriodTable;
+        
+            ret = super();
+        
+            select firstonly payrollPeriodTable
+                where payrollPeriodTable.PayrollFrequency == this.selection();
+            PayrollPeriod.value(payrollPeriodTable.RecId);
+        
+            SPYPayrollPeriodLine_ds.executeQuery();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>PeriodStatus</Name>
+				<Type>ComboBox</Type>
+				<Methods>
+					<Method>
+						<Name>modified</Name>
+						<Source><![CDATA[
+        public boolean modified()
+        {
+            boolean             ret;
+        
+            ret = super();
+        
+            SPYPayrollPeriodLine_ds.executeQuery();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>PayrollPeriod</Name>
+				<Type>ReferenceGroup</Type>
+				<Methods>
+					<Method>
+						<Name>lookupReference</Name>
+						<Source><![CDATA[
+        public Common lookupReference()
+        {
+            SysReferenceTableLookup     sysTableLookup = SysReferenceTableLookup::newParameters(tableNum(SPYPayrollPeriod), this);
+            Query                       query;
+            QueryBuildDataSource        qbds;
+            QueryBuildRange             qbr;
+            SPYPayrollPeriod            selectedRecord;
+        
+            // Display the coulmns fields in the lookup form.
+            sysTableLookup.addLookupfield(fieldNum(SPYPayrollPeriod, PayrollPeriodCode));
+            sysTableLookup.addLookupfield(fieldNum(SPYPayrollPeriod, Description));
+            sysTableLookup.addLookupfield(fieldNum(SPYPayrollPeriod, payrollFrequency));
+        
+            // Create a custom Query
+            query= new Query();
+            qbds = query.addDataSource(tableNum(SPYPayrollPeriod));
+            qbr = qbds.addRange(fieldNum(SPYPayrollPeriod, payrollFrequency));
+            qbr.value(queryValue(PayrollFrequencyRange.selection()));
+        
+            sysTableLookup.parmQuery(query);
+            selectedRecord = sysTableLookup.performFormLookup();
+        
+            return selectedRecord;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>modified</Name>
+						<Source><![CDATA[
+        public boolean modified()
+        {
+            boolean ret;
+        
+            ret = super();
+            SPYPayrollPeriodLine_ds.executeQuery();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYPayrollPeriodLine</Name>
+			<Table>SPYPayrollPeriodLine</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayrollDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayrollPeriod</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PeriodEndDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PeriodStartDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PeriodStatus</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<AlwaysOnTop xmlns="">Yes</AlwaysOnTop>
+		<BackgroundColor xmlns="">WindowBackground</BackgroundColor>
+		<Frame xmlns="">Border</Frame>
+		<HeightMode xmlns="">Column</HeightMode>
+		<HideIfEmpty xmlns="">No</HideIfEmpty>
+		<HideToolbar xmlns="">Yes</HideToolbar>
+		<SaveSize xmlns="">No</SaveSize>
+		<SetCompany xmlns="">No</SetCompany>
+		<Style xmlns="">Lookup</Style>
+		<WidthMode xmlns="">Column</WidthMode>
+		<WindowResize xmlns="">Fixed</WindowResize>
+		<WindowType xmlns="">Popup</WindowType>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>BodyArea</Name>
+				<ElementPosition>715827882</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacingMode>Fixed</VerticalSpacingMode>
+				<WidthMode>Auto</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>Content</Name>
+						<ElementPosition>1879048190</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Group</Type>
+						<VerticalSpacingMode>Fixed</VerticalSpacingMode>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GridContainer</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>SizeToAvailable</HeightMode>
+								<Type>Group</Type>
+								<VerticalSpacingMode>Fixed</VerticalSpacingMode>
+								<Width>450</Width>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormGridControl">
+										<Name>Grid</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Grid</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormReferenceGroupControl">
+												<Name>SPYPayrollPeriodLine_1_PayrollPeriod</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<ElementPosition>715827882</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>ReferenceGroup</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls />
+												<DataSource>SPYPayrollPeriodLine</DataSource>
+												<ReferenceField>PayrollPeriod</ReferenceField>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormDateControl">
+												<Name>SPYPayrollPeriodLine_1_PeriodStartDate</Name>
+												<ElementPosition>1073741823</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>Date</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>PeriodStartDate</DataField>
+												<DataSource>SPYPayrollPeriodLine</DataSource>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormDateControl">
+												<Name>SPYPayrollPeriodLine_1_PeriodEndDate</Name>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>Date</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>PeriodEndDate</DataField>
+												<DataSource>SPYPayrollPeriodLine</DataSource>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormInt64Control">
+												<Name>SPYPayrollPeriodLine_1_RecId</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<ElementPosition>1789569705</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>Int64</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<Visible>No</Visible>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>RecId</DataField>
+												<DataSource>SPYPayrollPeriodLine</DataSource>
+											</AxFormControl>
+										</Controls>
+										<AlternateRowShading>Yes</AlternateRowShading>
+										<DataSource>SPYPayrollPeriodLine</DataSource>
+										<MultiSelect>No</MultiSelect>
+										<ShowRowLabels>No</ShowRowLabels>
+									</AxFormControl>
+								</Controls>
+								<FrameType>None</FrameType>
+								<Style>BorderlessGridContainer</Style>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>VSplitter</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1610612734</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<Style>SplitterVerticalContainer</Style>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>PreviewGroup</Name>
+								<ElementPosition>1879048190</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Skip>Yes</Skip>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormGroupControl">
+										<Name>BottomPreview</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Skip>Yes</Skip>
+										<Type>Group</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormDateControl">
+												<Name>SPYPayrollPeriodLine_1_PeriodStartDate1</Name>
+												<ElementPosition>715827882</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>Date</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>PeriodStartDate</DataField>
+												<DataSource>SPYPayrollPeriodLine</DataSource>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormDateControl">
+												<Name>SPYPayrollPeriodLine_1_PeriodEndDate1</Name>
+												<ElementPosition>1073741823</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>Date</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>PeriodEndDate</DataField>
+												<DataSource>SPYPayrollPeriodLine</DataSource>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormDateControl">
+												<Name>SPYPayrollPeriodLine_1_PayrollDate</Name>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>Date</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>PayrollDate</DataField>
+												<DataSource>SPYPayrollPeriodLine</DataSource>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormComboBoxControl">
+												<Name>SPYPayrollPeriodLine_1_PariodStatus</Name>
+												<ElementPosition>1789569705</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>ComboBox</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>PeriodStatus</DataField>
+												<DataSource>SPYPayrollPeriodLine</DataSource>
+												<Items />
+											</AxFormControl>
+										</Controls>
+									</AxFormControl>
+								</Controls>
+								<TopMargin>0</TopMargin>
+								<TopMarginMode>Fixed</TopMarginMode>
+								<ViewEditMode>View</ViewEditMode>
+							</AxFormControl>
+						</Controls>
+						<BottomMargin>0</BottomMargin>
+						<BottomMarginMode>Fixed</BottomMarginMode>
+						<Columns>3</Columns>
+						<Columnspace>0</Columnspace>
+						<ColumnspaceMode>Fixed</ColumnspaceMode>
+						<LeftMargin>0</LeftMargin>
+						<LeftMarginMode>Fixed</LeftMarginMode>
+						<RightMargin>0</RightMargin>
+						<RightMarginMode>Fixed</RightMarginMode>
+						<TopMargin>2</TopMargin>
+						<TopMarginMode>Fixed</TopMarginMode>
+					</AxFormControl>
+				</Controls>
+				<BottomMargin>0</BottomMargin>
+				<BottomMarginMode>Fixed</BottomMarginMode>
+				<LeftMargin>0</LeftMargin>
+				<LeftMarginMode>Fixed</LeftMarginMode>
+				<RightMargin>0</RightMargin>
+				<RightMarginMode>Fixed</RightMarginMode>
+				<TopMargin>0</TopMargin>
+				<TopMarginMode>Fixed</TopMarginMode>
+				<FrameType>None</FrameType>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SelectArea</Name>
+				<ElementPosition>1431655764</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>Auto</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>ButtonGroup</Name>
+						<ElementPosition>1879048190</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormCommandButtonControl">
+								<Name>OK</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Skip>Yes</Skip>
+								<Type>CommandButton</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Command>Enter</Command>
+								<DefaultButton>Yes</DefaultButton>
+								<MultiSelect>No</MultiSelect>
+								<SaveRecord>No</SaveRecord>
+								<Text>@SYS11584</Text>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCommandButtonControl">
+								<Name>Cancel</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1610612734</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Skip>Yes</Skip>
+								<Type>CommandButton</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Command>Cancel</Command>
+								<Text>@SYS301993</Text>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Columns>2</Columns>
+						<Columnspace>5</Columnspace>
+						<ColumnspaceMode>Fixed</ColumnspaceMode>
+						<Style>DialogCommitContainer</Style>
+					</AxFormControl>
+				</Controls>
+				<Columns>2</Columns>
+				<BackStyle>Opaque</BackStyle>
+				<Style>DialogCommit</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>FilterGroup</Name>
+				<ElementPosition>1789569705</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacingMode>Fixed</VerticalSpacingMode>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormComboBoxControl">
+						<Name>PayrollFrequencyRange</Name>
+						<AllowEdit>No</AllowEdit>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>858993458</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ComboBox</Type>
+						<VerticalSpacingMode>Fixed</VerticalSpacingMode>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<ComboType>List</ComboType>
+						<EnumType>SPYPayrollFrequency</EnumType>
+						<Label>@SYS313167</Label>
+						<ShowLabel>No</ShowLabel>
+						<Items />
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormComboBoxControl">
+						<Name>PeriodStatus</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1288490187</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ComboBox</Type>
+						<VerticalSpacingMode>Fixed</VerticalSpacingMode>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<ComboType>List</ComboType>
+						<EnumType>SPYPayrollPeriodStatus</EnumType>
+						<Label>@SYS313167</Label>
+						<ShowLabel>No</ShowLabel>
+						<Items />
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>PayrollPeriod</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1717986916</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ReferenceGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<ExtendedDataType>SPYPayrollPeriodRecId</ExtendedDataType>
+						<ReplacementFieldGroup>Identification</ReplacementFieldGroup>
+					</AxFormControl>
+				</Controls>
+				<AlignChildren>No</AlignChildren>
+				<BottomMargin>5</BottomMargin>
+				<BottomMarginMode>Fixed</BottomMarginMode>
+				<Columns>4</Columns>
+				<LeftMargin>5</LeftMargin>
+				<LeftMarginMode>Fixed</LeftMarginMode>
+				<RightMargin>5</RightMargin>
+				<RightMarginMode>Fixed</RightMarginMode>
+				<TopMargin>5</TopMargin>
+				<TopMarginMode>Fixed</TopMarginMode>
+				<BackStyle>Opaque</BackStyle>
+				<ViewEditMode>Edit</ViewEditMode>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

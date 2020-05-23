@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLoanTypeTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYLoanTypeTable extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYLoanTypeTable find(
+    SPYLoanTypeRecId        _recId,
+    boolean                 _forUpdate = false,
+    ConcurrencyModel        _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYLoanTypeTable    loanTypeTable;
+    
+        loanTypeTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            loanTypeTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly loanTypeTable
+             where loanTypeTable.RecId == _recId;
+    
+        return loanTypeTable;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY579</DeveloperDocumentation>
+	<Label>@SPY578</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>LoanTypeCode</TitleField1>
+	<TitleField2>Description</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>Code_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LoanTypeCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LoanTypeCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Payroll</Name>
+			<Label>@SYS2694</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DisbursementPayroll</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>RecoveryPayroll</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Expression</Name>
+			<Label>@SPY:Expression</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>EligibilityRule</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DisbursementPayroll</Name>
+			<ExtendedDataType>SPYPayrollRecId</ExtendedDataType>
+			<HelpText>@SPY1688</HelpText>
+			<Label>@SPY1687</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>LoanTypeCode</Name>
+			<ExtendedDataType>SPYLoanTypeCode</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>RecoveryPayroll</Name>
+			<ExtendedDataType>SPYPayrollRecId</ExtendedDataType>
+			<HelpText>@SPY1686</HelpText>
+			<Label>@SPY1685</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>EligibilityRule</Name>
+			<ExtendedDataType>SPYExpressionRecId</ExtendedDataType>
+			<Label>@SPY:EligibilityRule</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>Code_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>LoanTypeCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>DisbursementPayroll</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPayrollTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>DisbursementPayroll</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DisbursementPayroll</Name>
+					<Field>DisbursementPayroll</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>RecoveryPayroll</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPayrollTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>RecoveryPayroll</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>RecoveryPayroll</Name>
+					<Field>RecoveryPayroll</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYExpressionTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYExpressionTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>EligibilityRule</Name>
+					<Field>EligibilityRule</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

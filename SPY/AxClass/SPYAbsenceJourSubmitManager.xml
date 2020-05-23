@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceJourSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYAbsenceJourSubmitManager
+{
+    /*Comment */
+    SPYAbsenceJournalTable          absenceJournalTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAbsenceJournalTable</Name>
+				<Source><![CDATA[
+    private SPYAbsenceJournalTable parmAbsenceJournalTable(SPYAbsenceJournalTable _absenceJournalTable = absenceJournalTable)
+    {
+        absenceJournalTable = _absenceJournalTable;
+    
+        return absenceJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;    
+        
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            absenceJournalTable.submitToWorkflow(workFlowTypeStr(SPYAbsenceJournal), workflowSubmitDialog.parmWorkflowComment(), false);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYAbsenceJourSubmitManager         absenceJourSubmitManager = new SPYAbsenceJourSubmitManager();
+        SPYAbsenceJournalTable              absenceJournalTable = args.record();
+    
+        absenceJourSubmitManager.parmAbsenceJournalTable(absenceJournalTable);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYAbsenceJournalSubmit))
+            absenceJourSubmitManager.submit(args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

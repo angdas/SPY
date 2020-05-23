@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYCompensationPlanPayroll</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYCompensationPlanPayroll extends common
+{
+}
+
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY447</DeveloperDocumentation>
+	<Label>@SPY445</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>CompensationPlan</TitleField1>
+	<TitleField2>Payroll</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>PlanPayroll_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationPlan</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Payroll</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationPlan</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Payroll</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>EffectiveDate</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AmountMax</Name>
+			<Label>@SYS134341</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>MonthlyMax</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AmountMid</Name>
+			<Label>@SPY547</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>MonthlyMid</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AmountMin</Name>
+			<Label>@SYS23897</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>MonthlyMin</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Currency</Name>
+			<Label>@SYS333999</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Currency</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Currency</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Sequence</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>EffectiveDate</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>PayrollPeriod</Name>
+			<Label>@SPY24</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>AnnualMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS117193</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>AnnualMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS117193</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>AnnualMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS117193</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>BiWeeklyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY97</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>BiWeeklyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY97</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>BiWeeklyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY97</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>CompensationPlan</Name>
+			<ExtendedDataType>SPYCompensationPlanRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Currency</Name>
+			<ExtendedDataType>SPYCurrencyCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>DailyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS13656</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>DailyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS13656</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>DailyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS13656</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>HourlyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS24619</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>HourlyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS24619</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>HourlyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS24619</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>MonthlyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>MonthlyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>MonthlyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Payroll</Name>
+			<ExtendedDataType>SPYPayElementRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollPeriod</Name>
+			<ExtendedDataType>SPYPayrollPeriodRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QuarterlyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67527</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QuarterlyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67527</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QuarterlyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67527</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>SemiAnnualMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY98</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>SemiAnnualMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY98</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>SemiAnnualMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY98</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>WeeklyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS92558</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>WeeklyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS92558</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>WeeklyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS92558</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>EffectiveDate</Name>
+			<ExtendedDataType>DateInterval</ExtendedDataType>
+			<Label>@SPY:EffectiveDate</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>Sequence</Name>
+			<ExtendedDataType>DocumentLineNumber</ExtendedDataType>
+			<Label>@SYS499</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>PlanPayroll_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>CompensationPlan</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Payroll</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>EffectiveDate</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+		<AxTableIndex>
+			<Name>PlanPayroll_View</Name>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>CompensationPlan</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Payroll</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Sequence</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation>
+			<Name>Currency</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>Currency</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Currency</Name>
+					<SourceEDT>SPYCurrencyCode</SourceEDT>
+					<Field>Currency</Field>
+					<RelatedField>CurrencyCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYCompensationPlanTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYCompensationPlanTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>CompensationPlan</Name>
+					<Field>CompensationPlan</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollPeriod</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPayrollPeriod</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollPeriod</Name>
+					<Field>PayrollPeriod</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYPayrollTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPayrollTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Payroll</Name>
+					<Field>Payroll</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>LedgerPeriodCode</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>LedgerPeriodCode</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>EffectiveDate</Name>
+					<Field>EffectiveDate</Field>
+					<RelatedField>Code</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

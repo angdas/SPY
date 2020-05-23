@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYUpdateLogTest</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYUpdateLogTest
+{        
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Runs the class with the specified arguments.
+    /// </summary>
+    /// <param name = "_args">The specified arguments.</param>
+    public static void main(Args _args)
+    {        
+        HcmWorker       worker;
+        SPYAbsenceLedger        absenceLedger;
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        ProjPeriodEmpl      projPeriodEmpl;
+        ResourceWorkerView          resourceWorkerView;
+        ProjValEmplProjSetup    projValEmplProjSetup;
+        SPYDocumentRequestAddress   documentRequestAddress;
+        SPYDocumentRequestType      documentRequestType;
+        HRMAbsenceCode      absenceCode;
+        ttsbegin;
+        /*
+        while select forupdate worker 
+            where worker.PersonnelNumber == 'E001'
+        {
+            worker.update();
+        }
+        while select forupdate absenceLedger
+            join worker
+            where worker.RecId == absenceLedger.Worker &&
+            worker.PersonnelNumber == 'E001'
+        {
+            absenceLedger.update();
+        }
+        while select forupdate leaveApplicationTable
+            join worker
+            where worker.RecId == leaveApplicationTable.Worker &&
+            worker.PersonnelNumber == 'E001'
+        {
+            leaveApplicationTable.update();
+        }
+        while select forupdate projPeriodEmpl
+           join resourceWorkerView
+            where projPeriodEmpl.Resource == resourceWorkerView.RecId
+            join worker
+            where worker.RecId == resourceWorkerView.Worker &&
+            worker.PersonnelNumber == 'E001'
+        {
+            projPeriodEmpl.update();
+        }
+        while select forupdate projValEmplProjSetup
+           join resourceWorkerView
+            where projValEmplProjSetup.Resource == resourceWorkerView.RecId
+            join worker
+            where worker.RecId == resourceWorkerView.Worker &&
+            worker.PersonnelNumber == 'E001'
+        {
+            projValEmplProjSetup.update();
+        }*/
+        /*
+        while select documentRequestAddress
+        {
+            documentRequestAddress.update();
+        }
+        while select documentRequestType
+        {
+            documentRequestType.update();
+        }
+        */
+        while select absenceCode
+        {
+            absenceCode.update();
+        }
+        ttscommit;
+
+        info("Done");
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

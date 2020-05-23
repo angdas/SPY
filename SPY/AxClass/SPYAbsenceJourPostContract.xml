@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceJourPostContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYAbsenceJourPostContract
+{
+    container                   absenceJourTableQuery;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAbsenceJourTableQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmAbsenceJourTableQuery(container _absenceJourTableQuery = absenceJourTableQuery)
+    {
+        absenceJourTableQuery = _absenceJourTableQuery;
+        return absenceJourTableQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

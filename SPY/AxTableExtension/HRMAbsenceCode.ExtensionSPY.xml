@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTableExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>HRMAbsenceCode.ExtensionSPY</Name>
+	<FieldGroupExtensions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>SPY</Name>
+			<Label>@SPY246</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYBenefit</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYIsUnpaid</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYBalanceValidation</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYLeaveAccrualBasis</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYLeaveBalanceExpression</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<FieldModifications />
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>SPYBalanceValidation</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<HelpText>@SPY920</HelpText>
+			<Label>@SPY919</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYBenefit</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYPayElementRecId</ExtendedDataType>
+			<HelpText>@SPY540</HelpText>
+			<Label>@SPY46</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>SPYIsUnpaid</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<HelpText>@SPY922</HelpText>
+			<Label>@SPY921</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>SPYLeaveAccrualBasis</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<EnumType>SPYLeaveAccrualBasis</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYLeaveBalanceExpression</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYExpressionRecId</ExtendedDataType>
+			<Label>@SPY:LeaveBalanceExpression</Label>
+		</AxTableField>
+	</Fields>
+	<Indexes />
+	<Mappings />
+	<PropertyModifications />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYBenefitTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYBenefitTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYBenefit</Name>
+					<Field>SPYBenefit</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYExpressionTable</Name>
+			<RelatedTable>SPYExpressionTable</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYLeaveBalanceExpression</Name>
+					<Field>SPYLeaveBalanceExpression</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+</AxTableExtension>

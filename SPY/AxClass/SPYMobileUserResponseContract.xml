@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYMobileUserResponseContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYMobileUserResponseContract
+{
+    boolean                     authenticated;
+    SPYWorkerContract           workerContract;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAuthenticated</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Authenticated")]
+    public boolean parmAuthenticated(boolean _authenticated = authenticated)
+    {
+        authenticated = _authenticated;
+    
+        return authenticated;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorker</Name>
+				<Source><![CDATA[
+    [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYWorkerContract)),
+    DataMemberAttribute("Worker")]
+    public SPYWorkerContract parmWorker(SPYWorkerContract _workerContract = workerContract)
+    {
+        workerContract = _workerContract;
+    
+        return workerContract;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

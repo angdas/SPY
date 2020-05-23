@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollEarnJourResubmitAction</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayrollEarnJourResubmitAction
+{
+    SPYPayrollEarningsJournalTable  payrollEarningsJournalTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>actionDialog</Name>
+				<Source><![CDATA[
+    protected boolean actionDialog(WorkflowWorkItemActionDialog _workflowWorkItemActionDialog)
+    {
+        _workflowWorkItemActionDialog.run();
+        return _workflowWorkItemActionDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>activatingFromWeb</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Indicates whether the workflow action is performed from EP.
+    /// </summary>
+    /// <returns>
+    /// true if the workflow action is performed from EP; otherwise, false.
+    /// </returns>
+    protected boolean activatingFromWeb()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollEarningsJournalTable</Name>
+				<Source><![CDATA[
+    private SPYPayrollEarningsJournalTable parmPayrollEarningsJournalTable(SPYPayrollEarningsJournalTable _payrollEarningsJournalTable = payrollEarningsJournalTable)
+    {
+        payrollEarningsJournalTable = _payrollEarningsJournalTable;
+    
+        return payrollEarningsJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>resubmit</Name>
+				<Source><![CDATA[
+    private void resubmit(Args _args)
+    {
+        WorkflowWorkItemActionDialog    workflowWorkItemActionDialog;
+        WorkflowWorkItemTable           workItem = _args.caller().getActiveWorkflowWorkItem();
+        Object                          formRun;
+    
+        if (!this.activatingFromWeb())
+        {
+            workflowWorkItemActionDialog = WorkflowWorkItemActionDialog::construct( workItem,
+                                                                                    WorkflowWorkItemActionType::Resubmit,
+                                                                                    new MenuFunction(_args.menuItemName(), _args.menuItemType()));
+            if (this.actionDialog(workflowWorkItemActionDialog))
+            {
+                WorkflowWorkItemActionManager::dispatchWorkItemAction(workItem,
+                                                                      workflowWorkItemActionDialog.parmWorkflowComment(),
+                                                                      workflowWorkItemActionDialog.parmTargetUser(),
+                                                                      WorkflowWorkItemActionType::Resubmit,
+                                                                      _args.menuItemName());
+                SPYPayrollEarningsJournalTable::updateWorkflowStatus(payrollEarningsJournalTable.RecId,SPYWorkflowStatus::Submitted);
+            }
+    
+            formRun = _args.caller();
+            formRun.refreshDataSource();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayrollEarnJourResubmitAction    payrollEarnJourResubmit = new SPYPayrollEarnJourResubmitAction();
+        SPYPayrollEarningsJournalTable      payrollEarningsJournalTable = args.record();
+    
+        payrollEarnJourResubmit.parmPayrollEarningsJournalTable(payrollEarningsJournalTable);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYPayrollEarningsJournalResubmit))
+            payrollEarnJourResubmit.resubmit(args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

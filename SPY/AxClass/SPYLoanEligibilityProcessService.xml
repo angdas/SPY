@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLoanEligibilityProcessService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLoanEligibilityProcessService extends SysOperationServiceBase implements SPYIObservable
+{
+    SPYPayLoanTable         payLoanTable;
+    SPYPayLoanLine          payLoanLine;
+    HcmWorker      worker;
+    LegalEntityRecId        legalEntity;
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+    SPYPayrollPeriodLine            payrollPeriodLineTab;
+    TransDate       transDate;
+    TransDate                       periodStart;
+    TransDate                       periodEnd;
+    TransDate                       calcStart;
+    TransDate                       calcEnd;
+    TransDate                       timesheetStart;
+    TransDate                       timesheetEnd;
+    CalendarId                      workerCalendarId;
+    HcmEmployment                   hcmEmployment;
+    HcmEmploymentDetail             hcmEmploymentDetail;
+    SPYLoanTypeTable            loanTypeTable;
+    date                            employmentStartDate,employmentEndDate;
+
+    SPYExpressionEvaluationMap      expressionEvaluationMap;
+    SPYExpressionContextTmp         expressionContextTmp;
+    SPYExpressionContext            expressionContext;    
+
+    Array                           observers;
+    SPYObserver                     tracer;
+    SPYExpressionEvaluationEngine   expressionEvaluationEngine;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(SPYPayLoanLine _payLoanLine)
+    {
+        payLoanLine = _payLoanLine;
+        payLoanTable = payLoanLine.payLoanTable();
+        worker = HcmWorker::find(payLoanTable.Worker);
+        legalEntity = CompanyInfo::current();
+        payrollPeriodLine = payLoanLine.PayrollPeriodlLine;
+        payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+        transDate = payLoanLine.TransDate;
+        periodStart = payrollPeriodLineTab.PeriodStartDate;
+        periodEnd = payrollPeriodLineTab.PeriodEndDate;
+        calcStart = payrollPeriodLineTab.PeriodStartDate;
+        calcEnd = payrollPeriodLineTab.PeriodEndDate;
+        timesheetStart = SPYPayrollPeriodLine::findPrevPeriodLine(payrollPeriodLine).PayrollDate + 1;
+        timesheetEnd = payrollPeriodLineTab.PayrollDate;
+        loanTypeTable = SPYLoanTypeTable::find(payLoanLine.LoanType);
+
+        this.initialize();
+        this.addObserver(tracer,1);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initialize</Name>
+				<Source><![CDATA[
+    private void initialize()
+    {        
+        expressionEvaluationMap     = new SPYExpressionEvaluationMap();        
+        expressionContext           = new SPYExpressionContext();
+        observers                   = new Array(Types::Class);
+        tracer                      = new SPYObserver();
+        expressionEvaluationEngine  = new SPYExpressionEvaluationEngine(SPYProcess::PayProcess);
+        this.refreshExpressionContextTmp();
+        SPYObjectCache::flushAllUserCache();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshContext</Name>
+				<Source><![CDATA[
+    private void refreshContext()
+    {
+        expressionContext.worker(worker.RecId);
+        expressionContext.legalEntity(legalEntity);
+        expressionContext.payrollPeriodLine(payrollPeriodLine);
+        expressionContext.transDate(transDate);
+        expressionContext.calcFromDate(calcStart);
+        expressionContext.calcToDate(calcEnd);
+        expressionContext.timesheetFromDate(timesheetStart);
+        expressionContext.timesheetToDate(timesheetEnd);
+        expressionContext.workerCalendarId(workerCalendarId);
+        expressionContext.periodFromDate(periodStart);
+        expressionContext.periodToDate(periodEnd);
+        expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn(conNull());
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshExpressionContextTmp</Name>
+				<Source><![CDATA[
+    private void refreshExpressionContextTmp()
+    {
+        SPYExpressionContextInitialize      contextInitialize = new SPYExpressionContextInitialize();
+        Map                                 contextMap;
+        MapEnumerator                       contextMapEnumerator;
+        container                           contextAttribute;
+    
+        contextMap = contextInitialize.getContext();
+        contextMapEnumerator = contextMap.getEnumerator();
+    
+        delete_from expressionContextTmp;
+        while(contextMapEnumerator.moveNext())
+        {
+            contextAttribute = contextMapEnumerator.currentValue();
+            container  contextModules = conPeek(contextAttribute,4);
+            if(conFind(contextModules, SPYExpressionContextModule::All) || contextModules == conNull() || conFind(contextModules, SPYExpressionContextModule::HumanResource))
+            {
+                expressionContextTmp.Name   = contextMapEnumerator.currentKey();
+                expressionContextTmp.Type   = conPeek(contextAttribute,1);
+                expressionContextTmp.Label  = conPeek(contextAttribute,2);
+                expressionContextTmp.DisplayOrder   = conPeek(contextAttribute,3);
+                expressionContextTmp.ContextModules = conPeek(contextAttribute,4);
+                //expressionContextTmp.EventHandlerContext_old    = conPeek(contextAttribute,4);
+                expressionContextTmp.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>loanExpression</Name>
+				<Source><![CDATA[
+    private SPYAmount loanExpression(SPYExpressionRecId _expression)
+    {
+        SPYExpressionCondition          expressionCondition;
+        SPYAmount                       expressionValue;
+    
+        expressionEvaluationEngine.addObserver(tracer,1);
+        this.refreshContext();
+        while select RecId from expressionCondition
+            where expressionCondition.Expression == _expression
+        {
+            if(expressionEvaluationEngine.validateCondition(expressionCondition.RecId,legalEntity,worker.RecId))
+            {
+                expressionEvaluationEngine.parmExpressionContext(expressionContext);
+                expressionValue += expressionEvaluationEngine.evaluateExpression(expressionCondition.RecId);
+            }
+        }
+    
+        return expressionValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>loanAmountFromExpression</Name>
+				<Source><![CDATA[
+    public  SPYAmount  loanAmountFromExpression()
+    {
+        SPYAmount   ret;
+
+        this.notifyObserver("@SYS80745",worker.name(),3);
+        this.notifyObserver("@SPY:ExpressionAmount","",4,1);
+        ret = loanTypeTable.EligibilityRule ? this.loanExpression(loanTypeTable.EligibilityRule) : payLoanLine.Amount;
+        this.notifyObserver(strFmt("@SPY:EligibleLoanAmount",ret),"",5,2);
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>notifyObserver</Name>
+				<Source><![CDATA[
+    public void notifyObserver(str      _propertyName,
+                               str      _propertyValue,
+                               int      _heading = 0,
+                               int      _space = 0)
+    {
+        SPYIObserver    localObserver;
+        int             ctr;
+    
+        for (Ctr = 1; Ctr <= observers.lastIndex(); Ctr++ )
+        {
+            localObserver = observers.value(Ctr);
+            localObserver.changed(this, _propertyName, _propertyValue,_heading,_space);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>addObserver</Name>
+				<Source><![CDATA[
+    public void addObserver(SPYIObserver    _iObserver,
+                            int             _key)
+    {
+        observers.value(_key, _iObserver);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>removeObserver</Name>
+				<Source><![CDATA[
+    public void removeObserver(int _key)
+    {
+        observers.value(_key, null);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerEmployment</Name>
+				<Source><![CDATA[
+    private void setWorkerEmployment()
+    {
+        StartDateTime   startDateTime = DateTimeUtil::newDateTime(periodStart,00-00);
+        EndDateTime     endDateTime = DateTimeUtil::newDateTime(periodEnd,00-00);
+    
+        hcmEmployment       = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,startDateTime,endDateTime);
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,startDateTime,endDateTime);
+        if(!hcmEmployment)
+        {
+            startDateTime = DateTimeUtil::minValue();
+            endDateTime = DateTimeUtil::maxValue();
+            hcmEmployment   = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,startDateTime,endDateTime);
+            hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,startDateTime,endDateTime);
+        }
+        employmentStartDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidFrom,DateTimeUtil::getCompanyTimeZone()));
+        employmentEndDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidTo,DateTimeUtil::getCompanyTimeZone()));
+        this.setWorkerCalendarId(hcmEmployment);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerCalendarId</Name>
+				<Source><![CDATA[
+    private void setWorkerCalendarId(HcmEmployment _hcmEmployment)
+    {
+        WorkCalendarEmployment      workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(_hcmEmployment.RecId);
+    
+        workerCalendarId = workCalendarEmployment.CalendarId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getExpressionTrace</Name>
+				<Source><![CDATA[
+    public SPYExpressionTraceRecId getExpressionTrace()
+    {
+        SPYIObserver                localObserver;
+        int                         ctr;
+        SPYExpressionTraceRecId     expressionTrace;
+    
+        for (Ctr = 1; Ctr <= observers.lastIndex(); Ctr++ )
+        {
+            localObserver = observers.value(Ctr);
+            expressionTrace = localObserver.getExpressionTrace();
+        }
+
+        return expressionTrace;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

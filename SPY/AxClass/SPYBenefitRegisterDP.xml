@@ -1,0 +1,724 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitRegisterDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYBenefitRegisterContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerLookup))
+]
+public class SPYBenefitRegisterDP extends SrsReportDataProviderPreProcess
+{
+    SPYHeaderFooterTmp              headerFooterTmp;
+    SPYBenefitRegisterTmp           benefitRegisterTmp;
+
+    HcmWorker                       hcmWorker;
+    SPYWorkerPositionPayroll        workerPositionPayroll;
+    SPYBenefitLedger                benefitLedger;
+
+    SPYPayrollPeriodLineRecId       payrollPeriodLineRecId;
+    SPYPayrollPeriodLine            payrollPeriodLine, payrollPeriodFrom, payrollPeriodTo;
+    CompanyInfo                     companyInfo;
+
+    Array                           DimArray;
+    DefaultDimensionView            dimensionView;
+
+    SPYPayrollPeriodLineRecId       payrollPeriodLineFrom, payrollPeriodLineTo;
+    SPYPayElementRecId              benefitCode;
+    SPYBenefitTypeRecId             benefitType;
+
+    HcmEmploymentDetail             hcmEmploymentDetail;
+
+    #define.Opening("Opening")
+    #define.Accrued("Accrued")
+    #define.Availed("Availed")
+    #define.Adjustment("Adjustment")
+    #define.Entitled("Entitled")
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>financialDimensions</Name>
+				<Source><![CDATA[
+    public void financialDimensions()
+    {
+        DimensionAttribute              dimAttr;
+        DimensionAttributeSetItem       dimAttrSetItem;
+        DimensionAttributeSetItem       dimAttrSetItemEditable;
+        DimensionEnumeration            dimensionSetId;
+        int                             dimCount;
+    
+        dimensionSetId = DimensionCache::getDimensionAttributeSetForLedger();
+    
+        while select dimAttr
+            order by Name
+                where dimAttr.Type != DimensionAttributeType::MainAccount
+            join RecId from dimAttrSetItem
+                where dimAttrSetItem.DimensionAttribute == dimAttr.RecId &&
+                    dimAttrSetItem.DimensionAttributeSet == dimensionSetId
+        {
+            dimCount++;
+            DimArray.value(dimCount, dimAttr.Name);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYBenefitRegisterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYBenefitRegisterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYBenefitRegisterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYBenefitRegisterTmp))]
+    public SPYBenefitRegisterTmp getSPYBenefitRegisterTmp()
+    {
+        select benefitRegisterTmp;
+        return benefitRegisterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYHeaderFooterTmp))]
+    public SPYHeaderFooterTmp getSPYHeaderFooterTmp()
+    {
+        select headerFooterTmp;
+        return headerFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoBenefitRegisterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoBenefitRegisterTmp()
+    {
+        SPYPayElementTable      payElementTable;
+        HcmWorker               hcmWorkerLoc;
+        SPYBenefitLedger        benefitLedgerLoc;
+        SPYPayrollPeriodLine    payrollPeriodLineLoc;
+        boolean                 recordExists = false;
+        SPYPayElementCode                   benCode;
+        RecordInsertList        benefitRegisterTmpList;
+    
+        benefitRegisterTmpList  = new RecordInsertList(tableNum(SPYBenefitRegisterTmp));
+
+        hcmWorkerLoc = HcmWorker::find(hcmWorker.RecId);
+        benefitRegisterTmp.clear();
+        benefitRegisterTmp.Worker                       = hcmWorkerLoc.RecId;
+        benefitRegisterTmp.WorkerName                   = hcmWorkerLoc.name();
+        benefitRegisterTmp.WorkerPersonnelNumber        = hcmWorkerLoc.PersonnelNumber;
+        benefitRegisterTmp.PeriodCode                   = SPYPayrollPeriod::find(payrollPeriodFrom.PayrollPeriod).PayrollPeriodCode;
+        benefitRegisterTmp.PeriodStartDate              = payrollPeriodFrom.PeriodStartDate;
+        benefitRegisterTmp.PeriodEndDate                = payrollPeriodTo.PeriodEndDate;
+
+        if(benefitCode)
+        {
+            //Opening balance
+            while select Benefit, sum(AccountingCurrencyAmount), sum(TransactionCurrencyAmount), sum(AccountingCurPnLAmount),
+        sum(TransactionCurPnLAmount), sum(Quantity) from benefitLedgerLoc group by Benefit
+        where benefitLedgerLoc.Worker             == hcmWorkerLoc.RecId
+        &&  benefitLedgerLoc.Benefit == benefitCode
+            join payrollPeriodLineLoc
+            where payrollPeriodLineLoc.RecId        == benefitLedgerLoc.PayrollPeriodLine
+            &&   payrollPeriodLineLoc.PeriodEndDate  <  payrollPeriodFrom.PeriodStartDate
+            &&   payrollPeriodLineLoc.PayrollPeriod  == payrollPeriodFrom.PayrollPeriod
+            {
+                recordExists = true;
+
+                if(DimArray.exists(1))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(1);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension1 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(2))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(2);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension2 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(3))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(3);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension3 = dimensionView.dimensionDiscription();
+
+                payElementTable = SPYPayElementTable::find(benefitLedgerLoc.Benefit);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.BenefitDescription           = payElementTable.Description;
+
+                benefitRegisterTmp.TransType                    = #Opening;
+                benefitRegisterTmp.DisplayOrder                 = 1;
+                benefitRegisterTmp.Currency                     = benefitLedgerLoc.Currency;
+                benefitRegisterTmp.TransactionCurrencyAmount    = benefitLedgerLoc.TransactionCurrencyAmount + benefitLedgerLoc.TransactionCurPnLAmount;
+                benefitRegisterTmp.AccountingCurrencyAmount     = benefitLedgerLoc.AccountingCurrencyAmount + benefitLedgerLoc.AccountingCurPnLAmount;
+                benefitRegisterTmp.Quantity                     = benefitLedgerLoc.Quantity;
+                //benefitRegisterTmp.insert();
+                benefitRegisterTmpList.add(benefitRegisterTmp);
+            }
+            if(recordExists)
+                benefitRegisterTmpList.insertDatabase();
+            if(!recordExists)//One record per employeee per benefit is required for every transType(Opening, Accrued, Availed, adjusted, entitled)
+            {
+                payElementTable = SPYPayElementTable::find(benefitCode);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.TransType                    = #Opening;
+                benefitRegisterTmp.DisplayOrder                 = 1;
+                benefitRegisterTmp.Currency                     = HcmEmploymentDetail::findByEmployment(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+                benefitRegisterTmp.TransactionCurrencyAmount    = 0;
+                benefitRegisterTmp.AccountingCurrencyAmount     = 0;
+                benefitRegisterTmp.Quantity                     = 0;
+                benefitRegisterTmp.insert();
+            }
+
+
+            //reset recordExists variable
+            recordExists = false;
+            benefitRegisterTmpList  = new RecordInsertList(tableNum(SPYBenefitRegisterTmp));
+
+            //Accrued
+            while select Benefit, sum(AccountingCurrencyAmount), sum(TransactionCurrencyAmount),sum(TransactionCurPnLAmount), sum(AccountingCurPnLAmount), sum(Quantity) from benefitLedgerLoc
+        group by benefit
+        where benefitLedgerLoc.Worker               == hcmWorkerLoc.RecId
+        &&  benefitLedgerLoc.Benefit                == benefitCode
+        &&  benefitLedgerLoc.JournalType            == SPYBenefitJournalType::Accrual
+        &&  benefitLedgerLoc.BenefitJournalTrans    == 0 //should not be from benefit journal
+        join payrollPeriodLineLoc
+        where payrollPeriodLineLoc.RecId            == benefitLedgerLoc.PayrollPeriodLine
+        &&  payrollPeriodLineLoc.PeriodStartDate    >= payrollPeriodFrom.PeriodStartDate
+        &&  payrollPeriodLineLoc.PeriodEndDate      <= payrollPeriodTo.PeriodEndDate
+        &&  payrollPeriodLineLoc.PayrollPeriod      == payrollPeriodFrom.PayrollPeriod
+            {
+                recordExists = true;
+
+                if(DimArray.exists(1))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(1);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension1 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(2))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(2);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension2 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(3))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(3);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension3 = dimensionView.dimensionDiscription();
+
+                payElementTable = SPYPayElementTable::find(benefitLedgerLoc.Benefit);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.BenefitDescription           = payElementTable.Description;
+
+                benefitRegisterTmp.TransType                    = #Accrued;
+                benefitRegisterTmp.DisplayOrder                 = 2;
+                benefitRegisterTmp.Currency                     = benefitLedgerLoc.Currency;
+                benefitRegisterTmp.TransactionCurrencyAmount    = benefitLedgerLoc.TransactionCurrencyAmount + benefitLedgerLoc.TransactionCurPnLAmount;
+                benefitRegisterTmp.AccountingCurrencyAmount     = benefitLedgerLoc.AccountingCurrencyAmount + benefitLedgerLoc.AccountingCurPnLAmount;
+                benefitRegisterTmp.Quantity                     = benefitLedgerLoc.Quantity;
+                //benefitRegisterTmp.insert();
+                benefitRegisterTmpList.add(benefitRegisterTmp);
+            }
+            if(recordExists)
+                benefitRegisterTmpList.insertDatabase();
+            if(!recordExists)//One record per employeee per benefit is required for every transType(Opening, Accrued, Availed, adjusted, entitled)
+            {
+                payElementTable = SPYPayElementTable::find(benefitCode);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.TransType                    = #Accrued;
+                benefitRegisterTmp.DisplayOrder                 = 2;
+                benefitRegisterTmp.Currency                     = HcmEmploymentDetail::findByEmployment(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+                benefitRegisterTmp.TransactionCurrencyAmount    = 0;
+                benefitRegisterTmp.AccountingCurrencyAmount     = 0;
+                benefitRegisterTmp.Quantity                     = 0;
+                benefitRegisterTmp.insert();
+            }
+
+            //reset recordExists variable
+            recordExists = false;
+            benefitRegisterTmpList  = new RecordInsertList(tableNum(SPYBenefitRegisterTmp));
+
+            //Availed -- negative quantity
+            while select sum(AccountingCurrencyAmount), sum(TransactionCurrencyAmount),sum(TransactionCurPnLAmount), sum(AccountingCurPnLAmount), sum(AccountingCurPnLAmount),
+        sum(TransactionCurPnLAmount), sum(Quantity) from benefitLedgerLoc
+        group by benefit
+        where benefitLedgerLoc.Worker               == hcmWorkerLoc.RecId
+        &&  benefitLedgerLoc.Benefit                == benefitCode
+        &&  benefitLedgerLoc.JournalType            == SPYBenefitJournalType::Encashment
+        &&  benefitLedgerLoc.BenefitJournalTrans    == 0 //should not be from benefit journal
+        join payrollPeriodLineLoc
+        where payrollPeriodLineLoc.RecId            == benefitLedgerLoc.PayrollPeriodLine
+        &&  payrollPeriodLineLoc.PeriodStartDate    >= payrollPeriodFrom.PeriodStartDate
+        &&  payrollPeriodLineLoc.PeriodEndDate      <= payrollPeriodTo.PeriodEndDate
+        &&  payrollPeriodLineLoc.PayrollPeriod      == payrollPeriodFrom.PayrollPeriod
+            {
+                recordExists = true;
+
+                if(DimArray.exists(1))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(1);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension1 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(2))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(2);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension2 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(3))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(3);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension3 = dimensionView.dimensionDiscription();
+
+                payElementTable = SPYPayElementTable::find(benefitLedgerLoc.Benefit);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.BenefitDescription           = payElementTable.Description;
+
+                benefitRegisterTmp.TransType                    = #Availed;
+                benefitRegisterTmp.DisplayOrder                 = 3;
+                benefitRegisterTmp.Currency                     = benefitLedgerLoc.Currency;
+                benefitRegisterTmp.TransactionCurrencyAmount    = benefitLedgerLoc.TransactionCurrencyAmount + benefitLedgerLoc.TransactionCurPnLAmount;
+                benefitRegisterTmp.AccountingCurrencyAmount     = benefitLedgerLoc.AccountingCurrencyAmount + benefitLedgerLoc.AccountingCurPnLAmount;
+                benefitRegisterTmp.Quantity                     = benefitLedgerLoc.Quantity;
+               // benefitRegisterTmp.insert();
+                benefitRegisterTmpList.add(benefitRegisterTmp);
+            }
+            if(recordExists)
+                benefitRegisterTmpList.insertDatabase();
+            if(!recordExists)//One record per employeee per benefit is required for every transType(Opening, Accrued, Availed, adjusted, entitled)
+            {
+                payElementTable = SPYPayElementTable::find(benefitCode);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.TransType                    = #Availed;
+                benefitRegisterTmp.DisplayOrder                 = 3;
+                benefitRegisterTmp.Currency                     = HcmEmploymentDetail::findByEmployment(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+                benefitRegisterTmp.TransactionCurrencyAmount    = 0;
+                benefitRegisterTmp.AccountingCurrencyAmount     = 0;
+                benefitRegisterTmp.Quantity                     = 0;
+                benefitRegisterTmp.insert();
+            }
+
+            //reset recordExists variable
+            recordExists = false;
+            benefitRegisterTmpList  = new RecordInsertList(tableNum(SPYBenefitRegisterTmp));
+
+            //Adjusted
+            while select sum(AccountingCurrencyAmount), sum(TransactionCurrencyAmount),sum(TransactionCurPnLAmount), sum(AccountingCurPnLAmount), sum(Quantity) from benefitLedgerLoc
+        group by benefit
+        where benefitLedgerLoc.Worker               == hcmWorkerLoc.RecId
+        &&  benefitLedgerLoc.Benefit                == benefitCode
+        &&  benefitLedgerLoc.BenefitJournalTrans    != 0 //should be from benefit journal
+        join payrollPeriodLineLoc
+        where payrollPeriodLineLoc.RecId            == benefitLedgerLoc.PayrollPeriodLine
+        &&  payrollPeriodLineLoc.PeriodStartDate    >= payrollPeriodFrom.PeriodStartDate
+        &&  payrollPeriodLineLoc.PeriodEndDate      <= payrollPeriodTo.PeriodEndDate
+        &&  payrollPeriodLineLoc.PayrollPeriod      == payrollPeriodFrom.PayrollPeriod
+            {
+                recordExists = true;
+
+                if(DimArray.exists(1))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(1);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension1 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(2))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(2);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension2 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(3))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(3);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension3 = dimensionView.dimensionDiscription();
+
+                payElementTable = SPYPayElementTable::find(benefitLedgerLoc.Benefit);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.BenefitDescription           = payElementTable.Description;
+
+                benefitRegisterTmp.TransType                    = #Adjustment;
+                benefitRegisterTmp.DisplayOrder                 = 4;
+                benefitRegisterTmp.Currency                     = benefitLedgerLoc.Currency;
+                benefitRegisterTmp.TransactionCurrencyAmount    = benefitLedgerLoc.TransactionCurrencyAmount + benefitLedgerLoc.TransactionCurPnLAmount;
+                benefitRegisterTmp.AccountingCurrencyAmount     = benefitLedgerLoc.AccountingCurrencyAmount + benefitLedgerLoc.AccountingCurPnLAmount;
+                benefitRegisterTmp.Quantity                     = benefitLedgerLoc.Quantity;
+                // benefitRegisterTmp.insert();
+                benefitRegisterTmpList.add(benefitRegisterTmp);
+            }
+            if(recordExists)
+                benefitRegisterTmpList.insertDatabase();
+            if(!recordExists)//One record per employeee per benefit is required for every transType(Opening, Accrued, Availed, adjusted, entitled)
+            {
+                payElementTable = SPYPayElementTable::find(benefitCode);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.TransType                    = #Adjustment;
+                benefitRegisterTmp.DisplayOrder                 = 4;
+                benefitRegisterTmp.Currency                     = HcmEmploymentDetail::findByEmployment(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+                benefitRegisterTmp.TransactionCurrencyAmount    = 0;
+                benefitRegisterTmp.AccountingCurrencyAmount     = 0;
+                benefitRegisterTmp.Quantity                     = 0;
+                benefitRegisterTmp.insert();
+            }
+        }
+        else
+        {
+            while select Benefit, sum(AccountingCurrencyAmount), sum(TransactionCurrencyAmount), sum(AccountingCurPnLAmount),
+        sum(TransactionCurPnLAmount), sum(Quantity) from benefitLedgerLoc group by Benefit
+        where benefitLedgerLoc.Worker             == hcmWorkerLoc.RecId
+        join payrollPeriodLineLoc
+        where payrollPeriodLineLoc.RecId        == benefitLedgerLoc.PayrollPeriodLine
+        &&   payrollPeriodLineLoc.PeriodEndDate  <  payrollPeriodFrom.PeriodStartDate
+        &&   payrollPeriodLineLoc.PayrollPeriod  == payrollPeriodFrom.PayrollPeriod
+            {
+                recordExists = true;
+
+                if(DimArray.exists(1))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(1);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension1 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(2))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(2);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension2 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(3))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(3);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension3 = dimensionView.dimensionDiscription();
+
+                payElementTable = SPYPayElementTable::find(benefitLedgerLoc.Benefit);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.BenefitDescription           = payElementTable.Description;
+
+                benefitRegisterTmp.TransType                    = #Opening;
+                benefitRegisterTmp.DisplayOrder                 = 1;
+                benefitRegisterTmp.Currency                     = benefitLedgerLoc.Currency;
+                benefitRegisterTmp.TransactionCurrencyAmount    = benefitLedgerLoc.TransactionCurrencyAmount + benefitLedgerLoc.TransactionCurPnLAmount;
+                benefitRegisterTmp.AccountingCurrencyAmount     = benefitLedgerLoc.AccountingCurrencyAmount + benefitLedgerLoc.AccountingCurPnLAmount;
+                benefitRegisterTmp.Quantity                     = benefitLedgerLoc.Quantity;
+                // benefitRegisterTmp.insert();
+                benefitRegisterTmpList.add(benefitRegisterTmp);
+            }
+            if(recordExists)
+                benefitRegisterTmpList.insertDatabase();
+            if(!recordExists)//One record per employeee per benefit is required for every transType(Opening, Accrued, Availed, adjusted, entitled)
+            {
+                benefitRegisterTmp.TransType                    = #Opening;
+                benefitRegisterTmp.DisplayOrder                 = 1;
+                benefitRegisterTmp.Currency                     = HcmEmploymentDetail::findByEmployment(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+                benefitRegisterTmp.TransactionCurrencyAmount    = 0;
+                benefitRegisterTmp.AccountingCurrencyAmount     = 0;
+                benefitRegisterTmp.Quantity                     = 0;
+                benefitRegisterTmp.insert();
+            }
+
+
+            //reset recordExists variable
+            recordExists = false;
+            benefitRegisterTmpList  = new RecordInsertList(tableNum(SPYBenefitRegisterTmp));
+
+            //Accrued
+            while select Benefit, sum(AccountingCurrencyAmount), sum(TransactionCurrencyAmount),sum(TransactionCurPnLAmount), sum(AccountingCurPnLAmount), sum(Quantity) from benefitLedgerLoc
+        group by benefit
+        where benefitLedgerLoc.Worker               == hcmWorkerLoc.RecId
+        &&  benefitLedgerLoc.JournalType            == SPYBenefitJournalType::Accrual
+        &&  benefitLedgerLoc.BenefitJournalTrans    == 0 //should not be from benefit journal
+        join payrollPeriodLineLoc
+        where payrollPeriodLineLoc.RecId            == benefitLedgerLoc.PayrollPeriodLine
+        &&  payrollPeriodLineLoc.PeriodStartDate    >= payrollPeriodFrom.PeriodStartDate
+        &&  payrollPeriodLineLoc.PeriodEndDate      <= payrollPeriodTo.PeriodEndDate
+        &&  payrollPeriodLineLoc.PayrollPeriod      == payrollPeriodFrom.PayrollPeriod
+            {
+                recordExists = true;
+
+                if(DimArray.exists(1))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(1);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension1 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(2))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(2);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension2 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(3))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(3);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension3 = dimensionView.dimensionDiscription();
+
+                payElementTable = SPYPayElementTable::find(benefitLedgerLoc.Benefit);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.BenefitDescription           = payElementTable.Description;
+
+                benefitRegisterTmp.TransType                    = #Accrued;
+                benefitRegisterTmp.DisplayOrder                 = 2;
+                benefitRegisterTmp.Currency                     = benefitLedgerLoc.Currency;
+                benefitRegisterTmp.TransactionCurrencyAmount    = benefitLedgerLoc.TransactionCurrencyAmount + benefitLedgerLoc.TransactionCurPnLAmount;
+                benefitRegisterTmp.AccountingCurrencyAmount     = benefitLedgerLoc.AccountingCurrencyAmount + benefitLedgerLoc.AccountingCurPnLAmount;
+                benefitRegisterTmp.Quantity                     = benefitLedgerLoc.Quantity;
+                // benefitRegisterTmp.insert();
+                benefitRegisterTmpList.add(benefitRegisterTmp);
+            }
+            if(recordExists)
+                benefitRegisterTmpList.insertDatabase();
+            if(!recordExists)//One record per employeee per benefit is required for every transType(Opening, Accrued, Availed, adjusted, entitled)
+            {
+
+                benefitRegisterTmp.TransType                    = #Accrued;
+                benefitRegisterTmp.DisplayOrder                 = 2;
+                benefitRegisterTmp.Currency                     = HcmEmploymentDetail::findByEmployment(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+                benefitRegisterTmp.TransactionCurrencyAmount    = 0;
+                benefitRegisterTmp.AccountingCurrencyAmount     = 0;
+                benefitRegisterTmp.Quantity                     = 0;
+                benefitRegisterTmp.insert();
+            }
+
+            //reset recordExists variable
+            recordExists = false;
+            benefitRegisterTmpList  = new RecordInsertList(tableNum(SPYBenefitRegisterTmp));
+
+            //Availed -- negative quantity
+            while select sum(AccountingCurrencyAmount), sum(TransactionCurrencyAmount), sum(AccountingCurPnLAmount),
+        sum(TransactionCurPnLAmount), sum(Quantity) from benefitLedgerLoc
+        group by benefit
+        where benefitLedgerLoc.Worker               == hcmWorkerLoc.RecId
+        &&  benefitLedgerLoc.JournalType            == SPYBenefitJournalType::Encashment
+        &&  benefitLedgerLoc.BenefitJournalTrans    == 0 //should not be from benefit journal
+        join payrollPeriodLineLoc
+        where payrollPeriodLineLoc.RecId            == benefitLedgerLoc.PayrollPeriodLine
+        &&  payrollPeriodLineLoc.PeriodStartDate    >= payrollPeriodFrom.PeriodStartDate
+        &&  payrollPeriodLineLoc.PeriodEndDate      <= payrollPeriodTo.PeriodEndDate
+        &&  payrollPeriodLineLoc.PayrollPeriod      == payrollPeriodFrom.PayrollPeriod
+            {
+                recordExists = true;
+
+                if(DimArray.exists(1))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(1);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension1 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(2))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(2);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension2 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(3))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(3);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension3 = dimensionView.dimensionDiscription();
+
+                payElementTable = SPYPayElementTable::find(benefitLedgerLoc.Benefit);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.BenefitDescription           = payElementTable.Description;
+
+                benefitRegisterTmp.TransType                    = #Availed;
+                benefitRegisterTmp.DisplayOrder                 = 3;
+                benefitRegisterTmp.Currency                     = benefitLedgerLoc.Currency;
+                benefitRegisterTmp.TransactionCurrencyAmount    = benefitLedgerLoc.TransactionCurrencyAmount + benefitLedgerLoc.TransactionCurPnLAmount;
+                benefitRegisterTmp.AccountingCurrencyAmount     = benefitLedgerLoc.AccountingCurrencyAmount + benefitLedgerLoc.AccountingCurPnLAmount;
+                benefitRegisterTmp.Quantity                     = benefitLedgerLoc.Quantity;
+                // benefitRegisterTmp.insert();
+                benefitRegisterTmpList.add(benefitRegisterTmp);
+            }
+            if(recordExists)
+                benefitRegisterTmpList.insertDatabase();
+            if(!recordExists)//One record per employeee per benefit is required for every transType(Opening, Accrued, Availed, adjusted, entitled)
+            {
+                benefitRegisterTmp.TransType                    = #Availed;
+                benefitRegisterTmp.DisplayOrder                 = 3;
+                benefitRegisterTmp.Currency                     = HcmEmploymentDetail::findByEmployment(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+                benefitRegisterTmp.TransactionCurrencyAmount    = 0;
+                benefitRegisterTmp.AccountingCurrencyAmount     = 0;
+                benefitRegisterTmp.Quantity                     = 0;
+                benefitRegisterTmp.insert();
+            }
+
+            //reset recordExists variable
+            recordExists = false;
+            benefitRegisterTmpList  = new RecordInsertList(tableNum(SPYBenefitRegisterTmp));
+
+            //Adjusted
+            while select sum(AccountingCurrencyAmount), sum(TransactionCurrencyAmount),sum(TransactionCurPnLAmount), sum(AccountingCurPnLAmount), sum(Quantity) from benefitLedgerLoc
+        group by benefit
+        where benefitLedgerLoc.Worker               == hcmWorkerLoc.RecId
+        &&  benefitLedgerLoc.BenefitJournalTrans    != 0 //should be from benefit journal
+        join payrollPeriodLineLoc
+        where payrollPeriodLineLoc.RecId            == benefitLedgerLoc.PayrollPeriodLine
+        &&  payrollPeriodLineLoc.PeriodStartDate    >= payrollPeriodFrom.PeriodStartDate
+        &&  payrollPeriodLineLoc.PeriodEndDate      <= payrollPeriodTo.PeriodEndDate
+        &&  payrollPeriodLineLoc.PayrollPeriod      == payrollPeriodFrom.PayrollPeriod
+            {
+                recordExists = true;
+
+                if(DimArray.exists(1))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(1);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension1 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(2))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(2);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension2 = dimensionView.dimensionDiscription();
+                if(DimArray.exists(3))
+                    select dimensionView where dimensionView.DefaultDimension == benefitLedgerLoc.DefaultDimension && dimensionView.Name == DimArray.value(3);
+                if(dimensionView)
+            benefitRegisterTmp.FinDimension3 = dimensionView.dimensionDiscription();
+
+                payElementTable = SPYPayElementTable::find(benefitLedgerLoc.Benefit);
+                benefitRegisterTmp.BenefitCode                  = payElementTable.PayElementCode;
+                benefitRegisterTmp.BenefitDescription           = payElementTable.Description;
+
+                benefitRegisterTmp.TransType                    = #Adjustment;
+                benefitRegisterTmp.DisplayOrder                 = 4;
+                benefitRegisterTmp.Currency                     = benefitLedgerLoc.Currency;
+                benefitRegisterTmp.TransactionCurrencyAmount    = benefitLedgerLoc.TransactionCurrencyAmount + benefitLedgerLoc.TransactionCurPnLAmount;
+                benefitRegisterTmp.AccountingCurrencyAmount     = benefitLedgerLoc.AccountingCurrencyAmount + benefitLedgerLoc.AccountingCurPnLAmount;
+                benefitRegisterTmp.Quantity                     = benefitLedgerLoc.Quantity;
+                // benefitRegisterTmp.insert();
+                benefitRegisterTmpList.add(benefitRegisterTmp);
+            }
+            if(recordExists)
+                benefitRegisterTmpList.insertDatabase();
+            if(!recordExists)//One record per employeee per benefit is required for every transType(Opening, Accrued, Availed, adjusted, entitled)
+            {
+                benefitRegisterTmp.TransType                    = #Adjustment;
+                benefitRegisterTmp.DisplayOrder                 = 4;
+                benefitRegisterTmp.Currency                     = HcmEmploymentDetail::findByEmployment(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+                benefitRegisterTmp.TransactionCurrencyAmount    = 0;
+                benefitRegisterTmp.AccountingCurrencyAmount     = 0;
+                benefitRegisterTmp.Quantity                     = 0;
+                benefitRegisterTmp.insert();
+            }
+        
+            select benefitRegisterTmp
+            where benefitRegisterTmp.BenefitCode !="" && benefitRegisterTmp.WorkerPersonnelNumber == hcmWorkerLoc.PersonnelNumber;
+        
+            benCode = benefitRegisterTmp.BenefitCode;
+        
+            while select forupdate benefitRegisterTmp
+            where benefitRegisterTmp.BenefitCode == "" && benefitRegisterTmp.WorkerPersonnelNumber == hcmWorkerLoc.PersonnelNumber
+            {
+                ttsBegin;
+                benefitRegisterTmp.BenefitCode = benCode;
+                benefitRegisterTmp.update();
+                ttsCommit;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYHeaderFooterTmp()
+    {
+        headerFooterTmp.clear();
+        headerFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        headerFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        headerFooterTmp.CompanyName      = companyInfo.Name();
+        headerFooterTmp.CompanyEmail     = companyInfo.email();
+        headerFooterTmp.CompanyPhone     = companyInfo.phone();
+        headerFooterTmp.CompanyURL       = companyInfo.url();
+        headerFooterTmp.PeriodCode       = SPYPayrollPeriod::find(payrollPeriodFrom.PayrollPeriod).PayrollPeriodCode;
+        headerFooterTmp.PeriodStartDate  = payrollPeriodFrom.PeriodStartDate;
+        headerFooterTmp.PeriodEndDate    = payrollPeriodTo.PeriodEndDate;
+        headerFooterTmp.CompanyCurrency  = HcmEmploymentDetail::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::find().RecId).SPYDefaultPayrollCurrency; //Ledger::accountingCurrency();
+        if(DimArray.exists(1))
+            headerFooterTmp.FinDim1          = DimArray.value(1);
+        if(DimArray.exists(2))
+            headerFooterTmp.FinDim2          = DimArray.value(2);
+        if(DimArray.exists(3))
+            headerFooterTmp.FinDim3          = DimArray.value(3);
+        headerFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertRemainingPayElements</Name>
+				<Source><![CDATA[
+    public void insertRemainingPayElements(HcmWorkerRecId _worker)
+    {
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYBenefitRegisterContract  contract = this.parmDataContract() as SPYBenefitRegisterContract;
+        Query                       q;
+        QueryRun                    qr;
+        QueryBuildDataSource        qbdHcmWorker, qbdHcmEmployment, qbdBenefitLedger, qbdPayrollPeriodLine;
+        HcmWorkerRecId              curWorker;
+
+        DimArray = new Array(Types::String);
+
+        this.setTableConnections();
+
+        payrollPeriodLineFrom   = contract.parmPayrollPeriodLineFrom();
+        payrollPeriodLineTo     = contract.parmPayrollPeriodLineTo();
+        benefitCode             = contract.parmBenefitCode();
+        benefitType             = contract.parmBenefitType();
+
+        companyInfo             = CompanyInfo::find();
+        payrollPeriodFrom       = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        payrollPeriodTo         = SPYPayrollPeriodLine::find(payrollPeriodLineTo);
+
+        this.financialDimensions();
+
+        this.insertIntoSPYHeaderFooterTmp();
+
+        q = this.parmQuery();
+        qbdHcmWorker = q.dataSourceTable(tableNum(HcmWorker));
+        qbdHcmWorker.addGroupByField(fieldNum(hcmWorker, RecId));
+        q.dataSourceTable(tableNum(DirPerson)).addGroupByField(fieldNum(DirPerson, Name));
+
+        //qbdBenefitLedger = qbdHcmWorker.addDataSource(tableNum(SPYBenefitLedger), "SPYBenefitLedger");
+        //qbdBenefitLedger.joinMode(JoinMode::InnerJoin);
+        //qbdBenefitLedger.fetchMode(QueryFetchMode::One2One);
+        //qbdBenefitLedger.Relations(true);
+        //if(benefitCode)
+        //    qbdBenefitLedger.addRange(fieldNum(SPYBenefitLedger, Benefit)).value(queryValue(benefitCode));
+        //qbdBenefitLedger.addGroupByField(fieldNum(SPYBenefitLedger, benefit));
+        //qbdBenefitLedger.addGroupByField(fieldNum(SPYBenefitLedger, defaultDimension));
+        //qbdPayrollPeriodLine = qbdBenefitLedger.addDataSource(tableNum(SPYPayrollPeriodLine), "SPYPayrollPeriodLine");
+        //qbdPayrollPeriodLine.joinMode(JoinMode::InnerJoin);
+        //qbdPayrollPeriodLine.fetchMode(QueryFetchMode::One2One);
+        //qbdPayrollPeriodLine.Relations(false);
+        //qbdPayrollPeriodLine.addLink(fieldNum(SPYBenefitLedger, payrollPeriodLine), fieldNum(SPYPayrollPeriodLine, RecId));
+        //qbdPayrollPeriodLine.addRange(fieldNum(SPYPayrollPeriodLine, PeriodStartDate)).value(strFmt("((PeriodStartDate >= %1) && (PeriodEndDate <= %2))", Date2StrXpp(payrollPeriodFrom.PeriodStartDate), Date2StrXpp(payrollPeriodTo.PeriodEndDate)));
+        //qbdPayrollPeriodLine.addRange(fieldNum(SPYPayrollPeriodLine, PayrollPeriod)).value(queryValue(payrollPeriodFrom.PayrollPeriod));
+        //qbdPayrollPeriodLine.addGroupByField(fieldNum(SPYPayrollPeriodLine, PayrollPeriod));
+
+        qr = new QueryRun(q);
+
+        while(qr.next())
+        {
+            hcmWorker           = qr.get(tableNum(HcmWorker));
+
+            this.insertIntoBenefitRegisterTmp();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        headerFooterTmp.setConnection(this.parmUserConnection());
+        benefitRegisterTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

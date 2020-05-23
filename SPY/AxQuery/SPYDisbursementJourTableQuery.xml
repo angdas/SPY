@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYDisbursementJourTableQuery</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYDisbursementJourTableQuery extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYDisbursementJournalTable</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYDisbursementJournalTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYDisbursementJournalLine</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYDisbursementJournalLine</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<JoinMode>ExistsJoin</JoinMode>
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges />
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

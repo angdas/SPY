@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayLoanTable extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow(str _workflowType = '')
+    {
+        boolean                 ret;
+        SPYPayLoanLine          payLoanLine;
+    
+        ret = super(_workflowType);
+    
+        if(this.WorkflowStatus == SPYWorkflowStatus::Created && !this.Posted)
+        {
+            select count(recid) from payLoanLine
+                where payLoanLine.PayLoan == this.RecId;
+            if(payLoanLine.RecId > 0)
+                ret = true;
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initValue</Name>
+				<Source><![CDATA[
+    public void initValue()
+    {
+        super();
+        this.Worker = HcmWorkerLookup::currentWorker();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitToWorkflow</Name>
+				<Source><![CDATA[
+    public void  submitToWorkflow(WorkflowTypeName      _workflowTemplateName,
+                                  WorkflowComment       _workflowComment,
+                                  boolean               _activatingFromWeb = false)
+    {
+        Workflow::activateFromWorkflowType(_workflowTemplateName,
+                                           this.RecId,
+                                           _workflowComment,
+                                           _activatingFromWeb,
+                                           curUserId());
+    
+        SPYPayLoanTable::updateWorkflowStatus(this.RecId,SPYWorkflowStatus::Submitted);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Finds the specified record in the <c>SPYPayLoanTable</c> table.
+    /// </summary>
+    /// /// <param name="_recId">
+    ///    The record ID of the record to find.
+    /// </param>
+    /// <param name="_forUpdate">
+    ///     A Boolean value that indicates whether to read the record for update; optional.
+    /// </param>
+    /// <param name="_concurrencyModel">
+    ///     An enumeration value that indicates the concurrency setting to use on the table; optional.
+    /// </param>
+    /// <returns>
+    ///     A record in the <c>SPYPayLoanTable</c> table; otherwise, an empty record.
+    /// </returns>
+    /// <remarks>
+    ///     Finds the specified record in the <c>SPYPayLoanTable</c> table.
+    /// </remarks>
+    public static SPYPayLoanTable find(
+        SPYPayLoanRecId                _recId,
+        boolean                        _forUpdate = false,
+        ConcurrencyModel               _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayLoanTable   payLoanTable;
+    
+        payLoanTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            payLoanTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly payLoanTable
+             where payLoanTable.RecId == _recId;
+    
+        return payLoanTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByCode</Name>
+				<Source><![CDATA[
+    public static SPYPayLoanTable findByCode(
+        SPYPayLoanCode                 _code,
+        boolean                        _forUpdate = false,
+        ConcurrencyModel               _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayLoanTable   payLoanTable;
+    
+        payLoanTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            payLoanTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly payLoanTable
+             where payLoanTable.PayLoanCode == _code;
+    
+        return payLoanTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWorkflowStatus</Name>
+				<Source><![CDATA[
+    static void updateWorkflowStatus(SPYPayLoanRecId _payLoan,SPYWorkflowStatus _status)
+    {
+        SPYPayLoanTable   payLoanTableUpdate;
+    
+        ttsBegin;
+        payLoanTableUpdate = SPYPayLoanTable::find(_payLoan,true);
+        if(payLoanTableUpdate)
+        {
+            payLoanTableUpdate.WorkflowStatus = _status;
+            payLoanTableUpdate.update();
+        }
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY340</DeveloperDocumentation>
+	<Label>@SPY334</Label>
+	<TableGroup>WorksheetHeader</TableGroup>
+	<TitleField1>PayLoanCode</TitleField1>
+	<TitleField2>Description</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<ReplacementKey>LoanCode_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayLoanCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayLoanCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayLoanCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayLoanCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Disbursement</Name>
+			<Label>@SYS79716</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ImmediateDisbursement</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayrollJournal</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Log</Name>
+			<Label>@SYS2515</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>createdBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>createdDateTime</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Posted</Name>
+			<Label>@SYS1711</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Posted</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Worker</Name>
+			<Label>@SYS80745</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>WorkflowStatus</Name>
+			<Label>@SPY138</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>WorkflowStatus</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ImmediateDisbursement</Name>
+			<HelpText>@SPY1668</HelpText>
+			<Label>@SPY1667</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PayLoanCode</Name>
+			<ExtendedDataType>SPYPayLoanCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollJournal</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>SPYPayrollJournalRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Posted</Name>
+			<AllowEdit>No</AllowEdit>
+			<HelpText>@SPY271</HelpText>
+			<Label>@SYS1711</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>WorkflowStatus</Name>
+			<EnumType>SPYWorkflowStatus</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>LoanCode_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>PayLoanCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollJournalTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollJournalTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollJournal</Name>
+					<Field>PayrollJournal</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

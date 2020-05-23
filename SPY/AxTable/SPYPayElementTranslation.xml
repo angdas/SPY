@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayElementTranslation</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayElementTranslation extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>insert</Name>
+				<Source><![CDATA[
+    public void insert()
+    {
+        if (this.validateWrite())
+        {
+            super();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>update</Name>
+				<Source><![CDATA[
+    public void update()
+    {
+        if (this.validateWrite())
+        {
+            super();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateField</Name>
+				<Source><![CDATA[
+    public boolean validateField(FieldId _fieldIdToCheck)
+    {
+        boolean isValid;
+    
+        isValid = super(_fieldIdToCheck);
+    
+        if (isValid)
+        {
+            switch (_fieldIdToCheck)
+            {
+                case fieldNum(SPYPayElementTranslation, LanguageId):
+                    if (this.LanguageId == SystemParameters::getSystemLanguageId())
+                    {
+                        isValid = checkFailed("@GLS150186");
+                    }
+    
+                    break;
+            }
+        }
+    
+        return isValid;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateWrite</Name>
+				<Source><![CDATA[
+    public boolean validateWrite()
+    {
+        boolean isValid;
+    
+        isValid = super();
+    
+        if (isValid)
+        {
+            if (this.LanguageId == SystemParameters::getSystemLanguageId())
+            {
+                //isValid = checkFailed("@GLS150186");
+            }
+        }
+    
+        return isValid;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByPayElementLanguage</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Finds a record in the <c>SPYPayElementTranslation</c> table that is based on the specified
+    ///    <c>PayElement</c> and <c>LanguageId</c> values.
+    /// </summary>
+    /// <param name="_payElementRecId">
+    ///    The value of the <c>PayElement</c> field to find.
+    /// </param>
+    /// <param name="_languageId">
+    ///    The value of the <c>LanguageId</c> field to find.
+    /// </param>
+    /// <param name="_forUpdate">
+    ///    A Boolean value that indicates whether to read the record for update; optional.
+    /// </param>
+    /// <param name="_concurrencyModel">
+    ///    An enumeration value that indicates the concurrency settings to use on the table; optional.
+    /// </param>
+    /// <returns>
+    ///    A <c>SPYPayElementTranslation</c> record.
+    /// </returns>
+    public static SPYPayElementTranslation findByPayElementLanguage(
+        RecId               _payElementRecId,
+        LanguageId          _languageId,
+        boolean             _forUpdate = false,
+        ConcurrencyModel    _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayElementTranslation payElementTranslation;
+    
+        if (_payElementRecId && _languageId)
+        {
+            payElementTranslation.selectForUpdate(_forUpdate);
+    
+            if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+            {
+                payElementTranslation.concurrencyModel(_concurrencyModel);
+            }
+    
+            select firstonly payElementTranslation
+                where payElementTranslation.PayElement == _payElementRecId
+                    && payElementTranslation.LanguageId == _languageId;
+        }
+    
+        return payElementTranslation;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SYS4001093</DeveloperDocumentation>
+	<Label>@SPY80</Label>
+	<TableGroup>Main</TableGroup>
+	<TitleField1>LanguageId</TitleField1>
+	<TitleField2>Name</TitleField2>
+	<CacheLookup>FoundAndEmpty</CacheLookup>
+	<ClusteredIndex>PayElementLanguageIdx</ClusteredIndex>
+	<ReplacementKey>PayElementLanguageIdx</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LanguageId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElement</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LanguageId</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>General</Name>
+			<Label>@SYS312922</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Identification</Name>
+			<Label>@SYS5711</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LanguageId</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>LanguageId</Name>
+			<ExtendedDataType>LanguageId</ExtendedDataType>
+			<IgnoreEDTRelation>Yes</IgnoreEDTRelation>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Name</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+			<HelpText>@SPY821</HelpText>
+			<Label>@SYS7399</Label>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayElement</Name>
+			<ExtendedDataType>SPYPayElementRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>PayElementLanguageIdx</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>PayElement</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LanguageId</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>LanguageTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>LanguageTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LanguageId</Name>
+					<Field>LanguageId</Field>
+					<RelatedField>LanguageId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayElementTable</Name>
+			<OnDelete>Cascade</OnDelete>
+			<RelatedTable>SPYPayElementTable</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayElement</Name>
+					<Field>PayElement</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

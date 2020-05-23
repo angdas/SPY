@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPromotionProcessService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPromotionProcessService
+{
+    SPYPromotionProcessContract             contract;
+    LegalEntityRecId                        legalEntity;
+    FromDate                                fromDate;
+    SPYPromotionIncrementType               promotionIncrementType;
+    SPYPromotionTable                       promotionTable;
+    SPYPromotionWorkerTable                 promotionWorkerTable;
+    SPYCompensationPlanTable                compensationPlanTable;
+    SPYPayrollParameters                    payrollParameters;
+
+
+
+    HcmWorker                               hcmWorker;
+    HcmEmployment                           hcmEmployment;
+    TransDate                               workDate;
+    SPYPromotionCode                        promotionCode;
+
+    RecordInsertList                        overtimeLedgerList;
+    RecordInsertList                        absenceLedgerList;
+    SPYDefaultPromotionCompensationBasis    promotionCompensationBasis;
+
+    SPYPayProcessLog                        payProcessLog;
+    SPYPayProcessLogReference               payProcessLogReference;
+    RecordInsertList                        payProcessLogReferenceList;
+    SPYPayProcessLogRecId                   absenceLogRecId,overtimeLogRecId,benefitLogRecId;
+    boolean                                 traceEnabled;
+    boolean                                 absenceLogCreated,overtimeLogCreated,benefitLogCreated;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>insertIntoPromotionTable</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionTable()
+    {
+        promotionCode = NumberSeq::newGetNum(SPYPayrollParameters::numRefPromotionCode()).num();
+
+        promotionTable.clear();
+        promotionTable.PromotionCode   = promotionCode;
+        promotionTable.StartDate            = fromDate;
+        promotionTable.PromotionIncrementType = promotionIncrementType;
+        // promotionTable.Description     = "test";
+        promotionTable.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerCurrentBenefit</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerCurrentBenefit(SPYPromotionWorkerTable _promotionWorkerTable)
+    {
+        SPYPromotionWorkerCurrentBenefit           promotionWorkerCurrBenefit;
+        SPYWorkerPositionBenefit                   workerPositionBenefit;
+        RecordInsertList                           promotionWorkerCurrBenefitList;
+
+        promotionWorkerCurrBenefitList = new RecordInsertList(tableNum(SPYPromotionWorkerCurrentBenefit));
+
+        while select validTimeState(fromDate, fromDate) workerPositionBenefit
+        where workerPositionBenefit.Worker == hcmWorker.RecId &&
+              (workerPositionBenefit.AmountAnnual != 0 || workerPositionBenefit.AmountMonthly != 0
+              || workerPositionBenefit.QtyAnnual != 0 || workerPositionBenefit.QtyMonthly != 0)
+        {
+            promotionWorkerCurrBenefit.clear();
+            promotionWorkerCurrBenefit.PromotionWorker        = _promotionWorkerTable.RecId;
+            promotionWorkerCurrBenefit.Benefit                = workerPositionBenefit.Benefit;
+            promotionWorkerCurrBenefit.Monthly                = workerPositionBenefit.AmountMonthly;
+            promotionWorkerCurrBenefit.QtyMonthly             = workerPositionBenefit.QtyMonthly;
+            promotionWorkerCurrBenefit.AmountAnnual           = workerPositionBenefit.AmountAnnual;
+            promotionWorkerCurrBenefit.QtyAnnual              = workerPositionBenefit.QtyAnnual;
+            //promotionWorkerCurrBenefit.insert();
+            promotionWorkerCurrBenefitList.add(promotionWorkerCurrBenefit);
+        }
+        promotionWorkerCurrBenefitList.insertDatabase();
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerCurrentPayroll</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerCurrentPayroll(SPYPromotionWorkerTable _promotionWorkerTable)
+    {
+        SPYPromotionWorkerCurrentPayroll           promotionWorkerCurrPayroll;
+        SPYWorkerPositionPayroll                   workerPositionPayroll;
+        RecordInsertList                           promotionWorkerCurrPayrollList;
+       
+         promotionWorkerCurrPayrollList              = new RecordInsertList(tableNum(SPYPromotionWorkerCurrentPayroll));
+        
+         while select validTimeState(fromDate, fromDate) workerPositionPayroll
+        where workerPositionPayroll.Worker == hcmWorker.RecId && workerPositionPayroll.Monthly != 0
+        {
+            promotionWorkerCurrPayroll.clear();
+            promotionWorkerCurrPayroll.PromotionWorker        = _promotionWorkerTable.RecId;
+            promotionWorkerCurrPayroll.Payroll                = workerPositionPayroll.Payroll;
+            promotionWorkerCurrPayroll.Monthly                = workerPositionPayroll.Monthly;
+            
+            promotionWorkerCurrPayrollList.add(promotionWorkerCurrPayroll);
+        }
+        promotionWorkerCurrPayrollList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerProposedBenefit</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerProposedBenefit(SPYPromotionWorkerTable _promotionWorkerTable)
+    {
+        SPYPromotionWorkerProposedBenefit          promotionWorkerProposedBenefit;
+        SPYWorkerPositionBenefit                   workerPositionBenefit;
+        SPYCompensationPlanBenefit                 compensationPlanBenefit;
+
+        while select validTimeState(fromDate, fromDate) workerPositionBenefit
+        where workerPositionBenefit.Worker == hcmWorker.RecId &&
+              (workerPositionBenefit.AmountAnnual != 0 || workerPositionBenefit.AmountMonthly != 0
+              || workerPositionBenefit.QtyAnnual != 0 || workerPositionBenefit.QtyMonthly != 0)
+        {
+            if(compensationPlanTable)
+            select compensationPlanBenefit where compensationPlanBenefit.CompensationPlan == compensationPlanTable.RecId 
+                && compensationPlanBenefit.Benefit == workerPositionBenefit.Benefit;
+            if(compensationPlanBenefit)
+            {
+                if(promotionCompensationBasis == SPYDefaultPromotionCompensationBasis::Minimum)
+                {
+                    promotionWorkerProposedBenefit.clear();
+                    promotionWorkerProposedBenefit.PromotionWorker        = _promotionWorkerTable.RecId;
+                    promotionWorkerProposedBenefit.Benefit                = compensationPlanBenefit.Benefit;
+                    promotionWorkerProposedBenefit.Monthly                = compensationPlanBenefit.AmountMonthlyMin;
+                    promotionWorkerProposedBenefit.QtyMonthly             = compensationPlanBenefit.QtyMonthlyMin;
+                    promotionWorkerProposedBenefit.AmountAnnual           = compensationPlanBenefit.AmountAnnualMin;
+                    promotionWorkerProposedBenefit.QtyAnnual              = compensationPlanBenefit.QtyAnnualMin;
+                    promotionWorkerProposedBenefit.insert();
+                }
+                else if(promotionCompensationBasis == SPYDefaultPromotionCompensationBasis::Average)
+                {
+                    promotionWorkerProposedBenefit.clear();
+                    promotionWorkerProposedBenefit.PromotionWorker        = _promotionWorkerTable.RecId;
+                    promotionWorkerProposedBenefit.Benefit                = compensationPlanBenefit.Benefit;
+                    promotionWorkerProposedBenefit.Monthly                = compensationPlanBenefit.AmountMonthlyMid;
+                    promotionWorkerProposedBenefit.QtyMonthly             = compensationPlanBenefit.QtyMonthlyMid;
+                    promotionWorkerProposedBenefit.AmountAnnual           = compensationPlanBenefit.AmountAnnualMid;
+                    promotionWorkerProposedBenefit.QtyAnnual              = compensationPlanBenefit.QtyAnnualMid;
+                    promotionWorkerProposedBenefit.insert();
+                }
+                else if(promotionCompensationBasis == SPYDefaultPromotionCompensationBasis::Maximum)
+                {
+                    promotionWorkerProposedBenefit.clear();
+                    promotionWorkerProposedBenefit.PromotionWorker        = _promotionWorkerTable.RecId;
+                    promotionWorkerProposedBenefit.Benefit                = compensationPlanBenefit.Benefit;
+                    promotionWorkerProposedBenefit.Monthly                = compensationPlanBenefit.AmountMonthlyMax;
+                    promotionWorkerProposedBenefit.QtyMonthly             = compensationPlanBenefit.QtyMonthlyMax;
+                    promotionWorkerProposedBenefit.AmountAnnual           = compensationPlanBenefit.AmountAnnualMax;
+                    promotionWorkerProposedBenefit.QtyAnnual              = compensationPlanBenefit.QtyAnnualMax;
+                    promotionWorkerProposedBenefit.insert();
+                }
+
+            }
+            else
+            {
+                promotionWorkerProposedBenefit.clear();
+                promotionWorkerProposedBenefit.PromotionWorker        = _promotionWorkerTable.RecId;
+                promotionWorkerProposedBenefit.Benefit                = workerPositionBenefit.Benefit;
+                promotionWorkerProposedBenefit.Monthly                = workerPositionBenefit.AmountMonthly;
+                promotionWorkerProposedBenefit.QtyMonthly             = workerPositionBenefit.QtyMonthly;
+                promotionWorkerProposedBenefit.AmountAnnual           = workerPositionBenefit.AmountAnnual;
+                promotionWorkerProposedBenefit.QtyAnnual              = workerPositionBenefit.QtyAnnual;
+                promotionWorkerProposedBenefit.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerProposedPayroll</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerProposedPayroll(SPYPromotionWorkerTable _promotionWorkerTable)
+    {
+        SPYPromotionWorkerProposedPayroll          promotionWorkerProposedPayroll;
+        SPYWorkerPositionPayroll                   workerPositionPayroll;
+        SPYCompensationPlanPayroll                 compensationPlanPayroll;
+
+        while select validTimeState(fromDate, fromDate) workerPositionPayroll
+        where workerPositionPayroll.Worker == hcmWorker.RecId && workerPositionPayroll.Monthly != 0
+        {
+            if(compensationPlanTable)
+            select compensationPlanPayroll where compensationPlanPayroll.CompensationPlan == compensationPlanTable.RecId 
+                && compensationPlanPayroll.Payroll == workerPositionPayroll.Payroll;
+            if(compensationPlanPayroll)
+            {
+                if(promotionCompensationBasis == SPYDefaultPromotionCompensationBasis::Minimum)
+                {
+                    promotionWorkerProposedPayroll.clear();
+                    promotionWorkerProposedPayroll.PromotionWorker        = _promotionWorkerTable.RecId;
+                    promotionWorkerProposedPayroll.Payroll                = compensationPlanPayroll.Payroll;
+                    promotionWorkerProposedPayroll.Monthly                = compensationPlanPayroll.MonthlyMin;
+                    promotionWorkerProposedPayroll.insert();
+                }
+                else if(promotionCompensationBasis == SPYDefaultPromotionCompensationBasis::Average)
+                {
+                    promotionWorkerProposedPayroll.clear();
+                    promotionWorkerProposedPayroll.PromotionWorker        = _promotionWorkerTable.RecId;
+                    promotionWorkerProposedPayroll.Payroll                = compensationPlanPayroll.Payroll;
+                    promotionWorkerProposedPayroll.Monthly                = compensationPlanPayroll.MonthlyMid;
+                    promotionWorkerProposedPayroll.insert();
+                }
+                else if(promotionCompensationBasis == SPYDefaultPromotionCompensationBasis::Maximum)
+                {
+                    promotionWorkerProposedPayroll.clear();
+                    promotionWorkerProposedPayroll.PromotionWorker        = _promotionWorkerTable.RecId;
+                    promotionWorkerProposedPayroll.Payroll                = compensationPlanPayroll.Payroll;
+                    promotionWorkerProposedPayroll.Monthly                = compensationPlanPayroll.MonthlyMax;
+                    promotionWorkerProposedPayroll.insert();
+                }
+            }
+            else
+            {
+                promotionWorkerProposedPayroll.clear();
+                promotionWorkerProposedPayroll.PromotionWorker        = _promotionWorkerTable.RecId;
+                promotionWorkerProposedPayroll.Payroll                = workerPositionPayroll.Payroll;
+                promotionWorkerProposedPayroll.Monthly                = workerPositionPayroll.Monthly;
+                promotionWorkerProposedPayroll.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerTable</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerTable(SPYPromotionTable _promotionTable)
+    {
+        HcmPositionDetail                           hcmpositionDetail;
+        hcmpositionDetail                           = HcmpositionDetail::findByPosition(HcmPosition::find(this.getPrimaryPosition(hcmWorker.RecId)).RecId);
+
+        select compensationPlanTable where compensationPlanTable.CompensationLevelGrade == hcmpositionDetail.SPYCompensationLevelGrade
+                                 &&    compensationPlanTable.CompensationLevelBand == hcmpositionDetail.SPYCompensationLevelBand
+                                 &&    compensationPlanTable.CompensationLevelStep == hcmpositionDetail.SPYCompensationLevelStep;
+
+        promotionWorkerTable.clear();
+        promotionWorkerTable.Promotion              = _promotionTable.RecId;
+        promotionWorkerTable.Worker                 = hcmWorker.RecId;
+        promotionWorkerTable.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+        promotionWorkerTable.WorkerName             = hcmWorker.name();
+        promotionWorkerTable.StartDate              = fromDate;
+        promotionWorkerTable.PromotionIncrementType = promotionIncrementType;
+        promotionWorkerTable.CurrentDepartment      = this.getPrimaryDepartmentRecId(hcmWorker.RecId);
+        promotionWorkerTable.CurrentPosition        = this.getPrimaryPosition(hcmWorker.RecId);
+        promotionWorkerTable.CurrentGrade           = hcmpositionDetail.SPYCompensationLevelGrade;
+        promotionWorkerTable.CurrentBand            = hcmpositionDetail.SPYCompensationLevelBand;
+        promotionWorkerTable.CurrentStep            = hcmpositionDetail.SPYCompensationLevelStep;
+        promotionWorkerTable.ProposedGrade          = hcmpositionDetail.SPYCompensationLevelGrade;
+        promotionWorkerTable.ProposedBand           = hcmpositionDetail.SPYCompensationLevelBand;
+        promotionWorkerTable.ProposedStep           = hcmpositionDetail.SPYCompensationLevelStep;
+        promotionWorkerTable.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///     promotion process
+    /// </summary>
+    /// <param name="_contract">
+    ///     promotion process contract
+    /// </param>
+    /// <remarks>
+    ///     promotion process of worker
+    /// </remarks>
+    public void process(SPYPromotionProcessContract   _contract)
+    {
+        QueryRun                workerQueryRun;
+        boolean                 payrollParameterState;
+        container               workerContainer;
+        List                    workerList = new List(Types::Int64);
+        ListEnumerator          workerListEnumerator;
+        int                     workerContainerLenCount;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+
+        contract                        = _contract as SPYPromotionProcessContract;
+        legalEntity                     = CompanyInfo::current();
+        fromDate                        = contract.parmFromDate();
+        promotionIncrementType          = contract.parmPromotionIncrementType();
+        overtimeLedgerList              = new RecordInsertList(tableNum(SPYOvertimeLedger));
+        absenceLedgerList               = new RecordInsertList(tableNum(SPYAbsenceLedger));
+        payrollParameters               = SPYPayrollParameters::find();
+        promotionCompensationBasis      = payrollParameters.PromotionCompensationBasis;
+
+
+
+        if(contract.parmPayrollParameterState().parmWorkerContainer())
+        {
+            payrollParameterState = true;
+            workerContainer = contract.parmPayrollParameterState().parmWorkerContainer();
+            workerContainerLenCount = 1;
+            while(workerContainerLenCount <= conLen(workerContainer))
+            {
+                workerList.addEnd(conPeek(workerContainer,workerContainerLenCount));
+                workerContainerLenCount++;
+            }
+        }
+        else
+        {
+            if(contract.parmWorkerQuery())
+            workerQueryRun = new QueryRun(contract.parmWorkerQuery());
+            else
+            workerQueryRun = new QueryRun(new Query(queryStr(HcmWorkerLookup)));
+
+            while(workerQueryRun.next())
+            {
+                hcmWorker = workerQueryRun.get(tableNum(HcmWorker));
+                workerList.addEnd(hcmWorker.RecId);
+            }
+        }
+        workerListEnumerator = workerList.getEnumerator();
+        traceEnabled = SPYPayrollParameters::find().PayProcessTrace;
+        setPrefix("@SPY474");
+        progress.setCaption("@SPY1108");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(workerList.elements());
+        progressCount = 1;
+
+        try
+        {
+            ttsBegin;
+            this.insertIntoPromotionTable();
+            while(workerListEnumerator.moveNext())
+            {
+                hcmWorker = HcmWorker::find(workerListEnumerator.current());
+                progress.setText(strfmt("@SPY882", hcmWorker.name()));
+                progress.setCount(progressCount, 1);
+                changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+                {
+                    this.insertIntoPromotionWorkerTable(promotionTable);
+                    this.insertIntoPromotionWorkerCurrentPayroll(promotionWorkerTable);
+                    this.insertIntoPromotionWorkerCurrentBenefit(promotionWorkerTable);
+                    this.insertIntoPromotionWorkerProposedPayroll(promotionWorkerTable);
+                    this.insertIntoPromotionWorkerProposedBenefit(promotionWorkerTable);
+                }
+                progressCount++;
+            }
+            ttsCommit;
+            //info("@SPY379");
+            info(strFmt("@SPY1951",promotionCode),"",
+        SysInfoAction_TableField::newBuffer(SPYPromotionTable::findByCode(promotionCode)));
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPrimaryPosition</Name>
+				<Source><![CDATA[
+    public HcmPositionRecId getPrimaryPosition(HcmWorkerRecId _workerRecId, utcdatetime _asOfDate = DateTimeUtil::utcNow())
+    {
+        HcmPositionRecId                    positionRecId = 0;
+        HcmPositionWorkerAssignment         hcmPositionWorkerAssignment;
+        HcmPositionWorkerAssignmentRecId    hcmPositionWorkerAssignmentRecId;
+
+        hcmPositionWorkerAssignmentRecId = this.getPrimaryPositionAssignment(_workerRecId, _asOfDate);
+
+        hcmPositionWorkerAssignment = HcmPositionWorkerAssignment::find(hcmPositionWorkerAssignmentRecId);
+        if (hcmPositionWorkerAssignment)
+        {
+            positionRecId = hcmPositionWorkerAssignment.Position;
+        }
+
+        return positionRecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPrimaryPositionAssignment</Name>
+				<Source><![CDATA[
+    public HcmPositionWorkerAssignmentRecId getPrimaryPositionAssignment(HcmWorkerRecId _workerRecId, utcdatetime _asOfDate = DateTimeUtil::utcNow())
+    {
+        HcmPositionRecId                    positionRecId = 0;
+        HcmPositionWorkerAssignmentRecId    positionWorkerAssignmentRecId = 0;
+        HcmPositionWorkerAssignment         hcmPositionWorkerAssignment;
+        HcmPositionDuration                 hcmPositionDuration;
+        boolean                             isValidPosition = true;
+        HcmWorkerPrimaryPosition            hcmWorkerPrimaryPosition;
+
+        // check whether the worker has a primary position assignment
+        select firstonly ValidTimeState(_asOfDate) PositionAssignment from hcmWorkerPrimaryPosition
+            where hcmWorkerPrimaryPosition.Worker == _workerRecId
+        exists join hcmPositionWorkerAssignment
+            where hcmPositionWorkerAssignment.Worker == hcmWorkerPrimaryPosition.Worker
+                    && hcmPositionWorkerAssignment.RecId == hcmWorkerPrimaryPosition.PositionAssignment
+        exists join hcmPositionDuration
+            where hcmPositionWorkerAssignment.Position == hcmPositionWorkerAssignment.Position;
+
+        positionWorkerAssignmentRecId = hcmWorkerPrimaryPosition.PositionAssignment;
+
+        if (positionWorkerAssignmentRecId == 0)
+        {
+            // no valid primary position existed for the worker, so retrieve the position
+            // assignment for the worker in which the worker has the longest active seniority
+            select ValidTimeState(_asOfDate) Position, RecId from hcmPositionWorkerAssignment
+            order by ValidFrom asc
+                where hcmPositionWorkerAssignment.Worker == _workerRecId
+            exists join hcmPositionDuration
+                where hcmPositionDuration.Position == hcmPositionWorkerAssignment.Position;
+
+            positionWorkerAssignmentRecId = hcmPositionWorkerAssignment.RecId;
+        }
+
+        return positionWorkerAssignmentRecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPrimaryDepartmentRecId</Name>
+				<Source><![CDATA[
+    public OMDepartmentRecId getPrimaryDepartmentRecId(HcmWorkerRecId _workerRecId, utcdatetime _asOfDate = DateTimeUtil::utcNow())
+    {
+        HcmPositionRecId            positionRecId;
+        HcmPositionDetail           positionDetail;
+
+        // Determine the primary position of the worker.
+        positionRecId = this.getPrimaryPosition(_workerRecId, _asOfDate);
+
+        if (positionRecId)
+        {
+            // Retrieve the corresponding position.
+            positionDetail = HcmPositionDetail::findByPosition(positionRecId, _asOfDate);
+        }
+
+        return positionDetail.Department;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

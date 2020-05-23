@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYLeaveApplication_MyTeamApplication</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYLeaveApplication_MyTeamApplication extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Title>@SPY695</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYLeaveApplicationTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYLeaveApplicationTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYMyTeamMember</Name>
+					<Table>SPYMyTeamMember</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields>
+						<AxQuerySimpleDataSourceField>
+							<Name>LegalEntity</Name>
+							<Field>LegalEntity</Field>
+						</AxQuerySimpleDataSourceField>
+						<AxQuerySimpleDataSourceField>
+							<Name>TeamMember</Name>
+							<Field>TeamMember</Field>
+						</AxQuerySimpleDataSourceField>
+					</Fields>
+					<Ranges>
+						<AxQuerySimpleDataSourceRange>
+							<Name>LegalEntityRange</Name>
+							<Field>LegalEntity</Field>
+							<Value>CompanyInfo::current()</Value>
+						</AxQuerySimpleDataSourceRange>
+					</Ranges>
+					<Relations>
+						<AxQuerySimpleDataSourceRelation>
+							<Name>QueryDataSourceRelation1</Name>
+							<Field>Worker</Field>
+							<JoinDataSource>SPYLeaveApplicationTable_1</JoinDataSource>
+							<RelatedField>TeamMember</RelatedField>
+						</AxQuerySimpleDataSourceRelation>
+					</Relations>
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy>
+				<AxQuerySimpleOrderByField>
+					<Name>LeaveApplicationCode</Name>
+					<DataSource>SPYLeaveApplicationTable_1</DataSource>
+					<Direction>Descending</Direction>
+					<Field>LeaveApplicationCode</Field>
+				</AxQuerySimpleOrderByField>
+			</OrderBy>
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

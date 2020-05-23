@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIBenefitCalculation</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+abstract class SPYIBenefitCalculation
+{
+    SPYAmount                   qty;
+    SPYAmount                   transactionCurrencyAmount;
+    SPYAmount                   accountingCurrencyAmount;
+
+    LegalEntityRecId            legalEntity;
+    HcmWorkerRecId              worker;
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+    SPYPayElementRecId          benefit;
+    TransDate                   transDate;
+    StartDate                   periodStart;
+    EndDate                     periodEnd;
+    SPYWorkerPositionBenefit    workerPositionBenefit;
+    CurrencyCode                transCurrency;
+
+    SPYPayLedgerUpdate          payLedgerUpdate;
+    //SPYExpressionContext        expressionContext;
+    SPYExpressionEvaluationEngine   expressionEvaluationEngine;
+
+    SPYBenefitLedgerTmp         benefitLedgerTmp;
+
+    Array                       observers;
+    SPYObserver                 tracer;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>calcAccCurAmt</Name>
+				<Source><![CDATA[
+    public SPYAmount calcAccCurAmt()
+    {
+        return accountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcQty</Name>
+				<Source><![CDATA[
+    public SPYAmount calcQty()
+    {
+        return qty;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcTransCurAmt</Name>
+				<Source><![CDATA[
+    public SPYAmount calcTransCurAmt()
+    {
+        return transactionCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeLedgerFromBenefit</Name>
+				<Source><![CDATA[
+    protected SPYBenefitLedger initializeLedgerFromBenefit(SPYWorkerPositionBenefit _workerPositionBenefit,SPYAmount _amount,SPYAmount _qty)
+    {
+        SPYBenefitLedger    benefitLedger;
+        ExchangeRateHelper  exchangeRateHelper;
+        CurrencyCode        currency = _workerPositionBenefit.Currency ? _workerPositionBenefit.Currency : Ledger::accountingCurrency();
+    
+        exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::findByLegalEntity(legalEntity).RecId,currency);
+        exchangeRateHelper.parmExchangeDate(transDate);
+        benefitLedger.initValue();
+        benefitLedger.Worker                    = worker;
+        benefitLedger.Benefit                   = benefit;
+        benefitLedger.Currency                  = currency;
+        benefitLedger.PayrollPeriodLine         = payrollPeriodLine;
+        benefitLedger.Quantity                  = _qty;
+        benefitLedger.TransactionCurrencyAmount = _amount;
+        benefitLedger.ExchRate                  = exchangeRateHelper.getExchangeRate1();
+        benefitLedger.AccountingCurrencyAmount  = _amount * benefitLedger.ExchRate / 100;
+        benefitLedger.TransDate                 = transDate;
+    
+        return benefitLedger;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeLedgerTmpFromBenefit</Name>
+				<Source><![CDATA[
+    protected SPYBenefitLedgerTmp initializeLedgerTmpFromBenefit(SPYWorkerPositionBenefit   _workerPositionBenefit,
+                                                                 SPYAmount                  _transCurAmount,
+                                                                 SPYAmount                  _qty,
+                                                                 Boolean                    _decorator = false)
+    {
+        ExchangeRateHelper  exchangeRateHelper;
+        CurrencyCode        currency = transCurrency ? transCurrency : Ledger::accountingCurrency();
+    
+        exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::findByLegalEntity(legalEntity).RecId,currency);
+        exchangeRateHelper.parmExchangeDate(transDate);
+        benefitLedgerTmp.initValue();
+        benefitLedgerTmp.Worker                    = worker;
+        benefitLedgerTmp.Benefit                   = benefit;
+        benefitLedgerTmp.Currency                  = currency;
+        benefitLedgerTmp.PayrollPeriodLine         = payrollPeriodLine;
+        benefitLedgerTmp.Quantity                  = _qty;
+        benefitLedgerTmp.TransactionCurrencyAmount = _transCurAmount;
+        benefitLedgerTmp.ExchRate                  = exchangeRateHelper.getExchangeRate1();
+        benefitLedgerTmp.AccountingCurrencyAmount  = (_transCurAmount / 100) * exchangeRateHelper.getExchangeRate1();
+        benefitLedgerTmp.TransDate                 = transDate;
+        benefitLedgerTmp.Decorator                 = _decorator;
+        benefitLedgerTmp.insert();
+    
+        return benefitLedgerTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(LegalEntityRecId            _legalEntity,
+                    HCMWorkerRecId              _worker,
+                    SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                    SPYPayElementRecId          _benefit,
+                    TransDate                   _transDate,
+                    StartDate                   _periodStart,
+                    EndDate                     _periodEnd,
+                    SPYWorkerPositionBenefit    _workerPositionBenefit,
+                    CurrencyCode                _transCurrency,
+                    SPYBenefitLedgerTmp         _benefitLedgerTmp)
+    {
+        legalEntity             = _legalEntity;
+        worker                  = _worker;
+        payrollPeriodLine       = _payrollPeriodLine;
+        benefit                 = _benefit;
+        transDate               = _transDate;
+        periodStart             = _periodStart;
+        periodEnd               = _periodEnd;
+        workerPositionBenefit   = _workerPositionBenefit;
+        transCurrency           = _transCurrency;
+        benefitLedgerTmp        = _benefitLedgerTmp;
+        observers               = new Array(Types::Class);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayLedgerUpdate</Name>
+				<Source><![CDATA[
+    /*
+    public SPYExpressionContext parmExpressionContext(SPYExpressionContext _expressionContext = expressionContext)
+    {
+        expressionContext = _expressionContext;
+    
+        return expressionContext;
+    }
+*/
+    public SPYPayLedgerUpdate parmPayLedgerUpdate(SPYPayLedgerUpdate _payLedgerUpdate = payLedgerUpdate)
+    {
+        payLedgerUpdate = _payLedgerUpdate;
+    
+        return payLedgerUpdate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTracer</Name>
+				<Source><![CDATA[
+    public void parmTracer(SPYObserver _tracer)
+    {
+        tracer = _tracer;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefit</Name>
+				<Source><![CDATA[
+    abstract public SPYBenefitLedgerTmp processBenefit(SPYExpressionEvaluationEngine   _expressionEvaluationEngine)//SPYExpressionContext _expressionContext)
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefitEncashment</Name>
+				<Source><![CDATA[
+    abstract public SPYBenefitLedgerTmp processBenefitEncashment(SPYExpressionEvaluationEngine   _expressionEvaluationEngine)//SPYExpressionContext _expressionContext)
+    {
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

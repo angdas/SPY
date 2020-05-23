@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveDetailDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SRSReportParameterAttribute(classStr(SPYLeaveDetailContract)),
+SRSReportQueryAttribute(queryStr(SPYHcmWorkerLookup))
+]
+public class SPYLeaveDetailDP extends SrsReportDataProviderPreProcess
+{
+    HcmWorker                       hcmWorker;
+    SPYLeaveDetailTmp               leaveDetailTmp;
+    SPYWorkerPositionPayroll        workerPositionPayroll;
+    SPYBenefitLedger                benefitLedger, benefitLedgerOp, benefitLedgerTk;
+    SPYBenefitTable                 benefitTable;
+    HRMAbsenceCode                  hrmAbsenceCode;
+    SPYPayrollPeriodLineRecId       payrollPeriodLineRecId;
+    SPYPayrollPeriodLine            payrollPeriodLine, payrollPeriodFrom, payrollPeriodTo, payrollPeriodTmp;
+    SPYPayrollPeriodLineRecId       payrollPeriodLineFrom, payrollPeriodLineTo;
+    SPYPayrollPeriod                payrollPeriod;
+    date                            fromDate;
+    date                            toDate, lastStartDate, lastEndDate;
+    real                            openBal, leaveTaken, entitlement;
+    String50                        payrollPeriodString;
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>checkAccuralLines</Name>
+				<Source><![CDATA[
+    private int checkAccuralLines()
+    {
+        int i = 0;
+    
+        while select Quantity from benefitLedger join benefitTable join hrmAbsenceCode where
+            benefitLedger.Worker == hcmWorker.RecId && benefitLedger.Benefit == benefitTable.RecId
+            && benefitTable.RecId == hrmAbsenceCode.SPYBenefit && benefitLedger.PayrollPeriodLine == payrollPeriodLineRecId
+            && benefitLedger.JournalType == SPYBenefitJournalType::Accrual
+        {
+    
+            i++;
+        }
+        return i;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYLeaveDetailTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYLeaveDetailTmp))]
+    public SPYLeaveDetailTmp getSPYLeaveDetailTmp()
+    {
+        select leaveDetailTmp;
+        return leaveDetailTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYLeaveDetailTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYLeaveDetailTmp()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    public void processReport()
+    {
+        SPYLeaveDetailContract  contract = this.parmDataContract() as SPYLeaveDetailContract;
+        Query                       q;
+        QueryRun                    qr;
+        QueryBuildDataSource        qbdHcmWorker, qbdPayrollPeriodLine;
+        RecordInsertList            recordInsertLeaveDetails;
+        HcmWorkerRecId              curWorker;
+        boolean                     ins;
+    
+    
+        payrollPeriodLineFrom   = contract.parmPayrollPeriodLineFrom();
+        payrollPeriodLineTo     = contract.parmPayrollPeriodLineTo();
+    
+        payrollPeriodFrom       = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        payrollPeriodTo         = SPYPayrollPeriodLine::find(payrollPeriodLineTo);
+    
+        q = this.parmQuery();
+    
+        qr = new QueryRun(q);
+    
+        while(qr.next())
+        {
+            hcmWorker                     = qr.get(tableNum(HcmWorker));
+            fromDate                      = payrollperiodFrom.PeriodStartDate;
+            toDate                        = payrollPeriodTo.PeriodEndDate;
+    
+            select sum(Quantity) from benefitLedgerOp join payrollPeriodTmp join benefitTable join hrmAbsenceCode where
+            payrollPeriodTmp.RecId == benefitLedgerOp.PayrollPeriodLine && payrollperiodTmp.PeriodEndDate < fromDate
+            && benefitLedgerOp.Worker == hcmWorker.RecId && benefitLedgerOp.Benefit == benefitTable.RecID && hrmAbsenceCode.SPYBenefit == benefitTable.RecID;
+    
+            openBal                       = benefitLedgerOp.Quantity;
+    
+            while select payrollPeriodLine where payrollPeriodLine.PeriodStartDate >= fromDate && payrollPeriodLine.PeriodEndDate <= todate
+            {
+                payrollPeriodLineRecId    = payrollPeriodLine.RecId;
+                payrollPeriod             = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod);
+                payrollPeriodString       = strFmt("%1 - %2 - %3", payrollPeriod.Description, payrollPeriodLine.PeriodStartDate, payrollPeriodLine.PeriodEndDate);
+                ins                       = false;
+                recordInsertLeaveDetails  = new RecordInsertList(tableNum(SPYLeaveDetailTmp));
+                while select benefitLedger join benefitTable join hrmAbsenceCode 
+                    where benefitLedger.Worker == hcmWorker.RecId && 
+                          benefitLedger.Benefit == benefitTable.RecId && 
+                          hrmAbsenceCode.SPYBenefit == benefitTable.RecID && 
+                          benefitLedger.PayrollPeriodLine == payrollPeriodLineRecId && 
+                          benefitLedger.JournalType == SPYBenefitJournalType::Accrual
+                {
+                    leaveDetailTmp.clear();
+                    leaveDetailTmp.OpeningBalance               = openBal;
+                    entitlement                                 = benefitLedger.Quantity;
+                    leaveDetailTmp.Entitlement                  = entitlement;
+    
+                    select Quantity from benefitLedgerTk join benefitTable join hrmAbsenceCode where
+                    benefitLedgerTk.Worker == hcmWorker.RecId && benefitLedgerTk.Benefit == benefitTable.RecId && hrmAbsenceCode.SPYBenefit == benefitTable.RecID && benefitLedgerTk.PayrollPeriodLine == payrollPeriodLine.RecId && benefitLedgerTk.JournalType == SPYBenefitJournalType::Encashment;
+    
+                    leaveTaken                                  = benefitLedgerTk.Quantity;
+                    leaveDetailTmp.DaysTaken                    = leaveTaken;
+                    openBal                                     = (openBal + entitlement) + (leaveTaken);
+                    leaveDetailTmp.ClosingBalance               = openBal;
+                    leaveDetailTmp.Type                         = 'Released';
+                    leaveDetailTmp.PayrollPeriod                = payrollPeriodString;
+                    leaveDetailTmp.EmployeeName                 = hcmWorker.PersonnelNumber + " - " + hcmWorker.name();
+    
+                    recordInsertLeaveDetails.add(leaveDetailTmp);
+                    ins                                         = true;
+                    if(this.checkAccuralLines() != 1)
+                    {
+                        select Quantity from benefitLedger join benefitTable join hrmAbsenceCode where
+                        benefitLedger.Worker == hcmWorker.RecId && benefitLedger.Benefit == benefitTable.RecId
+                        && benefitTable.RecId == hrmAbsenceCode.SPYBenefit && benefitLedger.PayrollPeriodLine == payrollPeriodLineRecId
+                        && benefitLedger.JournalType == SPYBenefitJournalType::Accrual && benefitLedger.TransactionCurrencyAmount != 0;
+   
+                        entitlement                             = benefitLedger.Quantity;
+                    }
+                }
+                recordInsertLeaveDetails.insertDatabase();
+   
+                if(!ins)
+                {
+                    //cases when the date range is such that not a single benefit ledger is in range
+                    //in those cases pick the last record inserted irrespective of date and initialize
+                    //the entitlement with that figure
+                    if ( entitlement == 0 )
+                    {
+                        select firstOnly Quantity from benefitLedger
+                        join benefitTable join hrmAbsenceCode
+                        order by benefitLedger.RECID desc
+                        where benefitLedger.Worker == hcmWorker.RecId
+                            && benefitLedger.Benefit == benefitTable.RecId
+                            && benefitTable.RecId == hrmAbsenceCode.SPYBenefit
+                            && benefitLedger.JournalType == SPYBenefitJournalType::Accrual;
+    
+                        entitlement = benefitLedger.Quantity;
+                    }
+                    leaveDetailTmp.OpeningBalance               = openBal;
+                    leaveDetailTmp.Entitlement                  = entitlement;
+                    leaveDetailTmp.DaysTaken                    = 0;
+                    openBal                                     = (openBal + entitlement) - 0;
+                    leaveDetailTmp.ClosingBalance               = openBal;
+                    leaveDetailTmp.Type                         = 'Projected';
+                    leaveDetailTmp.PayrollPeriod                = payrollPeriodString;
+                    leaveDetailTmp.EmployeeName                 = hcmWorker.PersonnelNumber + " - " + hcmWorker.name();
+    
+                    leaveDetailTmp.insert();
+                }
+            }
+    
+    
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

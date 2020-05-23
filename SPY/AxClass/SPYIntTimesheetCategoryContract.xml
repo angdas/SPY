@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntTimesheetCategoryContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntTimesheetCategoryContract
+{
+    ProjCategoryId      categoryId;
+    Description         description;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmCategoryId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("CategoryId")]
+    public ProjCategoryId parmCategoryId(ProjCategoryId _categoryId = categoryId)
+    {
+        categoryId = _categoryId;
+
+        return categoryId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDescription</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Description")]
+    public Description parmDescription(Description _description = description)
+    {
+        description = _description;
+
+        return description;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYCashBankContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute,
+    SysOperationGroupAttribute('PayrollPeriod','Payroll period','1'),
+    SysOperationGroupAttribute('Details','Details','2')
+]
+class SPYCashBankContract
+{
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+    SPYPayrollDisbursementMode  cashBank;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLine'),
+        SysOperationLabelAttribute(literalStr('@SPY25')),
+        SysOperationHelpTextAttribute(literalStr('@SPY168')),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollperiodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine =_payrollperiodLine;
+    
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowCashBank</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('ShowCashBank'),
+        SysOperationLabelAttribute(literalStr('Type')),
+        SysOperationHelpTextAttribute(literalStr('Type')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('2')
+    ]
+    public SPYPayrollDisbursementMode parmShowCashBank(SPYPayrollDisbursementMode _cashBank = cashBank)
+    {
+        cashBank = _cashBank;
+    
+        return cashBank;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

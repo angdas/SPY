@@ -1,0 +1,928 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYTSDelegateRegister</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYTSDelegateRegister extends FormRun
+{
+
+    HcmWorker  worker;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+    
+    
+    
+    
+        super();
+    
+        if(element.args().dataset() == tableNum(HcmWorker))
+        worker = element.args().record();
+    
+    
+    
+        //Initialize splitter
+    
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="" />
+		<Members xmlns="" />
+	</SourceCode>
+	<AllowPreLoading>No</AllowPreLoading>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYAttendenceRegister</Name>
+			<Table>SPYAttendenceRegister</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day1</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day10</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day11</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day12</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day13</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day14</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day15</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day16</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day17</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day18</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day19</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day2</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day20</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day21</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day22</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day23</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day24</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day25</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day26</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day27</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day28</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day29</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day3</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day30</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day31</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day4</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day5</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day6</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day7</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day8</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Day9</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>MonthOfYearId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Year</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>TSAppEmplSub</JoinSource>
+			<CounterField>MonthOfYearId</CounterField>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>TSAppEmplSub</Name>
+			<Table>TSAppEmplSub</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>AppWorker</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DateFrom</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DateTo</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>SPYPersonnelNumber</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY1343</Caption>
+		<DataSource xmlns="">SPYAttendenceRegister</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">SimpleListDetails</Pattern>
+		<PatternVersion xmlns="">1.3</PatternVersion>
+		<Style xmlns="">SimpleListDetails</Style>
+		<TitleDataSource xmlns="">SPYAttendenceRegister</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>ActionPaneTab1</Name>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>Create</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYTSTimesheetCreate</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<MenuItemName>SPYTSTimesheetCreate</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<DataSource>TSAppEmplSub</DataSource>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<DataSource>TSAppEmplSub</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>ActionPaneTab</Name>
+						<ElementPosition>1610612733</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<DataSource>SPYAttendenceRegister</DataSource>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>GridContainer</Name>
+				<AutoDeclaration>Yes</AutoDeclaration>
+				<ElementPosition>858993458</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl>
+						<Name>QuickFilterControl</Name>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension>
+							<Name>QuickFilterControl</Name>
+							<ExtensionComponents />
+							<ExtensionProperties>
+								<AxFormControlExtensionProperty>
+									<Name>targetControlName</Name>
+									<Type>String</Type>
+									<TypeName>str</TypeName>
+									<Value>Grid</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>defaultColumnName</Name>
+									<Type>String</Type>
+									<TypeName>str</TypeName>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>placeholderText</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+							</ExtensionProperties>
+						</FormControlExtension>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>CustomFilterGroup</Name>
+						<ElementPosition>1288490187</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<Type>Group</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<AlignChild>No</AlignChild>
+						<FrameType>None</FrameType>
+						<Style>CustomFilter</Style>
+						<ViewEditMode>Edit</ViewEditMode>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGridControl">
+						<Name>Grid</Name>
+						<AllowEdit>No</AllowEdit>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<Type>Grid</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToContent</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<AlternateRowShading>No</AlternateRowShading>
+						<DataSource>TSAppEmplSub</DataSource>
+						<GridLinesStyle>Vertical</GridLinesStyle>
+						<MultiSelect>No</MultiSelect>
+						<ShowRowLabels>No</ShowRowLabels>
+						<Style>List</Style>
+					</AxFormControl>
+				</Controls>
+				<RightMargin>0</RightMargin>
+				<RightMarginMode>Fixed</RightMarginMode>
+				<DataSource>TSAppEmplSub</DataSource>
+				<FrameType>None</FrameType>
+				<Style>SidePanel</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>DetailsHeader</Name>
+				<ElementPosition>1073741822</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Pattern>FieldsFieldGroups</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls />
+				<ColumnsMode>Fill</ColumnsMode>
+				<DataSource>SPYAttendenceRegister</DataSource>
+				<FrameType>None</FrameType>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>DetailsTab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1610612733</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPage</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Pattern>ToolbarList</Pattern>
+						<PatternVersion>1.2</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>Grid1</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>AFZAttendenceRegister_MonthOfYearId</Name>
+										<ElementPosition>126322566</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ComboBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>MonthOfYearId</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+										<Items />
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day1</Name>
+										<ElementPosition>189483849</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day1</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day2</Name>
+										<ElementPosition>252645132</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day2</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day3</Name>
+										<ElementPosition>315806415</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day3</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day4</Name>
+										<ElementPosition>378967698</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day4</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day5</Name>
+										<ElementPosition>442128981</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day5</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day6</Name>
+										<ElementPosition>505290264</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day6</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day7</Name>
+										<ElementPosition>568451547</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day7</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day8</Name>
+										<ElementPosition>631612830</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day8</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day9</Name>
+										<ElementPosition>694774113</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day9</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day10</Name>
+										<ElementPosition>757935396</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day10</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day11</Name>
+										<ElementPosition>821096679</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day11</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day12</Name>
+										<ElementPosition>884257962</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day12</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day13</Name>
+										<ElementPosition>947419245</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day13</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day14</Name>
+										<ElementPosition>1010580528</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day14</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day15</Name>
+										<ElementPosition>1073741811</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day15</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day16</Name>
+										<ElementPosition>1136903094</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day16</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day17</Name>
+										<ElementPosition>1200064377</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day17</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day18</Name>
+										<ElementPosition>1263225660</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day18</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day19</Name>
+										<ElementPosition>1326386943</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day19</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day20</Name>
+										<ElementPosition>1389548226</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day20</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day21</Name>
+										<ElementPosition>1452709509</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day21</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day22</Name>
+										<ElementPosition>1515870792</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day22</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day23</Name>
+										<ElementPosition>1579032075</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day23</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day24</Name>
+										<ElementPosition>1642193358</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day24</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day25</Name>
+										<ElementPosition>1705354641</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day25</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day26</Name>
+										<ElementPosition>1768515924</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day26</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day27</Name>
+										<ElementPosition>1831677207</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day27</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day28</Name>
+										<ElementPosition>1894838490</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day28</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day29</Name>
+										<ElementPosition>1957999773</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day29</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day30</Name>
+										<ElementPosition>2021161056</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day30</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>AFZAttendenceRegister_Day31</Name>
+										<ElementPosition>2084322339</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Day31</DataField>
+										<DataSource>SPYAttendenceRegister</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataSource>SPYAttendenceRegister</DataSource>
+							</AxFormControl>
+						</Controls>
+						<DataSource>SPYAttendenceRegister</DataSource>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<DataSource>SPYAttendenceRegister</DataSource>
+				<Style>FastTabs</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

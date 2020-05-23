@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitJournalPostContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYBenefitJournalPostContract
+{
+    container                   benefitJournalQuery;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmBenefitJournalQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmBenefitJournalQuery(container _benefitJournalQuery = benefitJournalQuery)
+    {
+        benefitJournalQuery = _benefitJournalQuery;
+        return benefitJournalQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTimesheetProcessContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYTimesheetProcessContract
+{
+    container                   workerQuery;
+    LegalEntityRecId            legalEntity;
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+    FromDate                    fromDate;
+    ToDate                      toDate;
+    SPYPayrollParameterState    payrollParameterState;
+    boolean                     reprocessLeaveApplication;
+    boolean                     processClosedPeriodAL;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmFromDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public FromDate parmFromDate(FromDate _fromDate = fromDate)
+    {
+        fromDate = _fromDate;
+        return fromDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLegalEntity</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public LegalEntityRecId parmLegalEntity(LegalEntityRecId _legalEntity = legalEntity)
+    {
+        legalEntity = _legalEntity;
+        return legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollParameterState</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollParameterState parmPayrollParameterState(SPYPayrollParameterState _payrollParameterState = payrollParameterState)
+    {
+        payrollParameterState = _payrollParameterState;
+        return payrollParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine = _payrollPeriodLine;
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmProcessClosedPeriodAL</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmProcessClosedPeriodAL(boolean _processClosedPeriodAL = processClosedPeriodAL)
+    {
+        processClosedPeriodAL = _processClosedPeriodAL;
+        return processClosedPeriodAL;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmReprocessLeaveApplication</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmReprocessLeaveApplication(boolean _reprocessLeaveApplication = reprocessLeaveApplication)
+    {
+        reprocessLeaveApplication = _reprocessLeaveApplication;
+        return reprocessLeaveApplication;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmToDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public ToDate parmToDate(ToDate _toDate = toDate)
+    {
+        toDate = _toDate;
+        return toDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerQuery(container _workerQuery = workerQuery)
+    {
+        workerQuery = _workerQuery;
+        return workerQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

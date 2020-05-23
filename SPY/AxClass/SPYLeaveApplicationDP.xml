@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplicationDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportQueryAttribute(queryStr(SPYLeaveapplicationSRS))
+]
+class SPYLeaveApplicationDP extends SRSReportDataProviderBase
+{
+    SPYLeaveApplicationTmp          leaveApplicationTmp;
+    SPYHeaderFooterTmp              headerFooterTmp;
+
+    SPYLeaveApplicationTable        leaveApplicationTable;
+    SPYLeaveApplicationLine         leaveApplicationLine;
+    SPYAbsenceLedger                absenceLedger;
+    HcmWorker                       hcmWorker;
+    CompanyInfo                     companyInfo;
+
+    Array                           DimArray;
+    DefaultDimensionView            dimensionView;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYHeaderFooterTmp))]
+    public SPYHeaderFooterTmp getSPYHeaderFooterTmp()
+    {
+        select headerFooterTmp;
+        return headerFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYLeaveApplicationTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYLeaveApplicationTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYLeaveApplicationTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYLeaveApplicationTmp))]
+    public SPYLeaveApplicationTmp getSPYLeaveApplicationTmp()
+    {
+        select leaveApplicationTmp;
+        return leaveApplicationTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYHeaderFooterTmp()
+    {
+        headerFooterTmp.clear();
+        headerFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        headerFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        headerFooterTmp.CompanyName      = companyInfo.Name();
+        headerFooterTmp.CompanyEmail     = companyInfo.email();
+        headerFooterTmp.CompanyPhone     = companyInfo.phone();
+        headerFooterTmp.CompanyURL       = companyInfo.url();
+        headerFooterTmp.CompanyCurrency  = Ledger::accountingCurrency();
+        headerFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        QueryRun    qr;
+    
+        super();
+    
+        companyInfo = CompanyInfo::find();
+    
+        this.insertIntoSPYHeaderFooterTmp();
+    
+        this.parmQuery().validTimeStateDateRange(dateNull(), dateMax());
+        qr = new QueryRun(this.parmQuery());
+    
+        while(qr.next())
+        {
+            leaveApplicationTable   = qr.get(tableNum(SPYLeaveApplicationTable));
+            leaveApplicationLine    = qr.get(tableNum(SPYLeaveApplicationLine));
+            hcmWorker               = qr.get(tableNum(HcmWorker));
+    
+            this.setSPYLeaveApplicationTmp();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setSPYLeaveApplicationTmp</Name>
+				<Source><![CDATA[
+    public void setSPYLeaveApplicationTmp()
+    {
+        SPYLeaveApplicationValidation   leaveApplicationValidation = new SPYLeaveApplicationValidation(leaveApplicationTable, leaveApplicationLine);
+
+        leaveApplicationTmp.clear();
+        leaveApplicationTmp.Worker                  = hcmWorker.RecId;
+        leaveApplicationTmp.WorkerName              = hcmWorker.name();
+        leaveApplicationTmp.WorkerPersonnelNumber   = hcmWorker.PersonnelNumber;
+        leaveApplicationTmp.LeaveApplicationCode    = leaveApplicationTable.LeaveApplicationCode;
+        leaveApplicationTmp.WorkflowStatus          = leaveApplicationTable.WorkflowStatus;
+        leaveApplicationTmp.ServiceResumed          = leaveApplicationTable.ServiceResumed;
+        leaveApplicationTmp.HRMAbsenceCode          = leaveApplicationLine.HRMAbsenceCode;
+        leaveApplicationTmp.ActualStartDate         = leaveApplicationLine.ActualStartDate;
+        leaveApplicationTmp.ActualEndDate           = leaveApplicationLine.ActualEndDate;
+        leaveApplicationTmp.Hours                   = leaveApplicationLine.Hours;
+        leaveApplicationTmp.AbsenceDays             = leaveApplicationLine.LeaveApplied;
+        leaveApplicationTmp.Remarks                 = leaveApplicationLine.Remarks;
+        leaveApplicationTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

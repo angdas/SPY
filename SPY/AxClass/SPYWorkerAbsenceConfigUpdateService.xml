@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerAbsenceConfigUpdateService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWorkerAbsenceConfigUpdateService extends SysOperationServiceBase
+{
+    LegalEntityRecId                                        legalEntity;
+    SPYAbsenceConfigRecId                           absenceConfig;    
+    HcmWorker                                               hcmWorker;
+    HcmEmployment                                      hcmEmployment;
+    HcmEmploymentDetail                             hcmEmploymentDetail;
+    HCMPersonPrivateDetails                         personPrivateDetails;
+    QueryRun                                                 hcmWorkerQueryRun;
+    SPYWorkerAbsenceConfigUpdateContract    contract;
+    List                                                             workerList;
+    str                                                              workerValidationText;   
+    TransDate                                                  payStartDate, payEndDate, joiningDate;
+    RecordInsertList                                        workerPositionAbsenceConfigList;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    public void process(SPYWorkerAbsenceConfigUpdateContract _contract)
+    {
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+        ListEnumerator          workerListEnumerator;
+        TransDate                 transDate;
+
+        contract = _contract;
+        legalEntity = contract.parmLegalEntity();
+        absenceConfig = contract.parmAbsenceConfig();
+        transDate = contract.parmTransDate();
+        workerPositionAbsenceConfigList = new RecordInsertList(tableNum(SPYWorkerPositionAbsenceConfigLine));
+        changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+        {            
+            workerList = new List(Types::Int64);
+            this.setWorkerQuery(contract.parmWorkerQuery());
+            progress.setCaption("@SPY1533");
+            progress.setAnimation(#AviUpdate);
+            progress.setTotal(workerList.elements());
+            progressCount = 1;
+            setPrefix(strFmt("@SPY:UpdatingWorkerAbsence"));
+            if(this.validate(transDate) == false)
+                throw error("@SPY1530");
+            try
+            {
+                ttsBegin;
+                workerListEnumerator = workerList.getEnumerator();
+                while(workerListEnumerator.moveNext())
+                {
+                    this.setWorker(workerListEnumerator.current());
+                    this.setDates(transDate);
+                    progress.setText(strfmt("@SPY:UpdatingWorker", hcmWorker.name(),hcmWorker.PersonnelNumber));
+                    progress.setCount(progressCount, 1);
+                    info(strfmt("@SPY:UpdatingWorker",hcmWorker.PersonnelNumber, hcmWorker.name()));
+                    if(this.ValidateWorker(transDate) == false)
+                    {                        
+                        this.showWorkerValidationText();
+                        error(strFmt("@SPY1541",hcmWorker.name(),hcmWorker.PersonnelNumber));
+                    }
+                    else
+                    {
+                        this.updateWorkerAbsenceConfig();
+                    }
+                    progressCount++;
+                }
+                this.commitTrans();
+                info("@SPY1540");
+                ttsCommit;
+            }
+            catch(Exception::Error)
+            {
+                ttsAbort;
+                error("@SPY252");
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>commitTrans</Name>
+				<Source><![CDATA[
+    private void commitTrans()
+    {
+        workerPositionAbsenceConfigList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setAbsenceConfiguration</Name>
+				<Source><![CDATA[
+    private void setAbsenceConfiguration()
+    {
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setDates</Name>
+				<Source><![CDATA[
+    private void setDates(TransDate _transDate)
+    {   
+        if(contract.parmEffectiveFromJoiningDate())
+        {
+            date validFrom = dateNull(), validTo = dateMax();
+
+            select firstonly validtimestate(validFrom, validTo) hcmEmployment
+                order by ValidFrom desc
+                where hcmEmployment.Worker == hcmWorker.RecId &&
+                hcmEmployment.LegalEntity == legalEntity;
+            joiningDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidFrom, DateTimeUtil::getClientMachineTimeZone()));
+            payStartDate = joiningDate;
+        }
+        else if(contract.parmEffectiveFromOrigHiringDate())
+        {
+            HcmWorkerTitle  hcmWorkerTitle;
+            date validFrom = dateNull(), validTo = dateMax();
+
+            select firstonly validtimestate(validFrom, validTo) hcmEmployment
+                order by ValidFrom desc
+                where hcmEmployment.Worker == hcmWorker.RecId &&
+                hcmEmployment.LegalEntity == legalEntity;
+            
+            select firstonly validtimestate(validFrom, validTo) hcmWorkerTitle
+                order by ValidFrom desc
+                where hcmWorkerTitle.Worker == hcmWorker.RecId;
+            date origHiringDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmWorkerTitle.OriginalHireDateTime, DateTimeUtil::getClientMachineTimeZone()));
+            payStartDate = origHiringDate;
+        }
+        else
+        {
+            select firstonly validtimestate(_transDate) hcmEmployment
+                order by ValidFrom desc
+                where hcmEmployment.Worker == hcmWorker.RecId &&
+                hcmEmployment.LegalEntity == legalEntity;
+            payStartDate = _transDate;
+        }
+        payEndDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidTo, DateTimeUtil::getClientMachineTimeZone()));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorker</Name>
+				<Source><![CDATA[
+    private void setWorker(HcmWorkerRecId _worker)
+    {
+        hcmWorker = HcmWorker::find(_worker);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerQuery</Name>
+				<Source><![CDATA[
+    private void setWorkerQuery(container _workerQuery)
+    {
+        hcmWorkerQueryRun = new QueryRun(_workerQuery);
+        while(hcmWorkerQueryRun.next())
+        {
+            workerList.addEnd(hcmWorkerQueryRun.get(tableNum(HcmWorker)).RecId);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>showWorkerValidationText</Name>
+				<Source><![CDATA[
+    protected void showWorkerValidationText()
+    {
+        warning(workerValidationText);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    private boolean validate(TransDate _transDate)
+    {
+        boolean     ret = true;
+        if(!contract.parmEffectiveFromJoiningDate() && !contract.parmEffectiveFromOrigHiringDate())
+        {
+            if(!_transDate)
+                ret = checkFailed(strFmt("@SPY:TransDateCantNull", _transDate));
+        }
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ValidateWorker</Name>
+				<Source><![CDATA[
+    private boolean ValidateWorker(TransDate _transDate)
+    {
+        boolean ret = true; 
+
+        if(!contract.parmEffectiveFromJoiningDate() && !contract.parmEffectiveFromOrigHiringDate())
+        {
+            if(!hcmEmployment)
+                ret = checkFailed(strFmt("@SPY:WorkerDoesntHaveActiveEmployment", hcmWorker.PersonnelNumber, _transDate));
+        }
+        else
+        {
+            if(!hcmEmployment)
+                ret = checkFailed(strFmt("@SPY:WorkerDoesntHaveActiveEmployment1", hcmWorker.PersonnelNumber));
+        }
+        if(contract.parmEffectiveFromOrigHiringDate() && !payStartDate)
+        {
+            ret = checkFailed(strFmt("@SPY:OriginalHiringDateCantBeNull", hcmWorker.PersonnelNumber));
+        }
+        if(payStartDate < joiningDate)
+            ret = checkFailed(strFmt("@SPY:EffectiveDateCantBeEarlierThanJoiningDate", joiningDate, hcmWorker.PersonnelNumber));
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWorkerAbsenceConfig</Name>
+				<Source><![CDATA[
+    private void updateWorkerAbsenceConfig()
+    {
+        SPYAbsenceConfigLine        absenceConfigLine;
+        SPYWorkerPositionAbsenceConfigLine      workerPositionAbsenceConfig;
+        TransDate                          effectiveFromDate;
+        
+        while select absenceConfigLine
+            order by HRMAbsenceCodeId, Sequence
+            where absenceConfigLine.AbsenceConfig == absenceConfig &&
+                    (absenceConfigLine.Gender == personPrivateDetails.Gender ||
+                    absenceConfigLine.Gender == HcmPersonGender::NonSpecific ||
+                    absenceConfigLine.Gender == HcmPersonGender::None) &&
+                   (absenceConfigLine.EthnicOrigin == personPrivateDetails.EthnicOrigin ||
+                    absenceConfigLine.EthnicOrigin == 0)        
+        {
+            this.deleteWorkerAbsenceConfigLine(absenceConfigLine);
+            LedgerPeriodCode ledgerPeriodCode = LedgerPeriodCode::find(absenceConfigLine.EffectiveDate);
+            workerPositionAbsenceConfig.validTimeStateUpdateMode(ValidTimeStateUpdate::EffectiveBased);
+            workerPositionAbsenceConfig.initValue();
+            workerPositionAbsenceConfig.Worker        = hcmWorker.RecId;
+            workerPositionAbsenceConfig.LegalEntity   = legalEntity;
+            //workerPositionPayroll.Position      = position;   Updating position not reqd
+
+            if ( absenceConfigLine.EffectiveDate == "" )
+            {
+                effectiveFromDate = payStartDate;
+            }
+            else
+            {
+                effectiveFromDate =  ledgerPeriodCode.fromDateAdded(effectiveFromDate);
+            }
+            workerPositionAbsenceConfig.ValidFrom     = effectiveFromDate;
+            workerPositionAbsenceConfig.ValidTo       = payEndDate;
+            workerPositionAbsenceConfig.AbsenceConfig = absenceConfigLine.AbsenceConfig;
+            workerPositionAbsenceConfig.AbsenceCycle = absenceConfigLine.AbsenceCycle;
+            workerPositionAbsenceConfig.LedgerTransDateCalcFromLeave = absenceConfigLine.LedgerTransDateCalcFromLeave;
+            workerPositionAbsenceConfig.LedgerTransDateCalcFromPeriodClose = absenceConfigLine.LedgerTransDateCalcFromPeriodClose;
+            workerPositionAbsenceConfig.AccruedDate = absenceConfigLine.AccruedDate;
+            workerPositionAbsenceConfig.AccruedQty = absenceConfigLine.AccruedQty;
+            workerPositionAbsenceConfig.AllowFullBalanceCarryFwdInFirstYr = absenceConfigLine.AllowFullBalanceCarryFwdInFirstYr;
+            workerPositionAbsenceConfig.AllowNegativeInCarryFwd = absenceConfigLine.AllowNegativeInCarryFwd;
+            workerPositionAbsenceConfig.CarryBackward = absenceConfigLine.CarryBackward;
+            workerPositionAbsenceConfig.CarryForward = absenceConfigLine.CarryForward;
+            workerPositionAbsenceConfig.EntitlementPayrollPeriod = absenceConfigLine.EntitlementPayrollPeriod;
+            workerPositionAbsenceConfig.FetchBenefitQty = absenceConfigLine.FetchBenefitQty;
+            workerPositionAbsenceConfig.HRMAbsenceCodeId = absenceConfigLine.HRMAbsenceCodeId;
+            workerPositionAbsenceConfig.PeriodCloseNotApplicable = absenceConfigLine.PeriodCloseNotApplicable;
+            workerPositionAbsenceConfig.Qty = absenceConfigLine.Qty;
+            workerPositionAbsenceConfig.RestrictInNotice = absenceConfigLine.RestrictInNotice;
+            workerPositionAbsenceConfig.RestrictInProbation = absenceConfigLine.RestrictInProbation;
+
+            workerPositionAbsenceConfigList.add(workerPositionAbsenceConfig);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteWorkerAbsenceConfigLine</Name>
+				<Source><![CDATA[
+    //delete future transactions
+    private void deleteWorkerAbsenceConfigLine(SPYAbsenceConfigLine _absenceConfigLine)
+    {
+        SPYWorkerPositionAbsenceConfigLine      workerPositionAbsenceConfigLine;
+        TransDate  startDate = dateNull(), endDate = dateMax();
+
+        delete_from workerPositionAbsenceConfigLine
+            where workerPositionAbsenceConfigLine.Worker == hcmWorker.RecId &&
+            workerPositionAbsenceConfigLine.LegalEntity == legalEntity &&
+            workerPositionAbsenceConfigLine.HRMAbsenceCodeId == _absenceConfigLine.HRMAbsenceCodeId &&
+            workerPositionAbsenceConfigLine.ValidFrom >= payStartDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

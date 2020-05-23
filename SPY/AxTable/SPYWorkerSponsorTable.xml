@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerSponsorTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYWorkerSponsorTable extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYWorkerSponsorTable find(
+        SPYWorkerSponsorRecId                _recId,
+        boolean                              _forUpdate = false,
+        ConcurrencyModel                     _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYWorkerSponsorTable   wrkerSponsorTable;
+    
+        wrkerSponsorTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            wrkerSponsorTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly wrkerSponsorTable
+             where wrkerSponsorTable.RecId == _recId;
+    
+        return wrkerSponsorTable;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY1287</DeveloperDocumentation>
+	<Label>@SPY1292</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>SponsorCode</TitleField1>
+	<TitleField2>Name</TitleField2>
+	<CacheLookup>FoundAndEmpty</CacheLookup>
+	<ReplacementKey>SponsorIndx</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SponsorCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SponsorCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SponsorCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Name</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>EmployerEID</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayerEID</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayerQID</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>EmployerEID</Name>
+			<ExtendedDataType>Name</ExtendedDataType>
+			<HelpText>@SPY1300</HelpText>
+			<Label>@SPY1299</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Name</Name>
+			<ExtendedDataType>Name</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PayerEID</Name>
+			<ExtendedDataType>Name</ExtendedDataType>
+			<HelpText>@SPY1289</HelpText>
+			<Label>@SPY1288</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PayerQID</Name>
+			<ExtendedDataType>Name</ExtendedDataType>
+			<HelpText>@SPY1291</HelpText>
+			<Label>@SPY1290</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>SponsorCode</Name>
+			<ExtendedDataType>SPYWorkerSponsorCode</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>SponsorIndx</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>SponsorCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations />
+	<StateMachines />
+</AxTable>

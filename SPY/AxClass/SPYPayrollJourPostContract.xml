@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollJourPostContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayrollJourPostContract
+{
+    container                   payrollJourTableQuery;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayrollJourTableQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmPayrollJourTableQuery(container _payrollJourTableQuery = payrollJourTableQuery)
+    {
+        payrollJourTableQuery = _payrollJourTableQuery;
+        return payrollJourTableQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

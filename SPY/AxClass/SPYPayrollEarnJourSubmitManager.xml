@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollEarnJourSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayrollEarnJourSubmitManager
+{
+    SPYPayrollEarningsJournalTable  payrollEarningsJournalTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>activatingFromWeb</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Indicates whether the workflow action is performed from EP.
+    /// </summary>
+    /// <returns>
+    /// true if the workflow action is performed from EP; otherwise, false.
+    /// </returns>
+    protected boolean activatingFromWeb()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollEarningsJournalTable</Name>
+				<Source><![CDATA[
+    private SPYPayrollEarningsJournalTable parmPayrollEarningsJournalTable(SPYPayrollEarningsJournalTable _payrollEarningsJournalTable = payrollEarningsJournalTable)
+    {
+        payrollEarningsJournalTable = _payrollEarningsJournalTable;
+    
+        return payrollEarningsJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;
+    
+        if (!this.activatingFromWeb())
+        {
+            workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+            if (this.submitDialog(workflowSubmitDialog))
+            {
+                payrollEarningsJournalTable.submitToWorkflow(workFlowTypeStr(SPYPayrollEarningsJournal), workflowSubmitDialog.parmWorkflowComment(), this.activatingFromWeb());
+            }
+    
+            formRun = _args.caller();
+            formRun.refreshDataSource();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayrollEarnJourSubmitManager     payrollEarnJourSubmit = new SPYPayrollEarnJourSubmitManager();
+        SPYPayrollEarningsJournalTable      payrollEarningsJournalTable = args.record();
+    
+        payrollEarnJourSubmit.parmPayrollEarningsJournalTable(payrollEarningsJournalTable);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYPayrollEarningsJournalSubmit))
+            payrollEarnJourSubmit.submit(args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

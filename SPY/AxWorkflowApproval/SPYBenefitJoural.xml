@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYBenefitJoural</Name>
+	<CanceledEventHandler>SPYBenefitJourEventHandler1</CanceledEventHandler>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DelegateMenuItem>SPYBenefitJourDelegateMenuItem</DelegateMenuItem>
+	<Document>SPYBenefitJourDocument</Document>
+	<DocumentMenuItem>SPYBenefitJournal</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>Details</DocumentPreviewFieldGroup>
+	<HelpText>@SPY409</HelpText>
+	<Label>@SPY408</Label>
+	<ResubmitMenuItem>SPYBenefitJourResubmitMenuItem</ResubmitMenuItem>
+	<StartedEventHandler>SPYBenefitJourEventHandler1</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYBenefitJourEventHandler1</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYBenefitJourApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYBenefitJourEventHandler1</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<Enabled xmlns="">No</Enabled>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYBenefitJourReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYBenefitJourEventHandler1</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYBenefitJourRequestChange</ActionMenuItem>
+		<EventHandler xmlns="">SPYBenefitJourEventHandler1</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPromotionProcessContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPromotionProcessContract
+{
+    container                   workerQuery;
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+    FromDate                    fromDate;
+    ToDate                      toDate;
+    SPYPayrollParameterState    payrollParameterState;
+    SPYPromotionIncrementType   promotionIncrementType;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmFromDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public FromDate parmFromDate(FromDate _fromDate = fromDate)
+    {
+        fromDate = _fromDate;
+        return fromDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollParameterState</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollParameterState parmPayrollParameterState(SPYPayrollParameterState _payrollParameterState = payrollParameterState)
+    {
+        payrollParameterState = _payrollParameterState;
+        return payrollParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPromotionIncrementType</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPromotionIncrementType parmPromotionIncrementType(SPYPromotionIncrementType _promotionIncrementType = promotionIncrementType)
+    {
+        promotionIncrementType = _promotionIncrementType;
+        return promotionIncrementType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerQuery(container _workerQuery = workerQuery)
+    {
+        workerQuery = _workerQuery;
+        return workerQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

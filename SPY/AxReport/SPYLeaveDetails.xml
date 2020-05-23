@@ -1,0 +1,866 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxReport xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYLeaveDetails</Name>
+	<DataMethods />
+	<DataSets>
+		<AxReportDataSet xmlns="">
+			<Name>LeaveDetails</Name>
+			<Query>SELECT SPYBenefitLedger.1.JournalType:NAME(SPYBenefitJournalType),SPYBenefitLedger.1.JournalType:LABEL(SPYBenefitJournalType),SPYBenefitLedger.1.TransDate,SPYBenefitLedger.1.Quantity,SPYBenefitLedger.1.AccountingCurrencyAmount,SPYBenefitLedger.1.AccountingCurPnLAmount,SPYBenefitLedger.1.Benefit,SPYPayElementTable.2.AutoIdentification[],SPYPayElementTable.1.PayElementCode,SPYPayElementTable.1.PayElementType:NAME(SPYPayElementType),SPYPayElementTable.1.PayElementType:LABEL(SPYPayElementType),SPYPayrollPeriodLine.1.PayrollPeriod,SPYPayrollPeriod.1.AutoIdentification[],SPYPayrollPeriodLine.1.PeriodStartDate,SPYPayrollPeriodLine.1.PeriodEndDate,HcmWorker.1.Person,HcmWorker.1.PersonnelNumber,HcmWorker.1.PersonAndPersonnelNumber[],HcmWorker.1.name() FROM SPYLeaveDetails</Query>
+			<FieldGroups>
+				<AxReportDataSetFieldGroupBase xmlns=""
+					i:type="AxReportDataSetFieldGroup">
+					<Name>PersonAndPersonnelNumber</Name>
+					<Alias>HcmWorker.1.PersonAndPersonnelNumber[]</Alias>
+					<Caption>@SYS305602</Caption>
+				</AxReportDataSetFieldGroupBase>
+			</FieldGroups>
+			<Fields>
+				<AxReportDataSetField>
+					<Name>JournalType</Name>
+					<Alias>SPYBenefitLedger.1.JournalType:NAME(SPYBenefitJournalType)</Alias>
+					<Caption>@SYS22453</Caption>
+					<DisableAutoCreateInDataRegion>true</DisableAutoCreateInDataRegion>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>JournalType1</Name>
+					<Alias>SPYBenefitLedger.1.JournalType:LABEL(SPYBenefitJournalType)</Alias>
+					<Caption>@SYS22453</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>TransDate</Name>
+					<Alias>SPYBenefitLedger.1.TransDate</Alias>
+					<Caption>@SYS7402</Caption>
+					<DataType>System.DateTime</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Quantity</Name>
+					<Alias>SPYBenefitLedger.1.Quantity</Alias>
+					<Caption>@SYS3065</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>AccountingCurrencyAmount</Name>
+					<Alias>SPYBenefitLedger.1.AccountingCurrencyAmount</Alias>
+					<Caption>@SPY247</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>AccountingCurPnLAmount</Name>
+					<Alias>SPYBenefitLedger.1.AccountingCurPnLAmount</Alias>
+					<Caption>@SPY486</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Benefit</Name>
+					<Alias>SPYBenefitLedger.1.Benefit</Alias>
+					<Caption>@SPY17</Caption>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PayElementCode</Name>
+					<Alias>SPYPayElementTable.1.PayElementCode</Alias>
+					<Caption>@SPY17</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PayElementType</Name>
+					<Alias>SPYPayElementTable.1.PayElementType:NAME(SPYPayElementType)</Alias>
+					<Caption>@SPY45</Caption>
+					<DisableAutoCreateInDataRegion>true</DisableAutoCreateInDataRegion>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PayElementType1</Name>
+					<Alias>SPYPayElementTable.1.PayElementType:LABEL(SPYPayElementType)</Alias>
+					<Caption>@SPY45</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PayrollPeriod</Name>
+					<Alias>SPYPayrollPeriodLine.1.PayrollPeriod</Alias>
+					<Caption>@SPY24</Caption>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PeriodStartDate</Name>
+					<Alias>SPYPayrollPeriodLine.1.PeriodStartDate</Alias>
+					<Caption>@SYS428</Caption>
+					<DataType>System.DateTime</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PeriodEndDate</Name>
+					<Alias>SPYPayrollPeriodLine.1.PeriodEndDate</Alias>
+					<Caption>@SYS50115</Caption>
+					<DataType>System.DateTime</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Person</Name>
+					<Alias>HcmWorker.1.Person</Alias>
+					<Caption>@SYS80991</Caption>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PersonnelNumber</Name>
+					<Alias>HcmWorker.1.PersonnelNumber</Alias>
+					<Caption>@SYS303656</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField xmlns=""
+					i:type="AxReportDataSetCalculatedField">
+					<Name>name</Name>
+					<Alias>HcmWorker.1.name()</Alias>
+					<Caption>@SYS320666</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+			</Fields>
+			<Parameters>
+				<AxReportDataSetParameter>
+					<Name>AX_PartitionKey</Name>
+					<Alias>AX_PartitionKey</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_PartitionKey</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_CompanyName</Name>
+					<Alias>AX_CompanyName</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_CompanyName</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_UserContext</Name>
+					<Alias>AX_UserContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_UserContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RenderingCulture</Name>
+					<Alias>AX_RenderingCulture</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RenderingCulture</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_ReportContext</Name>
+					<Alias>AX_ReportContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_ReportContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>LeaveDetails_DynamicParameter</Name>
+					<Alias>LeaveDetails_DynamicParameter</Alias>
+					<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+					<Parameter>LeaveDetails_DynamicParameter</Parameter>
+				</AxReportDataSetParameter>
+			</Parameters>
+		</AxReportDataSet>
+	</DataSets>
+	<DefaultParameterGroup>
+		<Name xmlns="">Parameters</Name>
+		<ReportParameterBases xmlns="">
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_PartitionKey</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_CompanyName</Name>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_UserContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RenderingCulture</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_ReportContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>LeaveDetails_DynamicParameter</Name>
+				<AOTQuery>SPYLeaveDetails</AOTQuery>
+				<AllowBlank>true</AllowBlank>
+				<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+		</ReportParameterBases>
+	</DefaultParameterGroup>
+	<Designs>
+		<AxReportDesign xmlns=""
+			i:type="AxReportAutoDesign">
+			<Name>AutoDesign1</Name>
+			<LayoutTemplate>ReportLayoutStyleTemplate</LayoutTemplate>
+			<DataRegions>
+				<AxReportDataRegion xmlns=""
+					i:type="AxReportTable">
+					<Name>Table</Name>
+					<DataSet>LeaveDetails</DataSet>
+					<Title>LeaveDetails</Title>
+					<Filters />
+					<StyleTemplate>TableStyleAlternatingRowsTemplate</StyleTemplate>
+					<Data>
+						<Name>Data</Name>
+						<DetailData>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>JournalType</Name>
+								<Caption>=Labels!@SYS22453</Caption>
+								<Expression>=Fields!JournalType.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>JournalType1</Name>
+								<Caption>=Labels!@SYS22453</Caption>
+								<Expression>=Fields!JournalType1.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>TransDate</Name>
+								<Caption>=Labels!@SYS7402</Caption>
+								<Expression>=Fields!TransDate.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>Quantity</Name>
+								<Caption>=Labels!@SYS3065</Caption>
+								<Expression>=Fields!Quantity.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>AccountingCurrencyAmount</Name>
+								<Caption>=Labels!@SPY247</Caption>
+								<Expression>=Fields!AccountingCurrencyAmount.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>AccountingCurPnLAmount</Name>
+								<Caption>=Labels!@SPY486</Caption>
+								<Expression>=Fields!AccountingCurPnLAmount.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>Benefit</Name>
+								<Caption>=Labels!@SPY17</Caption>
+								<Expression>=Fields!Benefit.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>PayElementCode</Name>
+								<Caption>=Labels!@SPY17</Caption>
+								<Expression>=Fields!PayElementCode.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>PayElementType</Name>
+								<Caption>=Labels!@SPY45</Caption>
+								<Expression>=Fields!PayElementType.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>PayElementType1</Name>
+								<Caption>=Labels!@SPY45</Caption>
+								<Expression>=Fields!PayElementType1.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>PayrollPeriod</Name>
+								<Caption>=Labels!@SPY24</Caption>
+								<Expression>=Fields!PayrollPeriod.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>PeriodStartDate</Name>
+								<Caption>=Labels!@SYS428</Caption>
+								<Expression>=Fields!PeriodStartDate.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>PeriodEndDate</Name>
+								<Caption>=Labels!@SYS50115</Caption>
+								<Expression>=Fields!PeriodEndDate.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>Person</Name>
+								<Caption>=Labels!@SYS80991</Caption>
+								<Expression>=Fields!Person.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>PersonnelNumber</Name>
+								<Caption>=Labels!@SYS303656</Caption>
+								<Expression>=Fields!PersonnelNumber.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+							<AxReportItem xmlns=""
+								i:type="AxReportTableDetailData">
+								<Name>name</Name>
+								<Caption>=Labels!@SYS320666</Caption>
+								<Expression>=Fields!name.Value</Expression>
+								<Padding>
+									<Name>Padding</Name>
+								</Padding>
+								<Style>
+									<BorderColor />
+									<BorderStyle />
+									<BorderWidth />
+									<Font />
+									<Padding />
+								</Style>
+								<DisplayWidth>Auto</DisplayWidth>
+								<Aggregation>
+									<Name>Aggregation</Name>
+									<GrandTotalStyle>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</GrandTotalStyle>
+								</Aggregation>
+								<DrillthroughAction>
+									<Style>
+										<BorderColor />
+										<BorderStyle />
+										<BorderWidth />
+										<Font />
+										<Padding />
+									</Style>
+								</DrillthroughAction>
+							</AxReportItem>
+						</DetailData>
+					</Data>
+					<Groupings />
+					<Sorting />
+				</AxReportDataRegion>
+			</DataRegions>
+			<DisableIndividualTransformation>
+				<Name>DisableIndividualTransformation</Name>
+			</DisableIndividualTransformation>
+			<InteractiveSize>
+				<Name>InteractiveSize</Name>
+				<Height>11in</Height>
+				<Width>8.5in</Width>
+			</InteractiveSize>
+			<Margin>
+				<Name>Margin</Name>
+				<Bottom>.5in</Bottom>
+				<Left>.5in</Left>
+				<Right>.5in</Right>
+				<Top>.5in</Top>
+			</Margin>
+			<PageSize>
+				<Name>PageSize</Name>
+				<Height>11in</Height>
+				<Width>8.5in</Width>
+			</PageSize>
+			<SizeToFit>
+				<Name>SizeToFit</Name>
+			</SizeToFit>
+		</AxReportDesign>
+	</Designs>
+	<EmbeddedImages />
+</AxReport>

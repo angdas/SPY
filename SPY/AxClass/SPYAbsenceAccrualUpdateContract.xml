@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceAccrualUpdateContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYAbsenceAccrualUpdateContract
+{
+    container                       hcmWorkerQuery;
+    LegalEntityRecId                legalEntity;
+    SPYPayrollPeriodLineRecId       fromPayrollPeriodLine;
+    SPYPayrollPeriodLineRecId       toPayrollPeriodLine;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmFromPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmFromPayrollPeriodLine(SPYPayrollPeriodLineRecId _fromPayrollPeriodLine = fromPayrollPeriodLine)
+    {
+        fromPayrollPeriodLine = _fromPayrollPeriodLine;
+        return fromPayrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLegalEntity</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public LegalEntityRecId parmLegalEntity(LegalEntityRecId _legalEntity = legalEntity)
+    {
+        legalEntity = _legalEntity;
+        return legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmToPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmToPayrollPeriodLine(SPYPayrollPeriodLineRecId _toPayrollPeriodLine = toPayrollPeriodLine)
+    {
+        toPayrollPeriodLine = _toPayrollPeriodLine;
+        return toPayrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerQuery(container _hcmWorkerQuery = hcmWorkerQuery)
+    {
+        hcmWorkerQuery = _hcmWorkerQuery;
+        return hcmWorkerQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

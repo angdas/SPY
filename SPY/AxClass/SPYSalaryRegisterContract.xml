@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYSalaryRegisterContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute,
+    SysOperationContractProcessingAttribute(classStr(SPYSalaryRegisterUIBuilder)),
+    SysOperationGroupAttribute('PayrollPeriod','Payroll period','1'),
+    SysOperationGroupAttribute('FinancialDimensions','Financial dimensions','2'),
+    SysOperationGroupAttribute('Details','Details','3')
+]
+class SPYSalaryRegisterContract implements SysOperationValidatable
+{
+    SPYPayrollPeriodLineRecId   payrollPeriodLineFrom, payrollPeriodLineTo;
+    boolean                     showFinDim1;
+    boolean                     showFinDim2;
+    boolean                     showFinDim3;
+    SPYPayrollTypeSRS           payrollType;
+    SPYAmountDisplay            amountDisplay;
+    String255                   documentTitle;
+    boolean                     showTotals;
+    boolean                     showBenefit; //CostToCompany requirement is accomplished
+    boolean                     showSummary;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAmountDisplay</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('AmountDisplay'),
+        SysOperationLabelAttribute(literalStr('@SYS91075')),
+        SysOperationHelpTextAttribute(literalStr('@SYS91075')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('2')
+    ]
+    public SPYAmountDisplay parmAmountDisplay(SPYAmountDisplay _amountDisplay = amountDisplay)
+    {
+        amountDisplay = _amountDisplay;
+    
+        return amountDisplay;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDocumentTitle</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('DocumentTitle'),
+        SysOperationLabelAttribute(literalStr('@SYS310663')),
+        SysOperationHelpTextAttribute(literalStr('@SYS310666')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('5')
+    ]
+    public String255 parmDocumentTitle(String255 _documentTitle = documentTitle)
+    {
+        documentTitle = _documentTitle;
+        return documentTitle;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLineFrom</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLineFrom'),
+        SysOperationLabelAttribute(literalStr('@SPY635')),
+        SysOperationHelpTextAttribute(literalStr('@SPY168')),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLineFrom(SPYPayrollPeriodLineRecId _payrollperiodLineFrom = payrollPeriodLineFrom)
+    {
+        payrollPeriodLineFrom =_payrollperiodLineFrom;
+    
+        return payrollPeriodLineFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLineTo</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLineTo'),
+        SysOperationLabelAttribute(literalStr('@SPY636')),
+        SysOperationHelpTextAttribute(literalStr('@SPY168')),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLineTo(SPYPayrollPeriodLineRecId _payrollperiodLineTo = payrollPeriodLineTo)
+    {
+        payrollPeriodLineTo =_payrollperiodLineTo;
+    
+        return payrollPeriodLineTo;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollType</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollType'),
+        SysOperationLabelAttribute(literalStr('@SPY56')),
+        SysOperationHelpTextAttribute(literalStr('@SPY136')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollTypeSRS parmPayrollType(SPYPayrollTypeSRS _payrollType = payrollType)
+    {
+        payrollType =_payrollType;
+    
+        return payrollType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowBenefit</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('ShowBenefit'),
+        SysOperationLabelAttribute(literalStr('@SPY737')),
+        SysOperationHelpTextAttribute(literalStr('@SPY737')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('4')
+    ]
+    public boolean parmShowBenefit(boolean _showBenefit = showBenefit)
+    {
+        showBenefit = _showBenefit;
+    
+        return showBenefit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowFinDim1</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('showFinDim1'),
+        SysOperationLabelAttribute(literalStr('Dimension 1')),
+        SysOperationHelpTextAttribute(literalStr('Show details by Dimension 1')),
+        SysOperationGroupMemberAttribute('FinancialDimensions'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public boolean  parmShowFinDim1(boolean _showFinDim1 = showFinDim1)
+    {
+        showFinDim1 = _showFinDim1;
+    
+        return showFinDim1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowFinDim2</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('showFinDim2'),
+        SysOperationLabelAttribute(literalStr('Dimension 2')),
+        SysOperationHelpTextAttribute(literalStr('Show details by Dimension 2')),
+        SysOperationGroupMemberAttribute('FinancialDimensions'),
+        SysOperationDisplayOrderAttribute('2')
+    ]
+    public boolean  parmShowFinDim2(boolean _showFinDim2 = showFinDim2)
+    {
+        showFinDim2 = _showFinDim2;
+    
+        return showFinDim2;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowFinDim3</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('showFinDim3'),
+        SysOperationLabelAttribute(literalStr('Dimension 3')),
+        SysOperationHelpTextAttribute(literalStr('Show details by Dimension 3')),
+        SysOperationGroupMemberAttribute('FinancialDimensions'),
+        SysOperationDisplayOrderAttribute('3')
+    ]
+    public boolean  parmShowFinDim3(boolean _showFinDim3 = showFinDim3)
+    {
+        showFinDim3 = _showFinDim3;
+    
+        return showFinDim3;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowSummary</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('ShowSummary'),
+        SysOperationLabelAttribute(literalStr('@SPY744')),
+        SysOperationHelpTextAttribute(literalStr('@SPY744')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('4')
+    ]
+    public boolean parmShowSummary(boolean _showSummary = showSummary)
+    {
+        showSummary = _showSummary;
+    
+        return showSummary;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowTotals</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('ShowTotals'),
+        SysOperationLabelAttribute(literalStr('@GLS105042')),
+        SysOperationHelpTextAttribute(literalStr('@GLS105042')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('4')
+    ]
+    public boolean parmShowTotals(boolean _showTotals = showTotals)
+    {
+        showTotals = _showTotals;
+    
+        return showTotals;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate()
+    {
+        SPYPayrollPeriodLine    payrollPeriodFrom = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        SPYPayrollPeriodLine    payrollPeriodTo = SPYPayrollPeriodLine::find(payrollPeriodLineTo);
+        boolean                 ret = true;
+    
+        if(payrollPeriodLineFrom == 0)
+            ret = checkFailed("Payroll Period From must be specified");
+    
+        if(payrollPeriodLineTo == 0)
+            ret = checkFailed("Payroll Period To must be specified");
+    
+        if(payrollPeriodFrom.PayrollPeriod != payrollPeriodTo.PayrollPeriod)
+            ret = checkFailed("Both period line entries must belong to the same Payroll Period");
+    
+        if(payrollPeriodFrom.PeriodStartDate > payrollPeriodTo.PeriodStartDate)
+            ret = checkFailed("Payroll Period Line To must be later than Payroll Period Line From");
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

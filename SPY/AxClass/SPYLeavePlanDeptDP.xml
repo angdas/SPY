@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeavePlanDeptDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[SRSReportParameterAttribute(classstr(SPYLeavePlanDeptContract))]
+public class SPYLeavePlanDeptDP extends SRSReportDataProviderBase
+{
+    SPYLeavePlanDeptTmp                 leavePlanDeptTmp;
+    List                                subordinates;
+    HcmWorker                           hcmWorker;
+    SPYAbsenceLedger                    absenceLedger;
+    OMOperatingUnitNumber               department;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYLeavePlanDeptTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tablestr(SPYLeavePlanDeptTmp))]
+    public SPYLeavePlanDeptTmp getSPYLeavePlanDeptTmp()
+    {
+        select leavePlanDeptTmp;
+        return leavePlanDeptTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        HcmPositionDetail                   hcmPositionDetail;
+    
+        HRMAbsenceCode                      hrmAbsenceCode;
+        TransDate                           dateVal;
+        boolean                             recordexists = false;
+    
+        SPYLeavePlanDeptContract            contract = this.parmDataContract() as SPYLeavePlanDeptContract;
+    
+        department                          = contract.parmDepartment();
+    
+        while select hcmWorker
+        {
+            recordexists = false;
+    
+            if( (department != "" && department == hcmWorker.primaryDepartmentName()) ||
+                (department == "")
+                )
+            {
+    
+                while select absenceLedger
+                    where   absenceLedger.Worker == hcmWorker.RecId
+                    &&      absenceLedger.AbsenceDate >= contract.parmFromDate()
+                    &&      absenceLedger.AbsenceDate <= contract.parmToDate()
+                {
+    
+                    hrmAbsenceCode  = hrmAbsenceCode::find(absenceLedger.HRMAbsenceCodeId);
+    
+                    //dates.add(absenceLedger.AbsenceDate);
+                    leavePlanDeptTmp.clear();
+                    leavePlanDeptTmp.Worker                 = absenceLedger.Worker;
+                    leavePlanDeptTmp.WorkerName             = hcmWorker.name();
+                    leavePlanDeptTmp.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+                    leavePlanDeptTmp.AbsenceDate            = absenceLedger.AbsenceDate;
+                    leavePlanDeptTmp.HRMAbsenceCodeId       = absenceLedger.HRMAbsenceCodeId;
+                    leavePlanDeptTmp.AbsenceExists          = NoYes::Yes;
+                    leavePlanDeptTmp.foreColor              = SPYLeavePlanDeptDP::int2RGBhex( hrmAbsenceCode.foreColor );
+                    leavePlanDeptTmp.backgroundColor        = SPYLeavePlanDeptDP::int2RGBhex( hrmAbsenceCode.backgroundColor);
+                    leavePlanDeptTmp.DepartmentName         = hcmWorker.primaryDepartmentName();
+                    hcmPositionDetail                       = HcmPositionDetail::findByPosition(HcmPosition::findByPosition(hcmWorker.primaryPositionId()).RecId);
+                    leavePlanDeptTmp.PositionDescription    = hcmPositionDetail.Description;
+                    leavePlanDeptTmp.insert();
+                    recordexists = true;
+    
+                }
+    
+                if(recordexists==false)
+                {
+    
+                    dateVal = contract.parmFromDate();
+                    leavePlanDeptTmp.clear();
+                    leavePlanDeptTmp.Worker                 = hcmWorker.RecId;
+                    leavePlanDeptTmp.WorkerName             = hcmWorker.name();
+                    leavePlanDeptTmp.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+                    leavePlanDeptTmp.AbsenceDate            = dateVal;
+                    leavePlanDeptTmp.AbsenceExists          = NoYes::No;
+                    leavePlanDeptTmp.DepartmentName         = hcmWorker.primaryDepartmentName();
+                    hcmPositionDetail                       = HcmPositionDetail::findByPosition(HcmPosition::findByPosition(hcmWorker.primaryPositionId()).RecId);
+                    leavePlanDeptTmp.PositionDescription    = hcmPositionDetail.Description;
+                    leavePlanDeptTmp.insert();
+                }
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>int2RGBhex</Name>
+				<Source><![CDATA[
+    static str int2RGBhex(int color)
+    {
+        container colorcon;
+        str colorhex;
+    ;
+    
+    colorcon=WinApi::RGBint2Con(color);
+    colorhex=Global::int2Hex(conpeek(colorcon,1),2);
+    colorhex+=Global::int2Hex(conpeek(colorcon,2),2);
+    colorhex+=Global::int2Hex(conpeek(colorcon,3),2);
+    
+    return "#"+colorhex;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYOvertimeJournal_MyJournal</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYOvertimeJournal_MyJournal extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Title>@SPY1051</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYOvertimeJournalTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYOvertimeJournalTable</Table>
+			<DataSources />
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>createdBy</Name>
+					<Field>createdBy</Field>
+					<Value>((createdBy = currentUserId()) &amp;&amp; ( createdBy != 0))</Value>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

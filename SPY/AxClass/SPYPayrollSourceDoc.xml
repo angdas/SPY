@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollSourceDoc</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[SourceDocumentEnumClassExtAttribute(enumstr(SPYSourceDocument_PayrollJournal),
+SPYSourceDocument_PayrollJournal::Journal,
+tableStr(SPYPayrollJournalTable))]
+public class SPYPayrollSourceDoc extends SourceDocument
+{
+    SPYPayrollJournalTable            payrollJournalTable;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>allocateNumAndVoucher</Name>
+				<Source><![CDATA[
+    NumberSeq  allocateNumAndVoucher()
+    {
+        NumberSeq               tmpNumberSeq;
+
+        tmpNumberSeq = NumberSeq::newGetVoucher(SPYPayrollParameters::numRefPayrollVoucherId());
+
+        return tmpNumberSeq;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>documentsBusinessEvent</Name>
+				<Source><![CDATA[
+    public BusinessEvent documentsBusinessEvent()
+    {
+        BusinessEvent           businessEvent;
+
+        businessEvent = new BusinessEvent(enumNum(SPYBusinessEvent_PayrollJournal),SPYBusinessEvent_PayrollJournal::Journal);
+
+        return businessEvent;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeImplementation</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Initializes the instance variables.
+    /// </summary>
+    /// <param name="_sourceDocumentImplementation">
+    /// A source document implementation table.
+    /// </param>
+    protected void initializeImplementation(SourceDocumentHeaderImplementation _sourceDocumentImplementation)
+    {
+        payrollJournalTable = _sourceDocumentImplementation;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAccountingDate</Name>
+				<Source><![CDATA[
+    public AccountingDate parmAccountingDate()
+    {
+        return payrollJournalTable.TransDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBusinessEventDate</Name>
+				<Source><![CDATA[
+    public DocumentDate parmBusinessEventDate()
+    {
+        DocumentDate documentDate;
+
+        documentDate = super();
+
+        return documentDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCurrentVoucher</Name>
+				<Source><![CDATA[
+    public Voucher parmCurrentVoucher(DataAreaId _dataAreaId)
+    {
+        Voucher ret;
+
+        ret = this.allocateNumAndVoucher().voucher();
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDocumentNumber</Name>
+				<Source><![CDATA[
+    public DocumentNum parmDocumentNumber()
+    {
+        return payrollJournalTable.JournalId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmExchangeRate1</Name>
+				<Source><![CDATA[
+    public ExchRate parmExchangeRate1()
+    {
+        return payrollJournalTable.exchRate();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmExchangeRate2</Name>
+				<Source><![CDATA[
+    public ExchRate parmExchangeRate2()
+    {
+        return payrollJournalTable.exchRateSecondary();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmExchangeRateDate</Name>
+				<Source><![CDATA[
+    public AccountingDate parmExchangeRateDate()
+    {
+        AccountingDate exchRateDate;
+
+        exchRateDate = payrollJournalTable.TransDate;
+
+        return exchRateDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmJournalTableRecId</Name>
+				<Source><![CDATA[
+    public RefRecId parmJournalTableRecId()
+    {
+        return payrollJournalTable.RecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmQuantity</Name>
+				<Source><![CDATA[
+    public Qty parmQuantity()
+    {
+        return 1;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

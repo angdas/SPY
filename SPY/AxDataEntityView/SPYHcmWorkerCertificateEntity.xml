@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxDataEntityView xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYHcmWorkerCertificateEntity</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYHcmWorkerCertificateEntity extends common
+{
+}
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<FormRef>HcmWorker</FormRef>
+	<Label>@SPY:SPYWorker</Label>
+	<DataManagementEnabled>Yes</DataManagementEnabled>
+	<DataManagementStagingTable>SPYHcmWorkerCertificateStaging</DataManagementStagingTable>
+	<IsPublic>Yes</IsPublic>
+	<PrimaryKey>EntityKey</PrimaryKey>
+	<PublicCollectionName>HcmWorkerCertificates</PublicCollectionName>
+	<PublicEntityName>HcmWorkerCertificate</PublicEntityName>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>Person</Name>
+			<AccessModifier>Private</AccessModifier>
+			<DataField>Person</DataField>
+			<DataSource>HcmWorker</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>CertificateType</Name>
+			<DataField>CertificateType</DataField>
+			<DataSource>HcmPersonCertificateEntity</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>CertificateTypeId</Name>
+			<DataField>CertificateTypeId</DataField>
+			<DataSource>HcmPersonCertificateEntity</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>EndDate</Name>
+			<DataField>EndDate</DataField>
+			<DataSource>HcmPersonCertificateEntity</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>Notes</Name>
+			<DataField>Notes</DataField>
+			<DataSource>HcmPersonCertificateEntity</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>StartDate</Name>
+			<DataField>StartDate</DataField>
+			<DataSource>HcmPersonCertificateEntity</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>PersonnelNumber</Name>
+			<DataField>PersonnelNumber</DataField>
+			<DataSource>HcmWorker</DataSource>
+		</AxDataEntityViewField>
+	</Fields>
+	<Keys>
+		<AxDataEntityViewKey>
+			<Name>EntityKey</Name>
+			<Fields>
+				<AxDataEntityViewKeyField>
+					<DataField>PersonnelNumber</DataField>
+				</AxDataEntityViewKeyField>
+			</Fields>
+		</AxDataEntityViewKey>
+	</Keys>
+	<Mappings />
+	<Ranges />
+	<Relations />
+	<StateMachines />
+	<ViewMetadata>
+		<Name>Metadata</Name>
+		<SourceCode>
+			<Methods>
+				<Method>
+					<Name>classDeclaration</Name>
+					<Source><![CDATA[
+[Query]
+public class Metadata extends QueryRun
+{
+}
+]]></Source>
+				</Method>
+			</Methods>
+		</SourceCode>
+		<DataSources>
+			<AxQuerySimpleRootDataSource>
+				<Name>HcmWorker</Name>
+				<DynamicFields>Yes</DynamicFields>
+				<Table>HcmWorker</Table>
+				<DataSources>
+					<AxQuerySimpleEmbeddedDataSource>
+						<Name>DirPerson</Name>
+						<DynamicFields>Yes</DynamicFields>
+						<Table>DirPerson</Table>
+						<DataSources>
+							<AxQuerySimpleEmbeddedDataSource>
+								<Name>HcmPersonCertificateEntity</Name>
+								<DynamicFields>Yes</DynamicFields>
+								<Table>HcmPersonCertificateEntity</Table>
+								<DataSources />
+								<DerivedDataSources />
+								<Fields />
+								<Ranges />
+								<Relations>
+									<AxQuerySimpleDataSourceRelation>
+										<Name>QueryDataSourceRelation1</Name>
+										<Field>PartyNumber</Field>
+										<JoinDataSource>DirPerson</JoinDataSource>
+										<RelatedField>PartyNumber</RelatedField>
+									</AxQuerySimpleDataSourceRelation>
+								</Relations>
+							</AxQuerySimpleEmbeddedDataSource>
+						</DataSources>
+						<DerivedDataSources />
+						<Fields />
+						<Ranges />
+						<Relations>
+							<AxQuerySimpleDataSourceRelation>
+								<Name>QueryDataSourceRelation1</Name>
+								<Field>Person</Field>
+								<JoinDataSource>HcmWorker</JoinDataSource>
+								<RelatedField>RecId</RelatedField>
+							</AxQuerySimpleDataSourceRelation>
+						</Relations>
+					</AxQuerySimpleEmbeddedDataSource>
+				</DataSources>
+				<DerivedDataSources />
+				<Fields />
+				<Ranges />
+				<GroupBy />
+				<Having />
+				<OrderBy />
+			</AxQuerySimpleRootDataSource>
+		</DataSources>
+	</ViewMetadata>
+</AxDataEntityView>

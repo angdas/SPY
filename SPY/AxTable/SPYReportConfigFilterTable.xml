@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYReportConfigFilterTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYReportConfigFilterTable extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYReportConfigFilterTable find(
+        SPYReportConfigFilterRecId          _recId,
+        boolean                     _forUpdate = false,
+        ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYReportConfigFilterTable reportConfigFilterTable;
+    
+        reportConfigFilterTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            reportConfigFilterTable.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly reportConfigFilterTable
+             where reportConfigFilterTable.RecId == _recId;
+    
+        return reportConfigFilterTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByCode</Name>
+				<Source><![CDATA[
+    public static SPYReportConfigFilterTable findByCode(
+        SPYReportConfigFilter           _code,
+        boolean                     _forUpdate = false,
+        ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYReportConfigFilterTable reportConfigFilterTable;
+    
+        reportConfigFilterTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            reportConfigFilterTable.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly reportConfigFilterTable
+             where reportConfigFilterTable.ReportFilterCode == _code;
+    
+        return reportConfigFilterTable;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<FormRef>SPYReportConfigFilter</FormRef>
+	<Label>@SPY:RepConfigFilter</Label>
+	<SubscriberAccessLevel>
+		<Read>Allow</Read>
+	</SubscriberAccessLevel>
+	<TitleField1>ReportFilterCode</TitleField1>
+	<TitleField2>Description</TitleField2>
+	<ReplacementKey>SPYReportConfigFilter_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ReportFilterCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ReportFilterCode</Name>
+			<ExtendedDataType>SPYReportConfigFilter</ExtendedDataType>
+			<Label>@SPY:RepConfigFilter</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldContainer">
+			<Name>Query</Name>
+			<Label>@SPY:FilterQuery</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Active</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>NoYesId</ExtendedDataType>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>SPYReportConfigFilter_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>ReportFilterCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations />
+	<StateMachines />
+</AxTable>

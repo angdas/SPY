@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayElementAccount</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayElementAccount extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>findByWorkerPayElementGroup</Name>
+				<Source><![CDATA[
+    public static SPYPayElementAccount findByWorkerPayElementGroup(
+    SPYPayElementGroupCode  _payElementGroup,
+    SPYWorkerGroupCode      _workerGroupCode,
+    CompanyInfoRecId        _legalEntity,
+    boolean                 _forUpdate = false,
+    ConcurrencyModel        _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayElementAccount    payElementAccount;
+    
+        payElementAccount.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            payElementAccount.concurrencyModel(_concurrencyModel);
+        }
+    
+        if (_payElementGroup && _workerGroupCode && _legalEntity)
+        {
+            select firstOnly payElementAccount
+            where payElementAccount.PayElementGroup == _payElementGroup &&
+                  payElementAccount.WorkerGroup == _workerGroupCode &&
+                  payElementAccount.LegalEntity == _legalEntity;
+        }
+    
+        return payElementAccount;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY487</DeveloperDocumentation>
+	<Label>@SPY76</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>LedgerDimensionDebit</TitleField1>
+	<TitleField2>LedgerDimensionCredit</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>PayElementAccount_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElementGroup</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>WorkerGroup</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElementGroup</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>WorkerGroup</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LegalEntity</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AccountDistTemplate</Name>
+			<Label>@SPY488</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>AccountingDistributionTemplate</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>LedgerAccount</Name>
+			<Label>@SYS8343</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LedgerDimensionDebit</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LedgerDimensionCredit</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LedgerDimensionPnL</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Overview</Name>
+			<Label>@SYS50012</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElementGroup</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>WorkerGroup</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>AccountingDistributionTemplate</Name>
+			<ExtendedDataType>AccountingDistributionTemplateRecId</ExtendedDataType>
+			<Label>@GLS92535</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LedgerDimensionCredit</Name>
+			<ExtendedDataType>LedgerDimensionDefaultAccount</ExtendedDataType>
+			<Label>@SYS11162</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LedgerDimensionDebit</Name>
+			<ExtendedDataType>LedgerDimensionDefaultAccount</ExtendedDataType>
+			<Label>@SYS24500</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LedgerDimensionExpenseCredit</Name>
+			<ExtendedDataType>LedgerDimensionDefaultAccount</ExtendedDataType>
+			<Label>@SPY1117</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LedgerDimensionExpenseDebit</Name>
+			<ExtendedDataType>LedgerDimensionDefaultAccount</ExtendedDataType>
+			<Label>@SPY1118</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LedgerDimensionPnL</Name>
+			<ExtendedDataType>LedgerDimensionDefaultAccount</ExtendedDataType>
+			<Label>@SYS978</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LegalEntity</Name>
+			<ExtendedDataType>LegalEntityRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PayElementGroup</Name>
+			<ExtendedDataType>SPYPayElementGroupCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>WorkerGroup</Name>
+			<ExtendedDataType>SPYWorkerGroupCode</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>PayElementAccount_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>PayElementGroup</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>WorkerGroup</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LegalEntity</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>AccountingDistributionTemplate</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>AccountingDistributionTemplate</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>AccountingDistributionTemplate</Name>
+					<Field>AccountingDistributionTemplate</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>CompanyInfo</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>CompanyInfo</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LegalEntity</Name>
+					<Field>LegalEntity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>DimensionAttributeValueCombination_Cr</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>DimensionAttributeValueCombination_Cr</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>CreditAccount</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LedgerDimensionCredit</Name>
+					<Field>LedgerDimensionCredit</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>DimensionAttributeValueCombination_Dr</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>DimensionAttributeValueCombination_Dr</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>DebitAccount</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LedgerDimensionDebit</Name>
+					<Field>LedgerDimensionDebit</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValueCombination_ExpCr</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>DimensionAttributeValueCombination_ExpCr</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>ExpenseCreditAccount</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LedgerDimensionExpenseCredit</Name>
+					<Field>LedgerDimensionExpenseCredit</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValueCombination_ExpDr</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>DimensionAttributeValueCombination_ExpDr</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>ExpenseDebitAccount</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LedgerDimensionExpenseDebit</Name>
+					<Field>LedgerDimensionExpenseDebit</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValueCombination_PnL</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>DimensionAttributeValueCombination_PnL</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>PnLAccount</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LedgerDimensionPnL</Name>
+					<Field>LedgerDimensionPnL</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayElementGroupTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPayElementGroupTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayElementGroup</Name>
+					<Field>PayElementGroup</Field>
+					<RelatedField>PayElementGroupCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>PayElementGroup_PK</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYWorkerGroupTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYWorkerGroupTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>WorkerGroup</Name>
+					<Field>WorkerGroup</Field>
+					<RelatedField>WorkerGroupCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>WorkerGroup_PK</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

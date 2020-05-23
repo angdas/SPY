@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPromotionEventHandler</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// The SPYPromotionEventHandler workflow event handler.
+/// </summary>
+public class  SPYPromotionEventHandler implements WorkflowCanceledEventHandler,  
+	WorkflowCompletedEventHandler,
+	WorkflowStartedEventHandler
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>started</Name>
+				<Source><![CDATA[
+    public void started(WorkflowEventArgs _workflowEventArgs)
+    {
+        SPYPromotionTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Started);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canceled</Name>
+				<Source><![CDATA[
+    public void canceled(WorkflowEventArgs _workflowEventArgs)
+    {
+        SPYPromotionTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Cancelled);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>completed</Name>
+				<Source><![CDATA[
+    public void completed(WorkflowEventArgs _workflowEventArgs)
+    {
+        SPYPromotionTable        promotionTable = SPYPromotionTable::find(_workflowEventArgs.parmWorkflowContext().parmRecId());
+        SPYPromotionTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Approved);
+
+        //promotionTable.updateWorkerPayelements();     //Commented by Rakesh OCt 7 2018 as update elemts giving error
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

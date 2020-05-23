@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAccJourRulePayroll</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SourceDocumentEnumExtensionAttribute(enumStr(SPYBusinessEvent_PayrollJournal),
+SPYBusinessEvent_PayrollJournal::Journal,
+    MonetaryAmount::PayrollCost)
+]
+public class SPYAccJourRulePayroll extends AccountingJournalizingRule
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canUseTaxMainAccDimensionListProvider</Name>
+				<Source><![CDATA[
+    public boolean canUseTaxMainAccDimensionListProvider()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerPostingType</Name>
+				<Source><![CDATA[
+    public LedgerPostingType parmLedgerPostingType()
+    {
+        return LedgerPostingType::PayrollCreditAccount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmReclassifyDistributionAmounts</Name>
+				<Source><![CDATA[
+    public boolean parmReclassifyDistributionAmounts()
+    {
+        boolean ret;
+
+        ret = true;//super();
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSide</Name>
+				<Source><![CDATA[
+    public DebitCredit parmSide()
+    {
+        DebitCredit             side = DebitCredit::Debit;
+        AccountingDistribution  localAccountingDistribution;
+
+        localAccountingDistribution = this.parmAccountingdistribution();
+
+
+        if(localAccountingDistribution.TransactionCurrencyAmount > 0)
+        {
+            side = DebitCredit::Credit;
+        }
+
+        return side;
+    }
+
+    /*
+
+    public LedgerPostingType postParmLedgerPostingType_BR(LedgerPostingType _retVal)
+    {
+        TaxSourceDocSublineItem taxSourceDocSublineItem;
+
+        if (this.parmSourceDocumentLineItem() is TaxSourceDocSublineItem)
+        {
+            taxSourceDocSublineItem = this.parmSourceDocumentLineItem();
+
+            if (this.parmMonetaryAmount() == monetaryAmount::Tax
+            && !TaxTable::find(taxSourceDocSublineItem.parmTaxCode()).RetainedTax_BR)
+            {
+                return LedgerPostingType::TaxExpense_BR;
+            }
+
+            if (this.parmMonetaryAmount() == monetaryAmount::TaxNonRecoverable // for IPI
+            && !TaxTable::find(taxSourceDocSublineItem.parmTaxCode()).RetainedTax_BR)
+            {
+                return LedgerPostingType::CustBalance;
+            }
+        }
+
+        return _retVal;
+    }
+
+    /// <summary>
+    /// Returns the posting type for the current <c>SourceDocumentLineItem</c>.
+    /// </summary>
+    /// <param name="_retVal">
+    /// Return value of the original method.
+    /// </param>
+    /// <returns>
+    /// Posting type for <c>SourceDocumentLineItem</c>.
+    /// </returns>
+// <GIN>
+    public LedgerPostingType postParmLedgerPostingType_IN(LedgerPostingType _retVal)
+    {
+        TaxSourceDocSublineItem    taxSourceDocSublineItem;
+        TaxType_IN                 taxType;
+
+        #ISOCountryRegionCodes
+
+        if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoIN]))
+        {
+            if (sourceDocumentLineItem is TaxSourceDocSublineItem
+            && (this.parmMonetaryAmount() == MonetaryAmount::Tax
+            || this.parmMonetaryAmount() == MonetaryAmount::Incentiveschemetax_IN))
+            {
+                taxSourceDocSublineItem = sourceDocumentLineItem;
+                taxType = TaxTable::find(taxSourceDocSublineItem.parmTaxCode()).TaxType_IN;
+
+                switch (taxType)
+                {
+                    case TaxType_IN::Customs:
+                        _retVal = LedgerPostingType::Customs_IN;
+                        break;
+                    default :
+                        break;
+                }
+            }
+        }
+
+        return _retVal;
+    }
+
+    
+    public DebitCredit postParmSide_BR(DebitCredit _returnValue = 0)
+    {
+        DebitCredit             side = _returnValue;
+        AccountingDistribution  localAccountingDistribution;
+
+        localAccountingDistribution = this.parmAccountingdistribution();
+
+        if (this.parmSourceDocumentLineItem() is TaxSourceDocSublineItem)
+        {
+            if (localAccountingDistribution.TransactionCurrencyAmount > 0)
+            {
+                side = DebitCredit::Credit;
+            }
+            else
+            {
+                side = DebitCredit::Debit;
+            }
+        }
+
+        return side;
+    }
+        
+
+    public static void parmLedgerPostingTypeHandler_BR(XppPrePostArgs _args)
+    {
+        AccJourRuleSaleOfProductExtendedPrice accountingRule = _args.getThis();
+
+        if (!BrazilParameters::isEnabled())
+        {
+            return;
+        }
+
+        _args.setReturnValue(accountingRule.postParmLedgerPostingType_BR(_args.getReturnValue()));
+    }
+
+    
+    public static void parmLedgerPostingTypeHandler_IN(XppPrePostArgs _args)
+    {
+        AccJourRuleSaleOfProductExtendedPrice accountingRule = _args.getThis();
+
+        if (!TaxParameters::isCustomsEnable_IN())
+        {
+            return;
+        }
+
+        _args.setReturnValue(accountingRule.postParmLedgerPostingType_IN(_args.getReturnValue()));
+    }
+
+    
+
+    public static void postParmSideHandler_BR(XppPrePostArgs _args)
+    {
+        AccJourRuleSaleOfProductExtendedPrice AccJourRuleSaleOfProductExtendedPrice = _args.getThis();
+        anyType returnValue;
+
+        if (!BrazilParameters::isEnabled())
+        {
+            return;
+        }
+
+        returnValue = AccJourRuleSaleOfProductExtendedPrice.postParmSide_BR(_args.getReturnValue());
+
+        _args.setReturnValue(returnValue);
+    }
+    */
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

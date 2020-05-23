@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>HCMEmploymentDateManagerExtensionSPYCustomizations</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// Handler for <c>HcmEmploymentDateManager.SPYExtension</c> class events.
+/// </summary>
+public class HCMEmploymentDateManagerExtensionSPYCustomizations
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>HcmEmployment_OnActivated</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Overrides the <c>OnActivated</c> method for the <c>HcmEmploymentDateManager</c> form.
+    /// </summary>
+    /// <param name = "_sender">The form data source.</param>
+    /// <param name = "_e">The data souces event arguments.</param>
+    [FormDataSourceEventHandler(formDataSourceStr(HcmEmploymentDateManager, HcmEmployment), FormDataSourceEventType::Activated)]
+    public static void HcmEmployment_OnActivated(FormDataSource _sender, FormDataSourceEventArgs _e)
+    {
+        var SPYEmploymentCostDistribution = _sender.formRun().design().controlName(formControlStr(HcmEmploymentDateManager, SPYEmploymentCostDistribution)) as FormFunctionButtonControl;
+        FormDataSource hcmEmployment_ds = _sender.formRun().dataSource(formDataSourceStr(HcmEmploymentDateManager, HcmEmployment)) as FormDataSource;
+        HcmEmployment hcmEmployment = hcmEmployment_ds.cursor();
+        HcmEmploymentDetail  hcmemploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId);
+
+        if(hcmemploymentDetail.SPYCostDistributionBasis != SPYCostDistributionBasis::Timesheet)
+        {
+            SPYEmploymentCostDistribution.visible(true);
+        }
+        else
+        {
+            SPYEmploymentCostDistribution.visible(false);
+        }
+        
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

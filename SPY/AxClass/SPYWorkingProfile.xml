@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkingProfile</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWorkingProfile
+{
+    HcmWorker       worker;
+    
+    LegalEntityRecId legalEntity;
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(HcmWorkerRecId _worker, LegalEntityRecId _legalEntity)
+    {
+        worker = HcmWorker::find(_worker);
+        legalEntity = _legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerIsCalendar</Name>
+				<Source><![CDATA[
+    public boolean workerIsCalendar(TransDate _transDate)
+    {
+        HcmEmployment       employment;
+        HcmEmploymentDetail     employmentDetail;
+        TransDate       transDate;
+
+        select firstonly validtimestate(_transDate) employmentDetail
+            join employment
+            where employmentDetail.Employment == employment.RecId &&
+            employment.Worker == worker.RecId &&
+            employment.LegalEntity == legalEntity;
+
+        if(employmentDetail.SPYPlannedWorkingHourSource == SPYPlannedWorkingHourSource::Calendar)
+            return true;
+        else
+            return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workingHoursFromProfile</Name>
+				<Source><![CDATA[
+    public SPYAmount workingHoursFromProfile(TransDate _transDate)
+    {
+        JmgProfiles jmgProfiles;
+        JmgStampJournalTable stampJournalTable;
+
+        JmgProfileId  profileId = this.workerProfileId(_transDate);
+        jmgProfiles = new JmgProfiles(false);
+        jmgProfiles.getProfile(profileId, dayOfWk(_transDate));
+        jmgProfiles.initStampJournalTable(stampJournalTable);
+    
+        return stampJournalTable.ProfileSeconds / 3600;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerProfileId</Name>
+				<Source><![CDATA[
+    public JmgProfileId workerProfileId(TransDate _transDate)
+    {
+        JmgProfileId  profileId = JmgProfileCalendar::find(JmgEmployee::find(worker.RecId), _transDate).ProfileId;
+
+        return profileId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>IsHolidayFromProfile</Name>
+				<Source><![CDATA[
+    public boolean IsHolidayFromProfile(TransDate _transDate)
+    {
+        JmgEmployee                     jmgEmployee;
+        JmgProfileCalendar              jmgProfileCalendarTable, jmgProfileCalendarGroup, jmgProfileCalendarAll;
+        JmgProfileTable                 jmgProfileTable;
+        JmgProfileId                    holidayprofileId = "";
+        SPYProfileHoliday               profileHoliday;
+        boolean                         isHoliday = false;
+        jmgEmployee = JmgEmployee::findPersonnelNumber(worker.PersonnelNumber);
+
+        select jmgProfileCalendarTable
+            where jmgProfileCalendarTable.ProfileCalendarType == JmgProfileCalendarType::Employee
+            && jmgProfileCalendarTable.RelationNumber == worker.PersonnelNumber
+            && jmgProfileCalendarTable.Date == _transDate
+            && holidayprofileId == "";
+        if(jmgProfileCalendarTable)
+        {
+            holidayprofileId = jmgProfileCalendarTable.ProfileId;
+        }
+
+        select jmgProfileCalendarGroup
+            where jmgProfileCalendarGroup.ProfileCalendarType == JmgProfileCalendarType::ProfileGroup
+            && jmgProfileCalendarGroup.RelationNumber == jmgEmployee.ProfileGroupId
+            && jmgProfileCalendarGroup.Date == _transDate
+            && holidayprofileId == "";
+        if(jmgProfileCalendarGroup)
+        {
+            holidayprofileId = jmgProfileCalendarGroup.ProfileId;
+        }
+
+        select jmgProfileCalendarAll
+            where jmgProfileCalendarAll.ProfileCalendarType == JmgProfileCalendarType::All
+            && jmgProfileCalendarAll.Date == _transDate
+            && holidayprofileId == "";
+        if(jmgProfileCalendarAll)
+        {
+            holidayprofileId = jmgProfileCalendarAll.ProfileId;
+        }
+
+        profileHoliday  = SPYProfileHoliday::find(holidayprofileId, _transDate);
+        if(profileHoliday)
+            isHoliday = true;
+
+        return isHoliday;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

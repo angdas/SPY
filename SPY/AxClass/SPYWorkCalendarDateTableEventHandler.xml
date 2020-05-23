@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkCalendarDateTableEventHandler</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWorkCalendarDateTableEventHandler
+{
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>WorkCalendarDate_onModifiedField</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// An event handler to update the Closed for pickup based on holiday
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    [DataEventHandler(tableStr(WorkCalendarDate), DataEventType::ModifiedField),
+    SuppressBPWarningAttribute("BPCheckSkipStatementValidation","skipDeleteActions is already implemented")]
+    public static void WorkCalendarDate_onModifiedField(Common sender, DataEventArgs e)
+    {
+        WorkCalendarDate        workCalendarDate = sender as WorkCalendarDate;
+        WorkCalendarDateLine    workCalendarDateLine; 
+        str                     cacheKey; 
+        SysGlobalCache          cache   = appl.globalCache(); 
+
+        workCalendarDateLine.skipDeleteActions(true);
+        delete_from workCalendarDateLine
+                where workCalendarDateLine.CalendarId == workCalendarDate.CalendarId &&
+                      workCalendarDateLine.TransDate == workCalendarDate.TransDate;
+        
+        if(workCalendarDate.SPYHoliday)
+        {
+            workCalendarDate.WorkTimeControl = WorkTimeControl::Closed;
+            workCalendarDate.ClosedForPickup = NoYes::Yes;
+        }
+        else
+        {
+            workCalendarDate.WorkTimeControl = WorkTimeControl::Open;
+            workCalendarDate.ClosedForPickup = NoYes::No;
+        }
+        cacheKey = WorkCalendarDate::getCalcDefinedHoursCacheKey(workCalendarDate.CalendarId, workCalendarDate.TransDate, true, curext());
+        if(cache.isSet(tableStr(WorkCalendarDate), cacheKey))
+                cache.remove(tableStr(WorkCalendarDate), cacheKey);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

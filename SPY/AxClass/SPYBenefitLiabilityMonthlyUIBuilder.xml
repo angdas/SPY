@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitLiabilityMonthlyUIBuilder</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYBenefitLiabilityMonthlyUIBuilder extends SrsReportDataContractUIBuilder
+{
+    SPYBenefitLiabilityMonthlyContract    spyBenefitLiabilityMonthlyContract;
+    SysLookupMultiSelectCtrl              msCtrlCust;
+
+    container                         conCustTable;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>build</Name>
+				<Source><![CDATA[
+    public void build()
+    {
+       spyBenefitLiabilityMonthlyContract      = this.dataContractObject();
+    
+       this.addDialogField(methodStr(spyBenefitLiabilityMonthlyContract,parmPayrollPeriodLineFrom), spyBenefitLiabilityMonthlyContract);
+       this.addDialogField(methodStr(spyBenefitLiabilityMonthlyContract,parmBenefitCodeList), spyBenefitLiabilityMonthlyContract);
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>custTableLookup</Name>
+				<Source><![CDATA[
+    private void custTableLookup(FormStringControl _control)
+    {
+        Query query = new Query();
+        QueryBuildDataSource qbds;
+    
+        qbds = query.addDataSource(tableNum(SPYBenefitTable));
+        qbds.fields().clearFieldList();
+        qbds.fields().addField(fieldNum(SPYBenefitTable, PayElementCode));
+    
+        SysLookupMultiSelectGrid::lookup(
+        query,
+        _control,
+        _control,
+        _control,
+        conCustTable);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postBuild</Name>
+				<Source><![CDATA[
+    public void postBuild()
+    {
+        DialogField dlgCustGroup;
+    
+        super();
+    
+        spyBenefitLiabilityMonthlyContract = this.dataContractObject() as SPYBenefitLiabilityMonthlyContract;
+    
+        dlgCustGroup = this.bindInfo().getDialogField(this.dataContractObject(),
+                    methodStr(spyBenefitLiabilityMonthlyContract,parmBenefitCodeList));
+    
+        dlgCustGroup.registerOverrideMethod(
+              methodStr(FormStringControl, lookup),
+              methodStr(SPYBenefitLiabilityMonthlyUIBuilder,custTableLookup),
+              this);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postRun</Name>
+				<Source><![CDATA[
+    public void postRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSDepartmentWiseReportController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYTSDepartmentWiseReportController extends SrsReportRunController
+{
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>caption</Name>
+				<Source><![CDATA[
+    public ClassDescription caption()
+    {
+        ClassDescription ret;
+    
+        ret = "@SPY1665";
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public void getFromDialog()
+    {
+        SrsReportRdlDataContractInfo    rdlContractInfo;
+        SrsReportRdlDataMemberInfo      rdlMember;
+    
+        if(dataContractObjects.exists("SrsReportRdlDataContract"))
+        {
+            rdlContractInfo = dataContractObjects.lookup("SrsReportRdlDataContract");
+            if(rdlContractInfo.getMembers().exists("Department"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("Department");
+                rdlMember.getReportParameter().setValueToDefault();
+                rdlMember.getReportParameter().setValueTyped("A"); //set datatype as string
+    
+                rdlMember = rdlContractInfo.getMembers().lookup("Supervisor");
+                rdlMember.getReportParameter().setValueToDefault();
+                rdlMember.getReportParameter().setValueTyped("A"); //set datatype as string
+            }
+        }
+    
+        super();
+    
+        if(dataContractObjects.exists("SrsReportRdlDataContract"))
+        {
+            rdlContractInfo = dataContractObjects.lookup("SrsReportRdlDataContract");
+            if(rdlContractInfo.getMembers().exists("Department"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("Department");
+                rdlMember.getReportParameter().setValueToDefault();
+                rdlMember.getReportParameter().setValueTyped(
+                OMOperatingUnit::find(rdlMember.getReportParameter().getValueTyped(),OMOperatingUnitType::OMDepartment).OMOperatingUnitNumber
+                + ":"
+                + OMOperatingUnit::find(rdlMember.getReportParameter().getValueTyped(),OMOperatingUnitType::OMDepartment).Name );
+            }
+    
+    
+            if(rdlContractInfo.getMembers().exists("Supervisor"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("Supervisor");
+    
+                rdlMember.getReportParameter().setValueTyped(
+                HCMWorker::find(rdlMember.getReportParameter().getValueTyped()).PersonnelNumber + ":"
+                + HCMWorker::find(rdlMember.getReportParameter().getValueTyped()).name() );
+            }
+    
+        }
+    
+      //  this.parmReportName(ssrsReportStr(SPY_SQL_TS, Report ));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>prePromptModifyContract</Name>
+				<Source><![CDATA[
+    protected void prePromptModifyContract()
+    {
+        SrsReportRdlDataContractInfo    rdlContractInfo;
+        SrsReportRdlDataMemberInfo      rdlMember;
+    
+        if(dataContractObjects.exists("SrsReportRdlDataContract"))
+        {
+            rdlContractInfo = dataContractObjects.lookup("SrsReportRdlDataContract");
+    
+            if(rdlContractInfo.getMembers().exists("FromDate"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("FromDate");
+                rdlMember.parmPropertyType(Types::UserType);
+                rdlMember.parmPropertyTypeId(extendedTypeName2Id("TransDate"));
+                rdlMember.parmDisplayOrderKey('1');
+            }
+            if(rdlContractInfo.getMembers().exists("ToDate"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("ToDate");
+                rdlMember.parmPropertyType(Types::UserType);
+                rdlMember.parmPropertyTypeId(extendedTypeName2Id("TransDate"));
+                rdlMember.parmDisplayOrderKey('2');
+            }
+            if(rdlContractInfo.getMembers().exists("PrintAbsence"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("PrintAbsence");
+                rdlMember.parmDisplayOrderKey('3');
+            }
+    
+    
+            if(rdlContractInfo.getMembers().exists("Supervisor"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("Supervisor");
+    
+                rdlMember.parmPropertyType(Types::UserType);
+                rdlMember.parmPropertyTypeId(extendedTypeName2Id("HcmWorkerRecId"));
+                rdlMember.parmDisplayOrderKey('4');
+            }
+            if(rdlContractInfo.getMembers().exists("Department"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("Department");
+    
+                rdlMember.parmPropertyType(Types::UserType);
+                rdlMember.parmPropertyTypeId(extendedTypeName2Id("OMDepartmentRecId"));
+                rdlMember.parmDisplayOrderKey('5');
+            }
+            if(rdlContractInfo.getMembers().exists("Project"))
+            {
+                rdlMember = rdlContractInfo.getMembers().lookup("Project");
+    
+                rdlMember.parmPropertyType(Types::UserType);
+                rdlMember.parmPropertyTypeId(extendedTypeName2Id("ProjId"));
+                rdlMember.parmDisplayOrderKey('6');
+            }
+        }
+    
+    
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args _args)
+    {
+        SPYTSDepartmentWiseReportController  controller = new SPYTSDepartmentWiseReportController();
+    
+    //    controller.parmReportName(ssrsReportStr(SPY_SQL_TS, Report));
+        controller.parmDialogCaption("@SPY1665");
+        controller.startOperation();
+    
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

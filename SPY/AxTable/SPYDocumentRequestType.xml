@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDocumentRequestType</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYDocumentRequestType extends common
+{
+    
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYDocumentRequestType find(
+    SPYDocumentRequestTypeRecId    _recId,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYDocumentRequestType    documentRequestType;
+    
+        documentRequestType.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            documentRequestType.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly documentRequestType
+             where documentRequestType.RecId == _recId;
+    
+        return documentRequestType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByCode</Name>
+				<Source><![CDATA[
+    public static SPYDocumentRequestType findByCode(
+    SPYDocumentRequestTypeCode    _code,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYDocumentRequestType    documentRequestType;
+    
+        documentRequestType.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            documentRequestType.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly documentRequestType
+             where documentRequestType.DocumentRequestTypeCode == _code;
+    
+        return documentRequestType;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYDocumentRequest</ConfigurationKey>
+	<DeveloperDocumentation>@SPY:HRRequestTypeMaster</DeveloperDocumentation>
+	<Label>@SPY:HRRequestType</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>DocumentRequestTypeCode</TitleField1>
+	<TitleField2>Description</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>RequestCode_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestTypeCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestTypeCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestTypeCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DocumentName</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CertificateType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ConsulateType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DocuRequest</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>IncludeSalary</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>IsAddressTo</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DocRequestType</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Language</Name>
+			<Label>@SYS93120</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentLanguage</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>RequestAddress</Name>
+			<Label>@SPY628</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestAddress</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Template</Name>
+			<Label>@SYS53423</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Template</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>CertificateType</Name>
+			<EnumType>SPYDocumentCertificateType</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ConsulateType</Name>
+			<EnumType>SPYDocumentConsulateType</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DocumentLanguage</Name>
+			<ExtendedDataType>LanguageId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DocumentName</Name>
+			<ExtendedDataType>SPYDocumentName</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DocumentRequestAddress</Name>
+			<ExtendedDataType>SPYDocumentRequestAddressRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DocumentRequestTypeCode</Name>
+			<ExtendedDataType>SPYDocumentRequestTypeCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>DocuRequest</Name>
+			<HelpText>@SPY:WhetherRequestTypeHRRequest</HelpText>
+			<Label>@SPY:HRRequest</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>IncludeSalary</Name>
+			<HelpText>@SPY608</HelpText>
+			<Label>@SPY607</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>IsAddressTo</Name>
+			<HelpText>@SPY606</HelpText>
+			<Label>@SPY605</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Template</Name>
+			<ExtendedDataType>DocuTypeId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>DocRequestType</Name>
+			<EnumType>SPYDocRequestType</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>RequestCode_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>DocumentRequestTypeCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>DocuType</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DocuType</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Template</Name>
+					<Field>Template</Field>
+					<RelatedField>TypeId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>LanguageTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>LanguageTable</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DocumentLanguage</Name>
+					<Field>DocumentLanguage</Field>
+					<RelatedField>LanguageId</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintRelatedFixed">
+					<Name>LabelFile</Name>
+					<RelatedField>LabelFile</RelatedField>
+					<Value>1</Value>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYDocumentRequestAddress</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYDocumentRequestAddress</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DocumentRequestAddress</Name>
+					<Field>DocumentRequestAddress</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

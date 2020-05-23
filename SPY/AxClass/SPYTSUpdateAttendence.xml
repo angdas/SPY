@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSUpdateAttendence</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYTSUpdateAttendence
+{
+    HcmWorkerRecId worker;
+    int            monthDiff;
+    TransDate      attendenceDay;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAttendenceDay</Name>
+				<Source><![CDATA[
+    public Transdate parmAttendenceDay(Transdate _attendenceDay = attendenceDay)
+    {
+        attendenceDay = _attendenceDay;
+    
+        return attendenceDay;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorker</Name>
+				<Source><![CDATA[
+    public HCMworkerRecid parmWorker(HCMworkerRecid _worker = worker)
+    {
+        worker = _worker;
+    
+        return worker;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public  void run()
+    {
+        try
+        {
+            SPYTSUpdateAttendence::updTimesheetMnth(worker,attendenceDay);
+        }
+        catch
+        {
+            error("@SPY1340");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>copyTSFavourites</Name>
+				<Source><![CDATA[
+    public static void copyTSFavourites()
+    {
+        SPYTSTimesheetFavorites TSTimesheetFavoritesUpload;
+        TSTimesheetFavorites    TimesheetFavorites;
+        ;
+    
+        while select TSTimesheetFavoritesUpload
+            order by ValidFrom desc
+        {
+            TimesheetFavorites.ActivityNumber = TSTimesheetFavoritesUpload.ActivityNumber;
+    
+        }
+    
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYTSUpdateAttendence   TSUpdateAttendence;
+        TSAppEmplSub            TSAppEmplSub;
+        int                     monthDiff;
+        SPYTSAttendenceList     AttendenceList;
+    
+        if(args.dataset() == tableNum(SPYTSAttendenceList))
+        {
+            AttendenceList = args.record();
+        }
+        TSUpdateAttendence = new SPYTSUpdateAttendence();
+        TSUpdateAttendence.parmworker(AttendenceList.Worker);
+        TSUpdateAttendence.parmAttendenceDay(AttendenceList.transdate);
+        TSUpdateAttendence.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLeavers</Name>
+				<Source><![CDATA[
+    public static void updateLeavers(HcmWorker _worker)
+    {
+        SPYTSattendenceList attendenceList;
+        HcmWorker           worker;
+        TransDate           startdate,enddate;
+        RecordInsertList    recordInsertAttendance;
+    
+        //if(_worker.AFZIsLeaverStaff == NoYes::Yes)
+        //{
+            startDate = dateStartYr(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()));
+            endDate = dateEndYr(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()));
+            recordInsertAttendance = new RecordInsertList(tableNum(SPYTSattendenceList));
+            do
+            {
+                attendenceList.Worker =  _worker.RecId;
+                attendenceList.Appworker = 0;
+                attendenceList.TransDate = startDate;
+                recordInsertAttendance.add(attendenceList);
+                startDate = startDate + 1;
+            }
+            while (startDate <= endDate);
+            recordInsertAttendance.insertDatabase();
+            /* }
+        else
+        {
+            delete_from attendenceList where attendenceList.Worker == _worker.RecId;
+        }*/
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updTimesheetMnth</Name>
+				<Source><![CDATA[
+    public static void updTimesheetMnth(HcmWorkerRecId _worker, Transdate attendenceDay, NoYes isPresent = NoYes::No)
+    {
+        TSTimesheetTable        tsTimesheetTable;
+        TSTimesheetLine         tsTimesheetLine;
+        TSTimesheetLineWeek     timesheetLineWeek;
+        int                     dayOfprojTimesheetweek;
+        int                     dayOfMonth;
+        TSTimesheetFavorites    tsTimesheetFavorites;
+        TSTimesheetNbr          tsNumber;
+        TSTimesheetTable        tsTimesheetTableCreate;
+        ProjPeriodTimesheetWeek projTimesheetweek;
+        ProjPeriodId            periodId;
+        StartDate               startmthdate;
+        EndDate                 endmthdate;
+        //ProjWorkerSetup         projWorker; //TODO UPGRADE
+        boolean                 updateLineAllowed;
+        ResourceWorkerView      resourceWorkerView;
+    
+        SPYUpdateTSFavourites::CreateFavouritesFromRoster(_worker, attendenceDay);  // code added to trigger the copy of latest roster record to favourites table
+    
+        //projWorker = ProjWorkerSetup::findByWorker(_worker); //TODO UPGRADE
+        //PeriodId = projWorker.PeriodId;   //"Monthly";  // this is now being fetched based on the setup against the worker //TODO UPGRADE
+    
+        startmthdate = dateStartMth(attendenceDay);
+        endmthdate = dateEndMth(attendenceDay);
+        if(PeriodId != "") // mark attendence if Period is setup for the worker
+        {
+                select projTimesheetweek where projTimesheetweek.PeriodId == PeriodId
+                && projTimesheetweek.PeriodFrom <= attendenceDay && projTimesheetweek.PeriodTo >= attendenceDay;
+                switch (dayName(dayOfWk(attendenceDay)) )
+                {
+                    case 'Sunday': dayOfprojTimesheetweek = 1;
+                        break;
+    
+                    case 'Monday': dayOfprojTimesheetweek = 2;
+                        break;
+    
+                    case 'Tuesday': dayOfprojTimesheetweek = 3;
+                        break;
+    
+                    case 'Wednesday': dayOfprojTimesheetweek = 4;
+                        break;
+    
+                    case 'Thursday': dayOfprojTimesheetweek = 5;
+                        break;
+    
+                    case 'Friday': dayOfprojTimesheetweek = 6;
+                        break;
+    
+                    case 'Saturday': dayOfprojTimesheetweek = 7;
+                        break;
+                }
+    
+                select TSTimesheetTable 
+                    join resourceWorkerView
+                    where TSTimesheetTable.Resource == resourceWorkerView.RecId &&
+                          resourceWorkerView.Worker == _worker &&
+                          TSTimesheetTable.PeriodFrom == projTimesheetweek.PeriodFrom &&    // startmthdate
+                          TSTimesheetTable.PeriodTo == projTimesheetweek.PeriodTo &&        // endmthdate
+                          TSTimesheetTable.ProjPeriodId == PeriodId && 
+                          TSTimesheetTable.ProjPeriodTimesheetWeek == projTimesheetweek.RecId;
+                if(!TSTimesheetTable.RecId)
+                {
+                    TSTimesheetTableCreate = null;
+                    TSTimesheetTableCreate.initValue();
+                    TSTimesheetTableCreate.Resource = resourceWorkerView.RecId;                    
+                    TSTimesheetTableCreate.PeriodFrom = projTimesheetweek.PeriodFrom;  //startmthdate; // commented to pickup the first day of week not month
+                    TSTimesheetTableCreate.PeriodTo = projTimesheetweek.PeriodTo; //endmthdate;         // commented to pickup the last day of week not month
+                    TSTimesheetTableCreate.ProjPeriodId = PeriodId;
+                    TSTimesheetTableCreate.ProjPeriodTimesheetWeek = projTimesheetweek.RecId;
+                    TSNumber = TSTimesheetTableCreate.TimesheetNbr;
+                    TSTimesheetTableCreate.insert();
+    
+                    TSTimesheetFavorites::transferAllFavorites(TSTimesheetTableCreate.TimesheetNbr, TSTimesheetTableCreate.ProjPeriodTimesheetWeek);
+    
+                    updateLineAllowed = true;
+    
+                }
+                else if(TSTimesheetTable.ApprovalStatus != TSAppStatus::Create)
+                {
+                    updateLineAllowed = false;
+                    warning(strFmt("@SPY1339",TSTimesheetTable.PeriodFrom,TSTimesheetTable.PeriodTo,TSTimesheetTable.ApprovalStatus));
+                }
+                else
+                {
+                    if(!TSTimesheetLine::existTimesheet(TSTimesheetTable.TimesheetNbr))
+                        TSTimesheetFavorites::transferAllFavorites(TSTimesheetTable.TimesheetNbr, TSTimesheetTable.ProjPeriodTimesheetWeek);
+                    else
+                        TSTimesheetFavorites::SPYTransferNewFavorites(TSTimesheetTable.TimesheetNbr, TSTimesheetTable.ProjPeriodTimesheetWeek); // Added to append mid-week roster change
+    
+                    TSNumber = TSTimesheetTable.TimesheetNbr;
+    
+                    updateLineAllowed = true;
+                }
+    
+                if(updateLineAllowed == true)
+                {
+                    while select TSTimesheetLine where TSTimesheetLine.TimesheetNbr == TSNumber
+                    {
+                        select  tsTimesheetFavorites
+                            join resourceWorkerView
+                            where tsTimesheetFavorites.Resource == resourceWorkerView.RecId &&
+                                  tsTimesheetFavorites.ProjectDataAreaId == TSTimesheetLine.ProjectDataAreaId &&
+                                  tsTimesheetFavorites.ProjId == TSTimesheetLine.ProjId &&
+                                  tsTimesheetFavorites.ActivityNumber == TSTimesheetLine.ActivityNumber &&
+                                  tsTimesheetFavorites.CategoryId == TSTimesheetLine.CategoryId &&
+                                  ((tsTimesheetFavorites.TableGroupAll == TableGroupAll::Table &&                             
+                                  resourceWorkerView.Worker == _worker ) ||
+                                  tsTimesheetFavorites.TableGroupAll == TableGroupAll::All);
+                        ttsBegin;
+                        timesheetLineWeek = TSTimesheetLineWeek::findByTimesheetLine(TSTimesheetLine.RecId, true);
+                        if(timesheetLineWeek)
+                        {
+                            if(isPresent)
+                            {
+                                timesheetLineWeek.Hours[dayOfprojTimesheetweek] = tsTimesheetFavorites.SPYGetHours(dayOfMth(attendenceDay));
+                            }
+                            else
+                            timesheetLineWeek.Hours[dayOfprojTimesheetweek] = 0;
+                            timesheetLineWeek.update();
+                        }
+                        ttsCommit;
+                    }
+    
+                    //>>SNK_START_2015-08-31
+                    //Disabled the autocreation as it slows down the performance.
+                    //AFZAttendenceRegister::createAttendenceRegister(_worker); // Create attendance register if not already present ex: for new employees
+                    SPYAttendenceRegister::updateAttendenceRegister(_worker,attendenceDay,isPresent);
+                }
+        }
+        else
+            error(strfmt("@SPY1338",HcmWorker::find(_worker).PersonnelNumber));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updTimesheetMnthTest</Name>
+				<Source><![CDATA[
+    public static void updTimesheetMnthTest(HcmWorkerRecId _worker, Transdate attendenceDay, NoYes isPresent = NoYes::No)
+    {
+        TSTimesheetTable        TSTimesheetTable;
+        TSTimesheetLine         TSTimesheetLine;
+        TSTimesheetLineWeek     timesheetLineWeek;
+        int                     dayOfprojTimesheetweek;
+        TSTimesheetFavorites    tTimesheetFavorites;
+        TSTimesheetNbr          TSNumber;
+        TSTimesheetTable        TSTimesheetTableCreate;
+        ProjPeriodTimesheetWeek projTimesheetweek;
+        ProjPeriodId            PeriodId;
+        StartDate               startmthdate;
+        EndDate                 endmthdate;
+        ResourceWorkerView      resourceWorkerView;
+
+        PeriodId = "Weekly";  //"Monthly";
+        startmthdate = dateStartMth(attendenceDay);
+        endmthdate = dateEndMth(attendenceDay);
+    
+        select projTimesheetweek where projTimesheetweek.PeriodId == PeriodId
+        && projTimesheetweek.PeriodFrom <= attendenceDay && projTimesheetweek.PeriodTo >= attendenceDay;
+    
+        dayOfprojTimesheetweek = attendenceDay - projTimesheetweek.PeriodFrom;
+    
+        dayOfprojTimesheetweek = dayOfprojTimesheetweek + 1;
+    
+        select TimesheetNbr, ProjPeriodTimesheetWeek, RecId from TSTimesheetTable 
+            join resourceWorkerView
+            where TSTimesheetTable.Resource == resourceWorkerView.RecId &&
+                  resourceWorkerView.Worker == _worker &&
+                  TSTimesheetTable.PeriodFrom == startmthdate && 
+                  TSTimesheetTable.PeriodTo == endmthdate &&
+                  TSTimesheetTable.ProjPeriodId == PeriodId && 
+                  TSTimesheetTable.ProjPeriodTimesheetWeek == projTimesheetweek.RecId;
+    
+        if(!TSTimesheetTable.RecId)
+        {
+            TSTimesheetTableCreate = null;
+            TSTimesheetTableCreate.initValue();
+            TSTimesheetTableCreate.Resource = resourceWorkerView.RecId;
+            TSTimesheetTableCreate.PeriodFrom = startmthdate;
+            TSTimesheetTableCreate.PeriodTo = endmthdate;
+            TSTimesheetTableCreate.ProjPeriodId = PeriodId;
+            TSTimesheetTableCreate.ProjPeriodTimesheetWeek = projTimesheetweek.RecId;
+            TSNumber = TSTimesheetTableCreate.TimesheetNbr;
+            TSTimesheetTableCreate.insert();
+    
+            TSTimesheetFavorites::transferAllFavorites(TSTimesheetTableCreate.TimesheetNbr, TSTimesheetTableCreate.ProjPeriodTimesheetWeek);
+        }
+        else
+        {
+            if(!TSTimesheetLine::existTimesheet(TSTimesheetTable.TimesheetNbr))
+                TSTimesheetFavorites::transferAllFavorites(TSTimesheetTable.TimesheetNbr, TSTimesheetTable.ProjPeriodTimesheetWeek);
+            TSNumber = TSTimesheetTable.TimesheetNbr;
+        }
+    
+        while select TSTimesheetLine where TSTimesheetLine.TimesheetNbr == TSNumber
+        {
+            select  tTimesheetFavorites
+                join resourceWorkerView
+                where tTimesheetFavorites.Resource == resourceWorkerView.RecId &&
+                      tTimesheetFavorites.ProjectDataAreaId == TSTimesheetLine.ProjectDataAreaId &&
+                      tTimesheetFavorites.ProjId == TSTimesheetLine.ProjId &&
+                      tTimesheetFavorites.ActivityNumber == TSTimesheetLine.ActivityNumber &&
+                      tTimesheetFavorites.CategoryId == TSTimesheetLine.CategoryId &&
+                      ((tTimesheetFavorites.TableGroupAll == TableGroupAll::Table && 
+                      resourceWorkerView.Worker == _worker ) ||
+                      tTimesheetFavorites.TableGroupAll == TableGroupAll::All);
+            ttsBegin;
+            timesheetLineWeek = TSTimesheetLineWeek::findByTimesheetLine(TSTimesheetLine.RecId, true);
+            if(isPresent)
+            {
+                timesheetLineWeek.Hours[dayOfprojTimesheetweek] = tTimesheetFavorites.SPYGetHours(dayOfMth(attendenceDay));
+            }
+            else
+            timesheetLineWeek.Hours[dayOfprojTimesheetweek] = 0;
+            timesheetLineWeek.update();
+            ttsCommit;
+        }
+        SPYAttendenceRegister::updateAttendenceRegister(_worker,attendenceDay,isPresent);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

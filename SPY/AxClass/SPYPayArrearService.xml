@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayArrearService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayArrearService extends SPYPayService
+{
+    SPYPayArrearContract        contract;
+    TransDate                   payrollProcessDate;
+    TransDate                   absenceValidFrom;
+    SPYPayrollPeriodLineRecId   arrearPeriodFrom;
+    SPYPayrollPeriodLineRecId   arrearPeriodTo;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>initialize</Name>
+				<Source><![CDATA[
+    public void initialize()
+    {
+        super();
+        this.setPayArrear(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payrollPeriodLineTable</Name>
+				<Source><![CDATA[
+    public void payrollPeriodLineTable(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+        timesheetStart = periodStart;
+        timesheetEnd = periodEnd;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="_contract">
+    ///
+    /// </param>
+    /// <remarks>
+    ///
+    /// </remarks>
+    public void process(SPYPayArrearContract   _contract)
+    {
+        contract = _contract as SPYPayArrearContract;
+        this.setLegalEntity(contract.parmLegalEntity());
+        this.initialize();
+        changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+        {
+            this.preLegalEntityPayrollProcess();
+            this.processPayElement();
+            this.postLegalEntityPayrollProcess();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processPayElement</Name>
+				<Source><![CDATA[
+    private void processPayElement()
+    {
+        boolean                 payrollParameterState;
+        ListEnumerator          workerListEnumerator;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+        SPYPayrollPeriodLine    payrollPeriodLineLoop;
+    
+        this.setPostedPeriodLine(contract.parmPayrollPeriodLine());
+        this.setTransDate(contract.parmTransDate());
+        this.setArrearPeriodFrom(contract.parmArrearPeriodFrom());
+        this.setArrearPeriodTo(contract.parmArrearPeriodTo());
+        this.addObserver(tracer,1);
+        if(contract.parmPayrollParameterState().parmCalledFromArrearProcess())
+        {
+            payrollParameterState = true;
+            this.initializeWorkerList(true,contract.parmPayrollParameterState().parmWorkerContainer());
+        }
+        else
+        {
+            this.initializeWorkerList(false,contract.parmWorkerQuery());
+        }
+        this.initializePayElementMap(false,contract.parmPayElementQuery());
+        this.setPayrollPeriodLine(contract.parmPayrollPeriodLine()); //set period start and end to initialize applicable for all pay element
+        this.initializeAllPayElementMap();
+        workerListEnumerator = workerList.getEnumerator();
+    
+        progress.setCaption("@SPY881");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(workerList.elements() * (select count(RecId) from SPYPayrollPeriodLine
+                                                    where SPYPayrollPeriodLine.RecId >= arrearPeriodFrom &&
+                                                          SPYPayrollPeriodLine.RecId <= arrearPeriodTo).RecId);
+        progressCount = 1;
+        setPrefix("@SPY378");
+        info(strFmt("@SPY253",DateTimeUtil::utcNow()));
+        
+        try
+        {
+            ttsBegin;
+            while select RecId from payrollPeriodLineLoop
+                where payrollPeriodLineLoop.RecId >= arrearPeriodFrom &&
+                      payrollPeriodLineLoop.RecId <= arrearPeriodTo
+            {
+                this.setPayrollPeriodLine(payrollPeriodLineLoop.RecId);
+                this.setPayElementPeriod();
+                workerListEnumerator = workerList.getEnumerator();
+                while(workerListEnumerator.moveNext())
+                {
+                    this.setWorker(HcmWorker::find(workerListEnumerator.current()));
+                    progress.setText(strfmt("@SPY1105", worker.name(),worker.PersonnelNumber));
+                    progress.setCount(progressCount, 1);
+                    this.notifyObserver("@SYS80745",strFmt("%1 (%2-%3)",worker.name(),payrollPeriodLineTab.PeriodStartDate,
+                    payrollPeriodLineTab.PeriodEndDate),3);
+                    if(this.payProcessApplicable())
+                    {
+                        //--<Pay calculation>--
+                        this.preWorkerPayrollProcess();
+                        this.workerPayroll();
+                        this.workerBenefit();
+                        this.postWorkerPayrollProcess();
+                        //--</Pay calculation>--
+                    }
+                    else
+                    {
+                        setPrefix(strFmt("@SPY1518",worker.name(),worker.PersonnelNumber,periodStart,periodEnd));
+                        this.showWorkerValidationText();
+                        this.clearWorkerValidationText();
+                        error(strFmt("@SPY1433"));
+                    }
+                    progressCount++;
+                }
+            }
+            this.finalizeProcess();
+            ttsCommit;
+            info("@SPY379");
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+    
+        info(strFmt("@SPY254",DateTimeUtil::utcNow()));
+        if(contract.parmCheckTrace())
+        {
+            this.checkTrace(strFmt('%1\\Trace_%2_%3_%4.html',WinAPIServer::getTempPath(),curUserId(),
+            date2str(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),123,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2),
+            DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone())));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setArrearPeriodFrom</Name>
+				<Source><![CDATA[
+    public void setArrearPeriodFrom(SPYPayrollPeriodLineRecId _arrearPeriodFrom)
+    {
+        arrearPeriodFrom = _arrearPeriodFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setArrearPeriodTo</Name>
+				<Source><![CDATA[
+    public void setArrearPeriodTo(SPYPayrollPeriodLineRecId _arrearPeriodTo)
+    {
+        arrearPeriodTo = _arrearPeriodTo;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollCalcDate</Name>
+				<Source><![CDATA[
+    public void setPayrollCalcDate(TransDate _validFrom, TransDate _validTo)
+    {
+        calcStart   = max(periodStart,_validFrom);
+        calcEnd     = min(periodEnd,_validTo);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollTimesheetDate</Name>
+				<Source><![CDATA[
+    public void setPayrollTimesheetDate(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+        SPYPayrollPeriodLine        payrollPeriodLineTable;
+        TransDate                   periodProcessDate = _payrollPeriodLineTab.PayrollDate;
+        TransDate                   prevPeriodProcessDate;
+    
+        select firstOnly PayrollDate from payrollPeriodLineTable order by PeriodEndDate desc
+            where payrollPeriodLineTable.PayrollPeriod == _payrollPeriodLineTab.PayrollPeriod &&
+                  payrollPeriodLineTable.PeriodEndDate < _payrollPeriodLineTab.PeriodStartDate;
+        prevPeriodProcessDate = payrollPeriodLineTable.PayrollDate;
+    
+        timesheetStart = prevPeriodProcessDate + 1;
+        timesheetEnd = periodProcessDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

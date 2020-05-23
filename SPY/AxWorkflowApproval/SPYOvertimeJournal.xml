@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYOvertimeJournal</Name>
+	<CanceledEventHandler>SPYOvertimeJourEventHandler1</CanceledEventHandler>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DelegateMenuItem>SPYOvertimeJourDelegateMenuItem</DelegateMenuItem>
+	<Document>SPYOvertimeJourDocument</Document>
+	<DocumentMenuItem>SPYOvertimeJournal</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>Details</DocumentPreviewFieldGroup>
+	<HelpText>@SPY905</HelpText>
+	<Label>@SPY904</Label>
+	<ResubmitMenuItem>SPYOvertimeJourResubmitMenuItem</ResubmitMenuItem>
+	<StartedEventHandler>SPYOvertimeJourEventHandler1</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYOvertimeJourEventHandler1</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYOvertimeJourApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYOvertimeJourEventHandler1</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<Enabled xmlns="">No</Enabled>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYOvertimeJourReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYOvertimeJourEventHandler1</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYOvertimeJourRequestChange</ActionMenuItem>
+		<EventHandler xmlns="">SPYOvertimeJourEventHandler1</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

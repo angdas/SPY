@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYOvertimeLedgerDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYOvertimeLedgerContract)),
+    SRSReportQueryAttribute(queryStr(SPYOvertimeLedger))
+]
+public class SPYOvertimeLedgerDP extends SrsReportDataProviderPreProcess
+{
+    SPYOvertimeHeaderFooterTmp  overtimeHeaderFooterTmp;
+    SPYOvertimeLedgerTmp        overtimeLedgerTmp;
+
+    HcmWorker                   hcmWorker;
+
+    SPYPayrollPeriodLine        payrollPeriodLineFrom, payrollPeriodLineTo, payrollPeriodLineCur;
+    CompanyInfo                 companyInfo;
+    SPYOvertimeLedger           overtimeLedger;
+    SPYOvertimeTypeTable        overtimeTypeTable;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYOvertimeHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYOvertimeHeaderFooterTmp))]
+    public SPYOvertimeHeaderFooterTmp getSPYOvertimeHeaderFooterTmp()
+    {
+        select overtimeHeaderFooterTmp;
+        return overtimeHeaderFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYOvertimeLedgerTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYOvertimeLedgerTmp))]
+    public SPYOvertimeLedgerTmp getSPYOvertimeLedgerTmp()
+    {
+        select overtimeLedgerTmp;
+        return overtimeLedgerTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYOvertimeHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYOvertimeHeaderFooterTmp()
+    {
+        overtimeHeaderFooterTmp.clear();
+        overtimeHeaderFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        overtimeHeaderFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        overtimeHeaderFooterTmp.CompanyName      = companyInfo.Name();
+        overtimeHeaderFooterTmp.CompanyEmail     = companyInfo.email();
+        overtimeHeaderFooterTmp.CompanyPhone     = companyInfo.phone();
+        overtimeHeaderFooterTmp.CompanyURL       = companyInfo.url();
+        overtimeHeaderFooterTmp.PeriodCode       = SPYPayrollPeriod::find(payrollPeriodLineFrom.PayrollPeriod).PayrollPeriodCode;
+        overtimeHeaderFooterTmp.PeriodStartDate  = payrollPeriodLineFrom.PeriodStartDate;
+        overtimeHeaderFooterTmp.PeriodEndDate    = payrollPeriodLineTo.PeriodEndDate;
+        overtimeHeaderFooterTmp.CompanyCurrency  = Ledger::accountingCurrency();
+        overtimeHeaderFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYOvertimeLedgerContract   contract = this.parmDataContract() as SPYOvertimeLedgerContract;
+        Query                       q;
+    
+        QueryBuildDataSource        qbdOvertimeLedger;
+        str                         sqlQuery, strFromDate, strToDate;
+        QueryBuildRange             qbr;
+      //  int                         cnt, i,j;
+    
+        this.setTableConnections();
+    
+        payrollPeriodLineFrom   = SPYPayrollPeriodLine::find(contract.parmPayrollPeriodLineFrom());
+        payrollPeriodLineTo     = SPYPayrollPeriodLine::find(contract.parmPayrollPeriodLineTo());
+    
+        companyInfo = CompanyInfo::find();
+    
+        this.insertIntoSPYOvertimeHeaderFooterTmp();
+    
+        q = this.parmQuery();
+        qbdOvertimeLedger = q.dataSourceTable(tableNum(SPYOvertimeLedger));
+    
+    
+        //>>2016-02-15_SNK_START
+        strFromDate = SPYSQLQueries::SQLDate( payrollperiodlineFrom.PeriodEndDate );
+        strToDate  = SPYSQLQueries::SQLDate( payrollperiodlineTo.PeriodEndDate );
+    
+        sqlQuery = "";
+        sqlQuery +=  " select W.RECID, PT.NAME, W.PERSONNELNUMBER, DEPT.NAME, JD.DESCRIPTION JobTitle, CL.CompensationLevelID Grade, PP.MONTHLY BasicAmt";
+        sqlQuery +=  " , OTH.OVERTIMETYPECODE, OTH.TotalHours, OTA.TotalAmount";
+        sqlQuery += SPYSQLQueries::HRQuery(payrollperiodlineFrom.PeriodStartDate, payrollperiodlineTo.PeriodEndDate);
+        sqlQuery = sqlQuery + " cross join SPYPAYROLLPERIODLINE PPL";
+        sqlQuery = sqlQuery + "     inner join SPYWORKERPOSITIONPAYROLL PP";
+        sqlQuery = sqlQuery + "     inner join SPYPAYELEMENTTABLE PE";
+        sqlQuery = sqlQuery + "         on PE.RECID = PP.PAYROLL";
+        sqlQuery = sqlQuery + "         and PE.PAYELEMENTCODE = 'Basic'";
+        sqlQuery = sqlQuery + "     on PP.WORKER = W.RECID";
+        sqlQuery = sqlQuery + "     and PP.PAYROLL = PE.RECID";
+        sqlQuery = sqlQuery + strFmt( "     and '%1' between PP.VALIDFROM and PP.VALIDTO", strFromDate);
+        sqlQuery = sqlQuery + " inner join ";
+        sqlQuery = sqlQuery + "     (";
+        sqlQuery = sqlQuery + "         select W.PERSONNELNUMBER, PPL.RECID PayrollPeriod, OTT.OVERTIMETYPECODE, isnull( sum( OTL.OVERTIMEHOURS ) , 0.00 ) TotalHours";
+        sqlQuery = sqlQuery + "         from HCMWORKER W";
+        sqlQuery = sqlQuery + "         cross join SPYOVERTIMETYPETABLE OTT";
+        sqlQuery = sqlQuery + "         cross join SPYPAYROLLPERIODLINE PPL";
+        sqlQuery = sqlQuery + "         left join SPYOVERTIMELEDGER OTL";
+        sqlQuery = sqlQuery + "             on OTL.OVERTIMETYPE = OTT.RECID";
+        sqlQuery = sqlQuery + "             and OTL.WORKER = W.RECID                    ";
+        sqlQuery = sqlQuery + "             and OTL.OVERTIMEDATE between PPL.PERIODSTARTDATE and PPL.PERIODENDDATE    ";
+        sqlQuery = sqlQuery + strFmt( "             and OTL.DataAreaID = '%1' ", curext()) ;
+        //applying filter for overtime type code
+        sqlQuery = sqlQuery + " where 1=1 ";
+        qbr = q.dataSourceName("SPYOvertimeTypeTable").findRange( fieldName2id( tableName2id("SPYOvertimeTypeTable"), "OvertimeTypeCode") );
+        if ( qbr )
+        {
+            if ( qbr.toString() != "" )
+                sqlQuery = sqlQuery + strFmt(" and ( %1 )", qbr.toString() );
+        }
+    
+        //applying filter for PersonnelNumber
+        qbr = null;
+        qbr = q.dataSourceName("HCMWorker").findRange( fieldName2id( tableName2id("HCMWorker"), "PersonnelNumber") );
+        if ( qbr )
+        {
+            if ( qbr.toString() != "" )
+                sqlQuery = sqlQuery + strFmt(" and ( %1 )", qbr.toString() );
+        }
+    
+        sqlQuery = sqlQuery + "         group by W.PERSONNELNUMBER, PPL.RECID, OTT.OVERTIMETYPECODE";
+        sqlQuery = sqlQuery + "     ) OTH";
+        sqlQuery = sqlQuery + "     on OTH.PERSONNELNUMBER = W.PERSONNELNUMBER";
+        sqlQuery = sqlQuery + "     and OTH.PayrollPeriod = PPL.RECID";
+        sqlQuery = sqlQuery + " left join";
+        sqlQuery = sqlQuery + "     (    ";
+        sqlQuery = sqlQuery + "     select W.PERSONNELNUMBER, PPL.RECID PayrollPeriod, OTT.OVERTIMETYPECODE, isnull( sum( PL.ACCOUNTINGCURRENCYAMOUNT ), 0.00 ) TotalAmount";
+        sqlQuery = sqlQuery + "     from SPYPAYROLLLEDGER PL";
+        sqlQuery = sqlQuery + "     inner join HCMWORKER W";
+        sqlQuery = sqlQuery + "         on W.RECID = PL.WORKER";
+        sqlQuery = sqlQuery + "     cross join SPYOVERTIMETYPETABLE OTT    ";
+        sqlQuery = sqlQuery + "     inner join SPYPAYROLLPERIODLINE PPL";
+        sqlQuery = sqlQuery + "         on PPL.RECID = PL.PAYROLLPERIODLINE";
+        sqlQuery = sqlQuery + "     where OTT.OVERTIMEPAYROLL = PL.PAYROLL  ";
+        sqlQuery = sqlQuery + strFmt( "     and PL.DataAreaID = '%1' ", curext() ) ;
+        sqlQuery = sqlQuery + "     group by W.PERSONNELNUMBER, PPL.RECID, PPL.PERIODSTARTDATE, PPL.PERIODENDDATE, OTT.OVERTIMETYPECODE";
+        sqlQuery = sqlQuery + "     ) OTA";
+        sqlQuery = sqlQuery + "     on OTA.PERSONNELNUMBER = W.PERSONNELNUMBER";
+        sqlQuery = sqlQuery + "     and OTH.PayrollPeriod = OTA.PayrollPeriod    ";
+        sqlQuery = sqlQuery + "     and OTH.OVERTIMETYPECODE = OTA.OVERTIMETYPECODE    ";
+        sqlQuery = sqlQuery + strFmt( "     where PPL.PERIODENDDATE between '%1' and '%2'", strFromDate, strToDate);
+        sqlQuery = sqlQuery + "    and ( isnull( OTH.TotalHours,0 )  + isnull( OTA.TotalAmount,0 ) <> 0 ) ";
+        sqlQuery = sqlQuery + "    and OTH.OVERTIMETYPECODE <> 'Normal' ";
+    
+    
+        info(sqlQuery);
+        this.processSQLQuery( sqlQuery);
+        //>>2016-02-15_SNK_STOP
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processSQLQuery</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckSQLCode","To improve peromoance, SQL query need to be executed")]
+    private void processSQLQuery(str SQLQuery)
+    {
+        Connection                      connection = new Connection();
+        Statement                       statement = connection.createStatement();
+        ResultSet                       resultSet;
+        SqlStatementExecutePermission   permission;
+        RecordInsertList                recordInsertOvertime;
+        str                             sqlStatement;
+    
+        sqlStatement = sqlQuery;
+    
+        permission = new SqlStatementExecutePermission(sqlStatement);
+        permission.assert();
+    
+        try
+        {
+            resultSet = statement.executeQuery(sqlStatement); 
+    
+            ttsBegin;
+            overtimeLedgerTmp.clear();
+    
+            delete_from overtimeLedgerTmp
+            where ((overtimeLedgerTmp.createdTransactionId == sessionId() ));
+            
+            recordInsertOvertime = new RecordInsertList(tableNum(SPYOvertimeLedgerTmp));
+            while(resultSet.next())
+            {
+                overtimeLedgerTmp.initValue();
+                overtimeLedgerTmp.Worker                    = resultSet.getInt64(1);
+                overtimeLedgerTmp.WorkerName                = resultSet.getString(2);
+                overtimeLedgerTmp.WorkerPersonnelNumber     = resultSet.getString(3);
+                overtimeLedgerTmp.Department                = resultSet.getString(4);
+                overtimeLedgerTmp.JobTitle                  = resultSet.getString(5);
+                overtimeLedgerTmp.PayrollPeriodLine         = payrollPeriodLineTo.RecId;
+                overtimeLedgerTmp.Grade                     = resultSet.getString(6);
+                overtimeLedgerTmp.Basic                     = resultSet.getReal(7);
+                overtimeLedgerTmp.OvertimeTypeCode          = resultSet.getString(8);
+                overtimeLedgerTmp.OTHours                   = resultSet.getReal(9);
+                overtimeLedgerTmp.OTAmount                  = resultSet.getReal(10);
+                recordInsertOvertime.add(overtimeLedgerTmp);
+            }
+            recordInsertOvertime.insertDatabase();
+    
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            info("@SPY1650");
+        }
+        CodeAccessPermission::revertAssert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        overtimeHeaderFooterTmp.setConnection(this.parmUserConnection());
+        overtimeLedgerTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

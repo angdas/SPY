@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSRunSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYEOSRunSubmitManager
+{
+    SPYEOSRunTable                  EOSRunTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmEOSRunTable</Name>
+				<Source><![CDATA[
+    private SPYEOSRunTable parmEOSRunTable(SPYEOSRunTable _EOSRunTable = EOSRunTable)
+    {
+        EOSRunTable = _EOSRunTable;
+    
+        return EOSRunTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;
+    
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            EOSRunTable.submitToWorkflow(workFlowTypeStr(SPYEOSRun), workflowSubmitDialog.parmWorkflowComment(), false);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYEOSRunSubmitManager              EOSRunSubmit = new SPYEOSRunSubmitManager();
+        SPYEOSRunTable                      EOSRunTable = args.record();
+    
+        EOSRunSubmit.parmEOSRunTable(EOSRunTable);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYEOSRunSubmitMenuItem))
+            EOSRunSubmit.submit(args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

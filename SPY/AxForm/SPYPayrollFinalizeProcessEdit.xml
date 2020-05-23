@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYPayrollFinalizeProcessEdit</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYPayrollFinalizeProcessEdit extends FormRun implements IDialogable
+{
+    SPYPayrollFinalizeProcessServiceController         payrollFinalizeProcessServiceController;
+    Query                                                              workerQuery;
+    QueryRun                                                        workerQueryRun;
+    container                                                         queryPack;
+    SPYPayrollFinalizeProcessContract                      payrollFinalizeProcessContract;
+    boolean                                                           calledFromMasterProcess;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>formRun</Name>
+				<Source><![CDATA[
+    public FormRun formRun()
+    {
+        //Required by the SysOperation framework.
+        return this;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>closedOk</Name>
+				<Source><![CDATA[
+    public boolean closedOk()
+    {
+        boolean                     ret;
+    
+        ret = super();
+    
+        if(payrollFinalizeProcessContract)
+        {
+            payrollFinalizeProcessContract.parmLegalEntity(LegalEntity_ReferenceGroup.value());
+            payrollFinalizeProcessContract.parmPayrollPeriodLine(PayrollPeriod_ReferenceGroup.value());
+            payrollFinalizeProcessContract.parmWorkerQuery(queryPack);            
+            payrollFinalizeProcessContract.parmPayrollParameterState(payrollFinalizeProcessServiceController.parmPayrollParameterState());
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        super();
+        this.initialize();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initialize</Name>
+				<Source><![CDATA[
+    void initialize()
+    {
+        SPYPayrollParameterState    payrollParameterState;
+    
+        if(element.args().caller() && element.args().caller() is SPYPayrollFinalizeProcessServiceController)
+        {
+            payrollFinalizeProcessServiceController = element.args().caller() as SPYPayrollFinalizeProcessServiceController;
+            payrollParameterState = payrollFinalizeProcessServiceController.parmPayrollParameterState();
+            if(payrollParameterState && payrollParameterState.parmCalledFromMasterProcess())
+            {
+                calledFromMasterProcess = true;
+            }
+            else
+            {
+                workerQuery = this.initApplQuery();
+                workerQueryRun = new QueryRun(workerQuery);
+            }
+        }
+    
+        element.setEnable();
+        if(payrollFinalizeProcessServiceController.getDataContractObject() is SPYPayrollFinalizeProcessContract)
+            payrollFinalizeProcessContract = payrollFinalizeProcessServiceController.getDataContractObject();
+    
+        element.initializeValue();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initApplQuery</Name>
+				<Source><![CDATA[
+    Query initApplQuery()
+    {
+        return new Query(queryStr(SPYHcmWorker_All));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeValue</Name>
+				<Source><![CDATA[
+    public void initializeValue()
+    {
+        LegalEntity_ReferenceGroup.value(payrollFinalizeProcessContract.parmLegalEntity());
+        PayrollPeriod_ReferenceGroup.value(payrollFinalizeProcessContract.parmPayrollPeriodLine());
+        queryPack = payrollFinalizeProcessContract.parmWorkerQuery();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initQuery</Name>
+				<Source><![CDATA[
+    void  initQuery()
+    {
+        if(workerQueryRun.prompt())
+        {
+            queryPack = workerQueryRun.pack();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runBase</Name>
+				<Source><![CDATA[
+    SPYPayrollFinalizeProcessServiceController runBase()
+    {//Method must be named runBase() for the integration to the Batch dialog to work.
+        return payrollFinalizeProcessServiceController;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEnable</Name>
+				<Source><![CDATA[
+    public void setEnable()
+    {
+        Choose.visible(!calledFromMasterProcess);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="">
+			<Control>
+				<Name>Choose</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void  clicked()
+        {
+            super();
+        
+            element.initQuery();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>PayrollPeriod_ReferenceGroup</Name>
+				<Type>ReferenceGroup</Type>
+				<Methods>
+					<Method>
+						<Name>modified</Name>
+						<Source><![CDATA[
+        public boolean modified()
+        {
+            boolean ret;
+        
+            ret = super();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>OK</Name>
+				<Type>CommandButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            boolean     ret = true;
+        
+            if(!LegalEntity_ReferenceGroup.value())
+                ret = checkFailed("@SPY375");
+        
+            if(ret)
+                super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources />
+	<Design>
+		<Caption xmlns="">@SPY:FinalizePayroll</Caption>
+		<Pattern xmlns="">Dialog</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<Style xmlns="">Dialog</Style>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>FormActionPaneControl1</Name>
+				<Type>ActionPane</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>GroupParametersButtonGroup</Name>
+						<ElementPosition>1610612734</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonControl">
+								<Name>Choose</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>357913940</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<HelpText>@SYS85423</HelpText>
+								<Skip>Yes</Skip>
+								<Type>Button</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Text>@SYS2245</Text>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+					</AxFormControl>
+				</Controls>
+				<Style>Strip</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>Group_</Name>
+				<ElementPosition>805306366</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Pattern>FieldsFieldGroups</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>GroupParameter</Name>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<Type>Group</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>LegalEntity_ReferenceGroup</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>858993458</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>ReferenceGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<ExtendedDataType>LegalEntityRecId</ExtendedDataType>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>PayrollPeriod_ReferenceGroup</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1288490187</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>ReferenceGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<ExtendedDataType>SPYPayrollPeriodLineRecId</ExtendedDataType>
+							</AxFormControl>
+						</Controls>
+					</AxFormControl>
+				</Controls>
+				<ColumnsMode>Fill</ColumnsMode>
+				<Style>DialogContent</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormButtonGroupControl">
+				<Name>ButtonGroup</Name>
+				<ElementPosition>1610612733</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<LeftMode>AutoRight</LeftMode>
+				<TopMode>BottomEdge</TopMode>
+				<Type>ButtonGroup</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>OK</Name>
+						<ElementPosition>858993458</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>CommandButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>OK</Command>
+						<DefaultButton>Yes</DefaultButton>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormMenuFunctionButtonControl">
+						<Name>ButtonBatch</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1717986916</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>MenuFunctionButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<MenuItemName>BatchDialog</MenuItemName>
+						<MenuItemType>Action</MenuItemType>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>Cancel</Name>
+						<ElementPosition>1288490187</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>CommandButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>Cancel</Command>
+					</AxFormControl>
+				</Controls>
+				<ArrangeMethod>HorizontalRight</ArrangeMethod>
+				<Style>DialogCommitContainer</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

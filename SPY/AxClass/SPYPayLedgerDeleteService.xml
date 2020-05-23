@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLedgerDeleteService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayLedgerDeleteService extends SysOperationServiceBase
+{
+    SPYPayLedgerDeleteContract      contract;
+    HcmWorker                       hcmWorker;
+    SPYPayrollPeriodLineRecId       payrollPeriodLine;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>unFinalize</Name>
+				<Source><![CDATA[
+    public void unFinalize(SPYPayLedgerDeleteContract   _contract)
+    {
+        //connected on menu item SPYPayLedgerUnFinalize
+        QueryRun                workerQueryRun;
+        LegalEntity             legalEntity;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+        List                    workerList = new List(Types::Int64);
+        ListEnumerator          workerListEnumerator;
+    
+        contract = _contract as SPYPayLedgerDeleteContract;
+        legalEntity = contract.parmLegalEntity();
+        payrollPeriodLine = contract.parmPayrollPeriodLine();
+        setPrefix("@SPY:UnDoFinalize");
+       
+        try
+        {
+            ttsBegin;
+            changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+            {
+                if(contract.parmWorkerQuery())
+                    workerQueryRun = new QueryRun(contract.parmWorkerQuery());
+                else
+                    workerQueryRun = new QueryRun(new Query(queryStr(SPYHcmWorker_All)));
+                while(workerQueryRun.next())
+                {
+                    hcmWorker = workerQueryRun.get(tableNum(HcmWorker));
+                    workerList.addEnd(hcmWorker.RecId);
+                }
+                workerListEnumerator = workerList.getEnumerator();
+                progress.setCaption("@SPY:Updating");
+                progress.setAnimation(#AviUpdate);
+                progress.setTotal(workerList.elements());
+                progressCount = 1;
+                while(workerListEnumerator.moveNext())
+                {
+                    hcmWorker = HcmWorker::find(workerListEnumerator.current());
+                    progress.setText(strfmt("@SPY882", hcmWorker.name()));
+                    progress.setCount(progressCount, 1);
+                    this.unFinalizeLedger();
+                    progressCount++;
+                }
+                ttsCommit;
+                info("@SPY379");
+            }
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>delete</Name>
+				<Source><![CDATA[
+    public void delete(SPYPayLedgerDeleteContract   _contract)
+    {
+        QueryRun                workerQueryRun;
+        LegalEntity             legalEntity;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+        List                    workerList = new List(Types::Int64);
+        ListEnumerator          workerListEnumerator;
+    
+        contract = _contract as SPYPayLedgerDeleteContract;
+        legalEntity = contract.parmLegalEntity();
+        payrollPeriodLine = contract.parmPayrollPeriodLine();
+        setPrefix("@SPY1062");
+       
+        try
+        {
+            ttsBegin;
+            changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+            {
+                if(contract.parmWorkerQuery())
+                    workerQueryRun = new QueryRun(contract.parmWorkerQuery());
+                else
+                    workerQueryRun = new QueryRun(new Query(queryStr(SPYHcmWorker_All)));
+                while(workerQueryRun.next())
+                {
+                    hcmWorker = workerQueryRun.get(tableNum(HcmWorker));
+                    workerList.addEnd(hcmWorker.RecId);
+                }
+                workerListEnumerator = workerList.getEnumerator();
+                progress.setCaption("@SPY1065");
+                progress.setAnimation(#AviUpdate);
+                progress.setTotal(workerList.elements());
+                progressCount = 1;
+                while(workerListEnumerator.moveNext())
+                {
+                    hcmWorker = HcmWorker::find(workerListEnumerator.current());
+                    progress.setText(strfmt("@SPY882", hcmWorker.name()));
+                    progress.setCount(progressCount, 1);
+                    this.deleteLedger();
+                    progressCount++;
+                }
+                ttsCommit;
+                info("@SPY379");
+            }
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteLedger</Name>
+				<Source><![CDATA[
+    private void deleteLedger()
+    {
+        SPYPayrollLedger                payrollLedger;
+        SPYBenefitLedger                benefitLedger;
+        SPYAbsenceLedger                absenceLedger;
+        SPYReferencePayElementLedger    refPayElementLedger;
+    
+        delete_from payrollLedger
+            where payrollLedger.Worker == hcmWorker.RecId &&
+                  payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !payrollLedger.PayrollJournalLine &&
+                  !payrollLedger.IsFinalised &&
+                  (payrollLedger.SourceDocument == 0 || payrollLedger.SourceDocument == tableNum(SPYLeaveApplicationTable));
+    
+        while select forupdate absenceLedger join benefitLedger
+            where benefitLedger.Worker == hcmWorker.RecId &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !benefitLedger.PayrollJournalLine &&
+                  !benefitLedger.IsFinalised &&
+                  benefitLedger.SourceDocument == tableNum(SPYAbsenceLedger) &&
+                  benefitLedger.RecId == absenceLedger.BenefitLedger
+        {
+            absenceLedger.BenefitLedger = 0;
+            absenceLedger.update();
+        }
+        delete_from benefitLedger
+            where benefitLedger.Worker == hcmWorker.RecId &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !benefitLedger.PayrollJournalLine &&
+                  !benefitLedger.IsFinalised &&
+                  (benefitLedger.SourceDocument == 0 || benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable));
+
+        delete_from refPayElementLedger
+            where refPayElementLedger.Worker == hcmWorker.RecId &&
+                  refPayElementLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !refPayElementLedger.IsFinalised &&
+                  (refPayElementLedger.SourceDocument == 0 || refPayElementLedger.SourceDocument == tableNum(SPYLeaveApplicationTable));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unFinalizeLedger</Name>
+				<Source><![CDATA[
+    private void unFinalizeLedger()
+    {
+        SPYPayrollLedger                payrollLedger;
+        SPYBenefitLedger                benefitLedger;
+        SPYAbsenceLedger                absenceLedger;
+        SPYReferencePayElementLedger    refPayElementLedger;
+    
+        update_recordset payrollLedger
+            setting IsFinalised = NoYes::No
+            where payrollLedger.Worker == hcmWorker.RecId &&
+                  payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+                    payrollLedger.IsFinalised &&
+                  !payrollLedger.PayrollJournalLine;
+    
+        update_recordset benefitLedger
+            setting IsFinalised = NoYes::No
+            where benefitLedger.Worker == hcmWorker.RecId &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !benefitLedger.PayrollJournalLine &&
+                    benefitLedger.IsFinalised ;
+
+
+        update_recordset refPayElementLedger
+            setting IsFinalised = NoYes::No
+            where refPayElementLedger.Worker == hcmWorker.RecId &&
+                  refPayElementLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  refPayElementLedger.IsFinalised;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

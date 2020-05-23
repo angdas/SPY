@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayAdjustmentPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayAdjustmentPostService extends SysOperationServiceBase
+{
+    SPYPayAdjustmentPostContract        contract;
+    RecordInsertList                    adjustmentrLedgerList;
+    boolean                             callFromPost;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>commitLedger</Name>
+				<Source><![CDATA[
+    private void commitLedger()
+    {
+        adjustmentrLedgerList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2Ledger</Name>
+				<Source><![CDATA[
+    private void insert2Ledger(SPYPayAdjustmentTable _payAdjustmentTable)
+    {
+        SPYPayAdjustmentTrans       payAdjustmentTrans;
+        SPYPayAdjustmentLedger      payAdjustmentLedger;
+        ExchangeRateHelper          exchangeRateHelper;
+    
+        while select payAdjustmentTrans
+            where payAdjustmentTrans.PayAdjustment == _payAdjustmentTable.RecId
+        {
+            exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::current(),payAdjustmentTrans.Currency);
+            exchangeRateHelper.parmExchangeDate(payAdjustmentTrans.TransDate);
+    
+            payAdjustmentLedger.PayAdjustmentTrans          = payAdjustmentTrans.RecId;
+            payAdjustmentLedger.Worker                      = payAdjustmentTrans.Worker;
+            payAdjustmentLedger.PayrollPeriodLine           = payAdjustmentTrans.PayrollPeriodlLine;
+            payAdjustmentLedger.TransDate                   = payAdjustmentTrans.TransDate;
+            payAdjustmentLedger.PayAdjustmentType           = payAdjustmentTrans.PayAdjustmentType;
+            payAdjustmentLedger.Txt                         = payAdjustmentTrans.Txt;
+            payAdjustmentLedger.DefaultDimension            = payAdjustmentTrans.DefaultDimension;
+            payAdjustmentLedger.TransactionCurrencyAmount   = payAdjustmentTrans.Amount;
+            payAdjustmentLedger.Currency                    = payAdjustmentTrans.Currency;
+            payAdjustmentLedger.ExchRate                    = exchangeRateHelper.getExchangeRate1();
+            payAdjustmentLedger.AccountingCurrencyAmount    = payAdjustmentTrans.Amount * payAdjustmentLedger.ExchRate / 100;
+            adjustmentrLedgerList.add(payAdjustmentLedger);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYPayAdjustmentPostContract _contract)
+    {
+        QueryRun                adjustmentQueryRun;
+        SPYPayAdjustmentTable   payAdjustmentTable;
+    
+        adjustmentQueryRun = new QueryRun(_contract.parmAdjustmentTableQuery());
+        adjustmentrLedgerList = new RecordInsertList(tableNum(SPYPayAdjustmentLedger));
+    
+        try
+        {
+            setPrefix("@SPY294");
+            ttsBegin;
+            callFromPost = true;
+            if(this.validate(_contract))
+            {
+                while(adjustmentQueryRun.next())
+                {
+                    payAdjustmentTable = adjustmentQueryRun.get(tableNum(SPYPayAdjustmentTable));
+                    if(!payAdjustmentTable.Posted)
+                    {
+                        this.insert2Ledger(payAdjustmentTable);
+                        this.updateAdjustmentHeader(payAdjustmentTable);
+                        info(strFmt("@SPY292",payAdjustmentTable.PayAdjustmentCode));
+                    }
+                }
+                this.commitLedger();
+            }
+            else
+                error("@SPY293");
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAdjustmentHeader</Name>
+				<Source><![CDATA[
+    private void updateAdjustmentHeader(SPYPayAdjustmentTable _payAdjustmentTable)
+    {
+        SPYPayAdjustmentTable   payAdjustmentTableUpdate = SPYPayAdjustmentTable::find(_payAdjustmentTable.RecId,true);
+    
+        if(payAdjustmentTableUpdate)
+        {
+            payAdjustmentTableUpdate.Posted = true;
+            payAdjustmentTableUpdate.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(SPYPayAdjustmentPostContract _contract)
+    {
+        boolean                 ret = true;
+        QueryRun                adjustmentQueryRun;
+        SPYPayAdjustmentTable   payAdjustmentTable;
+    
+        adjustmentQueryRun = new QueryRun(_contract.parmAdjustmentTableQuery());
+        if(!callFromPost)
+            setPrefix("@SPY290");
+        while(adjustmentQueryRun.next())
+        {
+            payAdjustmentTable = adjustmentQueryRun.get(tableNum(SPYPayAdjustmentTable));
+            if(!payAdjustmentTable.Posted)
+            {
+                if(!this.validateAdjustment(payAdjustmentTable))
+                    ret = checkFailed(strFmt("@SPY277",payAdjustmentTable.PayAdjustmentCode));
+                else
+                {
+                    if(!callFromPost)
+                        info(strFmt("@SPY280",payAdjustmentTable.PayAdjustmentCode));
+                }
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateAdjustment</Name>
+				<Source><![CDATA[
+    private boolean validateAdjustment(SPYPayAdjustmentTable _payAdjustmentTable)
+    {
+        boolean                     ret = true;
+        SPYPayAdjustmentTrans       payAdjustmentTrans;
+        SPYPayrollPeriodLine        payrollPeriodLine;
+    
+        if(_payAdjustmentTable.WorkflowStatus != SPYWorkFlowStatus::Approved)
+            ret = checkFailed(strFmt("@SPY417",_payAdjustmentTable.PayAdjustmentCode));
+        while select Worker,PayrollPeriodlLine,TransDate,Amount,Currency,LineNum from payAdjustmentTrans
+            where payAdjustmentTrans.PayAdjustment == _payAdjustmentTable.RecId
+        {
+            if(!payAdjustmentTrans.Worker)
+                ret = checkFailed(strFmt("@SPY286",payAdjustmentTrans.LineNum));
+            if(!payAdjustmentTrans.PayrollPeriodlLine)
+                ret = checkFailed(strFmt("@SPY287",payAdjustmentTrans.LineNum));
+            if(!payAdjustmentTrans.TransDate)
+                ret = checkFailed(strFmt("@SPY288",payAdjustmentTrans.LineNum));
+            if(!payAdjustmentTrans.Amount)
+                ret = checkFailed(strFmt("@SPY289",payAdjustmentTrans.LineNum));
+            if(!payAdjustmentTrans.Currency)
+                ret = checkFailed(strFmt("@SPY291",payAdjustmentTrans.LineNum));
+            payrollPeriodLine = SPYPayrollPeriodLine::find(payAdjustmentTrans.PayrollPeriodlLine);
+            if(payrollPeriodLine.PeriodStatus == SPYPayrollPeriodStatus::Closed)
+                ret = checkFailed(strFmt("@SPY1147",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,payAdjustmentTrans.LineNum));
+            if(payrollPeriodLine.PeriodStatus == SPYPayrollPeriodStatus::Stopped)
+                ret = checkFailed(strFmt("@SPY1148",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,payAdjustmentTrans.LineNum));
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

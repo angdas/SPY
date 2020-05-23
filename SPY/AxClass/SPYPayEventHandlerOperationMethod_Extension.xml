@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayEventHandlerOperationMethod_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[ExtensionOf(classStr(SPYPayEventHandlerOperationMethod))]
+final class SPYPayEventHandlerOperationMethod_Extension
+{
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>Evt_1_1_R</Name>
+				<Source><![CDATA[
+    public static SPYAmount Evt_1_1_R(HcmWorkerRecId worker,LegalEntityRecId legalEntity,RecId payrollPeriodLine,SPYExpressionReturnValue expressionReturn)
+    {
+        SPYGridTable     SPYGridTable;
+        select firstonly SPYGridTable where SPYGridTable.Worker == worker && SPYGridTable.LegalEntity == legalEntity && SPYGridTable.PayrollPeriodLine == payrollPeriodLine && SPYGridTable.Row == 1 && SPYGridTable.Column == 1;
+        return SPYGridTable.value;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Evt_1_1_F</Name>
+				<Source><![CDATA[
+    public static void Evt_1_1_F(HcmWorkerRecId worker,LegalEntityRecId legalEntity,RecId payrollPeriodLine,SPYExpressionReturnValue expressionReturn)
+    {
+        SPYGridTable     SPYGridTable;
+        select firstonly forupdate SPYGridTable where SPYGridTable.Worker == worker && SPYGridTable.LegalEntity == legalEntity && SPYGridTable.PayrollPeriodLine == payrollPeriodLine && SPYGridTable.Row == 1 && SPYGridTable.Column == 1;if(SPYGridTable.recid)
+        {
+            SPYGridTable.value = 0;
+            SPYGridTable.update();
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Evt_1_2_R</Name>
+				<Source><![CDATA[
+    public static SPYAmount Evt_1_2_R(HcmWorkerRecId worker,LegalEntityRecId legalEntity,RecId payrollPeriodLine,SPYExpressionReturnValue expressionReturn)
+    {
+        SPYGridTable     SPYGridTable;
+        select firstonly SPYGridTable where SPYGridTable.Worker == worker && SPYGridTable.LegalEntity == legalEntity && SPYGridTable.PayrollPeriodLine == payrollPeriodLine && SPYGridTable.Row == 1 && SPYGridTable.Column == 2;
+        return SPYGridTable.value;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Evt_1_2_F</Name>
+				<Source><![CDATA[
+    public static void Evt_1_2_F(HcmWorkerRecId worker,LegalEntityRecId legalEntity,RecId payrollPeriodLine,SPYExpressionReturnValue expressionReturn)
+    {
+        SPYGridTable     SPYGridTable;
+        select firstonly forupdate SPYGridTable where SPYGridTable.Worker == worker && SPYGridTable.LegalEntity == legalEntity && SPYGridTable.PayrollPeriodLine == payrollPeriodLine && SPYGridTable.Row == 1 && SPYGridTable.Column == 2;if(SPYGridTable.recid)
+        {
+            SPYGridTable.value = 0;
+            SPYGridTable.update();
+        }
+
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

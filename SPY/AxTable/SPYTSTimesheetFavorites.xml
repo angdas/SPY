@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSTimesheetFavorites</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYTSTimesheetFavorites extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>delete</Name>
+				<Source><![CDATA[
+    public void delete()
+    {
+        TSTimesheetFavorites    timesheetFavorites;
+        ResourceWorkerView      resourceWorkerView;
+        super();
+    
+        ttsBegin;
+        delete_from timesheetFavorites
+            exists join resourceWorkerView 
+            where timesheetFavorites.Resource == resourceWorkerView.RecId &&
+                  resourceWorkerView.Worker == this.Worker && 
+                  timesheetFavorites.ProjId == this.ProjId;
+        ttsCommit;    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initValue</Name>
+				<Source><![CDATA[
+    public void initValue()
+    {
+        this.CategoryId = "Normal";
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>modifiedField</Name>
+				<Source><![CDATA[
+    public void modifiedField(FieldId _fieldId)
+    {
+        super(_fieldId);
+    
+        if(_fieldId == fieldNum(SPYTSTimesheetFavorites,ProjId))
+        {
+            this.ProjName = ProjTable::find(this.ProjId).Name;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>showProjName</Name>
+				<Source><![CDATA[
+    display ProjName showProjName()
+    {
+        return ProjTable::find(this.ProjId).Name;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByWorker</Name>
+				<Source><![CDATA[
+    static SPYTSTimesheetFavorites findByWorker(ProjWorkerRecId    _worker,
+                                                ProjId             _projId,
+                                                ProjCategoryId     _categoryId,
+                                                boolean            _forUpdate)
+    {
+        SPYTSTimesheetFavorites tsTimesheetFavorites;
+    
+        tsTimesheetFavorites.selectForUpdate(_forUpdate);
+    
+        select firstonly tsTimesheetFavorites
+                     where tsTimesheetFavorites.Worker         == _worker
+                     && tsTimesheetFavorites.ProjId            == _projId
+                     && tsTimesheetFavorites.CategoryId        == _categoryId;
+    
+        return tsTimesheetFavorites;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SYS322224</DeveloperDocumentation>
+	<FormRef>TSTimesheetFavoritesSetup</FormRef>
+	<Label>@SPY1330</Label>
+	<TableGroup>Transaction</TableGroup>
+	<TitleField1>Worker</TitleField1>
+	<TitleField2>ProjId</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<ReplacementKey>HcmWorkerIdx</ReplacementKey>
+	<ValidTimeStateFieldType>Date</ValidTimeStateFieldType>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CategoryId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ProjId</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ProjId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CategoryId</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidTo</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidFrom</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Timesheet</Name>
+			<Label>@SYS138979</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CategoryId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ProjId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ActivityNumber</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ActivityNumber</Name>
+			<ExtendedDataType>ProjActivityNumber</ExtendedDataType>
+			<Label>@SPY:ActivityNumber</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>CategoryId</Name>
+			<ExtendedDataType>ProjCategoryId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>IsUpdated</Name>
+			<ExtendedDataType>NoYesId</ExtendedDataType>
+			<Label>Is Updated</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ProjId</Name>
+			<ExtendedDataType>ProjId</ExtendedDataType>
+			<Label>Project</Label>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ProjName</Name>
+			<ExtendedDataType>ProjName</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>TransTxt</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>01</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal1</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>02</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal10</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>11</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal11</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>12</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal12</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>13</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal13</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>14</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal14</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>15</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal15</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>16</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal16</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>17</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal17</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>18</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal18</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>19</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal19</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>20</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal2</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>03</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal20</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>21</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal21</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>22</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal22</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>23</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal23</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>24</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal24</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>25</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal25</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>26</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal26</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>27</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal27</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>28</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal28</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>29</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal29</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>30</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal3</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>04</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal30</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>31</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal31</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal4</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>05</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal5</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>06</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal6</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>07</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal7</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>08</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal8</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>09</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TSDailyHoursTotal9</Name>
+			<ExtendedDataType>TSDailyHoursTotal</ExtendedDataType>
+			<Label>10</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>ProjWorkerRecId</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidTo</Name>
+			<ExtendedDataType>ValidToDate</ExtendedDataType>
+			<Label>Valid to date</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidFrom</Name>
+			<ExtendedDataType>ValidFromDate</ExtendedDataType>
+			<Label>Valid from date</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>HcmWorkerIdx</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<ValidTimeStateKey>Yes</ValidTimeStateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>Worker</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidTo</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidFrom</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker_FK</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelatedTableRole>HcmWorker</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>HcmWorker_TSTimesheetFavorites</Role>
+			<UseDefaultRoleNames>No</UseDefaultRoleNames>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>ProjCategory</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<EDTRelation>Yes</EDTRelation>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>ProjCategory</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelatedTableRole>ProjCategory</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>TSTimesheetFavorites</Role>
+			<UseDefaultRoleNames>No</UseDefaultRoleNames>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>CategoryId</Name>
+					<Field>CategoryId</Field>
+					<RelatedField>CategoryId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>CategoryIdx</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>ProjTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<EDTRelation>Yes</EDTRelation>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>ProjTable</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelatedTableRole>ProjTable</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>TSTimesheetFavorites</Role>
+			<UseDefaultRoleNames>No</UseDefaultRoleNames>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>ProjId</Name>
+					<Field>ProjId</Field>
+					<RelatedField>ProjId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

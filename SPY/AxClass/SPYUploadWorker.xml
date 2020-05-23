@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYUploadWorker</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+class SPYUploadWorker extends RunBaseBatch
+{
+    // Packed variables
+    FileName            fileName;
+
+    // Dialog fields
+    DialogField         dlgFileName;
+    DialogField         dlgJrnDesc;
+    DialogField         dlgJrnType;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+        fileName
+    #endmacro
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase       dialog = super();
+        #resAppl
+    
+        //dialog.addImage(#ImageFolder);
+        dialog.addInfoImage();
+        dlgFileName = dialog.addFieldValue(extendedTypeStr(FileName),fileName);
+    
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+    ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        fileName    = dlgFileName.value();
+    
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            ttsbegin;
+    
+            this.upload();
+    
+            ttscommit;
+        }
+        catch (Exception::Deadlock)
+        {
+            retry;
+        }
+        catch (Exception::UpdateConflict)
+        {
+            if (appl.ttsLevel() == 0)
+            {
+                if (xSession::currentRetryCount() >= #RetryNum)
+                {
+                    throw Exception::UpdateConflictNotRecovered;
+                }
+                else
+                {
+                    retry;
+                }
+            }
+            else
+            {
+                throw Exception::UpdateConflict;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+    ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>upload</Name>
+				<Source><![CDATA[
+    /*
+    private void updateEmployeeInfo(SysExcelCells _cells,int _row)
+    {
+        DirPerson               dirPerson;
+        DirPersonName           dirPersonName;
+        HcmWorker               worker;
+        HcmEmployment           hcmEmployment;
+        HcmEmploymentDetail     hcmEmploymentDetail;
+        HcmPersonPrivateDetails hcmPersonPrivateDetails;
+        date                    joiningDate = _cells.item(_row, 8).value().date(),birthDate = _cells.item(_row, 6).value().date();
+        TransDateTime           joiningDateTime = DateTimeUtil::applyTimeZoneOffset(DateTimeUtil::newDateTime(joiningDate,00-00),
+                                                                                    DateTimeUtil::getCompanyTimeZone());
+        DirPartyContactInfoView     contactView;
+        DirParty                    dirParty;
+        DirPartyPostalAddressView   addressView;
+        container                   roles;
+    
+        worker = HcmWorker::findByPersonnelNumber(_cells.item(_row, 1).value().bStr());
+        if(worker)
+        {
+            dirPerson = DirPerson::find(worker.Person,true);
+            if(dirPerson)
+            {
+                dirPerson.NameAlias = _cells.item(_row, 2).value().bStr() + " " + _cells.item(_row, 4).value().bStr();
+                dirPerson.BirthDay = dayOfMth(birthDate);
+                dirPerson.BirthMonth = mthOfYr(birthDate);
+                dirPerson.BirthYear = year(birthDate);
+                if(_cells.item(_row, 7).value().bStr() == "Male")
+                    dirPerson.Gender = Gender::Male;
+                else
+                    dirPerson.Gender = Gender::Female;
+                dirPerson.update();
+            }
+        }
+        else
+        {
+            dirPerson.initValue();
+            dirPerson.NameAlias = _cells.item(_row, 2).value().bStr() + " " + _cells.item(_row, 4).value().bStr();
+            dirPerson.BirthDay = dayOfMth(birthDate);
+            dirPerson.BirthMonth = mthOfYr(birthDate);
+            dirPerson.BirthYear = year(birthDate);
+            if(_cells.item(_row, 7).value().bStr() == "Male")
+                dirPerson.Gender = Gender::Male;
+            else
+                dirPerson.Gender = Gender::Female;
+            dirPerson.insert();
+    
+            worker.initValue();
+            worker.PersonnelNumber = _cells.item(_row, 1).value().bStr();
+            worker.Person = dirPerson.RecId;
+            worker.insert();
+        }
+        delete_from dirPersonName
+            where dirPersonName.Person == dirPerson.RecId;
+    
+        dirPersonName.initValue();
+        dirPersonName.validTimeStateUpdateMode(ValidTimeStateUpdate::CreateNewTimePeriod);
+        dirPersonName.Person = dirPerson.RecId;
+        dirPersonName.ValidFrom = joiningDateTime;
+        dirPersonName.ValidTo = DateTimeUtil::maxValue();
+        dirPersonName.FirstName = _cells.item(_row, 2).value().bStr();
+        dirPersonName.MiddleName = _cells.item(_row, 3).value().bStr();
+        dirPersonName.LastName = _cells.item(_row, 4).value().bStr();
+        dirPersonName.insert();
+    
+        hcmPersonPrivateDetails = hcmPersonPrivateDetails::findByPerson(dirPerson.RecId,true);
+        if(hcmPersonPrivateDetails)
+        {
+            hcmPersonPrivateDetails.CitizenshipCountryRegion = _cells.item(_row, 5).value().bStr();
+            hcmPersonPrivateDetails.BirthDate = birthDate;
+            if(_cells.item(_row, 7).value().bStr() == "Male")
+                hcmPersonPrivateDetails.Gender = HcmPersonGender::Male;
+            else
+                hcmPersonPrivateDetails.Gender = HcmPersonGender::Female;
+            hcmPersonPrivateDetails.update();
+        }
+        else
+        {
+            hcmPersonPrivateDetails.initValue();
+            hcmPersonPrivateDetails.Person = dirPerson.RecId;
+            hcmPersonPrivateDetails.CitizenshipCountryRegion = _cells.item(_row, 5).value().bStr();
+            hcmPersonPrivateDetails.insert();
+        }
+    
+        hcmEmployment = hcmEmployment::findByWorkerLegalEntity(worker.RecId,CompanyInfo::current(),joiningDateTime,DateTimeUtil::maxValue(),true);
+        if(hcmEmployment)
+        {
+            hcmEmployment.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+            hcmEmployment.update();
+        }
+        else
+        {
+            hcmEmployment.initValue();
+            hcmEmployment.validTimeStateUpdateMode(ValidTimeStateUpdate::CreateNewTimePeriod);
+            hcmEmployment.Worker = worker.RecId;
+            hcmEmployment.LegalEntity = CompanyInfo::current();
+            hcmEmployment.ValidFrom = joiningDateTime;
+            hcmEmployment.ValidTo = DateTimeUtil::maxValue();
+            hcmEmployment.insert();
+        }
+    
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,joiningDateTime,DateTimeUtil::maxValue(),true);
+        if(hcmEmploymentDetail)
+        {
+            hcmEmploymentDetail.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+            hcmEmploymentDetail.SPYWorkerGroupCode = _cells.item(_row, 9).value().bStr();
+            hcmEmploymentDetail.update();
+        }
+        else
+        {
+            hcmEmploymentDetail.initValue();
+            hcmEmploymentDetail.validTimeStateUpdateMode(ValidTimeStateUpdate::CreateNewTimePeriod);
+            hcmEmploymentDetail.Employment = hcmEmployment.RecId;
+            hcmEmploymentDetail.ValidFrom = joiningDateTime;
+            hcmEmploymentDetail.ValidTo = DateTimeUtil::maxValue();
+            hcmEmploymentDetail.SPYWorkerGroupCode = _cells.item(_row, 9).value().bStr();
+            hcmEmploymentDetail.insert();
+        }
+    
+        //create primary email
+        DirParty = DirParty::constructFromPartyRecId(dirPerson.RecId);
+        contactView.clear();
+        contactView.LocationName                = 'Primary Email';
+        contactView.Locator                     = _cells.item(_row, 10).value().bStr();
+        contactView.Type                        = LogisticsElectronicAddressMethodType::Email;
+        contactView.Party                       = dirPerson.RecId;
+        contactView.IsPrimary                   = NoYes::Yes;
+        dirParty.createOrUpdateContactInfo(contactView);
+    
+        //create primary phone
+        contactView.clear();
+        contactView.LocationName                = 'Primary Phone';
+        contactView.Locator                     = _cells.item(_row, 11).value().bStr();
+        contactView.Type                        = LogisticsElectronicAddressMethodType::Phone;
+        contactView.Party                       = dirPerson.RecId;
+        contactView.IsPrimary                   = NoYes::Yes;
+        dirParty.createOrUpdateContactInfo(contactView);
+    
+        roles  = [LogisticsLocationRole::findBytype(LogisticsLocationRoleType::Home).RecId];
+        //create address
+        addressView.Street  = _cells.item(_row, 12).value().bStr();
+        addressView.City    = _cells.item(_row, 13).value().bStr();
+        addressView.CountryRegionId = _cells.item(_row, 14).value().bStr();
+        addressView.ZipCode = _cells.item(_row, 15).value().bStr();
+        addressView.IsPrimary   = NoYes::Yes;
+        addressView.Party   = dirPerson.RecId;
+        DirParty.createOrUpdatePostalAddress(addressView,roles);
+    }*/
+
+    private void upload()
+    {/*
+        SysExcelApplication     application;
+        SysExcelWorkbooks       workbooks;
+        SysExcelWorkbook        workbook;
+        SysExcelWorksheets      worksheets;
+        SysExcelWorksheet       worksheet;
+        SysExcelCells           cells;
+        int                     row = 1;
+        COMVariantType          type;
+    
+        application = SysExcelApplication::construct();
+        workbooks = application.workbooks();
+    
+        try
+        {
+            workbooks.open(filename);
+        }
+        catch (Exception::Error)
+        {
+            throw error("@SYS19358");
+        }
+        workbook = workbooks.item(1);
+        worksheets = workbook.worksheets();
+        worksheet = worksheets.itemFromNum(1);
+        cells = worksheet.cells();
+    
+        try
+        {
+            do
+            {
+                row++;
+                this.updateEmployeeInfo(cells,row);
+                type = cells.item(row+1, 1).value().variantType();
+            }
+            while (type != COMVariantType::VT_EMPTY);
+        }
+        catch(Exception::Error)
+        {
+            throw error("@SPY1253");
+        }
+        application.quit();
+        info(strFmt("@SPY1577",row-1));*/
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYUploadWorker construct()
+    {
+        return new SPYUploadWorker();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "@SPY1575";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYUploadWorker    uploadWorker;
+    
+        uploadWorker = SPYUploadWorker::construct();
+    
+        if (uploadWorker.prompt())
+            uploadWorker.runOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    protected boolean canRunInNewSession()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

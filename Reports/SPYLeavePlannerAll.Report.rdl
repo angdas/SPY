@@ -1,0 +1,619 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2008/01/reportdefinition">
+  <Body>
+    <ReportItems>
+      <Tablix Name="Tablix1">
+        <TablixCorner>
+          <TablixCornerRows>
+            <TablixCornerRow>
+              <TablixCornerCell>
+                <CellContents>
+                  <Textbox Name="Textbox5">
+                    <CanGrow>true</CanGrow>
+                    <KeepTogether>true</KeepTogether>
+                    <Paragraphs>
+                      <Paragraph>
+                        <TextRuns>
+                          <TextRun>
+                            <Value>Employee Id</Value>
+                            <Style>
+                              <FontFamily>Segoe UI</FontFamily>
+                              <FontWeight>Bold</FontWeight>
+                            </Style>
+                          </TextRun>
+                        </TextRuns>
+                        <Style />
+                      </Paragraph>
+                    </Paragraphs>
+                    <rd:DefaultName>Textbox5</rd:DefaultName>
+                    <Style>
+                      <Border>
+                        <Style>Solid</Style>
+                      </Border>
+                      <PaddingLeft>2pt</PaddingLeft>
+                      <PaddingRight>2pt</PaddingRight>
+                      <PaddingTop>2pt</PaddingTop>
+                      <PaddingBottom>2pt</PaddingBottom>
+                    </Style>
+                  </Textbox>
+                </CellContents>
+              </TablixCornerCell>
+              <TablixCornerCell>
+                <CellContents>
+                  <Textbox Name="Textbox6">
+                    <CanGrow>true</CanGrow>
+                    <KeepTogether>true</KeepTogether>
+                    <Paragraphs>
+                      <Paragraph>
+                        <TextRuns>
+                          <TextRun>
+                            <Value>Employee Name</Value>
+                            <Style>
+                              <FontFamily>Segoe UI</FontFamily>
+                              <FontWeight>Bold</FontWeight>
+                            </Style>
+                          </TextRun>
+                        </TextRuns>
+                        <Style />
+                      </Paragraph>
+                    </Paragraphs>
+                    <rd:DefaultName>Textbox6</rd:DefaultName>
+                    <Style>
+                      <Border>
+                        <Style>Solid</Style>
+                      </Border>
+                      <PaddingLeft>2pt</PaddingLeft>
+                      <PaddingRight>2pt</PaddingRight>
+                      <PaddingTop>2pt</PaddingTop>
+                      <PaddingBottom>2pt</PaddingBottom>
+                    </Style>
+                  </Textbox>
+                </CellContents>
+              </TablixCornerCell>
+            </TablixCornerRow>
+          </TablixCornerRows>
+        </TablixCorner>
+        <TablixBody>
+          <TablixColumns>
+            <TablixColumn>
+              <Width>1in</Width>
+            </TablixColumn>
+          </TablixColumns>
+          <TablixRows>
+            <TablixRow>
+              <Height>0.25in</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="HRMAbsenceCodeId">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Fields!HRMAbsenceCodeId.Value</Value>
+                              <Style>
+                                <FontFamily>Segoe UI</FontFamily>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Center</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>HRMAbsenceCodeId</rd:DefaultName>
+                      <CustomProperties>
+                        <CustomProperty>
+                          <Name>AXDataType</Name>
+                          <Value><![CDATA[String]]></Value>
+                        </CustomProperty>
+                        <CustomProperty>
+                          <Name>AXEDTFormat</Name>
+                          <Value><![CDATA[SPYLeavePlanTmp.HRMAbsenceCodeId]]></Value>
+                        </CustomProperty>
+                        <CustomProperty>
+                          <Name>AXEDTTextAlign</Name>
+                          <Value><![CDATA[SPYLeavePlanTmp.HRMAbsenceCodeId]]></Value>
+                        </CustomProperty>
+                        <CustomProperty>
+                          <Name>AXEDTDirection</Name>
+                          <Value><![CDATA[SPYLeavePlanTmp.HRMAbsenceCodeId]]></Value>
+                        </CustomProperty>
+                        <CustomProperty>
+                          <Name>AXFieldName</Name>
+                          <Value><![CDATA[HRMAbsenceCodeId]]></Value>
+                        </CustomProperty>
+                      </CustomProperties>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BackgroundColor>=IIf(Fields!HRMAbsenceCodeId.Value &lt;&gt; "", "Red", "White")</BackgroundColor>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+          </TablixRows>
+        </TablixBody>
+        <TablixColumnHierarchy>
+          <TablixMembers>
+            <TablixMember>
+              <Group Name="AbsenceDateGroup">
+                <GroupExpressions>
+                  <GroupExpression>=Fields!AbsenceDate.Value</GroupExpression>
+                </GroupExpressions>
+              </Group>
+              <SortExpressions>
+                <SortExpression>
+                  <Value>=Fields!AbsenceDate.Value</Value>
+                </SortExpression>
+              </SortExpressions>
+              <TablixHeader>
+                <Size>0.25in</Size>
+                <CellContents>
+                  <Textbox Name="AbsenceDate">
+                    <CanGrow>true</CanGrow>
+                    <KeepTogether>true</KeepTogether>
+                    <Paragraphs>
+                      <Paragraph>
+                        <TextRuns>
+                          <TextRun>
+                            <Value>=Fields!AbsenceDate.Value</Value>
+                            <Style>
+                              <FontFamily>Segoe UI</FontFamily>
+                              <FontWeight>Bold</FontWeight>
+                              <Format>d</Format>
+                            </Style>
+                          </TextRun>
+                        </TextRuns>
+                        <Style>
+                          <TextAlign>Center</TextAlign>
+                        </Style>
+                      </Paragraph>
+                    </Paragraphs>
+                    <rd:DefaultName>AbsenceDate</rd:DefaultName>
+                    <CustomProperties>
+                      <CustomProperty>
+                        <Name>AXDataType</Name>
+                        <Value><![CDATA[DateTime]]></Value>
+                      </CustomProperty>
+                      <CustomProperty>
+                        <Name>AXEDTFormat</Name>
+                        <Value><![CDATA[SPYLeavePlanTmp.AbsenceDate]]></Value>
+                      </CustomProperty>
+                      <CustomProperty>
+                        <Name>AXEDTTextAlign</Name>
+                        <Value><![CDATA[SPYLeavePlanTmp.AbsenceDate]]></Value>
+                      </CustomProperty>
+                      <CustomProperty>
+                        <Name>AXEDTDirection</Name>
+                        <Value><![CDATA[SPYLeavePlanTmp.AbsenceDate]]></Value>
+                      </CustomProperty>
+                      <CustomProperty>
+                        <Name>AXFieldName</Name>
+                        <Value><![CDATA[AbsenceDate]]></Value>
+                      </CustomProperty>
+                    </CustomProperties>
+                    <Style>
+                      <Border>
+                        <Style>Solid</Style>
+                      </Border>
+                      <PaddingLeft>2pt</PaddingLeft>
+                      <PaddingRight>2pt</PaddingRight>
+                      <PaddingTop>2pt</PaddingTop>
+                      <PaddingBottom>2pt</PaddingBottom>
+                    </Style>
+                  </Textbox>
+                </CellContents>
+              </TablixHeader>
+            </TablixMember>
+          </TablixMembers>
+        </TablixColumnHierarchy>
+        <TablixRowHierarchy>
+          <TablixMembers>
+            <TablixMember>
+              <Group Name="WorkerGroup">
+                <GroupExpressions>
+                  <GroupExpression>=Fields!Worker.Value</GroupExpression>
+                </GroupExpressions>
+              </Group>
+              <TablixHeader>
+                <Size>1.25in</Size>
+                <CellContents>
+                  <Textbox Name="WorkerPersonnelNumber">
+                    <CanGrow>true</CanGrow>
+                    <KeepTogether>true</KeepTogether>
+                    <Paragraphs>
+                      <Paragraph>
+                        <TextRuns>
+                          <TextRun>
+                            <Value>=Fields!WorkerPersonnelNumber.Value</Value>
+                            <Style>
+                              <FontFamily>Segoe UI</FontFamily>
+                            </Style>
+                          </TextRun>
+                        </TextRuns>
+                        <Style />
+                      </Paragraph>
+                    </Paragraphs>
+                    <rd:DefaultName>WorkerPersonnelNumber</rd:DefaultName>
+                    <CustomProperties>
+                      <CustomProperty>
+                        <Name>AXDataType</Name>
+                        <Value><![CDATA[String]]></Value>
+                      </CustomProperty>
+                      <CustomProperty>
+                        <Name>AXEDTFormat</Name>
+                        <Value><![CDATA[SPYLeavePlanTmp.WorkerPersonnelNumber]]></Value>
+                      </CustomProperty>
+                      <CustomProperty>
+                        <Name>AXEDTTextAlign</Name>
+                        <Value><![CDATA[SPYLeavePlanTmp.WorkerPersonnelNumber]]></Value>
+                      </CustomProperty>
+                      <CustomProperty>
+                        <Name>AXEDTDirection</Name>
+                        <Value><![CDATA[SPYLeavePlanTmp.WorkerPersonnelNumber]]></Value>
+                      </CustomProperty>
+                      <CustomProperty>
+                        <Name>AXFieldName</Name>
+                        <Value><![CDATA[WorkerPersonnelNumber]]></Value>
+                      </CustomProperty>
+                    </CustomProperties>
+                    <Style>
+                      <Border>
+                        <Style>Solid</Style>
+                      </Border>
+                      <PaddingLeft>2pt</PaddingLeft>
+                      <PaddingRight>2pt</PaddingRight>
+                      <PaddingTop>2pt</PaddingTop>
+                      <PaddingBottom>2pt</PaddingBottom>
+                    </Style>
+                  </Textbox>
+                </CellContents>
+              </TablixHeader>
+              <TablixMembers>
+                <TablixMember>
+                  <TablixHeader>
+                    <Size>2in</Size>
+                    <CellContents>
+                      <Textbox Name="WorkerName">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>=Fields!WorkerName.Value</Value>
+                                <Style>
+                                  <FontFamily>Segoe UI</FontFamily>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style />
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>WorkerName</rd:DefaultName>
+                        <CustomProperties>
+                          <CustomProperty>
+                            <Name>AXDataType</Name>
+                            <Value><![CDATA[String]]></Value>
+                          </CustomProperty>
+                          <CustomProperty>
+                            <Name>AXEDTFormat</Name>
+                            <Value><![CDATA[SPYLeavePlanTmp.WorkerName]]></Value>
+                          </CustomProperty>
+                          <CustomProperty>
+                            <Name>AXEDTTextAlign</Name>
+                            <Value><![CDATA[SPYLeavePlanTmp.WorkerName]]></Value>
+                          </CustomProperty>
+                          <CustomProperty>
+                            <Name>AXEDTDirection</Name>
+                            <Value><![CDATA[SPYLeavePlanTmp.WorkerName]]></Value>
+                          </CustomProperty>
+                          <CustomProperty>
+                            <Name>AXFieldName</Name>
+                            <Value><![CDATA[WorkerName]]></Value>
+                          </CustomProperty>
+                        </CustomProperties>
+                        <Style>
+                          <Border>
+                            <Style>Solid</Style>
+                          </Border>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                    </CellContents>
+                  </TablixHeader>
+                </TablixMember>
+              </TablixMembers>
+            </TablixMember>
+          </TablixMembers>
+        </TablixRowHierarchy>
+        <NoRowsMessage>No data found</NoRowsMessage>
+        <DataSetName>LeavePlanDS</DataSetName>
+        <Height>0.5in</Height>
+        <Width>4.25in</Width>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+        </Style>
+      </Tablix>
+    </ReportItems>
+    <Height>0.59375in</Height>
+    <Style />
+  </Body>
+  <Width>6in</Width>
+  <Page>
+    <PageHeader>
+      <Height>0.72917in</Height>
+      <PrintOnFirstPage>true</PrintOnFirstPage>
+      <PrintOnLastPage>true</PrintOnLastPage>
+      <ReportItems>
+        <Textbox Name="Textbox1">
+          <CanGrow>true</CanGrow>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>="Leave Planner "</Value>
+                  <Style>
+                    <FontFamily>Segoe UI</FontFamily>
+                    <FontSize>14pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style />
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.12917in</Top>
+          <Height>0.25in</Height>
+          <Width>4.91333in</Width>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox2">
+          <CanGrow>true</CanGrow>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=Format(Parameters!LeavePlanDS_FromDate.Value, "dd/MM/yyyy") + " - " + Format(Parameters!LeavePlanDS_ToDate.Value, "dd/MM/yyyy")</Value>
+                  <Style>
+                    <FontFamily>Segoe UI</FontFamily>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style />
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.37917in</Top>
+          <Height>0.2in</Height>
+          <Width>2.96541in</Width>
+          <ZIndex>1</ZIndex>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+      </ReportItems>
+      <Style>
+        <Border>
+          <Style>None</Style>
+        </Border>
+      </Style>
+    </PageHeader>
+    <InteractiveHeight>11in</InteractiveHeight>
+    <InteractiveWidth>8.5in</InteractiveWidth>
+    <LeftMargin>1in</LeftMargin>
+    <RightMargin>1in</RightMargin>
+    <TopMargin>1in</TopMargin>
+    <BottomMargin>1in</BottomMargin>
+    <Style />
+  </Page>
+  <Language>en-US</Language>
+  <rd:ReportID>a972a75a-59ab-4ee8-9cab-e8ba03526dd6</rd:ReportID>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ExpressionDialog>Microsoft.Dynamics.Framework.Design.Reports.ExpressionEditor.ExpressionEditorDialog, Microsoft.Dynamics.Framework.Design.Reports</rd:ExpressionDialog>
+  <DataSources>
+    <DataSource Name="AutoGen__ReportDataProvider">
+      <Transaction>true</Transaction>
+      <ConnectionProperties>
+        <DataProvider>AXREPORTDATAPROVIDER</DataProvider>
+        <ConnectString />
+        <IntegratedSecurity>true</IntegratedSecurity>
+      </ConnectionProperties>
+      <rd:DataSourceID>da3824f6-e545-4449-9a61-5334699697d4</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="LeavePlanDS">
+      <Fields>
+        <Field Name="AbsenceDate">
+          <DataField>SPYLeavePlanTmp.1.AbsenceDate</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
+        <Field Name="AbsenceExists1">
+          <DataField>SPYLeavePlanTmp.1.AbsenceExists:LABEL(NoYes)</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="AbsenceExists">
+          <DataField>SPYLeavePlanTmp.1.AbsenceExists:NAME(NoYes)</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="HRMAbsenceCodeId">
+          <DataField>SPYLeavePlanTmp.1.HRMAbsenceCodeId</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Worker">
+          <DataField>SPYLeavePlanTmp.1.Worker</DataField>
+          <rd:TypeName>System.Int64</rd:TypeName>
+        </Field>
+        <Field Name="WorkerName">
+          <DataField>SPYLeavePlanTmp.1.WorkerName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="WorkerPersonnelNumber">
+          <DataField>SPYLeavePlanTmp.1.WorkerPersonnelNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+      <Query>
+        <QueryParameters>
+          <QueryParameter Name="AX_PartitionKey">
+            <Value>=Parameters!AX_PartitionKey.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="AX_CompanyName">
+            <Value>=Parameters!AX_CompanyName.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="AX_UserContext">
+            <Value>=Parameters!AX_UserContext.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="AX_RenderingCulture">
+            <Value>=Parameters!AX_RenderingCulture.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="AX_ReportContext">
+            <Value>=Parameters!AX_ReportContext.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="AX_RdpPreProcessedId">
+            <Value>=Parameters!AX_RdpPreProcessedId.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="FromDate">
+            <Value>=Parameters!LeavePlanDS_FromDate.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="ToDate">
+            <Value>=Parameters!LeavePlanDS_ToDate.Value</Value>
+          </QueryParameter>
+          <QueryParameter Name="SPYLeavePlannerDP_DynamicParameter">
+            <Value>=Parameters!SPYLeavePlannerDP_DynamicParameter.Value</Value>
+          </QueryParameter>
+        </QueryParameters>
+        <DataSourceName>AutoGen__ReportDataProvider</DataSourceName>
+        <CommandType>Text</CommandType>
+        <CommandText>SELECT * FROM SPYLeavePlannerDP.SPYLeavePlanTmp</CommandText>
+        <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
+      </Query>
+      <rd:DataSetInfo>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:DataSetName>LeavePlanDS</rd:DataSetName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterName>FieldsTableAdapter</rd:TableAdapterName>
+        <rd:TableName>Fields</rd:TableName>
+      </rd:DataSetInfo>
+    </DataSet>
+  </DataSets>
+  <ReportParameters>
+    <ReportParameter Name="AX_PartitionKey">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Hidden>true</Hidden>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>AX_PartitionKey</Prompt>
+      <MultiValue>false</MultiValue>
+    </ReportParameter>
+    <ReportParameter Name="AX_CompanyName">
+      <DataType>String</DataType>
+      <Nullable>false</Nullable>
+      <Hidden>true</Hidden>
+      <AllowBlank>false</AllowBlank>
+      <Prompt>AX_CompanyName</Prompt>
+      <MultiValue>false</MultiValue>
+    </ReportParameter>
+    <ReportParameter Name="AX_UserContext">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Hidden>true</Hidden>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>AX_UserContext</Prompt>
+      <MultiValue>false</MultiValue>
+    </ReportParameter>
+    <ReportParameter Name="AX_RenderingCulture">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Hidden>true</Hidden>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>AX_RenderingCulture</Prompt>
+      <MultiValue>false</MultiValue>
+    </ReportParameter>
+    <ReportParameter Name="AX_ReportContext">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Hidden>true</Hidden>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>AX_ReportContext</Prompt>
+      <MultiValue>false</MultiValue>
+      <UsedInQuery>True</UsedInQuery>
+    </ReportParameter>
+    <ReportParameter Name="AX_RdpPreProcessedId">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Hidden>true</Hidden>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>AX_RdpPreProcessedId</Prompt>
+      <MultiValue>false</MultiValue>
+    </ReportParameter>
+    <ReportParameter Name="LeavePlanDS_FromDate">
+      <DataType>DateTime</DataType>
+      <Nullable>false</Nullable>
+      <Hidden>false</Hidden>
+      <AllowBlank>false</AllowBlank>
+      <Prompt>@SYS5209</Prompt>
+      <MultiValue>false</MultiValue>
+    </ReportParameter>
+    <ReportParameter Name="LeavePlanDS_ToDate">
+      <DataType>DateTime</DataType>
+      <Nullable>false</Nullable>
+      <Hidden>false</Hidden>
+      <AllowBlank>false</AllowBlank>
+      <Prompt>@SYS35904</Prompt>
+      <MultiValue>false</MultiValue>
+    </ReportParameter>
+    <ReportParameter Name="SPYLeavePlannerDP_DynamicParameter">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <Hidden>true</Hidden>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>SPYLeavePlannerDP_DynamicParameter</Prompt>
+      <MultiValue>false</MultiValue>
+    </ReportParameter>
+  </ReportParameters>
+  <CodeModules>
+    <CodeModule>Microsoft.Dynamics.Framework.Reports, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</CodeModule>
+    <CodeModule>Microsoft.Dynamics.ApplicationSuite.Reporting.BusinessLogic, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35</CodeModule>
+  </CodeModules>
+  <CustomProperties>
+    <CustomProperty>
+      <Name>DynamicParameterAOTQueryName_SPYLeavePlannerDP_DynamicParameter</Name>
+      <Value>SPYSubordinateLookup</Value>
+    </CustomProperty>
+  </CustomProperties>
+</Report>

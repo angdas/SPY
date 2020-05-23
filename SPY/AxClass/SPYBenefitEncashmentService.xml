@@ -1,0 +1,762 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitEncashmentService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYBenefitEncashmentService extends SysOperationServiceBase Implements SPYIObservable
+{
+    LegalEntityRecId                    legalEntity;
+    SPYPayrollPeriodLineRecId           payrollPeriodLine;
+    SPYEncashmentAmtSource              encashmentAmountSource;
+    date                                periodStart,periodEnd;
+    HcmWorker                           hcmWorker;
+    SPYBenefitRecId                     benefit;
+    SPYBenefitTable                     benefitTable;
+    HcmEmployment                   hcmEmployment;
+    HcmEmploymentDetail                 hcmEmploymentDetail;
+    SPYBenefitPolicyLine            benefitPolicyLine;
+    date                            employmentStartDate,employmentEndDate;
+    CalendarId                      workerCalendarId;
+    TransDate                       timesheetStart;
+    TransDate                       timesheetEnd;
+
+    SPYBenefitEncashmentContract        contract;
+    List                                workerList,benefitList;
+    SPYBenefitJournalRecId              benefitJournal;
+    SPYBenefitDetails                   benefitDetails;
+    LineNum                             lineNum;
+
+    SPYExpressionEvaluationEngine       expressionEvaluationEngine;
+    SPYObserver                         tracer;
+    Array                               observers;
+    SPYExpressionContext                expressionContext;
+
+    RecordInsertList                    benefitJournalTransList;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>addObserver</Name>
+				<Source><![CDATA[
+    public void addObserver(SPYIObserver    _iObserver,
+                            int             _key)
+    {
+        observers.value(_key, _iObserver);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>removeObserver</Name>
+				<Source><![CDATA[
+    public void removeObserver(int _key)
+    {
+        observers.value(_key, null);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>notifyObserver</Name>
+				<Source><![CDATA[
+    public void notifyObserver(str      _propertyName,
+                               str      _propertyValue,
+                               int      _heading = 0,
+                               int      _space = 0)
+    {
+        SPYIObserver    localObserver;
+        int             ctr;
+    
+        for (Ctr = 1; Ctr <= observers.lastIndex(); Ctr++ )
+        {
+            localObserver = observers.value(Ctr);
+            localObserver.changed(this, _propertyName, _propertyValue,_heading,_space);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>amtQtyFromBenefitLedgerTmp</Name>
+				<Source><![CDATA[
+    protected container amtQtyFromBenefitLedgerTmp(SPYBenefitLedgerTmp _benefitLedgerTmp)
+    {
+        container           ret;
+    
+        select sum(Quantity),sum(TransactionCurrencyAmount),sum(AccountingCurrencyAmount) from _benefitLedgerTmp;
+        ret = [_benefitLedgerTmp.TransactionCurrencyAmount,_benefitLedgerTmp.AccountingCurrencyAmount,_benefitLedgerTmp.Quantity];
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>benefitCurrency</Name>
+				<Source><![CDATA[
+    protected CurrencyCode benefitCurrency(SPYBenefitRecId _benefit)
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        date                        validFrom = dateNull(),validTo = dateMax();
+    
+        select firstOnly validTimeState(validFrom,validTo) workerPositionBenefit order by ValidTo desc
+            where workerPositionBenefit.Worker == hcmWorker.RecId &&
+                  workerPositionBenefit.LegalEntity == legalEntity &&
+                  workerPositionBenefit.Benefit == _benefit;
+    
+        if(workerPositionBenefit.Currency)
+            return workerPositionBenefit.Currency;
+        else if(hcmEmploymentDetail.SPYDefaultPayrollCurrency)
+            return hcmEmploymentDetail.SPYDefaultPayrollCurrency;
+        else
+            return Ledger::accountingCurrency();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkTrace</Name>
+				<Source><![CDATA[
+    void checkTrace(FileName _filePath = "")
+    {
+        SPYBenefitEncashmentService::saveOpen(_filePath,tracer.getTraceFormatted());
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>saveOpen</Name>
+				<Source><![CDATA[
+    public client static void saveOpen(FileName _filePath,str _text)
+    {
+        FileIOPermission        fioPermission;
+        TextStreamIo            txIoWrite;
+        System.IO.StreamWriter  writer;
+        InteropPermission       perm = new InteropPermission(InteropKind::ClrInterop);
+        System.IO.FileStream    stream;
+        #define.FileRW("RW")
+        #define.FileW("W")
+
+        perm.assert();
+        writer = new System.IO.StreamWriter(_filePath);
+        writer.WriteLine(_text);
+        writer.Close();
+        stream = System.IO.File::OpenRead(_filePath);
+        File::SendFileToUser(stream, _filePath);
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkBenefitPolicy</Name>
+				<Source><![CDATA[
+    private void checkBenefitPolicy()
+    {        
+        encashmentAmountSource = benefitPolicyLine.EncashmentAmtSource;
+        this.checkEncashmentPeriod(benefitPolicyLine);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initialize</Name>
+				<Source><![CDATA[
+    private void initialize()
+    {
+        expressionContext  = new SPYExpressionContext();
+        observers = new Array(Types::Class);
+        tracer = new SPYObserver();
+        expressionEvaluationEngine  = new SPYExpressionEvaluationEngine(SPYProcess::PayProcess);
+        //this.refreshExpressionContextTmp();
+        SPYObjectCache::flushAllUserCache();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcBenefitEncashmentExpression</Name>
+				<Source><![CDATA[
+    private SPYAmount calcBenefitEncashmentExpression()
+    {
+        SPYIBenefitCalculation      benefitCalculation;
+        SPYBenefitLedgerTmp         benefitLedgerTmp;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYAmount                   totalTransCurAmount,totalAccCurAmount,totalAccruedAccCurAmt,totalQty;
+        SPYPayElementCode           benefitCode;
+        CurrencyCode                transCur;
+        TransDate                   transDate = periodEnd;
+
+        benefitCode = benefitTable.PayElementCode;
+        this.notifyObserver("@SPY1648",strFmt("%1",benefitCode),4,1);
+        delete_from benefitLedgerTmp;
+        expressionContext.payElement(benefit);
+        transCur = this.benefitCurrency(benefit);
+        benefitCalculation = new SPYBenefitCalculation(legalEntity,
+                                                       hcmWorker.RecId,
+                                                       payrollPeriodLine,
+                                                       benefit,
+                                                       transDate,
+                                                       periodStart,
+                                                       periodEnd,
+                                                       workerPositionBenefit, //null instance
+                                                       transCur,
+                                                       benefitLedgerTmp);
+        benefitCalculation.parmTracer(tracer);
+        benefitLedgerTmp = benefitCalculation.processBenefitEncashment(expressionEvaluationEngine);
+        [totalTransCurAmount,totalAccCurAmount,totalQty] = this.amtQtyFromBenefitLedgerTmp(benefitLedgerTmp);
+        this.notifyObserver(strFmt("@SYS90673",benefitCode),strFmt("@SPY778",totalTransCurAmount,
+                                                            totalQty),4,2);
+        return totalAccCurAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshContext</Name>
+				<Source><![CDATA[
+    public void refreshContext()
+    {
+        expressionContext.worker(hcmWorker.RecId);
+        expressionContext.legalEntity(legalEntity);
+        expressionContext.payrollPeriodLine(contract.parmPayrollPeriodLine());
+        expressionContext.transDate(periodStart);
+        expressionContext.calcFromDate(periodStart);
+        expressionContext.calcToDate(periodEnd);
+        //expressionContext.expressionReturn(expressionReturn);
+        expressionContext.timesheetFromDate(timesheetStart);
+        expressionContext.timesheetToDate(timesheetEnd);
+        expressionContext.workerCalendarId(workerCalendarId);
+        expressionContext.periodFromDate(periodStart);
+        expressionContext.periodToDate(periodEnd);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkEncashmentPeriod</Name>
+				<Source><![CDATA[
+    private void checkEncashmentPeriod(SPYBenefitPolicyLine _benefitPolicyLine)
+    {
+        boolean                 encash = false;
+        TransDate               joiningDate,lastEncashmentDate,effectiveDate;
+        SPYBenefitLedger        benefitLedger;
+        SPYPayrollPeriodLine    payrollPeriodLineTab;
+    
+        switch(_benefitPolicyLine.EncashmentFrequency)
+        {
+            case SPYBenefitEncashmentFrequency::NotApplicable :
+                encash = false;
+                break;
+    
+            case SPYBenefitEncashmentFrequency::EmployeeAnniversary :
+                
+                joiningDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidFrom,DateTimeUtil::getCompanyTimeZone()));
+                effectiveDate = joiningDate;
+                if(_benefitPolicyLine.EncashmentPeriod == SPYEncashmentPeriod::Monthly)
+                {
+                    while(effectiveDate < periodStart)
+                    {
+                        effectiveDate = nextMth(effectiveDate);
+                    }
+                    if(effectiveDate >= periodStart && effectiveDate <= periodEnd)
+                        encash = true;
+                }
+                else if(_benefitPolicyLine.EncashmentPeriod == SPYEncashmentPeriod::Semiannually)
+                {
+                    while(effectiveDate < periodStart)
+                    {
+                        effectiveDate = nextMth(effectiveDate);
+                        effectiveDate = nextMth(effectiveDate);
+                        effectiveDate = nextMth(effectiveDate);
+                        effectiveDate = nextMth(effectiveDate);
+                        effectiveDate = nextMth(effectiveDate);
+                        effectiveDate = nextMth(effectiveDate);
+                    }
+                    if(effectiveDate >= periodStart && effectiveDate <= periodEnd)
+                        encash = true;
+                }
+                else if(_benefitPolicyLine.EncashmentPeriod == SPYEncashmentPeriod::Annually)
+                {
+                    while(effectiveDate < periodStart)
+                    {
+                        effectiveDate = nextYr(effectiveDate);
+                    }
+                    if(effectiveDate >= periodStart && effectiveDate <= periodEnd)
+                        encash = true;
+                }
+                else if(_benefitPolicyLine.EncashmentPeriod == SPYEncashmentPeriod::Biannually)
+                {
+                    while(effectiveDate < periodStart)
+                    {
+                        effectiveDate = nextYr(effectiveDate);
+                        effectiveDate = nextYr(effectiveDate);
+                    }
+                    if(effectiveDate >= periodStart && effectiveDate <= periodEnd)
+                        encash = true;
+                }
+                break;
+    
+            case SPYBenefitEncashmentFrequency::LastEncashment :
+                select firstonly benefitLedger
+                    where benefitLedger.Worker == hcmWorker.RecId &&
+                          benefitLedger.Benefit == benefit &&
+                          benefitLedger.JournalType == SPYBenefitJournalType::Encashment
+                    join payrollPeriodLineTab order by PeriodStartDate desc
+                    where payrollPeriodLineTab.RecId == benefitLedger.PayrollPeriodLine;
+                lastEncashmentDate = payrollPeriodLineTab.PeriodStartDate;
+                if(_benefitPolicyLine.EncashmentPeriod == SPYEncashmentPeriod::Monthly)
+                {
+                    while(lastEncashmentDate < periodStart)
+                    {
+                        lastEncashmentDate = nextMth(lastEncashmentDate);
+                    }
+                    if(lastEncashmentDate >= periodStart && lastEncashmentDate <= periodEnd)
+                        encash = true;
+                }
+                else if(_benefitPolicyLine.EncashmentPeriod == SPYEncashmentPeriod::Semiannually)
+                {
+                    while(lastEncashmentDate < periodStart)
+                    {
+                        lastEncashmentDate = nextMth(lastEncashmentDate);
+                        lastEncashmentDate = nextMth(lastEncashmentDate);
+                        lastEncashmentDate = nextMth(lastEncashmentDate);
+                        lastEncashmentDate = nextMth(lastEncashmentDate);
+                        lastEncashmentDate = nextMth(lastEncashmentDate);
+                        lastEncashmentDate = nextMth(lastEncashmentDate);
+                    }
+                    if(lastEncashmentDate >= periodStart && lastEncashmentDate <= periodEnd)
+                        encash = true;
+                }
+                else if(_benefitPolicyLine.EncashmentPeriod == SPYEncashmentPeriod::Annually)
+                {
+                    while(lastEncashmentDate < periodStart)
+                    {
+                        lastEncashmentDate = nextYr(lastEncashmentDate);
+                    }
+                    if(lastEncashmentDate >= periodStart && lastEncashmentDate <= periodEnd)
+                        encash = true;
+                }
+                else if(_benefitPolicyLine.EncashmentPeriod == SPYEncashmentPeriod::Biannually)
+                {
+                    while(lastEncashmentDate < periodStart)
+                    {
+                        lastEncashmentDate = nextYr(lastEncashmentDate);
+                        lastEncashmentDate = nextYr(lastEncashmentDate);
+                    }
+                    if(lastEncashmentDate >= periodStart && lastEncashmentDate <= periodEnd)
+                        encash = true;
+                }
+                break;
+    
+            case SPYBenefitEncashmentFrequency::FixedMonth :
+                if(mthOfYr(periodStart) == _benefitPolicyLine.EncashmentMonth && mthOfYr(periodEnd) == _benefitPolicyLine.EncashmentMonth)
+                    encash = true;
+                break;
+        }
+        if(_benefitPolicyLine.EncashmentAfterProbation && !this.checkProbationPeriod())
+            encash = false;
+    
+        if(encash)
+            this.createJournalLine();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkProbationPeriod</Name>
+				<Source><![CDATA[
+    private boolean checkProbationPeriod()
+    {
+        HcmEmploymentEmployee   hcmEmploymentEmployee = HcmEmploymentEmployee::findByEmployment(hcmEmployment.RecId);
+        date                    probationDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(
+                                    hcmEmploymentEmployee.ProbationEndDate,DateTimeUtil::getCompanyTimeZone()));
+        boolean                 ret = false;
+
+        if(probationDate <= periodEnd)
+        ret = true;
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkWorker</Name>
+				<Source><![CDATA[
+    private boolean checkWorker()
+    {
+        SPYBenefitJournalTable      benefitJournalTable;
+        SPYBenefitJournalTrans      benefitJournalTrans;
+        boolean                             ret;
+    
+        select firstOnly benefitJournalTrans
+            where benefitJournalTrans.Worker == hcmWorker.RecId &&
+                  benefitJournalTrans.Benefit == benefit
+            join benefitJournalTable
+            where benefitJournalTrans.BenefitJournal == benefitJournalTable.RecId &&
+                  benefitJournalTable.BenefitEncashmentBatch == true &&
+                  benefitJournalTable.BenefitEncashmentPeriod == payrollPeriodLine;    
+        if(benefitJournalTrans && !benefitPolicyLine)
+            ret = false;
+        else
+            ret = true;
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>commitTransaction</Name>
+				<Source><![CDATA[
+    private void commitTransaction()
+    {
+        SPYBenefitJournalTable      benefitJournalTable;
+    
+        if(lineNum == 0)
+        {
+            delete_from benefitJournalTable
+                where benefitJournalTable.RecId == benefitJournal;
+            warning(strFmt("@SPY1722",periodStart,periodEnd));
+        }
+        else
+        {
+            benefitJournalTable = SPYBenefitJournalTable::find(benefitJournal);
+            benefitJournalTransList.insertDatabase();
+            info(strFmt("@SPY1721",benefitJournalTable.BenefitJournalCode),"",SysInfoAction_TableField::newBuffer(benefitJournalTable));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createJournalHeader</Name>
+				<Source><![CDATA[
+    private void createJournalHeader()
+    {
+        SPYBenefitJournalTable      benefitJournalTable;
+    
+        this.deleteJournal();
+    
+        benefitJournalTable.initValue();
+        benefitJournalTable.BenefitJournalCode      = NumberSeq::newGetNum(SPYPayrollParameters::numRefBenefitJournalCode()).num();
+        benefitJournalTable.Description             = strFmt("@SPY1712",periodStart,periodEnd);
+        benefitJournalTable.JournalType             = SPYBenefitJournalType::Encashment;
+        benefitJournalTable.BenefitEncashmentBatch  = true;
+        benefitJournalTable.BenefitEncashmentPeriod = payrollPeriodLine;
+        benefitJournalTable.insert();
+    
+        benefitJournal = benefitJournalTable.RecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createJournalLine</Name>
+				<Source><![CDATA[
+    private void createJournalLine()
+    {
+        SPYBenefitJournalTrans      benefitJournalTrans;
+        ExchangeRateHelper          exchangeRateHelper;
+        SPYAmount                   balanceQty,balanceAmt;
+        CurrencyCode                currency;
+
+        this.notifyObserver("@SYS80745",hcmWorker.name(),3);
+        if(encashmentAmountSource == SPYEncashmentAmtSource::BalanceAmount)
+        {
+            balanceQty = benefitTable.balanceQty(hcmWorker.RecId,periodStart);
+            balanceAmt = benefitTable.balanceAccountingCurAmount(hcmWorker.RecId,periodStart);
+        }
+        else
+        {
+            this.refreshContext();
+            balanceQty = benefitTable.balanceQty(hcmWorker.RecId,periodStart);
+            balanceAmt = this.calcBenefitEncashmentExpression();
+        }
+    
+        if(hcmEmployment && (balanceQty || balanceAmt))
+        {
+            currency = hcmEmploymentDetail.SPYDefaultPayrollCurrency ? hcmEmploymentDetail.SPYDefaultPayrollCurrency : Ledger::accountingCurrency();
+            exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::current(),currency);
+            exchangeRateHelper.parmExchangeDate(periodEnd);
+    
+            lineNum++;
+            benefitJournalTrans.initValue();
+            benefitJournalTrans.BenefitJournal              = benefitJournal;
+            benefitJournalTrans.LineNum                     = lineNum;
+            benefitJournalTrans.Worker                      = hcmWorker.RecId;
+            benefitJournalTrans.Benefit                     = benefit;
+            benefitJournalTrans.PayrollPeriodlLine          = payrollPeriodLine;
+            benefitJournalTrans.Quantity                    = balanceQty;
+            benefitJournalTrans.AccountingCurrencyAmount    = balanceAmt;
+            benefitJournalTrans.Currency                    = currency;
+            benefitJournalTrans.TransDate                   = periodEnd;
+            benefitJournalTrans.ExchRate                    = exchangeRateHelper.getExchangeRate1();
+            if(benefitJournalTrans.ExchRate)
+                benefitJournalTrans.TransactionCurrencyAmount   = benefitJournalTrans.AccountingCurrencyAmount * 100 / benefitJournalTrans.ExchRate;
+            benefitJournalTrans.Txt                         = strFmt("@SPY1723",hcmWorker.name(),
+                                                                        SPYPayElementTable::find(benefit).PayElementCode,periodStart,periodEnd);
+            benefitJournalTrans.Payout                      = true;
+    
+            benefitJournalTransList.add(benefitJournalTrans);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteJournal</Name>
+				<Source><![CDATA[
+    private void deleteJournal()
+    {
+        SPYBenefitJournalTable      benefitJournalTable;
+        SPYBenefitJournalTrans      benefitJournalTrans;
+    
+        delete_from benefitJournalTrans
+            exists join benefitJournalTable
+            where benefitJournalTable.RecId == benefitJournalTrans.BenefitJournal &&
+                  benefitJournalTable.BenefitEncashmentBatch == true &&
+                  benefitJournalTable.BenefitEncashmentPeriod == payrollPeriodLine &&
+                  !benefitJournalTable.Posted;
+    
+        delete_from benefitJournalTable
+            where benefitJournalTable.BenefitEncashmentBatch == true &&
+                  benefitJournalTable.BenefitEncashmentPeriod == payrollPeriodLine &&
+                  !benefitJournalTable.Posted;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializePayElementMap</Name>
+				<Source><![CDATA[
+    protected void initializePayElementMap(boolean _calledFromMasterProcess,container _payElementContainer)
+    {
+        int                 payElementContainerLineCount = 1;
+        QueryRun            benefitQueryRun;
+        SPYBenefitTable     benefitTableMap;
+        SPYPayElementRecId  payElementRecId;
+    
+        if(_calledFromMasterProcess)
+        {
+            while(payElementContainerLineCount <= conLen(_payElementContainer))
+            {
+                payElementRecId = conPeek(_payElementContainer,payElementContainerLineCount);
+                if(SPYPayElementTable::find(payElementRecId).PayElementType == SPYPayElementType::Benefit)
+                    benefitList.addEnd(payElementRecId);
+                payElementContainerLineCount++;
+            }
+        }
+        else
+        {
+            if(_payElementContainer != conNull())
+                benefitQueryRun = new QueryRun(_payElementContainer);
+            else
+                benefitQueryRun = new QueryRun(new Query(queryStr(SPYBenefitQuery)));
+    
+            while(benefitQueryRun.next())
+            {
+                benefitTableMap = benefitQueryRun.get(tableNum(SPYBenefitTable));
+                benefitList.addEnd(benefitTableMap.RecId);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeWorkerList</Name>
+				<Source><![CDATA[
+    protected void initializeWorkerList(boolean _calledFromMasterProcess,container _workerContainer)
+    {
+        int                 workerContainerLenCount = 1;
+        QueryRun            workerQueryRun;
+    
+        if(_calledFromMasterProcess)
+        {
+            while(workerContainerLenCount <= conLen(_workerContainer))
+            {
+                workerList.addEnd(conPeek(_workerContainer,workerContainerLenCount));
+                workerContainerLenCount++;
+            }
+        }
+        else
+        {
+            if(_workerContainer)
+                workerQueryRun = new QueryRun(_workerContainer);
+            else
+                workerQueryRun = new QueryRun(new Query(queryStr(HcmWorkerLookup)));
+    
+            while(workerQueryRun.next())
+            {
+                hcmWorker = workerQueryRun.get(tableNum(HcmWorker));
+                workerList.addEnd(hcmWorker.RecId);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    public void process(SPYBenefitEncashmentContract _contract)
+    {
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+        ListEnumerator          workerListEnumerator;
+        ListEnumerator          benefitListEnumerator;
+    
+        contract = _contract;
+        legalEntity = contract.parmLegalEntity();
+        this.setPeriod(contract.parmPayrollPeriodLine());
+        this.initialize();
+        this.addObserver(tracer,1);
+        changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+        {
+            benefitJournalTransList = new RecordInsertList(tableNum(SPYBenefitJournalTrans));
+            workerList = new List(Types::Int64);
+            benefitList = new List(Types::Int64);
+            if(contract.parmPayrollParameterState().parmCalledFromMasterProcess())
+            {
+                this.initializeWorkerList(true,contract.parmPayrollParameterState().parmWorkerContainer());
+                this.initializePayElementMap(true,contract.parmPayrollParameterState().parmPayElementContainer());
+            }
+            else
+            {
+                this.initializeWorkerList(false,contract.parmWorkerQuery());
+                this.initializePayElementMap(false,contract.parmBenefitQuery());
+            }
+            progress.setCaption("@SPY1707");
+            progress.setAnimation(#AviUpdate);
+            progress.setTotal(workerList.elements() * benefitList.elements());
+            progressCount = 1;
+            setPrefix(strFmt("@SPY1708"));
+            try
+            {
+                ttsBegin;
+                this.createJournalHeader();
+                benefitListEnumerator = benefitList.getEnumerator();
+                while(benefitListEnumerator.moveNext())
+                {
+                    benefit = benefitListEnumerator.current();
+                    benefitTable = SPYBenefitTable::find(benefit);
+                    workerListEnumerator = workerList.getEnumerator();
+                    while(workerListEnumerator.moveNext())
+                    {
+                        hcmWorker = HcmWorker::find(workerListEnumerator.current());
+                        this.setWorkerEmployment();
+                        this.setBenefitPolicy();
+                        if(this.checkWorker())
+                            this.checkBenefitPolicy();
+                        progressCount++;
+                    }
+                }
+                this.commitTransaction();
+                info("@SPY1540");
+                ttsCommit;
+            }
+            catch(Exception::Error)
+            {
+                ttsAbort;
+                error("@SPY252");
+            }
+        }
+        if(contract.parmCheckTrace())
+            this.checkTrace(strFmt('%1\\Trace_%2_%3_%4.html',WinAPIServer::getTempPath(),curUserId(),
+            date2str(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),123,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2),
+            DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone())));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPeriod</Name>
+				<Source><![CDATA[
+    private void setPeriod(SPYPayrollPeriodLineRecId  _payrollPeriodLine)
+    {
+        SPYPayrollPeriodLine                payrollPeriodLineTab;
+    
+        payrollPeriodLine = _payrollPeriodLine;
+        payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+        periodStart = payrollPeriodLineTab.PeriodStartDate;
+        periodEnd = payrollPeriodLineTab.PeriodEndDate;
+        this.setPayrollTimesheetDate(payrollPeriodLineTab);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerEmployment</Name>
+				<Source><![CDATA[
+    public void setWorkerEmployment()
+    {
+        StartDateTime   startDateTime = DateTimeUtil::newDateTime(periodStart,00-00);
+        EndDateTime     endDateTime = DateTimeUtil::newDateTime(periodEnd,00-00);
+    
+        hcmEmployment       = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId,legalEntity,startDateTime,endDateTime);
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,startDateTime,endDateTime);
+        if(!hcmEmployment)
+        {
+            startDateTime = DateTimeUtil::minValue();
+            endDateTime = DateTimeUtil::maxValue();
+            hcmEmployment   = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId,legalEntity,startDateTime,endDateTime);
+            hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,startDateTime,endDateTime);
+        }
+        employmentStartDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidFrom,DateTimeUtil::getCompanyTimeZone()));
+        employmentEndDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidTo,DateTimeUtil::getCompanyTimeZone()));
+        this.setWorkerCalendarId(hcmEmployment);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerCalendarId</Name>
+				<Source><![CDATA[
+    public void setWorkerCalendarId(HcmEmployment _hcmEmployment)
+    {
+        WorkCalendarEmployment      workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(_hcmEmployment.RecId);
+    
+        workerCalendarId = workCalendarEmployment.CalendarId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setBenefitPolicy</Name>
+				<Source><![CDATA[
+    public void setBenefitPolicy()
+    {
+        select firstonly benefitPolicyLine
+            where benefitPolicyLine.BenefitPolicy == hcmEmploymentDetail.SPYBenefitPolicy &&
+            benefitPolicyLine.Benefit == benefit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollTimesheetDate</Name>
+				<Source><![CDATA[
+    public void setPayrollTimesheetDate(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+        SPYPayrollPeriodLine        payrollPeriodLineTable;
+        TransDate                   periodProcessDate = _payrollPeriodLineTab.PayrollDate;
+        TransDate                   prevPeriodProcessDate;
+    
+        select firstOnly PayrollDate from payrollPeriodLineTable order by PeriodEndDate desc
+            where payrollPeriodLineTable.PayrollPeriod == _payrollPeriodLineTab.PayrollPeriod &&
+                  payrollPeriodLineTable.PeriodEndDate < _payrollPeriodLineTab.PeriodStartDate;
+        prevPeriodProcessDate = payrollPeriodLineTable.PayrollDate;
+    
+        timesheetStart = prevPeriodProcessDate + 1;
+        timesheetEnd = periodProcessDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

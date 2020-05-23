@@ -1,0 +1,1326 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.HcmPositionDetail_ID(1)
+    #define.OMOperatingUnit_ID(2)
+    #define.HcmCompLocation_ID(3)
+    #define.HcmJob_ID(4)
+    #define.HcmPosition_ID(5)
+    #define.HcmPositionType_ID(6)
+    #define.HcmTitle_ID(7)
+    
+    // Data source buffers
+    HcmPositionDetail m_HcmPositionDetail;
+    OMOperatingUnit m_OMOperatingUnit;
+    HcmCompLocation m_HcmCompLocation;
+    HcmJob m_HcmJob;
+    HcmPosition m_HcmPosition;
+    HcmPositionType m_HcmPositionType;
+    HcmTitle m_HcmTitle;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmPositionDetail'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('OMOperatingUnit'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmCompLocation'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmJob'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmPosition'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmPositionType'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmTitle'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private boolean isAnyFieldSet_DS2(OMOperatingUnit _oMOperatingUnit, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_oMOperatingUnit.isFieldSet(fieldnum(OMOperatingUnit,OMOperatingUnitNumber)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _oMOperatingUnit) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS3(HcmCompLocation _hcmCompLocation, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_hcmCompLocation.isFieldSet(fieldnum(HcmCompLocation,CompLocationId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _hcmCompLocation) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS4(HcmJob _hcmJob, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_hcmJob.isFieldSet(fieldnum(HcmJob,JobId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _hcmJob) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS5(HcmPosition _hcmPosition, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_hcmPosition.isFieldSet(fieldnum(HcmPosition,PositionId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _hcmPosition) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS6(HcmPositionType _hcmPositionType, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_hcmPositionType.isFieldSet(fieldnum(HcmPositionType,TypeId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _hcmPositionType) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS7(HcmTitle _hcmTitle, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_hcmTitle.isFieldSet(fieldnum(HcmTitle,TitleId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _hcmTitle) ? true : false;
+        return rtrn;
+    }
+    private void foreignKeyPropagation_DS1(DataEntityRuntimeContext _entityCtx, HcmPositionDetail _hcmPositionDetail)
+    {
+        OMOperatingUnit oMOperatingUnit_ = _entityCtx.getRuntimeContextByName('OMOperatingUnit').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('OMOperatingUnit').conflictDetectionInvoked() || oMOperatingUnit_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_hcmPositionDetail.Department != oMOperatingUnit_.RecId)
+            {
+                _hcmPositionDetail.Department = oMOperatingUnit_.RecId;
+            }
+        }
+        
+        HcmCompLocation hcmCompLocation_ = _entityCtx.getRuntimeContextByName('HcmCompLocation').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('HcmCompLocation').conflictDetectionInvoked() || hcmCompLocation_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_hcmPositionDetail.CompLocation != hcmCompLocation_.RecId)
+            {
+                _hcmPositionDetail.CompLocation = hcmCompLocation_.RecId;
+            }
+        }
+        
+        HcmJob hcmJob_ = _entityCtx.getRuntimeContextByName('HcmJob').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_hcmPositionDetail.Job != hcmJob_.RecId)
+        {
+            _hcmPositionDetail.Job = hcmJob_.RecId;
+        }
+        
+        HcmPosition hcmPosition_ = _entityCtx.getRuntimeContextByName('HcmPosition').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_hcmPositionDetail.Position != hcmPosition_.RecId)
+        {
+            _hcmPositionDetail.Position = hcmPosition_.RecId;
+        }
+        
+        HcmPositionType hcmPositionType_ = _entityCtx.getRuntimeContextByName('HcmPositionType').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('HcmPositionType').conflictDetectionInvoked() || hcmPositionType_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_hcmPositionDetail.PositionType != hcmPositionType_.RecId)
+            {
+                _hcmPositionDetail.PositionType = hcmPositionType_.RecId;
+            }
+        }
+        
+        HcmTitle hcmTitle_ = _entityCtx.getRuntimeContextByName('HcmTitle').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('HcmTitle').conflictDetectionInvoked() || hcmTitle_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_hcmPositionDetail.Title != hcmTitle_.RecId)
+            {
+                _hcmPositionDetail.Title = hcmTitle_.RecId;
+            }
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('HcmPositionDetail').getDatabaseOperation();
+        HcmPositionDetailEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(HcmPositionDetailEntity, Department)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('HcmPositionDetail'), _entityCtx.getRuntimeContextByName('OMOperatingUnit'), dataSourceDBOperation, 'HcmPositionDetail.Department', _hcmPositionDetail, fieldnum(HcmPositionDetail, Department), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(HcmPositionDetailEntity, CompensationRegion)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('HcmPositionDetail'), _entityCtx.getRuntimeContextByName('HcmCompLocation'), dataSourceDBOperation, 'HcmPositionDetail.CompLocation', _hcmPositionDetail, fieldnum(HcmPositionDetail, CompLocation), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(HcmPositionDetailEntity, Job)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('HcmPositionDetail'), _entityCtx.getRuntimeContextByName('HcmJob'), dataSourceDBOperation, 'HcmPositionDetail.Job', _hcmPositionDetail, fieldnum(HcmPositionDetail, Job), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(HcmPositionDetailEntity, Position)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('HcmPositionDetail'), _entityCtx.getRuntimeContextByName('HcmPosition'), dataSourceDBOperation, 'HcmPositionDetail.Position', _hcmPositionDetail, fieldnum(HcmPositionDetail, Position), false/*disallowEditOnCreate*/, true/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(HcmPositionDetailEntity, PositionType)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('HcmPositionDetail'), _entityCtx.getRuntimeContextByName('HcmPositionType'), dataSourceDBOperation, 'HcmPositionDetail.PositionType', _hcmPositionDetail, fieldnum(HcmPositionDetail, PositionType), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(HcmPositionDetailEntity, Title)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('HcmPositionDetail'), _entityCtx.getRuntimeContextByName('HcmTitle'), dataSourceDBOperation, 'HcmPositionDetail.Title', _hcmPositionDetail, fieldnum(HcmPositionDetail, Title), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // save/update data sources referenced by [HcmPositionDetail].
+            {
+                // handle datasources which are part of extensions and need to be saved before [OMOperatingUnit]
+                if(!this.preSaveDataSource(_entityCtx, 'OMOperatingUnit'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('OMOperatingUnit');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS2(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        OMOperatingUnit oMOperatingUnit_ = _dataSourceCtx.getBuffer();
+                        if((oMOperatingUnit_.OMOperatingUnitNumber) || (oMOperatingUnit_.PartyNumber))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [OMOperatingUnit].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmCompLocation]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmCompLocation'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmCompLocation');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS3(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        HcmCompLocation hcmCompLocation_ = _dataSourceCtx.getBuffer();
+                        if((hcmCompLocation_.CompLocationId))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [HcmCompLocation].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmJob]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmJob'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmJob');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS4(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        HcmJob hcmJob_ = _dataSourceCtx.getBuffer();
+                        if((hcmJob_.JobId))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [HcmJob].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmPosition]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmPosition'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmPosition');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS5(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        HcmPosition hcmPosition_ = _dataSourceCtx.getBuffer();
+                        if((hcmPosition_.PositionId))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [HcmPosition].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmPositionType]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmPositionType'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmPositionType');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS6(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        HcmPositionType hcmPositionType_ = _dataSourceCtx.getBuffer();
+                        if((hcmPositionType_.TypeId))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [HcmPositionType].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmTitle]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmTitle'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmTitle');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS7(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        HcmTitle hcmTitle_ = _dataSourceCtx.getBuffer();
+                        if((hcmTitle_.TitleId))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [HcmTitle].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            // handle datasources which are part of extensions and need to be saved before [HcmPositionDetail]
+            if(!this.preSaveDataSource(_entityCtx, 'HcmPositionDetail'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmPositionDetail');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // propagates foreign key values from referenced data sources.
+            this.foreignKeyPropagation_DS1(_entityCtx, _dataSourceCtx.getBuffer());
+            // inserts/updates data source [HcmPositionDetail].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [HcmPositionDetail]
+            if(!this.preSaveDataSource(_entityCtx, 'HcmPositionDetail'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmPositionDetail');
+            // deletes data source [HcmPositionDetail].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+            // deletes data sources referenced by [HcmPositionDetail].
+            {
+                // handle datasources which are part of extensions and need to be saved before [OMOperatingUnit]
+                if(!this.preSaveDataSource(_entityCtx, 'OMOperatingUnit'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('OMOperatingUnit');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [OMOperatingUnit].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmCompLocation]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmCompLocation'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmCompLocation');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [HcmCompLocation].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmJob]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmJob'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmJob');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [HcmJob].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmPosition]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmPosition'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmPosition');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [HcmPosition].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmPositionType]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmPositionType'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmPositionType');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [HcmPositionType].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmTitle]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmTitle'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmTitle');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [HcmTitle].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPositionDetail _hcmPositionDetail, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, AvailableForAssignment), _hcmPositionDetail, fieldnum(HcmPositionDetail, AvailableForAssignment), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, CompensationRegion), _hcmPositionDetail, fieldnum(HcmPositionDetail, CompLocation), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Department), _hcmPositionDetail, fieldnum(HcmPositionDetail, Department), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Description), _hcmPositionDetail, fieldnum(HcmPositionDetail, Description), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, FullTimeEquivalent), _hcmPositionDetail, fieldnum(HcmPositionDetail, FullTimeEquivalency), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Job), _hcmPositionDetail, fieldnum(HcmPositionDetail, Job), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Position), _hcmPositionDetail, fieldnum(HcmPositionDetail, Position), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, PositionType), _hcmPositionDetail, fieldnum(HcmPositionDetail, PositionType), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Title), _hcmPositionDetail, fieldnum(HcmPositionDetail, Title), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, ValidFrom), _hcmPositionDetail, fieldnum(HcmPositionDetail, ValidFrom), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, ValidTo), _hcmPositionDetail, fieldnum(HcmPositionDetail, ValidTo), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _hcmPositionDetail, _hcmPositionDetailEntity);
+        _hcmPositionDetail.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS2(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, OMOperatingUnit _oMOperatingUnit, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, DepartmentNumber), _oMOperatingUnit, fieldnum(OMOperatingUnit, OMOperatingUnitNumber), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _oMOperatingUnit, _hcmPositionDetailEntity);
+        _oMOperatingUnit.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS3(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmCompLocation _hcmCompLocation, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('HRMAdministrationCompensation')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, CompensationRegionId), _hcmCompLocation, fieldnum(HcmCompLocation, CompLocationId), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _hcmCompLocation, _hcmPositionDetailEntity);
+            _hcmCompLocation.trackFieldExternallySet(false);
+        }
+    }
+    private void mapToDataSource_DS4(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmJob _hcmJob, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, JobId), _hcmJob, fieldnum(HcmJob, JobId), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _hcmJob, _hcmPositionDetailEntity);
+        _hcmJob.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS5(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPosition _hcmPosition, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, PositionId), _hcmPosition, fieldnum(HcmPosition, PositionId), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _hcmPosition, _hcmPositionDetailEntity);
+        _hcmPosition.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS6(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPositionType _hcmPositionType, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, PositionTypeId), _hcmPositionType, fieldnum(HcmPositionType, TypeId), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _hcmPositionType, _hcmPositionDetailEntity);
+        _hcmPositionType.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS7(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmTitle _hcmTitle, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, TitleId), _hcmTitle, fieldnum(HcmTitle, TitleId), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _hcmTitle, _hcmPositionDetailEntity);
+        _hcmTitle.trackFieldExternallySet(false);
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmPositionDetail_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #OMOperatingUnit_ID:
+                this.mapToDataSource_DS2(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmCompLocation_ID:
+                this.mapToDataSource_DS3(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmJob_ID:
+                this.mapToDataSource_DS4(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmPosition_ID:
+                this.mapToDataSource_DS5(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmPositionType_ID:
+                this.mapToDataSource_DS6(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmTitle_ID:
+                this.mapToDataSource_DS7(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPositionDetail _hcmPositionDetail, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, AvailableForAssignment), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, AvailableForAssignment), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, CompLocation), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, CompensationRegion), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, Department), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Department), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, Description), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Description), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, FullTimeEquivalency), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, FullTimeEquivalent), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, Job), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Job), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, Position), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Position), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, PositionType), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, PositionType), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, Title), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Title), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, ValidFrom), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, ValidFrom), false);
+        this.mapDataSourceFieldToEntityField(_hcmPositionDetail, fieldnum(HcmPositionDetail, ValidTo), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, ValidTo), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmPositionDetail, _hcmPositionDetailEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _hcmPositionDetailEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmPositionDetail);
+    }
+    private void mapFromDataSource_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, OMOperatingUnit _oMOperatingUnit, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_oMOperatingUnit, fieldnum(OMOperatingUnit, OMOperatingUnitNumber), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, DepartmentNumber), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _oMOperatingUnit, _hcmPositionDetailEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _hcmPositionDetailEntity.fromViewDataSource(_dataSourceCtx.id(), _oMOperatingUnit);
+    }
+    private void mapFromDataSource_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmCompLocation _hcmCompLocation, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmCompLocation, fieldnum(HcmCompLocation, CompLocationId), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, CompensationRegionId), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmCompLocation, _hcmPositionDetailEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _hcmPositionDetailEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmCompLocation);
+    }
+    private void mapFromDataSource_DS4(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmJob _hcmJob, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmJob, fieldnum(HcmJob, JobId), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, JobId), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmJob, _hcmPositionDetailEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _hcmPositionDetailEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmJob);
+    }
+    private void mapFromDataSource_DS5(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPosition _hcmPosition, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmPosition, fieldnum(HcmPosition, PositionId), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, PositionId), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmPosition, _hcmPositionDetailEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _hcmPositionDetailEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmPosition);
+    }
+    private void mapFromDataSource_DS6(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPositionType _hcmPositionType, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmPositionType, fieldnum(HcmPositionType, TypeId), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, PositionTypeId), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmPositionType, _hcmPositionDetailEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _hcmPositionDetailEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmPositionType);
+    }
+    private void mapFromDataSource_DS7(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmTitle _hcmTitle, HcmPositionDetailEntity _hcmPositionDetailEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmTitle, fieldnum(HcmTitle, TitleId), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, TitleId), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmTitle, _hcmPositionDetailEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _hcmPositionDetailEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmTitle);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmPositionDetail_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #OMOperatingUnit_ID:
+                this.mapFromDataSource_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmCompLocation_ID:
+                this.mapFromDataSource_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmJob_ID:
+                this.mapFromDataSource_DS4(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmPosition_ID:
+                this.mapFromDataSource_DS5(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmPositionType_ID:
+                this.mapFromDataSource_DS6(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmTitle_ID:
+                this.mapFromDataSource_DS7(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmPositionDetail_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #OMOperatingUnit_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS2(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #HcmCompLocation_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS3(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #HcmJob_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS4(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #HcmPosition_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS5(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #HcmPositionType_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS6(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #HcmTitle_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS7(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(HcmPositionDetailEntity _hcmPositionDetailEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, AvailableForAssignment)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, CompensationRegion)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, Department)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, Description)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, FullTimeEquivalent)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, Job)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, Position)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, PositionType)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, Title)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, ValidFrom)))
+        {
+            return true;
+        }
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, ValidTo)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_hcmPositionDetailEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS2(HcmPositionDetailEntity _hcmPositionDetailEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, DepartmentNumber)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_hcmPositionDetailEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS3(HcmPositionDetailEntity _hcmPositionDetailEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, CompensationRegionId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_hcmPositionDetailEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS4(HcmPositionDetailEntity _hcmPositionDetailEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, JobId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_hcmPositionDetailEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS5(HcmPositionDetailEntity _hcmPositionDetailEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, PositionId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_hcmPositionDetailEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS6(HcmPositionDetailEntity _hcmPositionDetailEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, PositionTypeId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_hcmPositionDetailEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS7(HcmPositionDetailEntity _hcmPositionDetailEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_hcmPositionDetailEntity.isFieldSet(fieldnum(HcmPositionDetailEntity, TitleId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_hcmPositionDetailEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmPositionDetail_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            case #OMOperatingUnit_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS2(_entityCtx.getEntityRecord());
+                break;
+            case #HcmCompLocation_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS3(_entityCtx.getEntityRecord());
+                break;
+            case #HcmJob_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS4(_entityCtx.getEntityRecord());
+                break;
+            case #HcmPosition_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS5(_entityCtx.getEntityRecord());
+                break;
+            case #HcmPositionType_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS6(_entityCtx.getEntityRecord());
+                break;
+            case #HcmTitle_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS7(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, HcmPositionDetailEntity _hcmPositionDetailEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPositionDetail _hcmPositionDetail)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, AvailableForAssignment), 'HcmPositionDetailEntity.AvailableForAssignment', _hcmPositionDetail, fieldnum(HcmPositionDetail, AvailableForAssignment), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, Description), 'HcmPositionDetailEntity.Description', _hcmPositionDetail, fieldnum(HcmPositionDetail, Description), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, FullTimeEquivalent), 'HcmPositionDetailEntity.FullTimeEquivalent', _hcmPositionDetail, fieldnum(HcmPositionDetail, FullTimeEquivalency), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, ValidFrom), 'HcmPositionDetailEntity.ValidFrom', _hcmPositionDetail, fieldnum(HcmPositionDetail, ValidFrom), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _hcmPositionDetailEntity, fieldnum(HcmPositionDetailEntity, ValidTo), 'HcmPositionDetailEntity.ValidTo', _hcmPositionDetail, fieldnum(HcmPositionDetail, ValidTo), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _hcmPositionDetailEntity, _dataSourceCtx, _hcmPositionDetail) ? rtrn : false;
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmPositionDetail_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPositionDetail _hcmPositionDetail, HcmPositionDetail _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, AvailableForAssignment), _matchingRecord, fieldnum(HcmPositionDetail, AvailableForAssignment), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, CompLocation), _matchingRecord, fieldnum(HcmPositionDetail, CompLocation), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, Department), _matchingRecord, fieldnum(HcmPositionDetail, Department), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, Description), _matchingRecord, fieldnum(HcmPositionDetail, Description), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, FullTimeEquivalency), _matchingRecord, fieldnum(HcmPositionDetail, FullTimeEquivalency), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, Job), _matchingRecord, fieldnum(HcmPositionDetail, Job), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, Position), _matchingRecord, fieldnum(HcmPositionDetail, Position), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, PositionType), _matchingRecord, fieldnum(HcmPositionDetail, PositionType), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, Title), _matchingRecord, fieldnum(HcmPositionDetail, Title), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, ValidFrom), _matchingRecord, fieldnum(HcmPositionDetail, ValidFrom), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionDetail, fieldnum(HcmPositionDetail, ValidTo), _matchingRecord, fieldnum(HcmPositionDetail, ValidTo), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(HcmPositionDetailEntity), _hcmPositionDetail, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, OMOperatingUnit _oMOperatingUnit, OMOperatingUnit _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _oMOperatingUnit, fieldnum(OMOperatingUnit, OMOperatingUnitNumber), _matchingRecord, fieldnum(OMOperatingUnit, OMOperatingUnitNumber), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(HcmPositionDetailEntity), _oMOperatingUnit, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmCompLocation _hcmCompLocation, HcmCompLocation _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmCompLocation, fieldnum(HcmCompLocation, CompLocationId), _matchingRecord, fieldnum(HcmCompLocation, CompLocationId), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(HcmPositionDetailEntity), _hcmCompLocation, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS4(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmJob _hcmJob, HcmJob _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmJob, fieldnum(HcmJob, JobId), _matchingRecord, fieldnum(HcmJob, JobId), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(HcmPositionDetailEntity), _hcmJob, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS5(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPosition _hcmPosition, HcmPosition _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPosition, fieldnum(HcmPosition, PositionId), _matchingRecord, fieldnum(HcmPosition, PositionId), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(HcmPositionDetailEntity), _hcmPosition, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS6(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPositionType _hcmPositionType, HcmPositionType _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPositionType, fieldnum(HcmPositionType, TypeId), _matchingRecord, fieldnum(HcmPositionType, TypeId), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(HcmPositionDetailEntity), _hcmPositionType, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS7(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmTitle _hcmTitle, HcmTitle _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmTitle, fieldnum(HcmTitle, TitleId), _matchingRecord, fieldnum(HcmTitle, TitleId), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(HcmPositionDetailEntity), _hcmTitle, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmPositionDetail_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #OMOperatingUnit_ID:
+                this.mapToMatchingRecord_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #HcmCompLocation_ID:
+                this.mapToMatchingRecord_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #HcmJob_ID:
+                this.mapToMatchingRecord_DS4(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #HcmPosition_ID:
+                this.mapToMatchingRecord_DS5(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #HcmPositionType_ID:
+                this.mapToMatchingRecord_DS6(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #HcmTitle_ID:
+                this.mapToMatchingRecord_DS7(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('HRMAdministrationCompensation')))
+        {
+            if(this.isAnyMappedDataSourceFieldSet_DS3(_entityCtx.getEntityRecord(), 'HRMAdministrationCompensation'))
+            {
+                // Outer joined data source configuration key is disabled and fields mapped to this data source are set
+                throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'HcmCompLocation','HRMAdministrationCompensation'));
+            }
+        }
+    }
+    protected int getValidTimeStateUpdateModeForDataSource(DataEntityRuntimeContext _entityCtx, int _dataSourceId, str _dataSourceName)
+    {
+        int validTimeStateUpdate_ = ValidTimeStateUpdate::CreateNewTimePeriod;
+        
+        // returns ValidTimeStateUpdate value for date effective data sources.
+        
+        switch (_dataSourceId)
+        {
+            case #HcmPositionDetail_ID:
+                validTimeStateUpdate_ = ValidTimeStateUpdate::Correction;
+                break;
+            default : validTimeStateUpdate_ = super(_entityCtx,_dataSourceId,_dataSourceName);
+        }
+        return validTimeStateUpdate_;
+    }
+    protected boolean hasDataSourceRecordChanged(int _dataSourceId, common _originalRecord, common _updatedRecord)
+    {
+        boolean hasDataSourceRecordChanged_ = true;
+        
+        // The method is called for OCC validation and only upon data sources that have One-to-Many relationships.
+        
+        switch (_dataSourceId)
+        {
+            case #OMOperatingUnit_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS2(_originalRecord, _updatedRecord);
+                break;
+            case #HcmCompLocation_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS3(_originalRecord, _updatedRecord);
+                break;
+            case #HcmJob_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS4(_originalRecord, _updatedRecord);
+                break;
+            case #HcmPositionType_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS6(_originalRecord, _updatedRecord);
+                break;
+            case #HcmTitle_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS7(_originalRecord, _updatedRecord);
+                break;
+        }
+        return hasDataSourceRecordChanged_;
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'HcmPositionDetail', m_HcmPositionDetail, this.getDataSourceId('HcmPositionDetail'), this.getDataSourceId('HcmPositionDetail'), false/* optional */, false/* readonly */, false/* oneToMany */, true/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'OMOperatingUnit', m_OMOperatingUnit, this.getDataSourceId('OMOperatingUnit'), this.getDataSourceId('OMOperatingUnit'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'HcmCompLocation', m_HcmCompLocation, this.getDataSourceId('HcmCompLocation'), this.getDataSourceId('HcmCompLocation'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'HcmJob', m_HcmJob, this.getDataSourceId('HcmJob'), this.getDataSourceId('HcmJob'), false/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'HcmPosition', m_HcmPosition, this.getDataSourceId('HcmPosition'), this.getDataSourceId('HcmPosition'), false/* optional */, true/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'HcmPositionType', m_HcmPositionType, this.getDataSourceId('HcmPositionType'), this.getDataSourceId('HcmPositionType'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'HcmTitle', m_HcmTitle, this.getDataSourceId('HcmTitle'), this.getDataSourceId('HcmTitle'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private boolean hasDataSourceRecordChanged_DS2(OMOperatingUnit _originalRecord, OMOperatingUnit _updatedRecord)
+    {
+        if (_originalRecord.OMOperatingUnitNumber != _updatedRecord.OMOperatingUnitNumber)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS3(HcmCompLocation _originalRecord, HcmCompLocation _updatedRecord)
+    {
+        if (_originalRecord.CompLocationId != _updatedRecord.CompLocationId)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS4(HcmJob _originalRecord, HcmJob _updatedRecord)
+    {
+        if (_originalRecord.JobId != _updatedRecord.JobId)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS6(HcmPositionType _originalRecord, HcmPositionType _updatedRecord)
+    {
+        if (_originalRecord.TypeId != _updatedRecord.TypeId)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS7(HcmTitle _originalRecord, HcmTitle _updatedRecord)
+    {
+        if (_originalRecord.TitleId != _updatedRecord.TitleId)
+        {
+            return true;
+        }
+        return false;
+    }
+    private HcmPositionDetail LookForUniqueKeyMatch_DS1(HcmPositionDetailEntity _hcmPositionDetailEntity, HcmPositionDetail _hcmPositionDetail)
+    {
+        HcmPositionDetail hcmPositionDetail_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+            // Applying min/max date range since ApplyDateFilter is No for date effective data source.
+            validTimeState(minimumDateTime, maximumDateTime)
+                hcmPositionDetail_
+        where
+            hcmPositionDetail_.Position == _hcmPositionDetail.Position && hcmPositionDetail_.ValidFrom == _hcmPositionDetail.ValidFrom && hcmPositionDetail_.ValidTo == _hcmPositionDetail.ValidTo
+        ;
+        
+        if (hcmPositionDetail_)
+        {
+            return hcmPositionDetail_;
+        }
+        
+        return hcmPositionDetail_;
+    }
+    private OMOperatingUnit LookForUniqueKeyMatch_DS2(HcmPositionDetailEntity _hcmPositionDetailEntity, OMOperatingUnit _oMOperatingUnit)
+    {
+        OMOperatingUnit oMOperatingUnit_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        oMOperatingUnit_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                OMOperatingUnitNumber, RecId
+            from
+                oMOperatingUnit_
+        where
+            oMOperatingUnit_.OMOperatingUnitNumber == _oMOperatingUnit.OMOperatingUnitNumber
+        ;
+        
+        if (oMOperatingUnit_)
+        {
+            return oMOperatingUnit_;
+        }
+        
+        return oMOperatingUnit_;
+    }
+    private HcmCompLocation LookForUniqueKeyMatch_DS3(HcmPositionDetailEntity _hcmPositionDetailEntity, HcmCompLocation _hcmCompLocation)
+    {
+        HcmCompLocation hcmCompLocation_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        hcmCompLocation_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                CompLocationId, RecId
+            from
+                hcmCompLocation_
+        where
+            hcmCompLocation_.CompLocationId == _hcmCompLocation.CompLocationId
+        ;
+        
+        if (hcmCompLocation_)
+        {
+            return hcmCompLocation_;
+        }
+        
+        return hcmCompLocation_;
+    }
+    private HcmJob LookForUniqueKeyMatch_DS4(HcmPositionDetailEntity _hcmPositionDetailEntity, HcmJob _hcmJob)
+    {
+        HcmJob hcmJob_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        hcmJob_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                JobId, RecId
+            from
+                hcmJob_
+        where
+            hcmJob_.JobId == _hcmJob.JobId
+        ;
+        
+        if (hcmJob_)
+        {
+            return hcmJob_;
+        }
+        
+        return hcmJob_;
+    }
+    private HcmPosition LookForUniqueKeyMatch_DS5(HcmPositionDetailEntity _hcmPositionDetailEntity, HcmPosition _hcmPosition)
+    {
+        HcmPosition hcmPosition_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        hcmPosition_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PositionId, RecId
+            from
+                hcmPosition_
+        where
+            hcmPosition_.PositionId == _hcmPosition.PositionId
+        ;
+        
+        if (hcmPosition_)
+        {
+            return hcmPosition_;
+        }
+        
+        return hcmPosition_;
+    }
+    private HcmPositionType LookForUniqueKeyMatch_DS6(HcmPositionDetailEntity _hcmPositionDetailEntity, HcmPositionType _hcmPositionType)
+    {
+        HcmPositionType hcmPositionType_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        hcmPositionType_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                TypeId, RecId
+            from
+                hcmPositionType_
+        where
+            hcmPositionType_.TypeId == _hcmPositionType.TypeId
+        ;
+        
+        if (hcmPositionType_)
+        {
+            return hcmPositionType_;
+        }
+        
+        return hcmPositionType_;
+    }
+    private HcmTitle LookForUniqueKeyMatch_DS7(HcmPositionDetailEntity _hcmPositionDetailEntity, HcmTitle _hcmTitle)
+    {
+        HcmTitle hcmTitle_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        hcmTitle_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                TitleId, RecId
+            from
+                hcmTitle_
+        where
+            hcmTitle_.TitleId == _hcmTitle.TitleId
+        ;
+        
+        if (hcmTitle_)
+        {
+            return hcmTitle_;
+        }
+        
+        return hcmTitle_;
+    }
+
+}
+

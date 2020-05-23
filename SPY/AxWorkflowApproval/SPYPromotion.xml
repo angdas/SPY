@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYPromotion</Name>
+	<CanceledEventHandler>SPYPromotionEventHandler1</CanceledEventHandler>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DelegateMenuItem>SPYPromotionDelegateMenuItem</DelegateMenuItem>
+	<Document>SPYPromotionDocument</Document>
+	<DocumentMenuItem>SPYPromotionTable</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>AutoIdentification</DocumentPreviewFieldGroup>
+	<HelpText>@SPY1959</HelpText>
+	<Label>@SPY1958</Label>
+	<ResubmitMenuItem>SPYPromotionResubmitMenuItem</ResubmitMenuItem>
+	<StartedEventHandler>SPYPromotionEventHandler1</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYPromotionEventHandler1</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYPromotionApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYPromotionEventHandler1</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYPromotionReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYPromotionEventHandler1</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYPromotionRequestChange</ActionMenuItem>
+		<EventHandler xmlns="">SPYPromotionEventHandler1</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

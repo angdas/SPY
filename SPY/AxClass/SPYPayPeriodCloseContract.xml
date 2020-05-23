@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayPeriodCloseContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayPeriodCloseContract
+{
+    container                       hcmWorkerQuery;
+    LegalEntityRecId                legalEntity;
+    SPYPayrollPeriodLineRecId       payrollPeriodLine;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmLegalEntity</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public LegalEntityRecId parmLegalEntity(LegalEntityRecId _legalEntity = legalEntity)
+    {
+        legalEntity = _legalEntity;
+        return legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine = _payrollPeriodLine;
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerQuery(container _hcmWorkerQuery = hcmWorkerQuery)
+    {
+        hcmWorkerQuery = _hcmWorkerQuery;
+        return hcmWorkerQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

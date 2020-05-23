@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYOvertimeLedger</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYOvertimeLedger extends FormRun
+{
+    SPYOvertimeJournalTable         overtimeJournalTable;
+    QueryBuildRange                    overtimeJournalRange;
+    boolean                                 masterProcessCaller;
+    HcmWorkerRecId                    worker;
+    TransDate                              timesheetStartDate, timesheetEndDate;
+    QueryBuildRange                    workerRange;
+    QueryBuildRange                    overtimeDateRange;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        FormRun            formRun;
+        container           argsCon;
+
+        if(element.args().record() is SPYOvertimeJournalTable)
+            overtimeJournalTable = element.args().record() as SPYOvertimeJournalTable;
+        else if(element.args().caller())
+        {
+            formRun = element.args().caller();
+            if(formRun.name() == formStr(SPYMasterProcess) || formRun.name() == formStr(SPYPayArrearProcess))
+            {
+                masterProcessCaller = true;
+                argsCon = str2con(element.args().parm());
+                worker = conPeek(argsCon,1);
+                timesheetStartDate = str2Date(conPeek(argsCon,2),123);
+                timesheetEndDate = str2Date(conPeek(argsCon,3), 123);
+            }
+        }
+    
+        super();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYOvertimeLedger</Name>
+				<Methods>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            if(overtimeJournalTable)
+                overtimeJournalRange.value(queryValue(overtimeJournalTable.RecId));
+            if(masterProcessCaller)
+            {
+                workerRange.value(queryValue(worker));
+                overtimeDateRange.value(SysQuery::range(timesheetStartDate, timesheetEndDate));
+            }
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            QueryBuildDataSource    overtimeLedgerDS;
+            QueryBuildDataSource    overtimeJournalTransDS;
+        
+            super();
+        
+            if(overtimeJournalTable)
+            {
+                overtimeLedgerDS = this.query().dataSourceTable(tableNum(SPYOvertimeLedger));
+                overtimeJournalTransDS = overtimeLedgerDS.addDataSource(tableNum(SPYOvertimeJournalTrans));
+                overtimeJournalTransDS.addLink(fieldnum(SPYOvertimeLedger,OvertimeJournalTrans),fieldNum(SPYOvertimeJournalTrans,RecId));
+                overtimeJournalRange = overtimeJournalTransDS.addRange(fieldNum(SPYOvertimeJournalTrans,OvertimeJournal));
+            }
+            else if(masterProcessCaller)
+            {
+                workerRange = this.query().dataSourceTable(tableNum(SPYOvertimeLedger)).addRange(fieldNum(SPYOvertimeLedger,Worker));
+                overtimeDateRange = this.query().dataSourceTable(tableNum(SPYOvertimeLedger)).addRange(fieldNum(SPYOvertimeLedger,OvertimeDate));
+            }
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="" />
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYOvertimeLedger</Name>
+			<Table>SPYOvertimeLedger</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeDays</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeHours</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeJournalTrans</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Txt</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY75</Caption>
+		<DataSource xmlns="">SPYOvertimeLedger</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">Task</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<TitleDataSource xmlns="">SPYOvertimeLedger</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>ActionPaneTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<DataSource>SPYOvertimeLedger</DataSource>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>CustomFilterGroup</Name>
+				<ElementPosition>1288490187</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Pattern>CustomFilters</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls />
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+				<FrameType>None</FrameType>
+				<Style>CustomFilter</Style>
+				<ViewEditMode>Edit</ViewEditMode>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1717986916</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageOverview</Name>
+						<ElementPosition>894784852</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Pattern>ToolbarList</Pattern>
+						<PatternVersion>1.2</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>Grid</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYOvertimeLedger_Worker</Name>
+										<ElementPosition>715827882</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+										<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>SPYOvertimeLedger_TransDate</Name>
+										<ElementPosition>894784852</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>TransDate</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>SPYOvertimeLedger_OvertimeDate</Name>
+										<ElementPosition>1073741823</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeDate</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>SPYOvertimeLedger_OvertimeDays</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeDays</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>SPYOvertimeLedger_OvertimeHours</Name>
+										<ElementPosition>1789569705</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeHours</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYOvertimeLedger_OvertimeType</Name>
+										<ElementPosition>1968526675</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<ReferenceField>OvertimeType</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<AlternateRowShading>No</AlternateRowShading>
+								<DataSource>SPYOvertimeLedger</DataSource>
+								<MultiSelect>No</MultiSelect>
+								<ShowRowLabels>No</ShowRowLabels>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SYS50012</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageDetails</Name>
+						<ElementPosition>1342177278</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Pattern>FieldsFieldGroups</Pattern>
+						<PatternVersion>1.1</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupWorker</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>GroupWorker_Worker</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Worker</DataGroup>
+								<DataSource>SPYOvertimeLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupOvertimeDetails</Name>
+								<ElementPosition>1610612733</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>GroupOvertimeDetails_OvertimeDate</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeDate</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupOvertimeDetails_OvertimeDays</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeDays</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupOvertimeDetails_OvertimeHours</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeHours</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>GroupOvertimeDetails_OvertimeType</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<ReferenceField>OvertimeType</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>OvertimeDetails</DataGroup>
+								<DataSource>SPYOvertimeLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupOvertimeJournal</Name>
+								<ElementPosition>1744830461</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>Group_OvertimeJournalTrans</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<ReferenceField>OvertimeJournalTrans</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>OvertimeJournal</DataGroup>
+								<DataSource>SPYOvertimeLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupLog</Name>
+								<ElementPosition>1879048189</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupLog_createdBy</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>createdBy</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+										<Label>@SPY:CreatedBy</Label>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateTimeControl">
+										<Name>GroupLog_createdDateTime</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>DateTime</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>createdDateTime</DataField>
+										<DataSource>SPYOvertimeLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Log</DataGroup>
+								<DataSource>SPYOvertimeLedger</DataSource>
+							</AxFormControl>
+						</Controls>
+						<ColumnsMode>Fill</ColumnsMode>
+						<Caption>@SYS318405</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

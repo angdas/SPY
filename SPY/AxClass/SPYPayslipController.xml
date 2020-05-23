@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayslipController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayslipController extends SrsReportRunController
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>runReport</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Runs the report to various destinations.
+    /// </summary>
+    /// <remarks>
+    /// This method takes care of calling <c>preRunModifyContract</c>, <c>preRunReport</c>, <c>postRunReport</c> as part of running report.
+    /// </remarks>
+    /// <exception cref="Exception::Error">
+    /// If report contract was not found or if any other error encountered during running the report.
+    /// </exception>
+    public void runReport()
+    {
+        str                             errorMessage;
+        SRSReportExecutionInfo          executionInfo;
+        SPYPayslipContract              contract;
+        SRSPrintDestinationSettings     printDestinationSettings, basePrintDestinationSettings;
+        Query                           query, baseQuery;
+        QueryRun                        queryRun;
+        HcmWorker                       hcmWorker;
+        SPYPayrollPeriodLine            payrollPeriodLine;
+        Filename                        fileName;
+        QueryBuildRange                 workerRange;
+        QueryBuildDataSource            qbdHcmWorker, qbdPayrollLedger;
+        //str                             body;
+        str 1250                        body;
+        str                             archiveName;
+        System.Byte[]                   reportBytes = new System.Byte[0]();
+        SRSProxy                        srsProxy;
+        SRSReportRunService             srsReportRunService = new SrsReportRunService();
+        Microsoft.Dynamics.AX.Framework.Reporting.Shared.ReportingService.ParameterValue[]  parameterValueArray;
+        Map                             reportParametersMap;
+        #SRSFramework
+        #WinAPI
+    
+        // The contract should already be populated.
+        if(!this.getReportContract())
+        {
+            throw error(strFmt("@SYS322717", this.parmReportName()));
+        }
+    
+        contract = this.getReportContract().parmRdpContract();
+    
+        // create a instance of ReportExecutionInfo & set it on contract. This will get used while running report.
+        executionInfo = new SRSReportExecutionInfo();
+        executionInfo.parmReportRunId(reportRunId);
+        reportContract.parmReportExecutionInfo(executionInfo);
+    
+        // Expand destination tokens found in the print settings of the report contract
+        this.parmPrintDestinationTokens().replace(this.parmReportContract().parmPrintSettings());
+    
+        basePrintDestinationSettings = this.parmReportContract().parmPrintSettings();
+    
+        // provides a hook for app teams developers to change the report contract to what they require,
+        // before executing report.
+        this.preRunModifyContract();
+    
+        // Not calling getFromDialog & validate, since dialog.run() will do it.
+        // Set the contract in underyling report run.
+        this.parmReportRun().parmReportContract(reportContract);
+    
+        // process pre run state. If state is not Run, then we should not run the report.
+        preRunState = this.processPreRunValidate();
+        if(preRunState != SrsReportPreRunState::Run)
+        {
+            return;
+        }
+    
+        // check print destination, if null, then will print to screen by default.
+        if(contract.parmSendMail())
+        {
+            this.parmReportRun().parmIsInBatch(this.isInBatch());
+    
+            payrollPeriodLine = SPYPayrollPeriodLine::find(contract.parmPayrollPeriodline());
+    
+            reportContract.parmPrintSettings().printMediumType(SRSPrintMediumType::File);
+            reportContract.parmPrintSettings().overwriteFile(true);
+            reportContract.parmPrintSettings().fileFormat(SRSReportFileFormat::PDF);
+    
+            baseQuery = this.parmReportContract().parmQueryContracts().lookup(this.getFirstQueryContractKey());
+            qbdHcmWorker = baseQuery.dataSourceTable(tableNum(HcmWorker));
+            qbdPayrollLedger = qbdHcmWorker.addDataSource(tableNum(SPYPayrollLedger), "SPYPayrollLedger");
+            qbdPayrollLedger.joinMode(JoinMode::ExistsJoin);
+            qbdPayrollLedger.fetchMode(QueryFetchMode::One2One);
+            qbdPayrollLedger.Relations(true);
+            qbdPayrollLedger.addRange(fieldNum(SPYPayrollLedger, PayrollPeriodLine)).value(queryValue(contract.parmPayrollPeriodline()));
+            queryRun = new QueryRun(baseQuery);
+    
+            while(queryRun.next())
+            {
+                hcmWorker = queryRun.get(tableNum(HcmWorker));
+    
+                if (isRunningOnServer() || xSession::isCLRSession())
+                {
+                    new FileIOPermission('', 'r').assert();
+                    fileName = WinAPIServer::getTempPath();
+                }
+                else
+                {
+                    fileName =  WinAPI::getFolderPath(#CSIDL_PERSONAL);
+                }
+                fileName = "C:\\Logs";
+                fileName += strFmt("\\%1_%2_%3.pdf", hcmWorker.PersonnelNumber, mthName(mthOfYr(payrollPeriodLine.PeriodEndDate)), int2str(year(payrollPeriodLine.PeriodEndDate)));
+    
+                reportContract.parmPrintSettings().fileName(fileName);
+    
+                //query = new Query(queryStr(SPYHcmWorkerLookup));
+                query = new Query(queryStr(SPYHcmWorkerNoPosition));
+    
+                workerRange = query.dataSourceTable(tableNum(HcmWorker)).addRange(fieldNum(HcmWorker, RecId));
+    
+                // Have to wrap this in try/catch, so that even if any error occurs we will still run postRun().
+    
+                workerRange.value(queryValue(hcmWorker.RecId));
+    
+                this.parmReportContract().parmQueryContracts().insert(this.getFirstQueryContractKey(), query);
+                // Change print settings as needed
+                printDestinationSettings = this.parmReportContract().parmPrintSettings();
+                // set the print destination in contract
+                printDestinationSettings.overridePrintContractSettings(true);
+                printDestinationSettings.printMediumType(SRSPrintMediumType::Archive);
+                printDestinationSettings.parmOverwriteFileIsSet(true);
+                printDestinationSettings.fileFormat(SRSReportFileFormat::PDF);
+                this.parmReportContract().parmPrintSettings(printDestinationSettings);
+                // pre report run
+                this.parmReportRun().preRunReport();
+    
+                try
+                {
+                    // Now send this to email/printer/file
+                    this.parmReportRun().runReport();
+                    executionInfo.parmIsSuccessful(true);
+
+                    reportParametersMap = srsReportRunService.createParamMapFromContract(this.parmReportContract());
+                    parameterValueArray = SrsReportRunUtil::getParameterValueArray(reportParametersMap);
+                    srsProxy = SRSProxy::constructWithConfiguration(this.parmReportContract().parmReportServerConfig());
+                    reportBytes = srsproxy.renderReportToByteArray(this.parmreportcontract().parmreportpath(),
+                                                                                  parameterValueArray,
+                                                                                  printDestinationSettings.fileFormat(),
+                                                                                  printDestinationSettings.deviceinfo());
+
+                    body = "Hi,</br>";
+                    body+= hcmWorker.name() + '</br>Please find your enclosed attachment for salary.</br>Thanks,</br>HR';
+                    
+                    SPYPayslipController::SendEmailPaySlip(hcmWorker.email(),hcmWorker.PersonnelNumber + '.PDF',strFmt("@SPY952",mthName(mthOfYr(payrollPeriodLine.PeriodEndDate)),year(payrollPeriodLine.PeriodEndDate)),
+                                    body,reportBytes);
+                    
+
+                    //body = strFmt("@SPY951",hcmWorker.name());
+                   /* SPYPayslipController::SendEmail(hcmWorker.email(),
+                                                    fileName,
+                                                    strFmt("@SPY952",mthName(mthOfYr(payrollPeriodLine.PeriodEndDate)),year(payrollPeriodLine.PeriodEndDate)),
+                                                    body);
+                   */
+                }
+                catch
+                {
+                    executionInfo.parmIsSuccessful(false);
+                    errorMessage = SrsReportRunController::getErrorMessage();
+                    executionInfo.parmErrorMessage(errorMessage);
+                }
+    
+                // post report run
+                this.parmReportRun().postRunReport(executionInfo);
+    
+                // raise the event.
+                this.onRenderingComplete(executionInfo);
+    
+                // we should rethrow this error if message exists. Otherwise in batch cases, the batch log will not have the error and show as successful
+                if(errorMessage && this.isInBatch())
+                {
+                    throw error(errorMessage);
+                }
+            }
+            this.parmPrintDestinationTokens().replace(basePrintDestinationSettings);
+        }
+        else if(!reportContract.parmPrintSettings() ||
+            reportContract.parmPrintSettings().printMediumType() == SRSPrintMediumType::Screen)
+        {
+            // pre report run
+            this.parmReportRun().preRunReport();
+    
+            // if running on RPC server
+            if(isRunningOnServer() && !xSession::isCLRSession())
+            {
+                // flag used to track if client server adapter was used,
+                // this will be used to figure out if we need to make a call to clean cache on client after report has rendered in postPrintMgmtCompletion()
+                clientServerAdapterUsed = true;
+                SrsClientServerAdapterController::runReportOnClient(this.pack(), reportContract.pack(), this, false);
+            }
+            else
+            {
+                this.runToScreen();
+            }
+        }
+        else
+        {
+            // pre report run
+            this.parmReportRun().preRunReport();
+    
+            this.parmReportRun().parmIsInBatch(this.isInBatch());
+    
+            // if report is running in batch and destination is file, we should set the overrideFile property to true. Without this, batch execution will fail for
+            // subsequent runs. The normal customer use case is, send to file and also to print archive and set the batch to run in some recurrence fashion.
+            // Currently the overrideFlag is set only if the file exists in disk when the print destination form is closed, this will not be the case until the first batch execution happens.
+            if(this.isInBatch() && reportContract.parmPrintSettings().printMediumType() == SRSPrintMediumType::File)
+            {
+                reportContract.parmPrintSettings().overwriteFile(true);
+            }
+    
+            // Have to wrap this in try/catch, so that even if any error occurs we will still run postRun().
+            try
+            {
+                // Now send this to email/printer/file
+                this.parmReportRun().runReport();
+                executionInfo.parmIsSuccessful(true);
+            }
+            catch
+            {
+                executionInfo.parmIsSuccessful(false);
+                errorMessage = SrsReportRunController::getErrorMessage();
+                executionInfo.parmErrorMessage(errorMessage);
+            }
+    
+            // post report run
+            this.parmReportRun().postRunReport(executionInfo);
+    
+            // raise the event.
+            this.onRenderingComplete(executionInfo);
+    
+            // we should rethrow this error if message exists. Otherwise in batch cases, the batch log will not have the error and show as successful
+            if(errorMessage && this.isInBatch())
+            {
+                throw error(errorMessage);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SendEmailPaySlip</Name>
+				<Source><![CDATA[
+    //<Aveek -31-Jan2019>
+    static void SendEmailPaySlip(str _toMail,str _fileName,str _subject,str _body,System.Byte[]  _reportBytes )
+    {
+        boolean result = false;
+        System.IO.MemoryStream stream = new System.IO.MemoryStream(_reportBytes);
+        
+
+        try
+        {
+            var messageBuilder = new SysMailerMessageBuilder();
+            //messageBuilder.setFrom('erp2@salamair.com');
+            if(!SPYPayrollParameters::find().PayrollAdminEmail)
+                throw error("@SPYLabel:NewLabel7");
+            messageBuilder.setFrom(SPYPayrollParameters::find().PayrollAdminEmail);
+            messageBuilder.addTo(_toMail);
+            messageBuilder.setSubject(_subject);
+            messageBuilder.setBody(_body);
+            messageBuilder.addAttachment(stream, _fileName);
+            SysMailerFactory::getNonInteractiveMailer().sendNonInteractive(messageBuilder.getMessage());
+                
+            info("Email has been send!");
+        }
+        catch (Exception::CLRError)
+        {
+            error(CLRInterop::getLastException().toString());
+            info ("Failed to Send Email some Error occured");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>preRunModifyContract</Name>
+				<Source><![CDATA[
+    //<SRB -06/02/2017>
+    protected void preRunModifyContract()
+    {
+        container              userRoles = ["SPYPayrollManagerHCPM_FullControl", "-SYSADMIN-"];
+        SPYAmountDisplay       amountDisplay;
+        str                    reportNameLocal;
+        SPYPayslipContract     contract = this.parmReportContract().parmRdpContract() as SPYPayslipContract;
+
+        amountDisplay = contract.parmAmountDisplay();
+
+        //Select the report name in case of Transaction currency <SRB- 06/02/2017>
+        if(amountDisplay == SPYAmountDisplay::TransactionCurrency)
+        {
+            reportNameLocal = ssrsReportStr(SPYPaySlip, SPYReportTransCurr);
+            this.parmReportContract().parmReportName(reportNameLocal);
+        }
+
+        if(!this.isUserInRole(curUserId(), userRoles))
+        {
+            SrsReportHelper::addParameterValueRangeToQuery(this.getFirstQuery(),tableNum(HcmWorker),fieldNum(HcmWorker, PersonnelNumber),SysQuery::value(HcmWorker::find(HcmWorkerLookup::currentWorker()).PersonnelNumber));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>isUserInRole</Name>
+				<Source><![CDATA[
+    public boolean isUserInRole(UserId axUserId, container roleNames)
+    {
+        SecurityUserRole securityUserRole;
+        SecurityRole securityRole;
+        int cnt = 0;
+
+        while select AotName from securityRole
+            join securityUserRole
+            where securityUserRole.User == axUserId
+            && securityUserRole.SecurityRole == securityRole.RecId
+        {
+            if (conFind(roleNames, securityRole.AotName))
+                cnt++;        
+        }
+
+        if(cnt > 0)
+            return true;
+        else
+            return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>showQuerySelectButton</Name>
+				<Source><![CDATA[
+    public boolean showQuerySelectButton(str parameterName)
+    {
+        boolean         ret;
+        container       userRoles = ["SPYPayrollManagerHCPM_FullControl", "-SYSADMIN-"];
+
+        ret = super(parameterName);
+
+        if(!this.isUserInRole(curUserId(), userRoles))
+        {
+            ret = false;
+        }
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    //<SRB -06/02/2017>
+    public static void main(Args _args)
+    {
+        SPYPayslipController    controller = new SPYPayslipController();
+
+        controller.parmReportName(ssrsReportStr(SPYPaySlip, SPYReport));
+        controller.parmDialogCaption(literalStr("@SPY:EmployeePayslip"));
+        controller.parmArgs(_args);
+        controller.startOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SendEmail</Name>
+				<Source><![CDATA[
+    static void SendEmail(str _toMail,str _file,str _subject,str _body)
+    {        
+        Str1260                 subject,body;
+        InteropPermission       interopPermission;
+        SysMailerMessageBuilder mailer  = new SysMailerMessageBuilder();
+        SysMailerSMTP           smtp    = new SysMailerSMTP();
+                    
+        subject = _subject;
+        body = "<B>Body of the email</B>";    
+        CodeAccessPermission::revertAssert();    
+        try
+        {
+            interopPermission = new InteropPermission(InteropKind::ComInterop);
+            interopPermission.assert();
+            mailer  = new SysMailerMessageBuilder(); 
+            if(!SPYPayrollParameters::find().PayrollAdminEmail)
+                throw error("@SPYLabel:NewLabel7");
+            mailer.setFrom(SPYPayrollParameters::find().PayrollAdminEmail);    
+            mailer.addTo(_toMail);
+            mailer.setSubject(subject);
+            mailer.setBody(body);
+            //mailer.addAttachmentFromFile(_file);            
+            smtp.sendNonInteractive(mailer.getMessage());
+            CodeAccessPermission::revertAssert();
+            info("Email has been send!");
+        }
+        catch (Exception::CLRError)
+        {
+            error(CLRInterop::getLastException().toString());    
+            info ("Failed to Send Email some Error occure");
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

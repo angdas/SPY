@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkCalendarOvertimeSlab</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYWorkCalendarOvertimeSlab extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>nextLineNum</Name>
+				<Source><![CDATA[
+    LineNum nextLineNum(SPYWorkCalendarOvertimeRecId _workCalendarOvertime)
+    {
+        SPYWorkCalendarOvertimeSlab     workCalendarOvertimeSlab;
+        LineNum                         ret;
+    
+        select maxOf(LineNum) from workCalendarOvertimeSlab
+            where workCalendarOvertimeSlab.WorkCalendarOvertime == _workCalendarOvertime;
+    
+        ret = workCalendarOvertimeSlab.LineNum + 1;
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY1078</DeveloperDocumentation>
+	<Label>@SPY1077</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>Hours</TitleField1>
+	<TitleField2>OvertimeType</TitleField2>
+	<CacheLookup>FoundAndEmpty</CacheLookup>
+	<ReplacementKey>Linenum_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>WorkCalendarOvertime</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>OvertimeType</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Hours</Name>
+			<ExtendedDataType>Hours</ExtendedDataType>
+			<HelpText>@SPY961</HelpText>
+			<Label>@SPY960</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>LineNum</Name>
+			<ExtendedDataType>LineNum</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>OvertimeType</Name>
+			<ExtendedDataType>SPYOvertimeTypeRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Remainder</Name>
+			<HelpText>@SPY954</HelpText>
+			<Label>@SYS56506</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>WorkCalendarOvertime</Name>
+			<ExtendedDataType>SPYWorkCalendarOvertimeRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>Linenum_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>WorkCalendarOvertime</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LineNum</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>OvertimeType</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYOvertimeTypeTable</Name>
+			<RelatedTable>SPYOvertimeTypeTable</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>OvertimeType</Name>
+					<Field>OvertimeType</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYWorkCalendarOvertime</Name>
+			<OnDelete>Cascade</OnDelete>
+			<RelatedTable>SPYWorkCalendarOvertime</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>WorkCalendarOvertime</Name>
+					<Field>WorkCalendarOvertime</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

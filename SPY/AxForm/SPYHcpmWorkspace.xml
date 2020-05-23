@@ -1,0 +1,3807 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYHcpmWorkspace</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYHcpmWorkspace extends FormRun implements EssICommonMethods, SysIFilterProvider, MssIManagerReportsHierarchyView, HcmIRefreshable
+{
+    HcmWorker currentWorker;
+    [FormObservable]
+    container personImage;
+    MssManagerReportsHierarchyViewModel managerReportsHierarchyModel;
+    SysFilterChangeEvent changeEvent;
+    real allHours, draftHours, submittedHours, approvedHours, returnedHours, readyHours, transferredHours, postedHours, inReviewHours;
+    boolean isPositionPersonnelActionEnabled;
+    boolean isWorkerPersonnelActionEnabled;
+    HcmPersonCertificate expiringPersonCertificate, expiredPersonCertificate;
+
+}
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmChangeEvent</Name>
+				<Source><![CDATA[
+    public SysFilterChangeEvent parmChangeEvent()
+    {
+        return changeEvent;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmHcmWorker</Name>
+				<Source><![CDATA[
+    public HcmWorker parmHcmWorker()
+    {
+        return currentWorker;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmFilter</Name>
+				<Source><![CDATA[
+    public SysIFilter parmFilter()
+    {
+        SysIFilter filter = SysFilterFactory::createEmptyFilter();
+
+        SysIFilterValue curUserIdFilterValue = SysFilterValueFactory::createFilterValueForString(curUserId(), extendedTypeNum(WorkflowUser));
+        filter.addItem(curUserIdFilterValue, SysFilterOperator::Equal, SysFilterValueResolutionMethod::None);
+
+        SysIFilterValue personFilterValue = SysFilterValueFactory::createFilterValueForInteger(HcmWorkerLookup::currentPerson(), extendedTypeNum(HcmPersonRecId));
+        filter.addItem(personFilterValue, SysFilterOperator::Equal, SysFilterValueResolutionMethod::None);
+
+        SysIFilterValue workerValue = SysFilterValueFactory::createFilterValueForInteger(currentWorker.RecId, extendedTypeNum(HcmWorkerRecId));
+        filter.addItem(workerValue, SysFilterOperator::Equal, SysFilterValueResolutionMethod::None);
+
+        HcmPosition primaryPos = HcmPosition::findByPosition(currentWorker.primaryPositionId());
+        SysIFilterValue hcmPositionFilterValue = SysFilterValueFactory::createFilterValueForInteger(primaryPos.RecId, extendedTypeNum(HcmPositionInPositionHierarchyPosition));
+        filter.addItem(hcmPositionFilterValue, SysFilterOperator::Equal, SysFilterValueResolutionMethod::None);
+
+        return filter;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmManagerReportsHierarchyModel</Name>
+				<Source><![CDATA[
+    public MssManagerReportsHierarchyViewModel parmManagerReportsHierarchyModel()
+    {
+        return managerReportsHierarchyModel;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        currentWorker = HcmWorker::find(HcmWorkerLookup::currentWorker());
+
+        if (!currentWorker)
+        {
+            throw error("@HCM:EssNoUserAssociation");
+        }
+
+        this.bindManagerReportsHierarchyViewModel(MssManagerReportsHierarchyViewModel::newManagerReportsHierarchy(currentWorker));
+
+        super();
+
+        changeEvent = SysFilterChangeEvent::construct();
+
+        element.design().caption(strFmt("@HCM:WelcomeName", DirPartyTable::findRec(currentWorker.Person).Name));
+
+        HcmSharedParameters parameters = HcmSharedParameters::find();
+        isPositionPersonnelActionEnabled = parameters.PersonnelActionPosition;
+        isWorkerPersonnelActionEnabled = parameters.PersonnelActionWorker;
+        this.initPersonnelActionControls();
+
+        element.setPerformanceMetrics();
+        element.setDiscussionMetrics();
+
+        element.setAttachmentsDetail();
+
+        this.initManagerControls();
+
+        EssCommonHelper::hideSystemDefinedAttachmentButton(element);
+        EssCommonHelper::hideSystemDefinedAdvancedFilterButton(element);
+
+        HRMParameters hrmParameters = HRMParameters::find();
+        this.showOpenPositionsTile(hrmParameters.MssOpenPositionsType);
+        MssExitingWorkers.visible(hrmParameters.MssViewExitingWorkerOption != HcmViewExitingWorkerOption::ViewNone);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshCallerDataSourceAndPosition</Name>
+				<Source><![CDATA[
+    public void refreshCallerDataSourceAndPosition(Common _record = null)
+    {
+        essWorkerView_ds.research(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>bindManagerReportsHierarchyViewModel</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Performs binding of the current view to the given view-model.
+    /// </summary>
+    /// <param name = "_managerReportsHierarchyViewModel">
+    /// A <c>MssManagerReportsHierarchyViewModel</c> view model instance to perform binding against.
+    /// </param>
+    public void bindManagerReportsHierarchyViewModel(MssManagerReportsHierarchyViewModel _managerReportsHierarchyViewModel)
+    {
+        managerReportsHierarchyModel = _managerReportsHierarchyViewModel;
+        managerReportsHierarchyModel.hierarchyUpdated += eventhandler(this.handleHierarchyUpdated);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initManagerControls</Name>
+				<Source><![CDATA[
+    private void initManagerControls()
+    {
+        boolean hasManagerAccess = hasMenuItemAccess(menuItemDisplayStr(HcmManagerSelfServiceWorkspace), MenuItemType::Display);
+        managerTabPage.visible(hasManagerAccess);
+
+        if (element.args() && element.args().menuItemName() == menuItemDisplayStr(HcmManagerSelfServiceWorkspace))
+        {
+            element.setTabFocusForManager();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initPersonnelActionControls</Name>
+				<Source><![CDATA[
+    private void initPersonnelActionControls()
+    {
+        ButtonGroupPersonnelActions.visible(isPositionPersonnelActionEnabled || isWorkerPersonnelActionEnabled);
+        MssRequestNewContractor.visible(isWorkerPersonnelActionEnabled);
+        MssRequestNewContractor.visible(isWorkerPersonnelActionEnabled);
+        MssRequestNewPosition.visible(isPositionPersonnelActionEnabled);
+
+        hcmWorkerActionList.visible(isWorkerPersonnelActionEnabled);
+        hcmPositionActionList.visible(isPositionPersonnelActionEnabled);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>showCompensation</Name>
+				<Source><![CDATA[
+    private void showCompensation(boolean _isVisible)
+    {
+        Salary.visible(_isVisible);
+        IncreaseGroup.visible(_isVisible);
+        ShowCompensationInformation.visible(!_isVisible);
+        HideCompensationInformation.visible(_isVisible);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runMenuItem</Name>
+				<Source><![CDATA[
+    private void runMenuItem(Common _tableBuffer, str _menuItemName, boolean _lookupRecord = true, str _parameter = "")
+    {
+        Args args = new Args();
+
+        if (_lookupRecord)
+        {
+            args.lookupRecord(_tableBuffer);
+        }
+        else
+        {
+            args.record(_tableBuffer);
+        }
+
+        args.parm(_parameter);
+        args.openMode(OpenMode::Auto);
+        args.caller(this);
+
+        new MenuFunction(_menuItemName, MenuItemType::Display).run(args);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSkillCount</Name>
+				<Source><![CDATA[
+    private void getSkillCount()
+    {
+        select count(RecId) from HcmPersonSkill where
+                HcmPersonSkill.Person == currentWorker.Person;
+
+        SkillsCount.value(HcmPersonSkill.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setAttachmentsDetail</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the number and the latest update time of external attachments for the current worker record.
+    /// </summary>
+    private void setAttachmentsDetail()
+    {
+        DocuRef workerRef;
+        select count(RecId) from workerRef
+            where workerRef.RefRecId == currentWorker.RecId
+                && workerRef.RefTableId == tablenum(HcmWorker)
+                && workerRef.Restriction == DocuRestriction::External;
+                        
+        AttachmentsCountExternal.value(workerRef.RecId);
+
+        if (workerRef.RecId)
+        {
+            select firstonly Name, createdDateTime from workerRef
+                order by workerRef.createdDateTime desc
+                where workerRef.RefRecId == currentWorker.RecId
+                    && workerRef.RefTableId == tablenum(HcmWorker)
+                    && workerRef.Restriction == DocuRestriction::External;
+
+            MostRecentAttachmentName.text(workerRef.Name);
+            MostRecentUploadTime.dateTimeValue(DateTimeUtil::applyTimeZoneOffset(workerRef.createdDateTime, DateTimeUtil::getCompanyTimeZone()));           
+        }
+
+        MostRecentAttachmentName.visible(workerRef.RecId != 0);
+        MostRecentUploadTime.visible(workerRef.RecId != 0);
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPerformanceMetrics</Name>
+				<Source><![CDATA[
+    private void setPerformanceMetrics()
+    {
+        QueryRun     performanceGoalQueryRun = new QueryRun(queryStr(EssWorkerCountPerformanceGoalsByStatus));
+        str notStartedText                   = strFmt("@HCM:NotStartedCount", 0);
+        str onTrackText                      = strFmt("@HCM:OnTrackCount", 0);
+        str needsImprovementText             = strFmt("@HCM:NeedsImprovementCount", 0);
+
+
+        while(performanceGoalQueryRun.next())
+        {
+            HcmGoal goal = performanceGoalQueryRun.get(tableNum(HcmGoal));
+            switch (goal.Status)
+            {
+                case HRMGoalStatus::NotStarted:
+                    notStartedText = strFmt("@HCM:NotStartedCount",any2Str(goal.RecId));
+                    break;
+                case HRMGoalStatus::OnTrack:
+                    onTrackText = strFmt("@HCM:OnTrackCount",any2Str(goal.RecId));
+                    break;
+                case HRMGoalStatus::NeedsImprovement:
+                    needsImprovementText = strFmt("@HCM:NeedsImprovementCount",any2Str(goal.RecId));
+                    break;
+            }
+        }
+
+        NotStarted.text(notStartedText);
+        OnTrack.text(onTrackText);
+        NeedsImprovement.text(needsImprovementText);
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setDiscussionMetrics</Name>
+				<Source><![CDATA[
+    private void setDiscussionMetrics()
+    {
+        QueryRun discussionQueryRun = new QueryRun(queryStr(EssDiscussionCountByStatus));
+        int inProgressCount = 0;
+        int readyForReviewCount = 0;
+        int finalReviewCount = 0;
+
+        while(discussionQueryRun.next())
+        {
+            HcmDiscussion discussion = discussionQueryRun.get(tableNum(HcmDiscussion));
+            switch (discussion.DiscussionApprovalStatus)
+            {
+                case HcmDiscussionApproveStatus::InProgress:
+                    inProgressCount = int642int(discussion.RecId);
+                    break;
+                case HcmDiscussionApproveStatus::ReadyForReview:
+                    readyForReviewCount = int642int(discussion.RecId);
+                    break;
+                case HcmDiscussionApproveStatus::FinalReview:
+                    finalReviewCount = int642int(discussion.RecId);
+                    break;
+            }
+        }
+
+        InProgress.text(strFmt("@Talent:ReviewsInProgress", int2Str(inProgressCount)));
+        ReadyForReview.text(strFmt("@Talent:ReviewsReadyForReview", int2Str(readyForReviewCount)));
+        FinalReview.text(strFmt("@Talent:ReviewsFinalReview", int2Str(finalReviewCount)));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>showOpenPositionsTile</Name>
+				<Source><![CDATA[
+    private void showOpenPositionsTile(HcmOpenPositionsType _openPositionsType)
+    {
+        HcmMyOpenPositions.visible(_openPositionsType == HcmOpenPositionsType::ExtendedReports || _openPositionsType == HcmOpenPositionsType::Both);
+        HcmMyDirectsOpenPositions.visible(_openPositionsType == HcmOpenPositionsType::DirectReportsOnly || _openPositionsType == HcmOpenPositionsType::Both);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshingFormCallback</Name>
+				<Source><![CDATA[
+    delegate void refreshingFormCallback(FormRun _element)
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshFormCallback</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// This method is used as a callback on forms opened from the workspace.
+    /// This is used in the various child forms to refresh this form upon exiting.
+    /// </summary>
+    public void refreshFormCallback()
+    {
+        EssWorkerView_DS.research(true);
+        Manager_DS.research(true);
+        
+        HcmPersonCertificate_DS.research();
+
+        if (!HcmPersonCertificate)
+        {
+           element.setCertificateFields();
+        }
+
+        element.getSkillCount();
+        this.refreshingFormCallback(element);
+        element.setCoursesFields(true);
+        element.setDiscussionFields(true);
+        element.setPerformanceMetrics();
+        element.setDiscussionMetrics();
+        element.setAttachmentsDetail();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setInProcessVisibility</Name>
+				<Source><![CDATA[
+    public void setInProcessVisibility()
+    {
+        //not implemented
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshWorkflowIcon</Name>
+				<Source><![CDATA[
+    public void refreshWorkflowIcon()
+    {
+        //not implemented
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkflowButton</Name>
+				<Source><![CDATA[
+    public void setWorkflowButton()
+    {
+        //not implemented
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setContentModificationVisibility</Name>
+				<Source><![CDATA[
+    public void setContentModificationVisibility()
+    {
+        //not implemented
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDirPersonCallerRecId</Name>
+				<Source><![CDATA[
+    public DirPersonRecId getDirPersonCallerRecId()
+    {
+        return EssWorkerView.PersonRecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setCertificateFields</Name>
+				<Source><![CDATA[
+    private void setCertificateFields()
+    {
+        expiringPersonCertificate = null;
+        expiredPersonCertificate = null;        
+        boolean noCertificate = true;      
+        date dateToCompare = HcmDateTimeUtil::currentDate();
+
+        // The HcmPersonCertificate buffer is expected to be sorted by field ExpirationDate in ascending order
+        HcmPersonCertificate personCertificate = HcmPersonCertificate_DS.getFirst();        
+        while (personCertificate)
+        {          
+            noCertificate = false;
+
+            if (personCertificate.ExpirationDate != dateNull())
+            {
+                if (personCertificate.ExpirationDate >= dateToCompare)
+                {
+                    expiringPersonCertificate = personCertificate;
+                    break;
+                }
+                else
+                {
+                    expiredPersonCertificate = personCertificate;
+                }
+            }
+
+            personCertificate = HcmPersonCertificate_DS.getNext();
+        }
+
+        if (!expiringPersonCertificate && !expiredPersonCertificate )
+        {
+            CertificateMessage.visible(true);
+            ExpiredCertificate_Description.visible(false);
+            ExpiredCertificateMessage.visible(false);
+            ExpiringCertificate_Description.visible(false);
+            ExpiringCertificateMessage.visible(false);
+
+            if (noCertificate)
+            {
+                CertificateMessage.text("@HCM:NoCertificates");
+            }
+            else
+            {
+                CertificateMessage.text("@HCM:NoCertificatesExpiring");
+            }
+        }
+        else 
+        {
+            CertificateMessage.visible(false);
+                       
+            if (expiringPersonCertificate)
+            {
+                ExpiringCertificate_Description.visible(true);
+                ExpiringCertificateMessage.visible(true);
+                ExpiringCertificate_Description.text(HcmCertificateType::find(expiringPersonCertificate.CertificateType).Description);
+                ExpiringCertificateMessage.text(strFmt("@HCM:ExpiringInCountOfDays",  expiringPersonCertificate.ExpirationDate - dateToCompare));
+            }
+            else
+            {
+                ExpiringCertificate_Description.visible(false);
+                ExpiringCertificateMessage.visible(false);
+            }
+
+            if (expiredPersonCertificate)
+            {  
+                ExpiredCertificate_Description.visible(true);
+                ExpiredCertificateMessage.visible(true);
+                ExpiredCertificate_Description.text(HcmCertificateType::find(expiredPersonCertificate.CertificateType).Description);
+                ExpiredCertificateMessage.text(strFmt("@HCM:ExpiredCountOfDaysPast", dateToCompare - expiredPersonCertificate.ExpirationDate));
+            }
+            else
+            {
+                ExpiredCertificate_Description.visible(false);
+                ExpiredCertificateMessage.visible(false);
+            }
+        }
+
+        ViewAllCertificates.visible(!noCertificate);
+        AddACertificate.visible(noCertificate);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setDiscussionFields</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Set the visibility for the discussion card
+    /// </summary>
+    /// <param name = "refresh">true if the datasource needs to be refreshed</param>
+    private void setDiscussionFields(boolean refresh = false)
+    {
+        if (refresh)
+        {
+            HcmDiscussion_DS.executeQuery();
+        }
+
+        boolean hasRecord = HcmDiscussion.RecId != 0;
+
+        HcmDiscussion_Description.visible(hasRecord);
+        HcmDiscussion_DiscussionType.visible(hasRecord);
+        NextDiscussionDateTime.visible(hasRecord);
+
+        HcmDiscussion_DiscussionType.text(HcmDiscussionType.DiscussionTypeId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setCoursesFields</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Set the visibility for the course card
+    /// </summary>
+    private void setCoursesFields(boolean refresh = false)
+    {
+        if (refresh)
+        {
+            HrmCourseAttendee_DS.executeQuery();
+            HrmCourseTable_DS.executeQuery();
+        }
+
+        boolean recordFound = HrmCourseTable_DS.cursor().RecId != 0 && HrmCourseAttendee_DS.cursor().RecId != 0;
+
+        description.visible(recordFound);
+        DateTimeGroup.visible(recordFound);
+        CourseNotFound.visible(!recordFound);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setStaticHeaderText</Name>
+				<Source><![CDATA[
+    private void setStaticHeaderText()
+    {
+        Department.text(HcmWorker.primaryDepartmentName());
+        PrimaryPosition.text(HcmWorker.primaryPositionTitle());
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public void run()
+    {
+        super();
+
+        element.setStaticHeaderText();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTabFocusForManager</Name>
+				<Source><![CDATA[
+    private void setTabFocusForManager()
+    {
+        if (ManagerTabPage.visible())
+        {
+            // Since form extensions can add tab pages that the base form is unaware of, dynamically determine index for setting tab focus
+            str tabControlName = formControlStr(EssWorkspace, FormTabControl);
+            FormTabControl tabControl = element.design().controlName(tabControlName) as FormTabControl;
+
+            for (int i = 1; i <= tabControl.controlCount(); i++)
+            {
+                FormTabPageControl control = tabControl.controlNum(i) as FormTabPageControl;
+
+                if (control && control.name() == ManagerTabPage.name())
+                {
+                    FormTabControl.tab(i);
+                    break;
+                }
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>handleHierarchyUpdated</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Refresh the highlighted manager based on manager reports hierarchy view-model changes.
+    /// </summary>
+    public void handleHierarchyUpdated()
+    {
+        HcmWorkerRecId newManagerRecId = managerReportsHierarchyModel.getManager().RecId;
+        if (newManagerRecId == currentWorker.RecId)
+        {
+            ManagerCard.visible(false);
+        }
+        else
+        {
+            ManagerCard.visible(true);
+        }
+
+        Manager_ds.queryBuildDataSource().clearRanges();
+        Manager_ds.queryBuildDataSource().addRange(fieldNum(HcmWorker, RecId)).value(queryValue(newManagerRecId));
+        Manager_ds.executeQuery();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>task</Name>
+				<Source><![CDATA[
+    public int task(int _taskId)
+    {
+        int ret;
+    
+        if (EssCommonHelper::allowTask(_taskId))
+        {
+            ret = super(_taskId);
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>EssWorkerView</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+            QueryBuildRange qbr = this.queryBuildDataSource().addRange(fieldNum(DirPerson, RecId));
+            qbr.value(int642str(currentWorker.Person));
+            qbr.status(RangeStatus::Hidden);
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>displayImage</Name>
+						<Source><![CDATA[
+        display container displayImage()
+        {
+            if (!personImage)
+            {
+                if (EssWorkerView.Image)
+                {
+                    personImage = EssWorkerView.Image;
+                }
+                else
+                {
+                    // If the user doesn't have a default profile picture, display the person silhouette
+                    ImageReference imgRef = ImageReference::constructForSymbol(ImageReferenceSymbol::Person);
+                    personImage = imgRef.pack();
+                }
+            }
+
+            return personImage;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>HcmPersonCertificate</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+            HcmPersonCertificate_DS.queryBuildDataSource().addSortField(fieldnum(HcmPersonCertificate, ExpirationDate));
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret = super();
+
+            element.setCertificateFields();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>HcmPersonSkill</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+
+            HcmPersonSkill_DS.queryBuildDataSource().firstOnly(true);
+            HcmPersonSkill_DS.queryBuildDataSource().addSortField(fieldnum(HcmPersonSkill, ModifiedDateTime), SortOrder::Descending);
+
+            element.getSkillCount();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>HcmDiscussion</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+
+            QueryBuildDataSource qbds = HcmDiscussion_DS.queryBuildDataSource();
+
+            qbds.firstOnly(true);
+            qbds.addSortField(fieldNum(HcmDiscussion, StartDate));
+
+            QueryBuildRange statusRange = qbds.addRange(fieldNum(HcmDiscussion, DiscussionApprovalStatus));
+            statusRange.value(SysQuery::valueNot(HcmDiscussionApproveStatus::Completed));
+
+            statusRange.status(RangeStatus::Hidden);
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret  = super();
+
+            element.setDiscussionFields();
+
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>HrmCourseAttendee</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+
+            QueryBuildDataSource qbds = this.queryBuildDataSource();
+
+            // Include those courses where the worker is either registered or has been a confirmed participant
+            QueryBuildRange statusRange = qbds.addRange(fieldNum(HrmCourseAttendee, status));
+            statusRange.value(queryValue(HRMCourseAttendeeStatus::Registered));
+
+            statusRange = qbds.addRange(fieldNum(HrmCourseAttendee, status));
+            statusRange.value(queryValue(HRMCourseAttendeeStatus::Confirmation));
+
+            statusRange.status(RangeStatus::Hidden);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>HrmCourseTable</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+
+            QueryBuildDataSource qbds = HRMCourseTable_DS.queryBuildDataSource();
+            qbds.firstOnly(true);
+            qbds.addSortField(fieldNum(HRMCourseTable, startDateTime));
+
+            QueryBuildRange qbr = qbds.addRange(fieldNum(HRMCourseTable, startDateTime));
+            //doing date math here because >= doesn't work in the query.
+            qbr.value('>' + queryvalue(DateTimeUtil::addDays(DateTimeUtil::utcNow(), -1)));
+            qbr.status(RangeStatus::Hidden);
+
+            element.setCoursesFields();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret;
+
+            ret = super();
+
+            element.setCoursesFields();
+
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>HrmCompFixedEmpl</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+
+            str todayDate = date2StrXpp(HcmDateTimeUtil::currentDate());
+
+            QueryBuildRange validFromRange = HrmCompFixedEmpl_DS.queryBuildDataSource().addRange(fieldNum(HrmCompFixedEmpl, ValidFrom));
+            validFromRange.value(strFmt('(ValidFrom <= %1)', todayDate));
+            validFromRange.status(RangeStatus::Hidden);
+
+            QueryBuildRange validToRange = HrmCompFixedEmpl_DS.queryBuildDataSource().addRange(fieldNum(HrmCompFixedEmpl, ValidTo));
+            validToRange.value(strFmt('(ValidTo >= %1)', todayDate));
+            validToRange.status(RangeStatus::Hidden);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>Manager</Name>
+				<Methods>
+					<Method>
+						<Name>displayDirectReportsCount</Name>
+						<Source><![CDATA[
+        public display str displayDirectReportsCount(HcmWorker _worker)
+        {
+            Set directReports = HcmPositionWorkerAssignment::workerReports(_worker.RecId, true);
+            return directReports.elements() == 0 ? '' : strFmt("@HCM:DirectReportsCount", directReports.elements());
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>CompanyDirectory</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        public void clicked()
+        {
+            Args args = new Args();
+            args.caller(this);
+            new menufunction(menuItemDisplayStr(EssWorkerContactList), MenuItemType::Display).run(args);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>description</Name>
+				<Type>String</Type>
+				<Methods>
+					<Method>
+						<Name>jumpRef</Name>
+						<Source><![CDATA[
+        public void jumpRef()
+        {
+            element.runMenuItem(HrmCourseAttendee, menuitemDisplayStr(HcmEPCourseAttendeeListPage), true, formStr(EssWorkspace));
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>ExpiringCertificate_Description</Name>
+				<Type>String</Type>
+				<Methods>
+					<Method>
+						<Name>jumpRef</Name>
+						<Source><![CDATA[
+        public void jumpRef()
+        {
+            element.runMenuItem(expiringPersonCertificate, menuitemDisplayStr(EssPersonCertificate), true, formStr(EssWorkspace));
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>ExpiredCertificate_Description</Name>
+				<Type>String</Type>
+				<Methods>
+					<Method>
+						<Name>jumpRef</Name>
+						<Source><![CDATA[
+        public void jumpRef()
+        {
+            element.runMenuItem(expiredPersonCertificate, menuitemDisplayStr(EssPersonCertificate), true, formStr(EssWorkspace));
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>HcmDiscussion_DiscussionType</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        public void clicked()
+        {
+            // run the target item but force a lookup record because the framework isn't going to select the active record in the child form's datasource for the same table
+            Args args = new Args();
+            args.caller(this);
+            args.record(hcmWorker);
+            args.parm(formStr(EssWorkspace));
+            args.openMode(OpenMode::Auto);
+            args.lookupRecord(hcmDiscussion);
+
+            new MenuFunction(this.menuItemName(), MenuItemType::Display).run(args);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>SkillsCount</Name>
+				<Type>Int64</Type>
+				<Methods>
+					<Method>
+						<Name>jumpRef</Name>
+						<Source><![CDATA[
+        public void jumpRef()
+        {
+            element.runMenuItem(HcmPersonSkill, menuitemDisplayStr(EssPersonSkill));
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>displayAnnualEquivalentAmount</Name>
+				<Type>Real</Type>
+				<Methods>
+					<Method>
+						<Name>jumpRef</Name>
+						<Source><![CDATA[
+        public void jumpRef()
+        {
+            element.runMenuItem(HrmCompFixedEmpl, menuitemDisplayStr(EssPersonCompensation));
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>ShowCompensationInformation</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        public void clicked()
+        {
+            super();
+
+            if (HRMCompFixedEmpl::exsitActiveCompPlansWithDifferentCurrency(currentWorker.RecId))
+            {
+                element.runMenuItem(HrmCompFixedEmpl, menuitemDisplayStr(EssPersonCompensation));
+            }
+            else
+            {
+                element.showCompensation(true);
+            }
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>HideCompensationInformation</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        public void clicked()
+        {
+            super();
+            element.showCompensation(false);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>AttachmentsCountExternal</Name>
+				<Type>Int64</Type>
+				<Methods>
+					<Method>
+						<Name>jumpRef</Name>
+						<Source><![CDATA[
+        public void jumpRef()
+        {
+            super();
+            
+            element.runMenuItem(HcmWorker, menuItemDisplayStr(DocuAttachment), false);            
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>MssSummaryFormPart</Name>
+				<Type>Container</Type>
+				<Methods>
+					<Method>
+						<Name>createForm</Name>
+						<Source><![CDATA[
+        public void createForm(str childFormId)
+        {
+            MssIManagerReportsHierarchyView controller = this.getPartFormRun() as MssIManagerReportsHierarchyView;
+            controller.bindManagerReportsHierarchyViewModel(element.managerReportsHierarchyModel);
+
+            super(childFormId);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>MssPositionFormPart</Name>
+				<Type>Container</Type>
+				<Methods>
+					<Method>
+						<Name>createForm</Name>
+						<Source><![CDATA[
+        public void createForm(str childFormId)
+        {
+            MssIManagerReportsHierarchyView controller = this.getPartFormRun() as MssIManagerReportsHierarchyView;
+            controller.bindManagerReportsHierarchyViewModel(element.managerReportsHierarchyModel);
+
+            super(childFormId);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>MssCompensationFormPart</Name>
+				<Type>Container</Type>
+				<Methods>
+					<Method>
+						<Name>createForm</Name>
+						<Source><![CDATA[
+        public void createForm(str childFormId)
+        {
+            MssIManagerReportsHierarchyView controller = this.getPartFormRun() as MssIManagerReportsHierarchyView;
+            controller.bindManagerReportsHierarchyViewModel(element.managerReportsHierarchyModel);
+
+            super(childFormId);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>MssPerformanceFormPart</Name>
+				<Type>Container</Type>
+				<Methods>
+					<Method>
+						<Name>createForm</Name>
+						<Source><![CDATA[
+        public void createForm(str childFormId)
+        {
+            MssIManagerReportsHierarchyView controller = this.getPartFormRun() as MssIManagerReportsHierarchyView;
+            controller.bindManagerReportsHierarchyViewModel(element.managerReportsHierarchyModel);
+
+            super(childFormId);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>MssDiscussionFormPart</Name>
+				<Type>Container</Type>
+				<Methods>
+					<Method>
+						<Name>createForm</Name>
+						<Source><![CDATA[
+        public void createForm(str childFormId)
+        {
+            MssIManagerReportsHierarchyView controller = this.getPartFormRun() as MssIManagerReportsHierarchyView;
+            controller.bindManagerReportsHierarchyViewModel(element.managerReportsHierarchyModel);
+
+            super(childFormId);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<AllowPreLoading>No</AllowPreLoading>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>EssWorkerView</Name>
+			<Table>EssWorkerView</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>Address</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Image</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Name</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PersonRecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Phone</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidFrom</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidTo</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WorkerRecId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<DelayActive>No</DelayActive>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>HcmWorker</Name>
+			<Table>HcmWorker</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>CreatedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Person</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PersonnelNumber</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<DelayActive>No</DelayActive>
+			<JoinSource>EssWorkerView</JoinSource>
+			<LinkType>InnerJoin</LinkType>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>HcmPersonCertificate</Name>
+			<Table>HcmPersonCertificate</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>CertificateType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ExpirationDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>IssueDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Note</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Person</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources>
+				<AxFormReferencedDataSource>
+					<Name>CertificateType</Name>
+					<Table>HcmCertificateType</Table>
+					<Fields>
+						<AxFormDataSourceField>
+							<DataField>CertificateTypeId</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>CreatedBy</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>CreatedDateTime</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>Description</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>ModifiedBy</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>ModifiedDateTime</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>Partition</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>RecId</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>RequireRenewal</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>TableId</DataField>
+						</AxFormDataSourceField>
+					</Fields>
+					<ReferencedDataSources />
+					<JoinSource>HcmPersonCertificate</JoinSource>
+					<LinkType>OuterJoin</LinkType>
+					<JoinRelation>CertificateType_FK</JoinRelation>
+				</AxFormReferencedDataSource>
+			</ReferencedDataSources>
+			<JoinSource>EssWorkerView</JoinSource>
+			<AllowCheck>No</AllowCheck>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>HcmPersonSkill</Name>
+			<Table>HcmPersonSkill</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>Certifier</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Experience</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>IsCertified</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Person</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RatingLevel</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RatingLevelDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RatingLevelExaminer</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RatingLevelType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Skill</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources>
+				<AxFormReferencedDataSource>
+					<Name>SkillType</Name>
+					<Table>HcmSkill</Table>
+					<Fields>
+						<AxFormDataSourceField>
+							<DataField>CreatedBy</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>CreatedDateTime</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>Description</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>ModifiedBy</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>ModifiedDateTime</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>Note</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>Partition</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>RatingModel</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>RecId</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>SkillId</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>SkillType</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>TableId</DataField>
+						</AxFormDataSourceField>
+					</Fields>
+					<ReferencedDataSources />
+					<JoinSource>HcmPersonSkill</JoinSource>
+					<LinkType>OuterJoin</LinkType>
+					<JoinRelation>Skill_FK</JoinRelation>
+				</AxFormReferencedDataSource>
+			</ReferencedDataSources>
+			<JoinSource>EssWorkerView</JoinSource>
+			<OnlyFetchActive>Yes</OnlyFetchActive>
+			<AllowCheck>No</AllowCheck>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>HcmDiscussion</Name>
+			<Table>HcmDiscussion</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>CreatedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DiscussionId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DiscussionPlace</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DiscussionType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>EndDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>FinishedDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Goal</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Overview</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PerfPeriod</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ResponsibleWorker</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>StartDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>status</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>HcmWorker</JoinSource>
+			<OnlyFetchActive>Yes</OnlyFetchActive>
+			<AllowCheck>No</AllowCheck>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>HcmDiscussionType</Name>
+			<Table>HcmDiscussionType</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>CreatedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DiscussionTypeId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>HcmDiscussion</JoinSource>
+			<LinkType>OuterJoin</LinkType>
+			<AllowCheck>No</AllowCheck>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>HrmCourseAttendee</Name>
+			<Table>HrmCourseAttendee</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>ApprovalStatus</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DefaultDimension</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>hrmCourseId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Person</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>registrationDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>status</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WorkflowOperation</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>EssWorkerView</JoinSource>
+			<OnlyFetchActive>Yes</OnlyFetchActive>
+			<AllowCheck>No</AllowCheck>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>HrmCourseTable</Name>
+			<Table>HrmCourseTable</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>Configuration</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CourseInstructor</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CourseType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DefaultDimension</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>endDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>hrmCourseId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>hrmCourseLocationId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>hrmCourseRoomId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>kmKnowledgeCollectorPlanningTableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>lastDateOfSignUp</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>maxAttendees</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>minAttendees</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>note</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>setup</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>startDateInUserTimeZone</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>startDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>status</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>webEnable</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>HrmCourseAttendee</JoinSource>
+			<LinkType>InnerJoin</LinkType>
+			<OnlyFetchActive>Yes</OnlyFetchActive>
+			<AllowCheck>No</AllowCheck>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>HrmCompFixedEmpl</Name>
+			<Table>HrmCompFixedEmpl</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>ActionId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CurrencyCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DefaultDimension</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>IncreaseAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>IncreasePercent</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LineNum</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayFrequencyId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayRate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayRateCumAmountMst</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PlanId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Position</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ProcessType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RefPointId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RefRecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Type</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidFrom</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidTo</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>HcmWorker</JoinSource>
+			<AllowCheck>No</AllowCheck>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<InsertAtEnd>No</InsertAtEnd>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<MaxAccessRight>View</MaxAccessRight>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>Manager</Name>
+			<Table>HcmWorker</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>CreatedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CreatedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Person</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PersonnelNumber</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<DataSourceLinks>
+				<AxFormDataSourceRootLink>
+					<Name>HcmPositionWorkerAssignment</Name>
+				</AxFormDataSourceRootLink>
+				<AxFormDataSourceRootLink>
+					<Name>HcmPersonImage</Name>
+				</AxFormDataSourceRootLink>
+				<AxFormDataSourceRootLink>
+					<Name>DirPartyTable</Name>
+				</AxFormDataSourceRootLink>
+			</DataSourceLinks>
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@HCM:EmployeeSelfService</Caption>
+		<Pattern xmlns="">Custom</Pattern>
+		<ShowDeleteButton xmlns="">No</ShowDeleteButton>
+		<ShowNewButton xmlns="">No</ShowNewButton>
+		<Style xmlns="">Workspace</Style>
+		<ViewEditMode xmlns="">View</ViewEditMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>WorkerInfo</Name>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>WorkerCard</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>Group</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormImageControl">
+								<Name>Image</Name>
+								<ExtendedStyle>image_circularMedium</ExtendedStyle>
+								<Type>Image</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataMethod>displayImage</DataMethod>
+								<DataSource>EssWorkerView</DataSource>
+								<Label>@HCM:WorkerImage</Label>
+								<ShowLabel>No</ShowLabel>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>Details</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStaticTextControl">
+										<Name>Department</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>StaticText</Type>
+										<FormControlExtension
+											i:nil="true" />
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStaticTextControl">
+										<Name>PrimaryPosition</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>StaticText</Type>
+										<FormControlExtension
+											i:nil="true" />
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>EditPersonalInformationButton</Name>
+										<Type>MenuFunctionButton</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+										<MenuItemName>EssPersonalDetails</MenuItemName>
+										<NormalImage>Edit</NormalImage>
+										<Style>Link</Style>
+										<Text>@HCM:EditPersonalInformation</Text>
+									</AxFormControl>
+								</Controls>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>None</ArrangeMethod>
+						<Style>Card</Style>
+					</AxFormControl>
+				</Controls>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>FormTabControl</Name>
+				<AutoDeclaration>Yes</AutoDeclaration>
+				<Type>Tab</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>EmployeeTabPage</Name>
+						<Type>TabPage</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormTabControl">
+								<Name>PanoramaBody</Name>
+								<Type>Tab</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>SummaryTiles</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Pattern>SectionTiles</Pattern>
+										<PatternVersion>1.0</PatternVersion>
+										<Type>TabPage</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>WorkItems</Name>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>MssWorkflowWorklist</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>QuestionnairesAssigned</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>EssQuestionnairesAssigned</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>CompanyDirectory</Name>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>EssCompanyDirectory</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+												<CopyCallerQuery>No</CopyCallerQuery>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>OpenJobs</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>EssOpenJobs</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+												<ButtonDisplay>TextOnly</ButtonDisplay>
+												<Style>Link</Style>
+											</AxFormControl>
+										</Controls>
+										<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+										<ColumnsMode>Fill</ColumnsMode>
+										<Caption>@SYS80378</Caption>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>DashboardTabPage</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>TabPage</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Courses</Name>
+												<ConfigurationKey>HRMCollaborativeCourse</ConfigurationKey>
+												<ExtendedStyle>group_cardExtended</ExtendedStyle>
+												<NeededPermission>Manual</NeededPermission>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>CoursesContent</Name>
+														<Type>Group</Type>
+														<WidthMode>SizeToAvailable</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormStringControl">
+																<Name>description</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>String</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataField>description</DataField>
+																<DataSource>HrmCourseTable</DataSource>
+																<ShowLabel>No</ShowLabel>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>DateTimeGroup</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>Group</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl>
+																		<Name>startDateTime</Name>
+																		<AutoDeclaration>Yes</AutoDeclaration>
+																		<FormControlExtension>
+																			<Name>DesktopCalendar</Name>
+																			<ExtensionComponents />
+																			<ExtensionProperties>
+																				<AxFormControlExtensionProperty>
+																					<Name>dataSource</Name>
+																					<Type>String</Type>
+																					<Value>HrmCourseTable</Value>
+																				</AxFormControlExtensionProperty>
+																				<AxFormControlExtensionProperty>
+																					<Name>dataField</Name>
+																					<Type>String</Type>
+																					<Value>StartDateInUserTimeZone</Value>
+																				</AxFormControlExtensionProperty>
+																			</ExtensionProperties>
+																		</FormControlExtension>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateTimeControl">
+																		<Name>startTime</Name>
+																		<Type>DateTime</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>startDateTime</DataField>
+																		<DataSource>HrmCourseTable</DataSource>
+																		<DateDay>None</DateDay>
+																		<DateMonth>None</DateMonth>
+																		<DateYear>None</DateYear>
+																		<ShowLabel>No</ShowLabel>
+																		<TimeSeconds>No</TimeSeconds>
+																	</AxFormControl>
+																</Controls>
+																<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+																<Columns>2</Columns>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormMenuFunctionButtonControl">
+																<Name>CourseNotFound</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>MenuFunctionButton</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<ButtonDisplay>TextOnly</ButtonDisplay>
+																<MenuItemName>HcmEPCourseAttendeeListPage</MenuItemName>
+																<Parameters>EssWorkspace</Parameters>
+																<Style>Link</Style>
+																<Text>@HCM:NoFutureCourses</Text>
+															</AxFormControl>
+														</Controls>
+														<Caption>@HCM:NextRegisteredCourse</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormActionPaneControl">
+														<Name>CoursesActionPane</Name>
+														<Type>ActionPane</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonGroupControl">
+																<Name>CoursesButtonGroup</Name>
+																<Type>ButtonGroup</Type>
+																<WidthMode>SizeToAvailable</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormMenuFunctionButtonControl">
+																		<Name>OpenCourses</Name>
+																		<Type>MenuFunctionButton</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<MenuItemName>HcmEPOpenCourseListPage</MenuItemName>
+																		<NormalImage>View</NormalImage>
+																		<Parameters>EssWorkspace</Parameters>
+																		<Style>Link</Style>
+																		<Text>@SYS327836</Text>
+																	</AxFormControl>
+																</Controls>
+																<ArrangeMethod>HorizontalRight</ArrangeMethod>
+															</AxFormControl>
+														</Controls>
+														<Style>Strip</Style>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+												<Breakable>No</Breakable>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Certificates</Name>
+												<ConfigurationKey>HRMAdministration</ConfigurationKey>
+												<ExtendedStyle>group_cardExtended</ExtendedStyle>
+												<NeededPermission>Manual</NeededPermission>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>CertificatesContent</Name>
+														<Type>Group</Type>
+														<WidthMode>SizeToAvailable</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>CertificateMessage</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text>@HCM:NoCertificates</Text>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStringControl">
+																<Name>ExpiringCertificate_Description</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>String</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<ExtendedDataType>HRMDescription</ExtendedDataType>
+																<ShowLabel>No</ShowLabel>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>ExpiringCertificateMessage</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text></Text>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStringControl">
+																<Name>ExpiredCertificate_Description</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>String</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<ExtendedDataType>HRMDescription</ExtendedDataType>
+																<ShowLabel>No</ShowLabel>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>ExpiredCertificateMessage</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text></Text>
+															</AxFormControl>
+														</Controls>
+														<Caption>@SYS32377</Caption>
+														<DataSource>HcmPersonCertificate</DataSource>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormActionPaneControl">
+														<Name>CertificatesActionPane</Name>
+														<Type>ActionPane</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonGroupControl">
+																<Name>CertificatesButtonGroup</Name>
+																<Type>ButtonGroup</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormMenuFunctionButtonControl">
+																		<Name>ViewAllCertificates</Name>
+																		<AutoDeclaration>Yes</AutoDeclaration>
+																		<Type>MenuFunctionButton</Type>
+																		<Visible>No</Visible>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																		<MenuItemName>EssPersonCertificate</MenuItemName>
+																		<NormalImage>View</NormalImage>
+																		<Parameters>EssWorkspace</Parameters>
+																		<Style>Link</Style>
+																		<Text>@HCM:ViewAllCertificates</Text>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormMenuFunctionButtonControl">
+																		<Name>AddACertificate</Name>
+																		<AutoDeclaration>Yes</AutoDeclaration>
+																		<Type>MenuFunctionButton</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																		<MenuItemName>EssPersonCertificateEntry</MenuItemName>
+																		<NormalImage>New</NormalImage>
+																		<OpenMode>New</OpenMode>
+																		<Parameters>EssWorkspace</Parameters>
+																		<Style>Link</Style>
+																		<Text>@SYS327609</Text>
+																	</AxFormControl>
+																</Controls>
+															</AxFormControl>
+														</Controls>
+														<Style>Strip</Style>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+												<Breakable>No</Breakable>
+												<DataSource>HcmPersonCertificate</DataSource>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Discussions</Name>
+												<ConfigurationKey>HRMCollaborativePerformance</ConfigurationKey>
+												<ExtendedStyle>group_cardExtended</ExtendedStyle>
+												<NeededPermission>Manual</NeededPermission>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>DiscussionContent</Name>
+														<Type>Group</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormMenuFunctionButtonControl">
+																<Name>HcmDiscussion_DiscussionType</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>MenuFunctionButton</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataSource>HcmDiscussion</DataSource>
+																<MenuItemName>HcmMyDiscussion</MenuItemName>
+																<Style>Link</Style>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>DiscussionDateTimeGroup</Name>
+																<Type>Group</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl>
+																		<Name>NextDiscussionDateTime</Name>
+																		<AutoDeclaration>Yes</AutoDeclaration>
+																		<Visible>No</Visible>
+																		<FormControlExtension>
+																			<Name>DesktopCalendar</Name>
+																			<ExtensionComponents />
+																			<ExtensionProperties>
+																				<AxFormControlExtensionProperty>
+																					<Name>dataSource</Name>
+																					<Type>String</Type>
+																					<Value>HcmDiscussion</Value>
+																				</AxFormControlExtensionProperty>
+																				<AxFormControlExtensionProperty>
+																					<Name>dataField</Name>
+																					<Type>String</Type>
+																					<Value>StartDate</Value>
+																				</AxFormControlExtensionProperty>
+																			</ExtensionProperties>
+																		</FormControlExtension>
+																	</AxFormControl>
+																</Controls>
+																<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+																<Columns>2</Columns>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStringControl">
+																<Name>HcmDiscussion_Description</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>String</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataField>Description</DataField>
+																<DataSource>HcmDiscussion</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>InProgress</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text></Text>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>ReadyForReview</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text></Text>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>FinalReview</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text></Text>
+															</AxFormControl>
+														</Controls>
+														<Caption>@Talent:NextScheduledReview</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormActionPaneControl">
+														<Name>DiscussionActionPane</Name>
+														<Type>ActionPane</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonGroupControl">
+																<Name>DiscussionButtonGroup</Name>
+																<Type>ButtonGroup</Type>
+																<WidthMode>SizeToAvailable</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormMenuFunctionButtonControl">
+																		<Name>ViewReviews</Name>
+																		<Type>MenuFunctionButton</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<MenuItemName>HcmMyDiscussion</MenuItemName>
+																		<NormalImage>View</NormalImage>
+																		<OpenMode>View</OpenMode>
+																		<Parameters>EssWorkspace</Parameters>
+																		<Style>Link</Style>
+																		<Text>@Talent:ViewReviews</Text>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDropDialogButtonControl">
+																		<Name>HcmDiscussionNew</Name>
+																		<AutoDeclaration>Yes</AutoDeclaration>
+																		<Type>DropDialogButton</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<MenuItemName>HcmDiscussionNewDialog</MenuItemName>
+																		<OpenMode>New</OpenMode>
+																		<Text>@Talent:CreateNewDiscussion</Text>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDropDialogButtonControl">
+																		<Name>HcmDiscussionAddFromTemplate</Name>
+																		<Type>DropDialogButton</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<MenuItemName>HcmDiscussionAddFromTemplate</MenuItemName>
+																	</AxFormControl>
+																</Controls>
+																<ArrangeMethod>HorizontalRight</ArrangeMethod>
+															</AxFormControl>
+														</Controls>
+														<Style>Strip</Style>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+												<Breakable>No</Breakable>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>PerformanceGoals</Name>
+												<ConfigurationKey>HRMCollaborativePerformance</ConfigurationKey>
+												<ExtendedStyle>group_cardExtended</ExtendedStyle>
+												<NeededPermission>Manual</NeededPermission>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>PerformanceContent</Name>
+														<Type>Group</Type>
+														<WidthMode>SizeToAvailable</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>NotStarted</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text></Text>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>OnTrack</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text></Text>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStaticTextControl">
+																<Name>NeedsImprovement</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>StaticText</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Text></Text>
+															</AxFormControl>
+														</Controls>
+														<Caption>@SYS135590</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormActionPaneControl">
+														<Name>PerformanceGoalActionPane</Name>
+														<Type>ActionPane</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonGroupControl">
+																<Name>PerformanceButtonGroup</Name>
+																<Type>ButtonGroup</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormMenuFunctionButtonControl">
+																		<Name>EditPersonGoal</Name>
+																		<Type>MenuFunctionButton</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<MenuItemName>HcmMyGoal</MenuItemName>
+																		<NormalImage>View</NormalImage>
+																		<Parameters>EssWorkspace</Parameters>
+																		<Style>Link</Style>
+																		<Text>@HCM:ViewAllGoals</Text>
+																	</AxFormControl>
+																</Controls>
+															</AxFormControl>
+														</Controls>
+														<Style>Strip</Style>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+												<Breakable>No</Breakable>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Skills</Name>
+												<ConfigurationKey>HRMAdministration</ConfigurationKey>
+												<ExtendedStyle>group_cardExtended</ExtendedStyle>
+												<NeededPermission>Manual</NeededPermission>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>SkillContent</Name>
+														<Type>Group</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormInt64Control">
+																<Name>SkillsCount</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<ExtendedStyle>Emphasized</ExtendedStyle>
+																<Type>Int64</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Alignment>Left</Alignment>
+																<Label>@SYS33216</Label>
+																<ShowLabel>No</ShowLabel>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormDateTimeControl">
+																<Name>HcmPersonSkill_ModifiedDateTime</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>DateTime</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataField>ModifiedDateTime</DataField>
+																<DataSource>HcmPersonSkill</DataSource>
+																<Label>@HCM:MostRecentSkillUpdate</Label>
+																<TimeHours>No</TimeHours>
+																<TimeMinute>No</TimeMinute>
+																<TimeSeconds>No</TimeSeconds>
+																<TimezonePreference>User</TimezonePreference>
+															</AxFormControl>
+														</Controls>
+														<Caption>@HCM:TotalSkills</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormActionPaneControl">
+														<Name>SkillActionPane</Name>
+														<Type>ActionPane</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonGroupControl">
+																<Name>SkillsButtonGroup</Name>
+																<Type>ButtonGroup</Type>
+																<WidthMode>SizeToAvailable</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormMenuFunctionButtonControl">
+																		<Name>AddSkills</Name>
+																		<Type>MenuFunctionButton</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<MenuItemName>EssPersonSkillEntry</MenuItemName>
+																		<NormalImage>Add</NormalImage>
+																		<OpenMode>New</OpenMode>
+																		<Parameters>EssWorkspace</Parameters>
+																		<Style>Link</Style>
+																		<Text>@HCM:AddMoreSkills</Text>
+																	</AxFormControl>
+																</Controls>
+																<ArrangeMethod>HorizontalRight</ArrangeMethod>
+															</AxFormControl>
+														</Controls>
+														<Style>Strip</Style>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+												<Breakable>No</Breakable>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Compensation</Name>
+												<ConfigurationKey>HRMAdministrationCompensation</ConfigurationKey>
+												<ExtendedStyle>group_cardExtended</ExtendedStyle>
+												<NeededPermission>Manual</NeededPermission>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>CompensationContent</Name>
+														<Type>Group</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>Salary</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>Group</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>displayAnnualEquivalentAmount</Name>
+																		<AllowEdit>No</AllowEdit>
+																		<ElementPosition>2113929214</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HelpText>@HCM:AnnualSalaryHelp</HelpText>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Alignment>Left</Alignment>
+																		<DataMethod>displayCumPayRateAmountMst</DataMethod>
+																		<DataSource>HrmCompFixedEmpl</DataSource>
+																		<Label>@SYS4006398</Label>
+																		<MinNoOfDecimals>0</MinNoOfDecimals>
+																		<MinNoOfDecimalsMode>Fixed</MinNoOfDecimalsMode>
+																		<NoOfDecimalsMode>Fixed</NoOfDecimalsMode>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>HrmCompFixedEmpl_CurrencyCodeSalary</Name>
+																		<EnableFormRef>No</EnableFormRef>
+																		<Type>String</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Alignment>Left</Alignment>
+																		<DataMethod>displayDefaultCurrency</DataMethod>
+																		<DataSource>HrmCompFixedEmpl</DataSource>
+																		<Label>@HCM:LastIncrease</Label>
+																		<ShowLabel>No</ShowLabel>
+																	</AxFormControl>
+																</Controls>
+																<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+																<Breakable>No</Breakable>
+																<FrameType>None</FrameType>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>IncreaseGroup</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>Group</Type>
+																<Visible>No</Visible>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>HrmCompFixedEmpl_IncreaseAmount</Name>
+																		<HelpText>@HCM:LastIncreaseAmountHelp</HelpText>
+																		<Type>Real</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Alignment>Left</Alignment>
+																		<DataMethod>displayIncreaseAmountMst</DataMethod>
+																		<DataSource>HrmCompFixedEmpl</DataSource>
+																		<Label>@HCM:LastIncreaseAmount</Label>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>HrmCompFixedEmpl_CurrencyCodeIncrease</Name>
+																		<Type>String</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Alignment>Left</Alignment>
+																		<DataMethod>displayDefaultCurrency</DataMethod>
+																		<DataSource>HrmCompFixedEmpl</DataSource>
+																		<ShowLabel>No</ShowLabel>
+																	</AxFormControl>
+																</Controls>
+																<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<HideIfEmpty>No</HideIfEmpty>
+														<Caption>@SYS332563</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormActionPaneControl">
+														<Name>CompensationActionPane</Name>
+														<Type>ActionPane</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonGroupControl">
+																<Name>CompensationButtonGroup</Name>
+																<Type>ButtonGroup</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormButtonControl">
+																		<Name>ShowCompensationInformation</Name>
+																		<AutoDeclaration>Yes</AutoDeclaration>
+																		<Type>Button</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<NormalImage>Unlock</NormalImage>
+																		<Text>@HCM:ShowCompensation</Text>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormButtonControl">
+																		<Name>HideCompensationInformation</Name>
+																		<AutoDeclaration>Yes</AutoDeclaration>
+																		<Type>Button</Type>
+																		<Visible>No</Visible>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<NormalImage>Lock</NormalImage>
+																		<Text>@HCM:HideCompensation</Text>
+																	</AxFormControl>
+																</Controls>
+															</AxFormControl>
+														</Controls>
+														<Style>Strip</Style>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+												<Breakable>No</Breakable>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Attachments</Name>
+												<ConfigurationKey>HRMAdministration</ConfigurationKey>
+												<ExtendedStyle>group_cardExtended</ExtendedStyle>
+												<NeededPermission>Manual</NeededPermission>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>AttachmentContent</Name>
+														<Type>Group</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormInt64Control">
+																<Name>AttachmentsCountExternal</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<ExtendedStyle>Emphasized</ExtendedStyle>
+																<Type>Int64</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Alignment>Left</Alignment>
+																<Label>@HCM:WorkerAttachments</Label>
+																<ShowLabel>No</ShowLabel>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormStringControl">
+																<Name>MostRecentAttachmentName</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<Type>String</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Alignment>Left</Alignment>
+																<Label>@HCM:MostRecentUpload</Label>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormDateTimeControl">
+																<Name>MostRecentUploadTime</Name>
+																<AllowEdit>No</AllowEdit>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<EnableFormRef>No</EnableFormRef>
+																<Type>DateTime</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Label>@HCM:MostRecentUpload</Label>
+																<ShowLabel>No</ShowLabel>
+																<ViewEditMode>View</ViewEditMode>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<HideIfEmpty>No</HideIfEmpty>
+														<Caption>@HCM:WorkerAttachments</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormActionPaneControl">
+														<Name>AttachmentsActionPane</Name>
+														<Type>ActionPane</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonGroupControl">
+																<Name>AttachmentsButtonGroup</Name>
+																<Type>ButtonGroup</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormMenuFunctionButtonControl">
+																		<Name>DocuAttachment</Name>
+																		<Type>MenuFunctionButton</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<AutoRefreshData>Yes</AutoRefreshData>
+																		<DataSource>HcmWorker</DataSource>
+																		<MenuItemName>DocuAttachment</MenuItemName>
+																		<NeedsRecord>Yes</NeedsRecord>
+																		<Text>@HCM:ManageWorkerAttachments</Text>
+																	</AxFormControl>
+																</Controls>
+															</AxFormControl>
+														</Controls>
+														<Style>Strip</Style>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+												<Breakable>No</Breakable>
+											</AxFormControl>
+										</Controls>
+										<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+										<ColumnsMode>Fill</ColumnsMode>
+										<Caption>@HCM:MyCareerInformation</Caption>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>RelatedInfoTabPage</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Pattern>SectionRelatedLinks</Pattern>
+										<PatternVersion>1.0</PatternVersion>
+										<Type>TabPage</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Benefits</Name>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>HcmWorkerEnrollmentList</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>HcmWorkerEnrollmentList</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+												</Controls>
+												<Caption>@SYS315743</Caption>
+												<FrameOptionButton>Hide</FrameOptionButton>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Performance</Name>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>PersonalPerfJournal</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>HcmPerfJournal_Employee</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>HcmPerfPraise</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>HcmPerfPraise</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+												</Controls>
+												<Caption>@Talent:Performance</Caption>
+												<FrameOptionButton>Hide</FrameOptionButton>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Competencies</Name>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>EssPersonCourse</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>EssPersonCourse</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>EssPersonEducation</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>EssPersonEducation</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>EssPersonTrustedPosition</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>EssPersonTrustedPosition</MenuItemName>
+														<Style>Link</Style>
+														<Text>@SYS33740</Text>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>EssPersonProfesionalExperience</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>EssPersonProfessionalExperience</MenuItemName>
+														<Style>Link</Style>
+														<Text>@SYS30427</Text>
+													</AxFormControl>
+												</Controls>
+												<Caption>@SYS118893</Caption>
+												<FrameOptionButton>Hide</FrameOptionButton>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Organization</Name>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>EssMyJob</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>EssMyJob</MenuItemName>
+														<Style>Link</Style>
+														<Text>@SYS302752</Text>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>Loans</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>EssPersonLoan</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+												</Controls>
+												<Caption>@SYS323422</Caption>
+												<FrameOptionButton>Hide</FrameOptionButton>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Questionnaire</Name>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>CompletedQuestionnaires</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>KMKnowledgeCollectorUserResultsMyAnswers</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>AvailableQuestionnaires</Name>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>EssKMListAvailable</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+												</Controls>
+												<Caption>@SYS80302</Caption>
+												<FrameOptionButton>Hide</FrameOptionButton>
+											</AxFormControl>
+										</Controls>
+										<Caption>@SYS332565</Caption>
+									</AxFormControl>
+								</Controls>
+								<Style>Panorama</Style>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SYS116201</Caption>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>ManagerTabPage</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>TabPage</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormActionPaneControl">
+								<Name>ActionPaneHeader</Name>
+								<ElementPosition>715827882</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ActionPane</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<Width>0</Width>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormButtonGroupControl">
+										<Name>ButtonGroupPersonnelActions</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>ButtonGroup</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MssRequestNewEmployee</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<MenuItemName>MssRequestNewEmployee</MenuItemName>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MssRequestNewContractor</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<MenuItemName>MssRequestNewContractor</MenuItemName>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormDropDialogButtonControl">
+												<Name>MssRequestNewPosition</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>DropDialogButton</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<MenuItemName>MssRequestNewPosition</MenuItemName>
+												<OpenMode>New</OpenMode>
+												<Text>@Workforce:RequestNewPosition</Text>
+											</AxFormControl>
+										</Controls>
+									</AxFormControl>
+								</Controls>
+								<AlignChild>No</AlignChild>
+								<AlignChildren>No</AlignChildren>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormTabControl">
+								<Name>ManagerPanoramaBody</Name>
+								<Type>Tab</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>SummaryTilesCopy1</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Pattern>SectionTiles</Pattern>
+										<PatternVersion>1.0</PatternVersion>
+										<Type>TabPage</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MyRecruitingProjects</Name>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>MssMyRecruitingProjects</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MssMyTeamExpiringCertificates</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>MssMyTeamExpiringCertificates</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MyTeamSkillsAssessment</Name>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>MssTeamSkillsAssessment</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+															<Value>TextAndImage</Value>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MssSkillGapAnalysis</Name>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>MssSkillGapAnalysis</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MyTeamPerfJournals</Name>
+												<ConfigurationKey>HRMCollaborativePerformance</ConfigurationKey>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>HcmPerfJournalMyTeam</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+															<Value>TextAndImage</Value>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MyTeamGoals</Name>
+												<ConfigurationKey>HRMCollaborativePerformance</ConfigurationKey>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>HcmGoalsMyTeam</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+															<Value>TextAndImage</Value>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MyTeamDiscussions</Name>
+												<ConfigurationKey>HRMCollaborativePerformance</ConfigurationKey>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>HcmDiscussionsMyTeam</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+															<Value>TextAndImage</Value>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>MssExitingWorkers</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>MenuFunctionButton</Type>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>MssExitingWorkerCount</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+												<CopyCallerQuery>No</CopyCallerQuery>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>HcmMyOpenPositions</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>MenuFunctionButton</Type>
+												<Visible>No</Visible>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>HcmMyOpenPositions</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+												<CopyCallerQuery>No</CopyCallerQuery>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormMenuFunctionButtonControl">
+												<Name>HcmMyDirectsOpenPositions</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>MenuFunctionButton</Type>
+												<Visible>No</Visible>
+												<FormControlExtension>
+													<Name>TileButtonControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties>
+														<AxFormControlExtensionProperty>
+															<Name>tile</Name>
+															<Type>String</Type>
+															<Value>HcmMyDirectsOpenPositions</Value>
+														</AxFormControlExtensionProperty>
+														<AxFormControlExtensionProperty>
+															<Name>tileDisplay</Name>
+															<Type>Enum</Type>
+															<TypeName>TileDisplay</TypeName>
+														</AxFormControlExtensionProperty>
+													</ExtensionProperties>
+												</FormControlExtension>
+												<CopyCallerQuery>No</CopyCallerQuery>
+											</AxFormControl>
+										</Controls>
+										<ArrangeMethod>HorizontalWrap</ArrangeMethod>
+										<ColumnsMode>Fill</ColumnsMode>
+										<Caption>@SYS80378</Caption>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>MyTeamTabbedListSection</Name>
+										<Type>TabPage</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>ManagerCard</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<ExtendedStyle>BusinessCard</ExtendedStyle>
+												<Type>Group</Type>
+												<Visible>No</Visible>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormImageControl">
+														<Name>ManagerImage_Image</Name>
+														<ExtendedStyle>image_personProfile</ExtendedStyle>
+														<Type>Image</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataMethod>personImage</DataMethod>
+														<DataSource>Manager</DataSource>
+														<Label>@HCM:WorkerImage</Label>
+														<ShowLabel>No</ShowLabel>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormStringControl">
+														<Name>Manager_Name</Name>
+														<ExtendedStyle>Heading</ExtendedStyle>
+														<Type>String</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataMethod>name</DataMethod>
+														<DataSource>Manager</DataSource>
+														<ShowLabel>No</ShowLabel>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormStringControl">
+														<Name>Manager_TitleId</Name>
+														<Type>String</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataMethod>HcmWorker_PersonnelManagement_Extension.primaryPositionTitle</DataMethod>
+														<DataSource>Manager</DataSource>
+														<Label>@HCM:CurrentTitle</Label>
+														<ShowLabel>No</ShowLabel>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormStringControl">
+														<Name>Manager_PrimaryDepartmentName</Name>
+														<Type>String</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataMethod>primaryDepartmentName</DataMethod>
+														<DataSource>Manager</DataSource>
+														<ShowLabel>No</ShowLabel>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormStringControl">
+														<Name>DirectReports</Name>
+														<ExtendedStyle>Footer1</ExtendedStyle>
+														<Type>String</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataMethod>displayDirectReportsCount</DataMethod>
+														<DataSource>Manager</DataSource>
+														<Label>@SYS119890</Label>
+														<ShowLabel>No</ShowLabel>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>None</ArrangeMethod>
+												<Style>Card</Style>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>MyTeamTabbedLists</Name>
+												<Type>Tab</Type>
+												<WidthMode>SizeToContent</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>Summary</Name>
+														<Type>TabPage</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormContainerControl">
+																<Name>MssSummaryFormPart</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<HeightMode>SizeToAvailable</HeightMode>
+																<Type>Container</Type>
+																<FormControlExtension>
+																	<Name>FormPartControl</Name>
+																	<ExtensionComponents>
+																		<AxFormControlExtensionComponent xmlns=""
+																			i:type="AxFormControlExtensionComponentComposite">
+																			<Name>dataLinks</Name>
+																			<ExtensionComponents />
+																		</AxFormControlExtensionComponent>
+																	</ExtensionComponents>
+																	<ExtensionProperties>
+																		<AxFormControlExtensionProperty>
+																			<Name>targetName</Name>
+																			<Type>String</Type>
+																			<Value>MssSummaryFormPart</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>parmRunMode</Name>
+																			<Type>Enum</Type>
+																			<TypeName>FormPartControlRunMode</TypeName>
+																			<Value>Local</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>autoRefreshInterval</Name>
+																			<Type>Int32</Type>
+																			<Value>0</Value>
+																		</AxFormControlExtensionProperty>
+																	</ExtensionProperties>
+																</FormControlExtension>
+																<Controls />
+															</AxFormControl>
+														</Controls>
+														<Caption>@SYS80378</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>Position</Name>
+														<Type>TabPage</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormContainerControl">
+																<Name>MssPositionFormPart</Name>
+																<HeightMode>SizeToAvailable</HeightMode>
+																<Type>Container</Type>
+																<FormControlExtension>
+																	<Name>FormPartControl</Name>
+																	<ExtensionComponents>
+																		<AxFormControlExtensionComponent xmlns=""
+																			i:type="AxFormControlExtensionComponentComposite">
+																			<Name>dataLinks</Name>
+																			<ExtensionComponents />
+																		</AxFormControlExtensionComponent>
+																	</ExtensionComponents>
+																	<ExtensionProperties>
+																		<AxFormControlExtensionProperty>
+																			<Name>targetName</Name>
+																			<Type>String</Type>
+																			<Value>MssPositionFormPart</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>parmRunMode</Name>
+																			<Type>Enum</Type>
+																			<TypeName>FormPartControlRunMode</TypeName>
+																			<Value>Local</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>autoRefreshInterval</Name>
+																			<Type>Int32</Type>
+																			<Value>0</Value>
+																		</AxFormControlExtensionProperty>
+																	</ExtensionProperties>
+																</FormControlExtension>
+																<Controls />
+															</AxFormControl>
+														</Controls>
+														<Caption>@SYS304061</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>CompensationCopy1</Name>
+														<Type>TabPage</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormContainerControl">
+																<Name>MssCompensationFormPart</Name>
+																<HeightMode>SizeToAvailable</HeightMode>
+																<Type>Container</Type>
+																<FormControlExtension>
+																	<Name>FormPartControl</Name>
+																	<ExtensionComponents>
+																		<AxFormControlExtensionComponent xmlns=""
+																			i:type="AxFormControlExtensionComponentComposite">
+																			<Name>dataLinks</Name>
+																			<ExtensionComponents />
+																		</AxFormControlExtensionComponent>
+																	</ExtensionComponents>
+																	<ExtensionProperties>
+																		<AxFormControlExtensionProperty>
+																			<Name>targetName</Name>
+																			<Type>String</Type>
+																			<Value>MssCompensationFormPart</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>parmRunMode</Name>
+																			<Type>Enum</Type>
+																			<TypeName>FormPartControlRunMode</TypeName>
+																			<Value>Local</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>autoRefreshInterval</Name>
+																			<Type>Int32</Type>
+																			<Value>0</Value>
+																		</AxFormControlExtensionProperty>
+																	</ExtensionProperties>
+																</FormControlExtension>
+																<Controls />
+															</AxFormControl>
+														</Controls>
+														<Caption>@SYS116555</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>PerformanceGoalsCopy1</Name>
+														<Type>TabPage</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormContainerControl">
+																<Name>MssPerformanceFormPart</Name>
+																<HeightMode>SizeToAvailable</HeightMode>
+																<Type>Container</Type>
+																<FormControlExtension>
+																	<Name>FormPartControl</Name>
+																	<ExtensionComponents>
+																		<AxFormControlExtensionComponent xmlns=""
+																			i:type="AxFormControlExtensionComponentComposite">
+																			<Name>dataLinks</Name>
+																			<ExtensionComponents />
+																		</AxFormControlExtensionComponent>
+																	</ExtensionComponents>
+																	<ExtensionProperties>
+																		<AxFormControlExtensionProperty>
+																			<Name>targetName</Name>
+																			<Type>String</Type>
+																			<Value>MssPerformanceFormPart</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>parmRunMode</Name>
+																			<Type>Enum</Type>
+																			<TypeName>FormPartControlRunMode</TypeName>
+																			<Value>Local</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>autoRefreshInterval</Name>
+																			<Type>Int32</Type>
+																			<Value>0</Value>
+																		</AxFormControlExtensionProperty>
+																	</ExtensionProperties>
+																</FormControlExtension>
+																<Controls />
+															</AxFormControl>
+														</Controls>
+														<Caption>@SYS135590</Caption>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>Discussion</Name>
+														<Type>TabPage</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormContainerControl">
+																<Name>MssDiscussionFormPart</Name>
+																<HeightMode>SizeToAvailable</HeightMode>
+																<Type>Container</Type>
+																<FormControlExtension>
+																	<Name>FormPartControl</Name>
+																	<ExtensionComponents>
+																		<AxFormControlExtensionComponent xmlns=""
+																			i:type="AxFormControlExtensionComponentComposite">
+																			<Name>dataLinks</Name>
+																			<ExtensionComponents />
+																		</AxFormControlExtensionComponent>
+																	</ExtensionComponents>
+																	<ExtensionProperties>
+																		<AxFormControlExtensionProperty>
+																			<Name>targetName</Name>
+																			<Type>String</Type>
+																			<Value>MssDiscussionFormPart</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>parmRunMode</Name>
+																			<Type>Enum</Type>
+																			<TypeName>FormPartControlRunMode</TypeName>
+																			<Value>Local</Value>
+																		</AxFormControlExtensionProperty>
+																		<AxFormControlExtensionProperty>
+																			<Name>autoRefreshInterval</Name>
+																			<Type>Int32</Type>
+																			<Value>0</Value>
+																		</AxFormControlExtensionProperty>
+																	</ExtensionProperties>
+																</FormControlExtension>
+																<Controls />
+															</AxFormControl>
+														</Controls>
+														<Caption>@Talent:Reviews</Caption>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>VerticalTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<Caption>@HCM:MyTeamInformation</Caption>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>PowerBITabPage</Name>
+										<Pattern>SectionPowerBI</Pattern>
+										<PatternVersion>1.0</PatternVersion>
+										<Type>TabPage</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl>
+												<Name>PowerBIControl</Name>
+												<FormControlExtension>
+													<Name>PowerBIControl</Name>
+													<ExtensionComponents />
+													<ExtensionProperties />
+												</FormControlExtension>
+											</AxFormControl>
+										</Controls>
+										<Caption>@PowerBIIntegration:PowerBISectionCaption</Caption>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>RelatedLinks</Name>
+										<Pattern>SectionRelatedLinks</Pattern>
+										<PatternVersion>1.0</PatternVersion>
+										<Type>TabPage</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>Actions</Name>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>HcmWorkerActionList</Name>
+														<AutoDeclaration>Yes</AutoDeclaration>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>HcmWorkerActionList</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormMenuFunctionButtonControl">
+														<Name>HcmPositionActionList</Name>
+														<AutoDeclaration>Yes</AutoDeclaration>
+														<Type>MenuFunctionButton</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextOnly</ButtonDisplay>
+														<MenuItemName>HcmPositionActionList</MenuItemName>
+														<Style>Link</Style>
+													</AxFormControl>
+												</Controls>
+												<Caption>@Workforce:Actions</Caption>
+												<FrameOptionButton>Hide</FrameOptionButton>
+											</AxFormControl>
+										</Controls>
+										<Caption>@SYS124680</Caption>
+									</AxFormControl>
+								</Controls>
+								<Style>Panorama</Style>
+							</AxFormControl>
+						</Controls>
+						<Caption>@HCM:MyTeam</Caption>
+					</AxFormControl>
+				</Controls>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

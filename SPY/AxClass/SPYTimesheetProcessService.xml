@@ -1,0 +1,1230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTimesheetProcessService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYTimesheetProcessService
+{
+    SPYTimesheetProcessContract         contract;
+    LegalEntityRecId                    legalEntity;
+    SPYPayrollPeriodLineRecId           payrollPeriodLine;
+    FromDate                            fromDate;
+    ToDate                              toDate;
+    boolean                             reprocessLeaveApplication;
+
+    HcmWorker                           hcmWorker;
+    HcmEmployment                       hcmEmployment;
+    HcmEmploymentDetail                 hcmEmploymentDetail;
+    CalendarId                          calendarId;
+    JmgProfileId                        profileId;
+    Hours                               totalHoursWorked;
+    TransDate                           workDate;
+    SPYTimesheetProcessSource           timesheetProcessSource;
+    SPYPlannedWorkingHourSource         plannedWorkingHourSource;
+
+    RecordInsertList                    overtimeLedgerList;
+    RecordInsertList                    absenceLedgerList;
+
+    SPYPayProcessLog                    payProcessLog;
+    SPYPayProcessLogReference           payProcessLogReference;
+    RecordInsertList                    payProcessLogReferenceList;
+    SPYPayProcessLogRecId               absenceLogRecId,overtimeLogRecId,benefitLogRecId;
+    boolean                             traceEnabled;
+    boolean                             absenceLogCreated,overtimeLogCreated,benefitLogCreated;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>calcAbsence</Name>
+				<Source><![CDATA[
+    private void calcAbsence(Date _timesheetDate,Hours _timesheetHours,Hours _workingHours)
+    {
+        SPYAbsenceLedger        absenceLedger;
+        Hours                   leaveApplHours;
+        Hours                   absenceHours;
+
+        if(traceEnabled && absenceLogCreated == false)
+        {
+            payProcessLog.PayProcessSteps = SPYPayProcessSteps::TimesheetAbsence;
+            payProcessLog.PayProcessStage = SPYPayProcessStage::Completed;
+            this.insert2PayProcessTrace();
+            absenceLogCreated = true;
+            absenceLogRecId = payProcessLog.RecId;
+        }
+
+        select sum(AbsenceHours) from absenceLedger
+        where absenceLedger.Worker == hcmWorker.RecId &&
+              absenceLedger.AbsenceDate == _timesheetDate &&
+              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable);
+
+        leaveApplHours = absenceLedger.AbsenceHours;
+
+        if(_timesheetHours < _workingHours)
+        {
+            absenceHours = _workingHours - (_timesheetHours + leaveApplHours);
+            if(absenceHours > 0)
+            {
+                absenceLedger.initValue();
+                absenceLedger.Worker            = hcmWorker.RecId;
+                absenceLedger.HRMAbsenceCodeId  = SPYPayrollParameters::find().TimesheetAbsenceCode;
+                absenceLedger.AbsenceDate       = _timesheetDate;
+                absenceLedger.AbsenceDays       = absenceHours / _workingHours;
+                absenceLedger.AbsenceHours      = absenceHours;
+                absenceLedger.EntryType             = SPYAbsenceLedgerEntryType::Transaction;
+                absenceLedger.SourceDocument     = tableNum(TSTimesheetTable);
+                absenceLedgerList.add(absenceLedger);
+
+                payProcessLogReference.clear();
+                payProcessLogReference.PayProcessLog = absenceLogRecId;
+                payProcessLogReference.Description = strFmt("@SPY1226",absenceLedger.AbsenceDate,absenceLedger.AbsenceHours,
+            absenceLedger.AbsenceDays);
+                payProcessLogReference.RefTableId  = tableNum(SPYAbsenceLedger);
+                payProcessLogReferenceList.add(payProcessLogReference);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcBenefitLedger</Name>
+				<Source><![CDATA[
+    private void calcBenefitLedger()
+    {
+        SPYAbsenceLedger            absenceLedger,absenceLedgeUpd;
+        SPYBenefitLedger            benefitLedger,benefitLedgerJoin;
+        SPYAmount                   absentAmount;
+        SPYAmount                   absentDays;
+        SPYPayElementRecId          benefit;
+        SPYPayrollPeriodLine        payrollPeriodLineTab;
+        SPYPayrollPeriodRecId       payrollPeriod = SPYPayrollPeriodLine::find(payrollPeriodLine).PayrollPeriod;
+        date                        transDate = SPYPayrollPeriodLine::find(payrollPeriodLine).PeriodEndDate;
+        CurrencyExchangeHelper      currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), transDate);
+        SPYAmount                   exchRate,transCurAmt;
+        CurrencyCode                transCur;
+    
+        if(traceEnabled && benefitLogCreated == false)
+        {
+            payProcessLog.PayProcessSteps = SPYPayProcessSteps::TimesheetBenefit;
+            payProcessLog.PayProcessStage = SPYPayProcessStage::Completed;
+            this.insert2PayProcessTrace();
+            benefitLogCreated = true;
+            benefitLogRecId = payProcessLog.RecId;
+        }
+        delete_from benefitLedger
+        where benefitLedger.SourceDocument == tableNum(SPYAbsenceLedger) &&
+                benefitLedger.Worker == hcmWorker.RecId &&
+                benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                !benefitLedger.IsFinalised;
+
+        //Entries from leave application
+        while select sum(absenceDays) from absenceLedger group by HRMAbsenceCodeId
+        where absenceLedger.Worker == hcmWorker.RecId &&
+              absenceLedger.TransDate >= fromDate &&
+              absenceLedger.TransDate <= toDate &&
+              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)
+        Notexists join benefitLedgerJoin
+        where benefitLedgerJoin.RecId == absenceLedger.BenefitLedger
+        {
+            absentDays = absenceLedger.AbsenceDays;
+            benefit = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId).SPYBenefit;
+            if(benefit)
+            {
+                absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,toDate,absentDays) * absentDays;
+                transCur = this.benefitCurrency(benefit);
+                exchRate = currencyExchangeHelper.calculateTransactionToAccounting(transCur,1,false);
+                transCurAmt = exchRate ? absentAmount / exchRate : absentAmount;
+            
+                benefitLedger.initValue();
+                benefitLedger.JournalType               = SPYBenefitJournalType::Encashment;
+                benefitLedger.SourceDocument            = tableNum(SPYAbsenceLedger);
+                benefitLedger.Worker                    = hcmWorker.RecId;
+                benefitLedger.Benefit                   = benefit;
+                benefitLedger.PayrollPeriodLine         = payrollPeriodLine;
+                benefitLedger.Currency                  = transCur;
+                benefitLedger.TransactionCurrencyAmount = transCurAmt;
+                benefitLedger.ExchRate                  = exchRate;
+                benefitLedger.AccountingCurrencyAmount  = absentAmount;
+                benefitLedger.Quantity                  = absentDays;
+                benefitLedger.TransDate                 = transDate;
+                benefitLedger.Txt                       = strFmt("@SPY374",SPYPayElementTable::find(benefit).PayElementCode,
+                                                             hcmWorker.name(),fromDate,toDate);
+                benefitLedger.setAccount(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),CompanyInfo::current(),payrollPeriodLine,true);
+                benefitLedger.insert();
+
+                while select forUpdate absenceLedgeUpd
+                where absenceLedgeUpd.Worker == hcmWorker.RecId &&
+                      absenceLedgeUpd.TransDate >= fromDate &&
+                      absenceLedgeUpd.TransDate <= toDate &&
+                      absenceLedgeUpd.HRMAbsenceCodeId == absenceLedger.HRMAbsenceCodeId &&
+                      absenceLedgeUpd.SourceDocument == tableNum(SPYLeaveApplicationTable)
+                Notexists join benefitLedgerJoin
+                where benefitLedgerJoin.RecId == absenceLedgeUpd.BenefitLedger
+                {
+                    absenceLedgeUpd.BenefitLedger = benefitLedger.RecId;
+                    absenceLedgeUpd.update();
+                }
+                payProcessLogReference.clear();
+                payProcessLogReference.PayProcessLog = absenceLogRecId;
+                payProcessLogReference.Description = strFmt("@SPY1226",absenceLedger.AbsenceDate,absenceLedger.AbsenceHours,
+            absenceLedger.AbsenceDays);
+                payProcessLogReference.RefTableId  = tableNum(SPYBenefitLedger);
+                payProcessLogReferenceList.add(payProcessLogReference);
+            }
+        }
+
+        //Entries from period close
+        while select sum(absenceDays) from absenceLedger group by HRMAbsenceCodeId
+        where absenceLedger.Worker == hcmWorker.RecId &&
+              absenceLedger.TransDate >= fromDate &&
+              absenceLedger.TransDate <= toDate &&
+              absenceLedger.SourceDocument == tableNum(SPYPayrollPeriod)
+        Notexists join benefitLedgerJoin
+        where benefitLedgerJoin.RecId == absenceLedger.BenefitLedger
+        {
+            absentDays = absenceLedger.AbsenceDays;
+            benefit = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId).SPYBenefit;
+            if(benefit)
+            {
+                absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,toDate,absentDays) * absentDays;
+                transCur = this.benefitCurrency(benefit);
+                exchRate = currencyExchangeHelper.calculateTransactionToAccounting(transCur,1,false);
+                transCurAmt = exchRate ? absentAmount / exchRate : absentAmount;
+            
+                benefitLedger.initValue();
+                benefitLedger.JournalType               = SPYBenefitJournalType::Encashment;
+                benefitLedger.SourceDocument            = tableNum(SPYAbsenceLedger);
+                benefitLedger.Worker                    = hcmWorker.RecId;
+                benefitLedger.Benefit                   = benefit;
+                benefitLedger.PayrollPeriodLine         = payrollPeriodLine;
+                benefitLedger.Currency                  = transCur;
+                benefitLedger.TransactionCurrencyAmount = transCurAmt;
+                benefitLedger.ExchRate                  = exchRate;
+                benefitLedger.AccountingCurrencyAmount  = absentAmount;
+                benefitLedger.Quantity                  = absentDays;
+                benefitLedger.TransDate                 = transDate;
+                benefitLedger.Txt                       = strFmt("@SPY:PeriodClose",SPYPayElementTable::find(benefit).PayElementCode,
+                                                             hcmWorker.name(),fromDate,toDate);
+                benefitLedger.setAccount(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),CompanyInfo::current(),payrollPeriodLine,true);
+                benefitLedger.insert();
+
+                while select forUpdate absenceLedgeUpd
+                where absenceLedgeUpd.Worker == hcmWorker.RecId &&
+                      absenceLedgeUpd.TransDate >= fromDate &&
+                      absenceLedgeUpd.TransDate <= toDate &&
+                      absenceLedgeUpd.HRMAbsenceCodeId == absenceLedger.HRMAbsenceCodeId &&
+                      absenceLedgeUpd.SourceDocument == tableNum(SPYPayrollPeriod)
+                Notexists join benefitLedgerJoin
+                where benefitLedgerJoin.RecId == absenceLedgeUpd.BenefitLedger
+                {
+                    absenceLedgeUpd.BenefitLedger = benefitLedger.RecId;
+                    absenceLedgeUpd.update();
+                }
+                payProcessLogReference.clear();
+                payProcessLogReference.PayProcessLog = absenceLogRecId;
+                payProcessLogReference.Description = strFmt("@SPY1226",absenceLedger.AbsenceDate,absenceLedger.AbsenceHours,
+            absenceLedger.AbsenceDays);
+                payProcessLogReference.RefTableId  = tableNum(SPYBenefitLedger);
+                payProcessLogReferenceList.add(payProcessLogReference);
+            }
+        }
+
+
+
+        if(contract.parmProcessClosedPeriodAL())
+    while select sum(absenceDays) from absenceLedger group by HRMAbsenceCodeId
+        where absenceLedger.Worker == hcmWorker.RecId &&
+              absenceLedger.TransDate <= fromDate &&
+              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)
+        join payrollPeriodLineTab
+        where payrollPeriodLineTab.PeriodStartDate <= absenceLedger.AbsenceDate &&
+              payrollPeriodLineTab.PeriodEndDate >= absenceLedger.AbsenceDate &&
+              payrollPeriodLineTab.PayrollPeriod == payrollPeriod &&
+              payrollPeriodLineTab.PeriodStatus == SPYPayrollPeriodStatus::Closed
+        Notexists join benefitLedgerJoin
+        where benefitLedgerJoin.RecId == absenceLedger.BenefitLedger
+        {
+            absentDays = absenceLedger.AbsenceDays;
+            benefit = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId).SPYBenefit;
+            if(benefit)
+            {
+                //absentAmount = SPYBenefitTable::find(benefit).rateForLeaveApplicationEncashment(hcmWorker.RecId,payrollPeriodLine) * absentDays;
+                absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,fromDate,absentDays) * absentDays;
+                transCur = this.benefitCurrency(benefit);
+                exchRate = currencyExchangeHelper.calculateTransactionToAccounting(transCur,1,false);
+                transCurAmt = exchRate ? absentAmount / exchRate : absentAmount;
+            
+                benefitLedger.initValue();
+                benefitLedger.JournalType               = SPYBenefitJournalType::Encashment;
+                benefitLedger.SourceDocument            = tableNum(SPYAbsenceLedger);
+                benefitLedger.Worker                    = hcmWorker.RecId;
+                benefitLedger.Benefit                   = benefit;
+                benefitLedger.PayrollPeriodLine         = payrollPeriodLine;
+                benefitLedger.Currency                  = transCur;
+                benefitLedger.TransactionCurrencyAmount = transCurAmt;
+                benefitLedger.ExchRate                  = exchRate;
+                benefitLedger.AccountingCurrencyAmount  = absentAmount;
+                benefitLedger.Quantity                  = absentDays;
+                benefitLedger.TransDate                 = SPYPayrollPeriodLine::find(payrollPeriodLine).PeriodEndDate;
+                benefitLedger.Txt                       = strFmt("@SPY1318",SPYPayElementTable::find(benefit).PayElementCode,
+                                                             hcmWorker.name(),fromDate,toDate);
+                benefitLedger.setAccount(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),CompanyInfo::current(),payrollPeriodLine,true);
+                benefitLedger.insert();
+
+                while select forUpdate absenceLedgeUpd
+                where absenceLedgeUpd.Worker == hcmWorker.RecId &&
+                      absenceLedgeUpd.TransDate <= fromDate &&
+                      absenceLedgeUpd.HRMAbsenceCodeId == absenceLedger.HRMAbsenceCodeId &&
+                      absenceLedgeUpd.SourceDocument == tableNum(SPYLeaveApplicationTable)
+                join payrollPeriodLineTab
+                where payrollPeriodLineTab.PeriodStartDate <= absenceLedgeUpd.AbsenceDate &&
+                      payrollPeriodLineTab.PeriodEndDate >= absenceLedgeUpd.AbsenceDate &&
+                      payrollPeriodLineTab.PayrollPeriod == payrollPeriod &&
+                      payrollPeriodLineTab.PeriodStatus == SPYPayrollPeriodStatus::Closed
+                Notexists join benefitLedgerJoin
+                where benefitLedgerJoin.RecId == absenceLedgeUpd.BenefitLedger
+                {
+                    absenceLedgeUpd.BenefitLedger = benefitLedger.RecId;
+                    absenceLedgeUpd.update();
+                }
+                payProcessLogReference.clear();
+                payProcessLogReference.PayProcessLog = absenceLogRecId;
+                payProcessLogReference.Description = strFmt("@SPY1226",absenceLedger.AbsenceDate,absenceLedger.AbsenceHours,
+            absenceLedger.AbsenceDays);
+                payProcessLogReference.RefTableId  = tableNum(SPYBenefitLedger);
+                payProcessLogReferenceList.add(payProcessLogReference);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcOvertime_overtimeCategory_TypeExists</Name>
+				<Source><![CDATA[
+    private void calcOvertime_overtimeCategory_TypeExists(Date _workDate,Hours _hoursWorked,Hours _workingHours,SPYOvertimeTypeRecId _overtimeType)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        Hours                       overtimeHours;
+    
+        overtimeHours = _hoursWorked;
+        if(overtimeHours > 0)
+        {
+            overtimeLedger.initValue();
+            overtimeLedger.Worker           = hcmWorker.RecId;
+            overtimeLedger.OvertimeDate     = _workDate;
+            if(_workingHours)
+                overtimeLedger.OvertimeDays = overtimeHours / _workingHours;
+            else
+                overtimeLedger.OvertimeDays = 1;
+            overtimeLedger.OvertimeHours    = overtimeHours;
+            overtimeLedger.OvertimeType     = _overtimeType;
+            overtimeLedgerList.add(overtimeLedger);
+    
+            payProcessLogReference.clear();
+            payProcessLogReference.PayProcessLog = overtimeLogRecId;
+            payProcessLogReference.Description = strFmt("@SPY1225",overtimeLedger.OvertimeDate,overtimeLedger.OvertimeHours,
+            overtimeLedger.OvertimeDays);
+            payProcessLogReference.RefTableId  = tableNum(SPYOvertimeLedger);
+            payProcessLogReferenceList.add(payProcessLogReference);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcOvertime_workingHours</Name>
+				<Source><![CDATA[
+    private void calcOvertime_workingHours(Date _workDate,Hours _hoursWorked,Hours _workingHours,SPYOvertimeTypeRecId _overtimeType)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYAbsenceLedger            absenceLedger;
+        Hours                       leaveApplHours;
+        Hours                       overtimeHours;
+    
+        select sum(AbsenceHours) from absenceLedger
+            where absenceLedger.Worker == hcmWorker.RecId &&
+                    absenceLedger.LeaveApplicationLine &&
+                    absenceLedger.AbsenceDate == _workDate;
+        leaveApplHours = absenceLedger.AbsenceHours;
+        if(_hoursWorked > _workingHours)
+        {
+            overtimeHours = _hoursWorked - (_workingHours + leaveApplHours);
+            if(overtimeHours > 0)
+            {
+                overtimeLedger.initValue();
+                overtimeLedger.Worker           = hcmWorker.RecId;
+                overtimeLedger.OvertimeDate     = _workDate;
+                if(_workingHours)
+                    overtimeLedger.OvertimeDays = overtimeHours / _workingHours;
+                else
+                    overtimeLedger.OvertimeDays = 1;
+                overtimeLedger.OvertimeHours    = overtimeHours;
+                overtimeLedger.OvertimeType     = _overtimeType;
+                overtimeLedgerList.add(overtimeLedger);
+    
+                payProcessLogReference.clear();
+                payProcessLogReference.PayProcessLog = overtimeLogRecId;
+                payProcessLogReference.Description = strFmt("@SPY1225",overtimeLedger.OvertimeDate,overtimeLedger.OvertimeHours,
+                overtimeLedger.OvertimeDays);
+                payProcessLogReference.RefTableId  = tableNum(SPYOvertimeLedger);
+                payProcessLogReferenceList.add(payProcessLogReference);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcOvertimeFromCalendar</Name>
+				<Source><![CDATA[
+    private void calcOvertimeFromCalendar(Date _workDate,Hours _hoursWorked,Hours _workingHours,SPYOvertimeTypeRecId _overtimeType)
+    {
+        SPYOvertimeLedger               overtimeLedger;
+        SPYAbsenceLedger                absenceLedger;
+        Hours                           leaveApplHours;
+        Hours                           overtimeHours,undertimeHours;
+        SPYWorkCalendarOvertime         workCalendarOvertime;
+        SPYWorkCalendarOvertimeSlab     workCalendarOvertimeSlab;
+        SPYWorkCalendarUndertime        workCalendarUndertime;
+        SPYWorkCalendarUndertimeSlab    workCalendarUndertimeSlab;
+        LineNum                         calendarLine;
+        Hours                           hrs;
+    
+        this.deleteOvertimeLedger(_workDate);
+        if(traceEnabled && overtimeLogCreated == false)
+        {
+            payProcessLog.PayProcessSteps = SPYPayProcessSteps::TimesheetOvertime;
+            payProcessLog.PayProcessStage = SPYPayProcessStage::Completed;
+            this.insert2PayProcessTrace();
+            overtimeLogCreated = true;
+            overtimeLogRecId = payProcessLog.RecId;
+        }
+        if(SPYPayrollParameters::find().TimesheetOvertimeCalculation == SPYTimesheetOvertimeCalculation::WorkingHours)
+        {
+            this.calcOvertime_workingHours(_workDate,_hoursWorked,_workingHours,_overtimeType);
+        }
+        else if(SPYPayrollParameters::find().TimesheetOvertimeCalculation == SPYTimesheetOvertimeCalculation::OvertimeCategory)
+        {
+            if(_overtimeType)
+            {
+                this.calcOvertime_overtimeCategory_TypeExists(_workDate,_hoursWorked,_workingHours,_overtimeType);
+            }
+            else
+            {
+                if(_hoursWorked > _workingHours)
+                {
+                    select sum(AbsenceHours) from absenceLedger
+                        where absenceLedger.Worker == hcmWorker.RecId &&
+                                absenceLedger.LeaveApplicationLine &&
+                                absenceLedger.AbsenceDate == _workDate;
+                    leaveApplHours = absenceLedger.AbsenceHours;
+                    workCalendarOvertime = SPYWorkCalendarOvertime::findWorkCalendarOvertime(calendarId,_workDate);
+                    if(workCalendarOvertime)
+                    {
+                        overtimeHours = _hoursWorked - (_workingHours + leaveApplHours);
+                        if(overtimeHours > 0)
+                        {
+                            calendarLine = 1;
+                            while(overtimeHours > 0)
+                            {
+                                select firstonly workCalendarOvertimeSlab
+                                    where workCalendarOvertimeSlab.WorkCalendarOvertime == workCalendarOvertime.RecId &&
+                                            workCalendarOvertimeSlab.LineNum == calendarLine;
+                                if(workCalendarOvertimeSlab.Remainder)
+                                    hrs = overtimeHours;
+                                else
+                                    hrs = min(overtimeHours,workCalendarOvertimeSlab.Hours);
+                                overtimeLedger.initValue();
+                                overtimeLedger.Worker           = hcmWorker.RecId;
+                                overtimeLedger.OvertimeDate     = _workDate;
+                                overtimeLedger.OvertimeHours    = hrs;
+                                if(_workingHours)
+                                    overtimeLedger.OvertimeDays = hrs / _workingHours;
+                                else
+                                    overtimeLedger.OvertimeDays = 1;
+                                overtimeLedger.OvertimeType     = workCalendarOvertimeSlab.OvertimeType;
+                                overtimeLedgerList.add(overtimeLedger);
+                                overtimeHours = overtimeHours - hrs;
+                                calendarLine++;
+    
+                                payProcessLogReference.clear();
+                                payProcessLogReference.PayProcessLog = overtimeLogRecId;
+                                payProcessLogReference.Description = strFmt("@SPY1225",overtimeLedger.OvertimeDate,overtimeLedger.OvertimeHours,
+                                overtimeLedger.OvertimeDays);
+                                payProcessLogReference.RefTableId  = tableNum(SPYOvertimeLedger);
+                                payProcessLogReferenceList.add(payProcessLogReference);
+                            }
+                        }
+                    }
+                }
+                else if(_hoursWorked < _workingHours)
+                {
+                    select sum(AbsenceHours) from absenceLedger
+                        where absenceLedger.Worker == hcmWorker.RecId &&
+                                absenceLedger.LeaveApplicationLine &&
+                                absenceLedger.AbsenceDate == _workDate;
+                    leaveApplHours = absenceLedger.AbsenceHours;
+                    workCalendarUndertime = SPYWorkCalendarUndertime::findWorkCalendarUndertime(calendarId,_workDate);
+                    if(workCalendarUndertime)
+                    {
+                        undertimeHours = _workingHours + leaveApplHours - _hoursWorked;
+                        if(undertimeHours > 0)
+                        {
+                            calendarLine = 1;
+                            while(undertimeHours > 0)
+                            {
+                                select firstonly workCalendarUndertimeSlab
+                                    where workCalendarUndertimeSlab.WorkCalendarUndertime == workCalendarUndertime.RecId &&
+                                          workCalendarUndertimeSlab.LineNum == calendarLine;
+                                if(workCalendarUndertimeSlab.Remainder)
+                                    hrs = undertimeHours;
+                                else
+                                    hrs = min(undertimeHours,workCalendarUndertimeSlab.Hours);
+                                overtimeLedger.initValue();
+                                overtimeLedger.Worker           = hcmWorker.RecId;
+                                overtimeLedger.OvertimeDate     = _workDate;
+                                overtimeLedger.OvertimeHours    = -hrs;
+                                if(_workingHours)
+                                    overtimeLedger.OvertimeDays = -hrs / _workingHours;
+                                else
+                                    overtimeLedger.OvertimeDays = -1;
+                                overtimeLedger.OvertimeType     = workCalendarUndertimeSlab.OvertimeType;
+                                overtimeLedgerList.add(overtimeLedger);
+                                undertimeHours = undertimeHours - hrs;
+                                calendarLine++;
+    
+                                payProcessLogReference.clear();
+                                payProcessLogReference.PayProcessLog = overtimeLogRecId;
+                                payProcessLogReference.Description = strFmt("@SPY1225",overtimeLedger.OvertimeDate,overtimeLedger.OvertimeHours,
+                                overtimeLedger.OvertimeDays);
+                                payProcessLogReference.RefTableId  = tableNum(SPYOvertimeLedger);
+                                payProcessLogReferenceList.add(payProcessLogReference);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcOvertimeFromProfile</Name>
+				<Source><![CDATA[
+    private void calcOvertimeFromProfile(Date _workDate,Hours _hoursWorked,Hours _workingHours,SPYOvertimeTypeRecId _overtimeType)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYAbsenceLedger            absenceLedger;
+        Hours                       leaveApplHours;
+        Hours                       overtimeHours,undertimeHours;
+        SPYProfileOvertime          profileOvertime;
+        SPYProfileOvertimeSlab      profileOvertimeSlab;
+        SPYProfileUndertime         profileUndertime;
+        SPYProfileUndertimeSlab     profileUndertimeSlab;
+        LineNum                     calendarLine;
+        Hours                       hrs;
+    
+        this.deleteOvertimeLedger(_workDate);
+        if(traceEnabled && overtimeLogCreated == false)
+        {
+            payProcessLog.PayProcessSteps = SPYPayProcessSteps::TimesheetOvertime;
+            payProcessLog.PayProcessStage = SPYPayProcessStage::Completed;
+            this.insert2PayProcessTrace();
+            overtimeLogCreated = true;
+            overtimeLogRecId = payProcessLog.RecId;
+        }
+        if(SPYPayrollParameters::find().TimesheetOvertimeCalculation == SPYTimesheetOvertimeCalculation::WorkingHours)
+        {
+            this.calcOvertime_workingHours(_workDate,_hoursWorked,_workingHours,_overtimeType);
+        }
+        else if(SPYPayrollParameters::find().TimesheetOvertimeCalculation == SPYTimesheetOvertimeCalculation::OvertimeCategory)
+        {
+            if(_overtimeType)
+            {
+                this.calcOvertime_overtimeCategory_TypeExists(_workDate,_hoursWorked,_workingHours,_overtimeType);
+            }
+            else
+            {
+                if(_hoursWorked > _workingHours)
+                {
+                    select sum(AbsenceHours) from absenceLedger
+                        where absenceLedger.Worker == hcmWorker.RecId &&
+                                absenceLedger.LeaveApplicationLine &&
+                                absenceLedger.AbsenceDate == _workDate;
+                    leaveApplHours = absenceLedger.AbsenceHours;
+                    profileOvertime = SPYProfileOvertime::findProfileOvertime(profileId, _workDate);
+                    if(profileOvertime)
+                    {
+                        overtimeHours = _hoursWorked - (_workingHours + leaveApplHours);
+                        if(overtimeHours > 0)
+                        {
+                            calendarLine = 1;
+                            while(overtimeHours > 0)
+                            {
+                                select firstonly profileOvertimeSlab
+                                    where profileOvertimeSlab.profileOvertime == profileOvertime.RecId &&
+                                            profileOvertimeSlab.LineNum == calendarLine;
+                                if(profileOvertimeSlab.Remainder)
+                                    hrs = overtimeHours;
+                                else
+                                    hrs = min(overtimeHours,profileOvertimeSlab.Hours);
+                                overtimeLedger.initValue();
+                                overtimeLedger.Worker           = hcmWorker.RecId;
+                                overtimeLedger.OvertimeDate     = _workDate;
+                                overtimeLedger.OvertimeHours    = hrs;
+                                if(_workingHours)
+                                    overtimeLedger.OvertimeDays = hrs / _workingHours;
+                                else
+                                    overtimeLedger.OvertimeDays = 1;
+                                overtimeLedger.OvertimeType     = profileOvertimeSlab.OvertimeType;
+                                overtimeLedgerList.add(overtimeLedger);
+                                overtimeHours = overtimeHours - hrs;
+                                calendarLine++;
+    
+                                payProcessLogReference.clear();
+                                payProcessLogReference.PayProcessLog = overtimeLogRecId;
+                                payProcessLogReference.Description = strFmt("@SPY1225",overtimeLedger.OvertimeDate,overtimeLedger.OvertimeHours,
+                                overtimeLedger.OvertimeDays);
+                                payProcessLogReference.RefTableId  = tableNum(SPYOvertimeLedger);
+                                payProcessLogReferenceList.add(payProcessLogReference);
+                            }
+                        }
+                    }
+                }
+                else if(_hoursWorked < _workingHours)  //Undertime
+                {
+                    select sum(AbsenceHours) from absenceLedger
+                        where absenceLedger.Worker == hcmWorker.RecId &&
+                                absenceLedger.LeaveApplicationLine &&
+                                absenceLedger.AbsenceDate == _workDate;
+                    leaveApplHours = absenceLedger.AbsenceHours;
+                    profileUndertime = SPYProfileUndertime::findProfileUndertime(hcmWorker.RecId,profileId,_workDate);
+                    if(profileUndertime)
+                    {
+                        undertimeHours = _workingHours + leaveApplHours - _hoursWorked;
+                        if(undertimeHours > 0)
+                        {
+                            calendarLine = 1;
+                            while(undertimeHours > 0)
+                            {
+                                select firstonly profileUndertimeSlab
+                                    where profileUndertimeSlab.profileUndertime == profileUndertime.RecId &&
+                                          profileUndertimeSlab.LineNum == calendarLine;
+                                if(profileUndertimeSlab.Remainder)
+                                    hrs = undertimeHours;
+                                else
+                                    hrs = min(undertimeHours,profileUndertimeSlab.Hours);
+                                overtimeLedger.initValue();
+                                overtimeLedger.Worker           = hcmWorker.RecId;
+                                overtimeLedger.OvertimeDate     = _workDate;
+                                overtimeLedger.OvertimeHours    = -hrs;
+                                if(_workingHours)
+                                    overtimeLedger.OvertimeDays = -hrs / _workingHours;
+                                else
+                                    overtimeLedger.OvertimeDays = -1;
+                                overtimeLedger.OvertimeType     = profileUndertimeSlab.OvertimeType;
+                                overtimeLedgerList.add(overtimeLedger);
+                                undertimeHours = undertimeHours - hrs;
+                                calendarLine++;
+    
+                                payProcessLogReference.clear();
+                                payProcessLogReference.PayProcessLog = overtimeLogRecId;
+                                payProcessLogReference.Description = strFmt("@SPY1225",overtimeLedger.OvertimeDate,overtimeLedger.OvertimeHours,
+                                overtimeLedger.OvertimeDays);
+                                payProcessLogReference.RefTableId  = tableNum(SPYOvertimeLedger);
+                                payProcessLogReferenceList.add(payProcessLogReference);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>commitDatabase</Name>
+				<Source><![CDATA[
+    private void commitDatabase()
+    {
+        absenceLedgerList.insertDatabase();
+        overtimeLedgerList.insertDatabase();
+        payProcessLogReferenceList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteOvertimeLedger</Name>
+				<Source><![CDATA[
+    private void deleteOvertimeLedger(Date _workDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+    
+        delete_from overtimeLedger
+            where overtimeLedger.Worker == hcmWorker.RecId &&
+                  overtimeLedger.OvertimeDate == _workDate &&
+                  overtimeLedger.OvertimeJournalTrans == 0;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>hoursWorkedFromAttendance</Name>
+				<Source><![CDATA[
+    protected Hours hoursWorkedFromAttendance(Date _workDate,Hours _workingHours)
+    {
+        boolean                 recFound;
+        Hours                   profileDateHours;
+        JmgStampJournalTable    jmgStampJournalTable = JmgStampJournalTable::find(hcmWorker.RecId,_workDate);
+    
+        profileDateHours = jmgStampJournalTable.PaySeconds / 3600;
+    
+        return profileDateHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcHoursWorkedFromAttendance</Name>
+				<Source><![CDATA[
+    private boolean calcHoursWorkedFromAttendance(Date _workDate, Hours _profileDateHours,Hours _workingHours)
+    {
+        boolean recFound;
+        if(_profileDateHours)
+        {
+            //AFZ
+            if(plannedWorkingHourSource == SPYPlannedWorkingHourSource::Calendar)
+                this.calcOvertimeFromCalendar(_workDate,_profileDateHours, _workingHours,0);
+            else
+                this.calcOvertimeFromProfile(_workDate,_profileDateHours, _workingHours,0);
+            //AFZ
+            recFound = true;
+        }
+        return recFound;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>hoursWorkedFromHoursJournal</Name>
+				<Source><![CDATA[
+    private boolean hoursWorkedFromHoursJournal(Date _workDate,Hours _workingHours)
+    {
+        ProjJournalTable        projJournalTable;
+        ProjJournalTrans        projJournalTrans;
+        ProjCategory            projCategory;
+        boolean                 recFound;
+        Hours                   journalDateHours;
+        ResourceWorkerView      resourceWorkerView;
+    
+        while select sum(Qty) from projJournalTrans
+            join RecId from projJournalTable
+            where projJournalTable.Posted &&
+                    projJournalTable.JournalId == projJournalTrans.JournalId &&
+                    projJournalTable.JournalType == ProjJournalType::Hour
+            join resourceWorkerView
+            where projJournalTrans.Resource == resourceWorkerView.RecId &&
+                  resourceWorkerView.Worker == hcmWorker.RecId &&
+                    projJournalTrans.ProjTransDate == _workDate
+            join projCategory group by SPYOvertimeType
+            where projCategory.CategoryId == projJournalTrans.CategoryId &&
+                  projCategory.SPYOvertimeType
+        {
+            recFound = true;
+            journalDateHours = projJournalTrans.Qty;
+            totalHoursWorked += journalDateHours;
+            if(SPYPayrollParameters::find().ConsiderCalendar)
+            {
+                this.calcOvertimeFromCalendar(_workDate,journalDateHours,_workingHours,0);//,projCategory.SPYOvertimeType);
+            }
+            else
+            {
+                this.calcOvertime_ProjJourTrans(_workDate,journalDateHours,_workingHours, projCategory.SPYOvertimeType);
+            }
+        }
+    
+        return recFound;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>hoursWorkedFromTimesheet</Name>
+				<Source><![CDATA[
+    private boolean hoursWorkedFromTimesheet(Date _workDate,Hours _workingHours)
+    {
+        TSTimesheetTable        timesheetTable;
+        TSTimesheetLine         timesheetLine;
+        TSTimesheetLineWeek     timesheetLineWeek;
+        ProjCategory            projCategory;
+        boolean                 recFound;
+        Hours                   timesheetDateHours;
+        ResourceWorkerView      resourceWorkerView;
+        ProjPeriodTimesheetWeek projPeriodTimesheetWeek;
+
+        while select sum(Hours) from timesheetLineWeek
+            join timesheetTable group by ProjPeriodId
+            where timesheetLineWeek.TimesheetNbr == timesheetTable.TimesheetNbr
+            join resourceWorkerView
+            where timesheetTable.Resource == resourceWorkerView.RecId &&
+                  resourceWorkerView.Worker == hcmWorker.RecId &&
+                  (timesheetTable.ApprovalStatus == TSAppStatus::Approved ||
+                  timesheetTable.ApprovalStatus == TSAppStatus::Ledger)
+            join projPeriodTimesheetWeek
+            where projPeriodTimesheetWeek.RecId == timesheetTable.ProjPeriodTimesheetWeek &&       projPeriodTimesheetWeek.PeriodFrom <= _workDate &&
+                  projPeriodTimesheetWeek.PeriodTo >= _workDate
+            join timesheetLine
+            where timesheetLine.RecId == timesheetLineWeek.TSTimesheetLine
+            join projCategory group by SPYOvertimeType
+            where projCategory.CategoryId == timesheetLine.CategoryId
+        {
+            recFound = true;
+            timesheetDateHours = timesheetLineWeek.Hours[TSPeriods::getDayOffset(ProjPeriodTable::find(timesheetTable.ProjPeriodId).WeekStart,_workDate)];
+            totalHoursWorked += timesheetDateHours;
+            if(plannedWorkingHourSource == SPYPlannedWorkingHourSource::Calendar)
+                this.calcOvertimeFromCalendar(_workDate,timesheetDateHours, _workingHours,projCategory.SPYOvertimeType);
+            else
+                this.calcOvertimeFromProfile(_workDate,timesheetDateHours, _workingHours,projCategory.SPYOvertimeType);
+        }
+    
+        return recFound;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2PayProcessTrace</Name>
+				<Source><![CDATA[
+    private void insert2PayProcessTrace()
+    {
+        payProcessLog.Worker              = hcmWorker.RecId;
+        payProcessLog.PayrollPeriodLine   = payrollPeriodLine;
+        payProcessLog.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///     timesheet process
+    /// </summary>
+    /// <param name="_contract">
+    ///     timesheet process contract
+    /// </param>
+    /// <remarks>
+    ///     Regular timesheet process of worker
+    /// </remarks>
+    public void process(SPYTimesheetProcessContract   _contract)
+    {
+        QueryRun                workerQueryRun;
+        boolean                 payrollParameterState;
+        container               workerContainer;
+        List                    workerList = new List(Types::Int64);
+        ListEnumerator          workerListEnumerator;
+        int                     workerContainerLenCount;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+    
+        contract                        = _contract as SPYTimesheetProcessContract;
+        legalEntity                     = contract.parmLegalEntity();
+        payrollPeriodLine               = contract.parmPayrollPeriodLine();
+        fromDate                        = contract.parmFromDate();
+        toDate                          = contract.parmToDate();
+        reprocessLeaveApplication       = contract.parmReprocessLeaveApplication();
+        overtimeLedgerList              = new RecordInsertList(tableNum(SPYOvertimeLedger));
+        absenceLedgerList               = new RecordInsertList(tableNum(SPYAbsenceLedger));
+        payProcessLogReferenceList      = new RecordInsertList(tableNum(SPYPayProcessLogReference));
+    
+        if(contract.parmPayrollParameterState().parmWorkerContainer())
+        {
+            payrollParameterState = true;
+            workerContainer = contract.parmPayrollParameterState().parmWorkerContainer();
+            workerContainerLenCount = 1;
+            while(workerContainerLenCount <= conLen(workerContainer))
+            {
+                workerList.addEnd(conPeek(workerContainer,workerContainerLenCount));
+                workerContainerLenCount++;
+            }
+        }
+        else
+        {
+            if(contract.parmWorkerQuery())
+                workerQueryRun = new QueryRun(contract.parmWorkerQuery());
+            else
+                workerQueryRun = new QueryRun(new Query(queryStr(HcmWorkerLookup)));
+    
+            while(workerQueryRun.next())
+            {
+                hcmWorker = workerQueryRun.get(tableNum(HcmWorker));
+                workerList.addEnd(hcmWorker.RecId);
+            }
+        }
+        workerListEnumerator = workerList.getEnumerator();
+        traceEnabled = SPYPayrollParameters::find().PayProcessTrace;
+        setPrefix("@SPY474");
+        progress.setCaption("@SPY1108");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(workerList.elements());
+        progressCount = 1;
+        
+        try
+        {
+            ttsBegin;
+            while(workerListEnumerator.moveNext())
+            {
+                hcmWorker = HcmWorker::find(workerListEnumerator.current());
+                progress.setText(strfmt("@SPY882", hcmWorker.name()));
+                progress.setCount(progressCount, 1);
+                changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+                {
+                    this.readTimesheet();
+                    this.commitDatabase();
+                }
+                progressCount++;
+            }
+            ttsCommit;
+            info("@SPY379");
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readTimeAttendance</Name>
+				<Source><![CDATA[
+    private void readTimeAttendance(date _profileDate)
+    {
+        JmgStampJournalTable    jmgStampJournalTable = JmgStampJournalTable::find(hcmWorker.RecId,_profileDate);
+        Hours                   hoursWorked = jmgStampJournalTable.WorkSeconds / 3600;
+        Hours                   profileHours = jmgStampJournalTable.ProfileSeconds / 3600;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readTimesheet</Name>
+				<Source><![CDATA[
+    private void readTimesheet()
+    {
+        Hours                       workingHours;
+        boolean                     timesheetFound, isHoliday;
+            
+        absenceLogCreated = false;
+        overtimeLogCreated = false;
+        this.setEmployment();
+        workDate = max(fromDate,DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidFrom,DateTimeUtil::getCompanyTimeZone())));
+        timesheetProcessSource = hcmEmploymentDetail.SPYTimesheetProcessSource;//SPYPayrollParameters::find().TimesheetProcessSource;
+        plannedWorkingHourSource = hcmEmploymentDetail.SPYPlannedWorkingHourSource;
+        if(plannedWorkingHourSource == SPYPlannedWorkingHourSource::Calendar)
+        {
+            this.setCalendarId();
+            workingHours = WorkCalendarTable::find(calendarId).StandardWorkDayHours;
+        }
+        while(workDate <= toDate)
+        {
+            timesheetFound = false;
+            totalHoursWorked = 0;
+            isHoliday = this.holidayWorkingHours(hcmWorker.PersonnelNumber, workDate);
+            if(plannedWorkingHourSource == SPYPlannedWorkingHourSource::Calendar)
+                workingHours = WorkCalendarDate::calcDefinedHours(calendarId,workDate);
+            if(timesheetProcessSource == SPYTimesheetProcessSource::Timesheet)
+            {
+                if(plannedWorkingHourSource == SPYPlannedWorkingHourSource::Roster)
+                {
+                    this.setProfileIdFromProfileCalendar(workDate);
+                    //AFZ Pavan
+                    if(isHoliday == true)
+                    {
+                        workingHours = 0;
+                    }
+                    else
+                    {
+                        workingHours = this.workingHoursFromProfileCalendar(workDate);
+                    }
+                    //AFZ Pavan
+                }
+                timesheetFound = this.hoursWorkedFromTimesheet(workDate,workingHours);
+            }
+            else if(timesheetProcessSource == SPYTimesheetProcessSource::HourJournal)
+            {
+                if(plannedWorkingHourSource == SPYPlannedWorkingHourSource::Roster)
+                {
+                    this.setProfileIdFromProfileCalendar(workDate);
+                    workingHours = this.workingHoursFromProfileCalendar(workDate);
+                }
+                timesheetFound = this.hoursWorkedFromHoursJournal(workDate,workingHours);
+            }
+            else if(timesheetProcessSource == SPYTimesheetProcessSource::TimeAttendance)
+            {
+                if(plannedWorkingHourSource == SPYPlannedWorkingHourSource::Roster)
+                {
+                    this.setProfileIdFromProfileCalendar(workDate);
+                    //AFZ Pavan
+                    if(isHoliday == true)
+                    {
+                        workingHours = 0;
+                    }
+                    else
+                    {
+                        workingHours = this.workingHoursFromProfileCalendar(workDate);
+                    }
+                    //AFZ Pavan
+                }
+                
+                timesheetFound = this.calcHoursWorkedFromAttendance(workDate, this.hoursWorkedFromAttendance(workDate,workingHours), workingHours);
+            }
+            if(SPYPayrollParameters::find().TimesheetAbsenceCode)
+                this.calcAbsence(workDate,totalHoursWorked,workingHours);
+            if(!timesheetFound)
+            {
+                this.deleteOvertimeLedger(workDate);
+            }
+            workDate++;
+        }
+    
+        if(reprocessLeaveApplication == true)
+            this.reprocessLeaveApplication();
+        this.calcBenefitLedger();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>reprocessLeaveApplication</Name>
+				<Source><![CDATA[
+    private void reprocessLeaveApplication()
+    {
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        SPYLeaveApplicationLine     leaveApplicationLine;
+    
+        while select validTimeState(fromDate,toDate) leaveApplicationLine
+            exists join leaveApplicationTable
+            where leaveApplicationTable.RecId == leaveApplicationLine.LeaveApplication &&
+                  leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved &&
+                  leaveApplicationTable.Worker == hcmWorker.RecId
+        {
+            //leaveApplicationLine.deleteAbsenceLedger();
+            leaveApplicationLine.updateAbsenceLedger();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setCalendarId</Name>
+				<Source><![CDATA[
+    private void setCalendarId()
+    {
+        WorkCalendarEmployment  workCalendarEmployment;
+    
+        workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+        calendarId = workCalendarEmployment.CalendarId;
+        if(calendarId == "")
+            info(strfmt("@SPY1133", hcmWorker.PersonnelNumber));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEmployment</Name>
+				<Source><![CDATA[
+    private void setEmployment()
+    {
+        FromDateTime            fromDateTime = DateTimeUtil::newDateTime(fromDate,00-00);
+        ToDateTime              toDateTime = DateTimeUtil::newDateTime(toDate,00-00);
+        FromDateTime            minDateTime = DateTimeUtil::newDateTime(dateNull(),00-00);
+        ToDateTime              maxDateTime = DateTimeUtil::newDateTime(dateMax(),00-00);
+    
+        hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId,legalEntity,fromDateTime,
+                                                                                       toDateTime);
+        if(!hcmEmployment)
+             hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId,
+                                                                    legalEntity,
+                                                                    minDateTime,
+                                                                    maxDateTime);
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,fromDateTime,
+                                                                                       toDateTime);
+        if(!hcmEmploymentDetail)
+            hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,minDateTime,
+                                                                            maxDateTime);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setProfileId</Name>
+				<Source><![CDATA[
+    private void setProfileId(Date _workDate)
+    {
+        JmgStampJournalTable    jmgStampJournalTable = JmgStampJournalTable::find(hcmWorker.RecId,_workDate);
+        profileId = jmgStampJournalTable.Profile;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setProfileIdFromProfileCalendar</Name>
+				<Source><![CDATA[
+    private void setProfileIdFromProfileCalendar(Date _workDate)
+    {
+        profileId = JmgProfileCalendar::find(JmgEmployee::find(hcmWorker.RecId),_workDate).ProfileId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workingHoursFromProfile</Name>
+				<Source><![CDATA[
+    private Hours workingHoursFromProfile(Date _workDate)
+    {
+        JmgStampJournalTable    jmgStampJournalTable = JmgStampJournalTable::find(hcmWorker.RecId,_workDate);
+    
+        return jmgStampJournalTable.ProfileSeconds / 3600;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workingHoursFromProfileCalendar</Name>
+				<Source><![CDATA[
+    private Hours workingHoursFromProfileCalendar(Date _workDate)
+    {
+        JmgProfiles jmgProfiles;
+        JmgStampJournalTable stampJournalTable;
+    
+        jmgProfiles = new JmgProfiles(false);
+        jmgProfiles.getProfile(profileId, dayOfWk(_workDate)-1);
+        jmgProfiles.initStampJournalTable(stampJournalTable);
+    
+        return stampJournalTable.ProfileSeconds / 3600;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcOvertime_ProjJourTrans</Name>
+				<Source><![CDATA[
+    private void calcOvertime_ProjJourTrans(Date _workDate,Hours _hoursWorked,Hours _workingHours,SPYOvertimeTypeRecId _overtimeType)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        Hours                       overtimeHours;
+
+
+        this.deleteOvertimeLedger(_workDate);
+        overtimeHours = _hoursWorked;
+        if(overtimeHours > 0)
+        {
+            overtimeLedger.initValue();
+            overtimeLedger.Worker           = hcmWorker.RecId;
+            overtimeLedger.OvertimeDate     = _workDate;
+            if(_workingHours)
+            overtimeLedger.OvertimeDays = overtimeHours / _workingHours;
+            else
+            overtimeLedger.OvertimeDays = 1;
+            overtimeLedger.OvertimeHours    = overtimeHours;
+            overtimeLedger.OvertimeType     = _overtimeType;
+            overtimeLedgerList.add(overtimeLedger);
+
+            payProcessLogReference.clear();
+            payProcessLogReference.PayProcessLog = overtimeLogRecId;
+            payProcessLogReference.Description = strFmt("@SPY1225",overtimeLedger.OvertimeDate,overtimeLedger.OvertimeHours,
+        overtimeLedger.OvertimeDays);
+            payProcessLogReference.RefTableId  = tableNum(SPYOvertimeLedger);
+            payProcessLogReferenceList.add(payProcessLogReference);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>benefitCurrency</Name>
+				<Source><![CDATA[
+    protected CurrencyCode benefitCurrency(SPYBenefitRecId _benefit)
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        date                        validFrom = dateNull(),validTo = dateMax();
+
+        select firstOnly validTimeState(validFrom,validTo) workerPositionBenefit order by ValidTo desc
+        where workerPositionBenefit.Worker == hcmWorker.RecId &&
+              workerPositionBenefit.LegalEntity == legalEntity &&
+              workerPositionBenefit.Benefit == _benefit;
+
+        if(workerPositionBenefit.Currency)
+            return workerPositionBenefit.Currency;
+        else if(HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId).SPYDefaultPayrollCurrency)
+            return HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId).SPYDefaultPayrollCurrency;
+        else
+            return Ledger::accountingCurrency();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>holidayWorkingHours</Name>
+				<Source><![CDATA[
+    private boolean holidayWorkingHours(HcmPersonnelNumberId _empId, TransDate _transDate)
+    {
+        JmgEmployee                     jmgEmployee;
+        JmgProfileCalendar              jmgProfileCalendarTable, jmgProfileCalendarGroup, jmgProfileCalendarAll;
+        JmgProfileTable                 jmgProfileTable;
+        JmgProfileId                    holidayprofileId = "";
+        SPYProfileHoliday               profileHoliday;
+        boolean                         isHoliday = false;
+
+        jmgEmployee = JmgEmployee::findPersonnelNumber(_empId);
+
+        select jmgProfileCalendarTable
+            where jmgProfileCalendarTable.ProfileCalendarType == JmgProfileCalendarType::Employee
+            && jmgProfileCalendarTable.RelationNumber == _empId
+            && jmgProfileCalendarTable.Date == _transDate
+            && holidayprofileId == "";
+        if(jmgProfileCalendarTable)
+        {
+            holidayprofileId = jmgProfileCalendarTable.ProfileId;
+        }
+
+        select jmgProfileCalendarGroup
+            where jmgProfileCalendarGroup.ProfileCalendarType == JmgProfileCalendarType::ProfileGroup
+            && jmgProfileCalendarGroup.RelationNumber == jmgEmployee.ProfileGroupId
+            && jmgProfileCalendarGroup.Date == _transDate
+            && holidayprofileId == "";
+        if(jmgProfileCalendarGroup)
+        {
+            holidayprofileId = jmgProfileCalendarGroup.ProfileId;
+        }
+
+        select jmgProfileCalendarAll
+            where jmgProfileCalendarAll.ProfileCalendarType == JmgProfileCalendarType::All
+            && jmgProfileCalendarAll.Date == _transDate
+            && holidayprofileId == "";
+        if(jmgProfileCalendarAll)
+        {
+            holidayprofileId = jmgProfileCalendarAll.ProfileId;
+        }
+
+        profileHoliday  = SPYProfileHoliday::find(holidayprofileId, _transDate);
+        if(profileHoliday)
+            isHoliday = true;
+
+        return isHoliday;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

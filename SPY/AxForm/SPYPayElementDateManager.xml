@@ -1,0 +1,859 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYPayElementDateManager</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYPayElementDateManager extends FormRun
+{
+    QueryBuildRange                 rangePayElementCode;
+    QueryBuildRange                 rangePayElementLegalEntity;
+
+    SPYPayElementTable              payElementTable;
+    RefRecId                        selectedDataAreaRecId;
+    SelectableDataArea              selectedLegalEntityDataAreaId;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        QueryBuildRange         qbr;
+        str                     callerParm;
+    
+        super();
+    
+    
+        if (element.args().caller() && element.args().record() is SPYPayElementTable)
+        {
+            payElementTable = element.args().record() as SPYPayElementTable;
+            callerParm = element.args().parm();
+        }
+        else
+        {
+            throw error(strFmt("@SYS22678",element.name()));
+        }
+    
+        legalEntity.text(callerParm);
+        selectedDataAreaRecId = CompanyInfo::findDataArea(legalEntity.text()).RecId;
+        selectedLegalEntityDataAreaId = CompanyInfo::findRecId(selectedDataAreaRecId).DataArea;
+    
+        headerField.text(payElementTable.PayElementCode + ' : ' + payElementTable.Description);
+        SPYPayElementTable_ds.query().dataSourceTable(tableNum(SPYPayElementTable)).clearDynalinks();
+        qbr = SPYPayElementTable_ds.query().dataSourceTable(tableNum(SPYPayElementTable)).addRange(fieldNum(SPYPayElementTable, RecId));
+        qbr.value(int642str(payElementTable.RecId));
+        qbr.status(RangeStatus::Hidden);
+    
+        element.setEnable();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public void run()
+    {
+        super();
+        element.wait(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setControlersContext</Name>
+				<Source><![CDATA[
+    public void setControlersContext()
+    {
+        if(!selectedDataAreaRecId)
+        {
+            selectedDataAreaRecId = CompanyInfo::findDataArea(curext()).RecId;
+            selectedLegalEntityDataAreaId = CompanyInfo::findRecId(selectedDataAreaRecId).DataArea;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEnable</Name>
+				<Source><![CDATA[
+    private void setEnable()
+    {
+        SPYPayrollDateManager.enabled(payElementTable.PayElementType == SPYPayElementType::Payroll);
+        SPYBenefitDateManager.enabled(payElementTable.PayElementType == SPYPayElementType::Benefit);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYPayElementDetails</Name>
+				<Methods>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            rangePayElementLegalEntity.value(queryValue(selectedDataAreaRecId));
+        
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+        
+            rangePayElementLegalEntity = this.query().dataSourceName(this.name()).addRange(fieldNum(SPYPayElementDetails, LegalEntity));
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>SPYPayrollDateManager</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            MenuFunction    mf = new MenuFunction(menuitemDisplayStr(SPYPayrollDateManager),MenuItemType::Display);
+            Args            args = new Args(element);
+        
+            args.record(SPYPayElementTable);
+            args.parm(LegalEntity.text());
+            mf.run(args);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>SPYBenefitDateManager</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            MenuFunction    mf = new MenuFunction(menuitemDisplayStr(SPYBenefitDateManager),MenuItemType::Display);
+            Args            args = new Args(element);
+        
+            args.record(SPYPayElementTable);
+            args.parm(LegalEntity.text());
+            mf.run(args);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>LegalEntity</Name>
+				<Type>String</Type>
+				<Methods>
+					<Method>
+						<Name>modified</Name>
+						<Source><![CDATA[
+        public boolean modified()
+        {
+            boolean isValid;
+        
+            isValid = super();
+        
+            selectedDataAreaRecId = CompanyInfo::findDataArea(legalEntity.text()).RecId;
+            selectedLegalEntityDataAreaId = CompanyInfo::findDataArea(legalEntity.text()).DataArea;
+        
+            if (selectedDataAreaRecId)
+            {
+                appl.setDefaultCompany(selectedLegalEntityDataAreaId, false);
+            }
+        
+            element.setControlersContext();
+            SPYPayElementDetails_ds.executeQuery();
+        
+            return isValid;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>validate</Name>
+						<Source><![CDATA[
+        public boolean validate()
+        {
+            boolean isValid = true;
+        
+            if (!CompanyInfo::findDataArea(legalEntity.text()).RecId)
+            {
+                isValid = false;
+            }
+        
+            return isValid;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYPayElementTable</Name>
+			<Table>SPYPayElementTable</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>InstanceRelationType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ParentPayElement</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayElementCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayElementType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>relationType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<AllowCheck>No</AllowCheck>
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources>
+				<AxFormDataSourceDerived>
+					<Name>SPYPayElementTable_SPYBenefitTable</Name>
+					<Table>SPYBenefitTable</Table>
+					<Fields>
+						<AxFormDataSourceField>
+							<DataField>BenefitType</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>RecId</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>TableId</DataField>
+						</AxFormDataSourceField>
+					</Fields>
+					<ReferencedDataSources />
+					<DerivedDataSources />
+				</AxFormDataSourceDerived>
+				<AxFormDataSourceDerived>
+					<Name>SPYPayElementTable_SPYPayrollTable</Name>
+					<Table>SPYPayrollTable</Table>
+					<Fields>
+						<AxFormDataSourceField>
+							<DataField>DisplayOrder</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>PayrollType</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>RecId</DataField>
+						</AxFormDataSourceField>
+						<AxFormDataSourceField>
+							<DataField>TableId</DataField>
+						</AxFormDataSourceField>
+					</Fields>
+					<ReferencedDataSources />
+					<DerivedDataSources />
+				</AxFormDataSourceDerived>
+			</DerivedDataSources>
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>SPYPayElementDetails</Name>
+			<Table>SPYPayElementDetails</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>ApplicableForAll</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CalculationOrder</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>EOSPayElement</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LegalEntity</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayElement</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayElementGroup</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidFrom</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidTo</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>SPYPayElementTable</JoinSource>
+			<LinkType>Active</LinkType>
+			<InsertAtEnd>No</InsertAtEnd>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<ValidTimeStateAutoQuery>DateRange</ValidTimeStateAutoQuery>
+			<ValidTimeStateUpdate>Correction</ValidTimeStateUpdate>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY174</Caption>
+		<SetCompany xmlns="">No</SetCompany>
+		<ViewEditMode xmlns="">Edit</ViewEditMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>CopyOfActionPaneTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>RecordBasics</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYPayrollDateManager</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataSource>SPYPayElementTable</DataSource>
+										<MenuItemName>SPYPayrollDateManager</MenuItemName>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYBenefitDateManager</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataSource>SPYPayElementTable</DataSource>
+										<MenuItemName>SPYBenefitDateManager</MenuItemName>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<DataSource>SPYPayElementTable</DataSource>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SPY174</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>HeaderGroup</Name>
+				<ElementPosition>715827882</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>Auto</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormStringControl">
+						<Name>HeaderField</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>String</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Label>@SPY0</Label>
+						<Style>TitleField</Style>
+					</AxFormControl>
+				</Controls>
+				<Style>DetailTitleContainer</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>Body</Name>
+				<ElementPosition>1431655764</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormStringControl">
+						<Name>LegalEntity</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<HelpText>@GLS92618</HelpText>
+						<Type>String</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<ExtendedDataType>LegalEntityDataAreaId</ExtendedDataType>
+						<Label>@GLS92619</Label>
+						<ViewEditMode>Edit</ViewEditMode>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabControl">
+						<Name>Tab</Name>
+						<AlignControl>No</AlignControl>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<Type>Tab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormTabPageControl">
+								<Name>DetailTabPage</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>SizeToAvailable</HeightMode>
+								<Type>TabPage</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormActionPaneControl">
+										<Name>DetailActionPane</Name>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ActionPane</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormActionPaneTabControl">
+												<Name>ActionPaneTab</Name>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>ActionPaneTab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>SizeToAvailable</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormButtonGroupControl">
+														<Name>ButtonGroup</Name>
+														<ElementPosition>1431655764</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Type>ButtonGroup</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormCommandButtonControl">
+																<Name>NewDetailCommandButton</Name>
+																<ElementPosition>1073741822</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<NeededPermission>Create</NeededPermission>
+																<Type>CommandButton</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																<Command>New</Command>
+																<NormalImage>New</NormalImage>
+																<Text>@SYS2318</Text>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormCommandButtonControl">
+																<Name>DeleteDetailCommandButton</Name>
+																<ElementPosition>1610612734</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<NeededPermission>Delete</NeededPermission>
+																<Type>CommandButton</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																<Command>DeleteRecord</Command>
+																<NormalImage>Delete</NormalImage>
+																<SaveRecord>No</SaveRecord>
+																<Text>@SYS26394</Text>
+															</AxFormControl>
+														</Controls>
+														<ArrangeMethod>Vertical</ArrangeMethod>
+														<DataSource>SPYPayElementDetails</DataSource>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<AlignChildren>No</AlignChildren>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+											</AxFormControl>
+										</Controls>
+										<AlignChild>No</AlignChild>
+										<AlignChildren>No</AlignChildren>
+										<ArrangeMethod>Vertical</ArrangeMethod>
+										<DataSource>SPYPayElementDetails</DataSource>
+										<Style>Strip</Style>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormGroupControl">
+										<Name>DetailBody</Name>
+										<ElementPosition>1610612734</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>SizeToAvailable</HeightMode>
+										<Type>Group</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>DetailGridContainer</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<ElementPosition>858993458</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>Group</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<Width>300</Width>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGridControl">
+														<Name>EarningCodeDetailGrid</Name>
+														<AllowEdit>No</AllowEdit>
+														<ElementPosition>1431655764</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<Type>Grid</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormDateControl">
+																<Name>SPYPayElementDetails_ValidFrom</Name>
+																<ElementPosition>1073741822</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<Type>Date</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataField>ValidFrom</DataField>
+																<DataSource>SPYPayElementDetails</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormDateControl">
+																<Name>SPYPayElementDetails_ValidTo</Name>
+																<ElementPosition>1610612733</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<Type>Date</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataField>ValidTo</DataField>
+																<DataSource>SPYPayElementDetails</DataSource>
+															</AxFormControl>
+														</Controls>
+														<AlternateRowShading>No</AlternateRowShading>
+														<DataGroup>ValidDates</DataGroup>
+														<DataSource>SPYPayElementDetails</DataSource>
+														<MultiSelect>No</MultiSelect>
+														<ShowRowLabels>No</ShowRowLabels>
+														<VisibleRows>15</VisibleRows>
+														<VisibleRowsMode>Fixed</VisibleRowsMode>
+													</AxFormControl>
+												</Controls>
+												<RightMargin>0</RightMargin>
+												<RightMarginMode>Fixed</RightMarginMode>
+												<Style>BorderlessGridContainer</Style>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>DetailVSplitter</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<ElementPosition>1288490187</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>Group</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls />
+												<Style>SplitterVerticalContainer</Style>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>DetailContainer</Name>
+												<ElementPosition>1717986916</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>SizeToAvailable</HeightMode>
+												<Type>Group</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>SizeToAvailable</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>DetailHeader</Name>
+														<ElementPosition>1073741822</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Type>Group</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>ValidDates</Name>
+																<ElementPosition>1431655764</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>ValidDates_ValidFrom</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ValidFrom</DataField>
+																		<DataSource>SPYPayElementDetails</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>ValidDates_ValidTo</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ValidTo</DataField>
+																		<DataSource>SPYPayElementDetails</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<BackgroundColor>WindowBackground</BackgroundColor>
+																<DataGroup>ValidDates</DataGroup>
+																<DataSource>SPYPayElementDetails</DataSource>
+																<FrameType>None</FrameType>
+															</AxFormControl>
+														</Controls>
+														<FrameType>None</FrameType>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>DetailGroup</Name>
+														<ElementPosition>1610612734</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>SizeToAvailable</HeightMode>
+														<Type>Group</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>SizeToAvailable</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormStringControl">
+																<Name>SPYPayElementDetails_PayElementGroup</Name>
+																<ElementPosition>858993458</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<Type>String</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataField>PayElementGroup</DataField>
+																<DataSource>SPYPayElementDetails</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormCheckBoxControl">
+																<Name>SPYPayElementDetails_ApplicableForAll</Name>
+																<ElementPosition>1288490187</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<Type>CheckBox</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataField>ApplicableForAll</DataField>
+																<DataSource>SPYPayElementDetails</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormCheckBoxControl">
+																<Name>SPYPayElementDetails_EOSPayElement</Name>
+																<ElementPosition>1717986916</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<Type>CheckBox</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<DataField>EOSPayElement</DataField>
+																<DataSource>SPYPayElementDetails</DataSource>
+															</AxFormControl>
+														</Controls>
+														<TopMargin>10</TopMargin>
+														<TopMarginMode>Fixed</TopMarginMode>
+														<DataSource>SPYPayElementDetails</DataSource>
+														<FrameType>None</FrameType>
+													</AxFormControl>
+												</Controls>
+												<BottomMargin>5</BottomMargin>
+												<BottomMarginMode>Fixed</BottomMarginMode>
+												<RightMargin>5</RightMargin>
+												<RightMarginMode>Fixed</RightMarginMode>
+												<TopMargin>5</TopMargin>
+												<TopMarginMode>Fixed</TopMarginMode>
+											</AxFormControl>
+										</Controls>
+										<Columns>3</Columns>
+										<RightMargin>5</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<TopMargin>5</TopMargin>
+										<TopMarginMode>Fixed</TopMarginMode>
+										<FrameType>None</FrameType>
+									</AxFormControl>
+								</Controls>
+								<Caption>@SYS318405</Caption>
+								<Scrollbars>Auto</Scrollbars>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Style>Auto</Style>
+					</AxFormControl>
+				</Controls>
+				<FrameType>None</FrameType>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

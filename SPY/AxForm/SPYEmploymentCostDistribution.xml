@@ -1,0 +1,1098 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYEmploymentCostDistribution</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYEmploymentCostDistribution extends FormRun
+{
+    DateEffectivenessPaneController         dateEffectivenessPaneController;
+    HcmEmploymentDetail                     hcmEmploymentDetail;
+
+    SPYCostDistributionBasis                costDistributionBasis;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canClose</Name>
+				<Source><![CDATA[
+    public boolean canClose()
+    {
+        boolean                         ret;
+        SPYEmploymentCostDistribution   employmentCostDistribution;
+        boolean                         employmentCostDistributionexists;
+    
+        ret = super();
+        
+        employmentCostDistributionexists = SPYEmploymentCostDistribution::existforEmploymentDetail(hcmEmploymentDetail);
+        
+        if(employmentCostDistributionexists == true)
+        {
+            select sum(Percent) from employmentCostDistribution
+            where employmentCostDistribution.EmploymentDetail == hcmEmploymentDetail.RecId;
+        
+            // Code commented Start by Lakshya on 18/10/2017 because this code was proving faulty If the user enters 0 percent for the CostDistribution
+            /*
+            if(employmentCostDistribution.Percent != 0 && employmentCostDistribution.Percent != 100)
+            ret = checkFailed("Sum of percent must be 100.");
+            */
+            // Code commented Ended by Lakshya on 18/10/2017 because this code was proving faulty If the user enters 0 percent for the CostDistribution
+
+            // New code start by Lakshya on 18/10/2017 for not allowing the user to enter 0 percent and also to check if it does not exceed 100
+            if(employmentCostDistribution.Percent != 0)
+            {
+                if(employmentCostDistribution.Percent != 100)
+                    ret = checkfailed("Sum of Percent must be 100.Kindly rectify.");
+            }
+            else
+                ret = checkFailed("Sum of Percent can never be 0 . Kindly rectify.");
+        }
+        // New code Ended by Lakshya on 18/10/2017 for not allowing the user to enter 0 percent and also to check if it does not exceed 100
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        HcmEmployment   hcmemploymentlocal;
+        TransDateTime   joiningDate = DateTimeUtil::minValue();
+        TransDateTime   endDate   = DateTimeutil::maxValue();
+
+        super();
+    
+        //Initialize splitter
+        //dateEffectivenessPaneController = DateEffectivenessPaneController::constructWithForm(element, SPYEmploymentCostDistribution_ds, false, true, true);
+        
+        if(element.args().caller())
+        {
+            if(element.args().record() is HcmEmploymentDetail)
+            {
+                hcmEmploymentDetail = element.args().record() as HcmEmploymentDetail;
+                costDistributionBasis = hcmEmploymentDetail.SPYCostDistributionBasis;
+            }
+            else
+            {
+                hcmemploymentlocal = element.args().record();
+                hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmemploymentlocal.recid);
+        
+                costDistributionBasis = hcmemploymentdetail.SPYCostDistributionBasis;
+            }
+        }
+        /*if(element.args().caller() && element.args().record() is HcmEmploymentDetail)
+        {
+            hcmEmploymentDetail = element.args().record() as HcmEmploymentDetail;
+            costDistributionBasis = hcmEmploymentDetail.SPYCostDistributionBasis;
+        }
+        hcmemploymentlocal = element.args().record();
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmemploymentlocal.recid);
+        
+        costDistributionBasis = hcmemploymentdetail.SPYCostDistributionBasis;*/
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCostDistributionBasis</Name>
+				<Source><![CDATA[
+    public SPYCostDistributionBasis parmCostDistributionBasis(SPYCostDistributionBasis _costDistributionBasis = costDistributionBasis)
+    {
+        costDistributionBasis = _costDistributionBasis;
+        return costDistributionBasis;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDimAttrValue1</Name>
+				<Source><![CDATA[
+    void updateDimAttrValue1(DimensionAttributeValueRecId _dimAttrValue)
+    {
+        SPYEmploymentCostDistribution.DimensionAttributeValue1 = _dimAttrValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDimAttrValue2</Name>
+				<Source><![CDATA[
+    void updateDimAttrValue2(DimensionAttributeValueRecId _dimAttrValue)
+    {
+        SPYEmploymentCostDistribution.DimensionAttributeValue2 = _dimAttrValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDimAttrValue3</Name>
+				<Source><![CDATA[
+    void updateDimAttrValue3(DimensionAttributeValueRecId _dimAttrValue)
+    {
+        SPYEmploymentCostDistribution.DimensionAttributeValue3 = _dimAttrValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDimAttrValue4</Name>
+				<Source><![CDATA[
+    void updateDimAttrValue4(DimensionAttributeValueRecId _dimAttrValue)
+    {
+        SPYEmploymentCostDistribution.DimensionAttributeValue4 = _dimAttrValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDimAttrValue5</Name>
+				<Source><![CDATA[
+    // New code added Start by Lakshya on 18/09/2017 for updation of the DimensionAttribute values 
+    void updateDimAttrValue5(DimensionAttributeValueRecId _dimAttrValue)
+    {
+        SPYEmploymentCostDistribution.DimensionAttributeValue5 = _dimAttrValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDimAttrValue6</Name>
+				<Source><![CDATA[
+    void updateDimAttrValue6(DimensionAttributeValueRecId _dimAttrValue)
+    {
+        SPYEmploymentCostDistribution.DimensionAttributeValue6 = _dimAttrValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDimAttrValue7</Name>
+				<Source><![CDATA[
+    void updateDimAttrValue7(DimensionAttributeValueRecId _dimAttrValue)
+    {
+        SPYEmploymentCostDistribution.DimensionAttributeValue7 = _dimAttrValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDimAttrValue8</Name>
+				<Source><![CDATA[
+    void updateDimAttrValue8(DimensionAttributeValueRecId _dimAttrValue)
+    {
+        SPYEmploymentCostDistribution.DimensionAttributeValue8 = _dimAttrValue;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYEmploymentCostDistribution</Name>
+				<Methods>
+					<Method>
+						<Name>initValue</Name>
+						<Source><![CDATA[
+        public void initValue()
+        {
+            super();
+            SPYEmploymentCostDistribution.EmploymentDetail = hcmEmploymentDetail.RecId;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields>
+					<Field>
+						<DataField>DimensionValue1</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                FormRun     formRun;
+                Args        args = new Args();
+
+                args.parm("1");
+                args.caller(element);
+                args.name(formStr(SPYCostDistributionDimensionValueLookUp));
+                formRun = classFactory.formRunClass(args);
+
+                //super(_formControl, _filterStr);
+
+                SPYEmploymentCostDistribution_ds.object(fieldNum(SPYEmploymentCostDistribution,DimensionValue1)).
+                performFormLookup(formRun,DimensionAttribute1_DimensionValue1);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>DimensionValue2</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                FormRun     formRun;
+                Args        args = new Args();
+
+                args.parm("2");
+                args.caller(element);
+                args.name(formStr(SPYCostDistributionDimensionValueLookUp));
+                formRun = classFactory.formRunClass(args);
+
+                //super(_formControl, _filterStr);
+
+                SPYEmploymentCostDistribution_ds.object(fieldNum(SPYEmploymentCostDistribution,DimensionValue2)).
+                performFormLookup(formRun,DimensionAttribute2_DimensionValue2);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>DimensionValue3</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                FormRun     formRun;
+                Args        args = new Args();
+
+                args.parm("3");
+                args.caller(element);
+                args.name(formStr(SPYCostDistributionDimensionValueLookUp));
+                formRun = classFactory.formRunClass(args);
+
+                //super(_formControl, _filterStr);
+
+                SPYEmploymentCostDistribution_ds.object(fieldNum(SPYEmploymentCostDistribution,DimensionValue3)).
+                performFormLookup(formRun,DimensionAttribute3_DimensionValue3);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>DimensionValue4</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                FormRun     formRun;
+                Args        args = new Args();
+
+                args.parm("4");
+                args.caller(element);
+                args.name(formStr(SPYCostDistributionDimensionValueLookUp));
+                formRun = classFactory.formRunClass(args);
+
+                //super(_formControl, _filterStr);
+
+                SPYEmploymentCostDistribution_ds.object(fieldNum(SPYEmploymentCostDistribution,DimensionValue4)).
+                performFormLookup(formRun,DimensionAttribute4_DimensionValue4);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>DimensionValue5</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                FormRun     formRun;
+                Args        args = new Args();
+
+                args.parm("5");
+                args.caller(element);
+                args.name(formStr(SPYCostDistributionDimensionValueLookUp));
+                formRun = classFactory.formRunClass(args);
+
+                //super(_formControl, _filterStr);
+
+                SPYEmploymentCostDistribution_ds.object(fieldNum(SPYEmploymentCostDistribution,DimensionValue5)).
+                performFormLookup(formRun,DimensionAttribute5_DimensionValue5);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>DimensionValue6</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                FormRun     formRun;
+                Args        args = new Args();
+
+                args.parm("6");
+                args.caller(element);
+                args.name(formStr(SPYCostDistributionDimensionValueLookUp));
+                formRun = classFactory.formRunClass(args);
+
+                //super(_formControl, _filterStr);
+
+                SPYEmploymentCostDistribution_ds.object(fieldNum(SPYEmploymentCostDistribution,DimensionValue6)).
+                performFormLookup(formRun,DimensionAttribute6_DimensionValue6);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>DimensionValue7</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                FormRun     formRun;
+                Args        args = new Args();
+
+                args.parm("7");
+                args.caller(element);
+                args.name(formStr(SPYCostDistributionDimensionValueLookUp));
+                formRun = classFactory.formRunClass(args);
+
+                //super(_formControl, _filterStr);
+
+                SPYEmploymentCostDistribution_ds.object(fieldNum(SPYEmploymentCostDistribution,DimensionValue7)).
+                performFormLookup(formRun,DimensionAttribute7_DimensionValue7);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>DimensionValue8</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                FormRun     formRun;
+                Args        args = new Args();
+
+                args.parm("8");
+                args.caller(element);
+                args.name(formStr(SPYCostDistributionDimensionValueLookUp));
+                formRun = classFactory.formRunClass(args);
+
+                //super(_formControl, _filterStr);
+
+                SPYEmploymentCostDistribution_ds.object(fieldNum(SPYEmploymentCostDistribution,DimensionValue8)).
+                performFormLookup(formRun,DimensionAttribute8_DimensionValue8);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+				</Fields>
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>SPYWorkerPositionPayrollDateManager</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            MenuFunction    mf = new MenuFunction(menuitemDisplayStr(SPYEmploymentCostDistributionDateManager),MenuItemType::Display);
+            Args            args = new Args(element);
+        
+            super();
+        
+            args.record(SPYEmploymentCostDistribution);
+            mf.run(args);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYEmploymentCostDistribution</Name>
+			<Table>SPYEmploymentCostDistribution</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionAttributeValue1</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionAttributeValue2</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionAttributeValue3</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionAttributeValue4</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionAttributeValue5</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionAttributeValue6</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionAttributeValue7</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionAttributeValue8</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionValue1</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionValue2</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionValue3</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionValue4</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionValue5</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionValue6</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionValue7</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DimensionValue8</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>EmploymentDetail</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Percent</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">Cost distribution</Caption>
+		<DataSource xmlns="">SPYEmploymentCostDistribution</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">SimpleListDetails</Pattern>
+		<PatternVersion xmlns="">1.3</PatternVersion>
+		<SetCompany xmlns="">No</SetCompany>
+		<Style xmlns="">SimpleListDetails</Style>
+		<TitleDataSource xmlns="">SPYEmploymentCostDistribution</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>ActionPaneTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>DateManagerButtonGroup</Name>
+								<ElementPosition>1789569705</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormButtonControl">
+										<Name>SPYWorkerPositionPayrollDateManager</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<HelpText>@SPY257</HelpText>
+										<Type>Button</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<Visible>No</Visible>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<AutoRefreshData>Yes</AutoRefreshData>
+										<NeedsRecord>Yes</NeedsRecord>
+										<Text>@SPY113</Text>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>GridContainer</Name>
+				<AutoDeclaration>Yes</AutoDeclaration>
+				<ElementPosition>858993458</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl>
+						<Name>QuickFilterControl</Name>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension>
+							<Name>QuickFilterControl</Name>
+							<ExtensionComponents />
+							<ExtensionProperties>
+								<AxFormControlExtensionProperty>
+									<Name>targetControlName</Name>
+									<Type>String</Type>
+									<Value>Grid</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>defaultColumnName</Name>
+									<Type>String</Type>
+									<Value>ReadOnly_GroupName</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>placeholderText</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+							</ExtensionProperties>
+						</FormControlExtension>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGridControl">
+						<Name>Grid</Name>
+						<AllowEdit>No</AllowEdit>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<Type>Grid</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToContent</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEmploymentCostDistribution_EmploymentDetail</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<ReferenceField>EmploymentDetail</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormStringControl">
+								<Name>SPYEmploymentCostDistribution_DimensionValue</Name>
+								<ElementPosition>1610612733</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>String</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>DimensionValue1</DataField>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEmploymentCostDistribution_DimensionAttributeValue2</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<ReferenceField>DimensionAttributeValue2</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEmploymentCostDistribution_DimensionAttributeValue3</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<ReferenceField>DimensionAttributeValue3</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEmploymentCostDistribution_DimensionAttributeValue4</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<ReferenceField>DimensionAttributeValue4</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormRealControl">
+								<Name>SPYEmploymentCostDistribution_Percent1</Name>
+								<ElementPosition>1879048189</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>Real</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>Percent</DataField>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<NoOfDecimals>-1</NoOfDecimals>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEmploymentCostDistribution_DimensionAttributeValue5</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<ReferenceField>DimensionAttributeValue5</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEmploymentCostDistribution_DimensionAttributeValue6</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<ReferenceField>DimensionAttributeValue6</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEmploymentCostDistribution_DimensionAttributeValue7</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<ReferenceField>DimensionAttributeValue7</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEmploymentCostDistribution_DimensionAttributeValue8</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<ReferenceField>DimensionAttributeValue8</ReferenceField>
+							</AxFormControl>
+						</Controls>
+						<AlternateRowShading>No</AlternateRowShading>
+						<DataSource>SPYEmploymentCostDistribution</DataSource>
+						<GridLinesStyle>Vertical</GridLinesStyle>
+						<MultiSelect>No</MultiSelect>
+						<ShowRowLabels>No</ShowRowLabels>
+						<Style>List</Style>
+					</AxFormControl>
+				</Controls>
+				<RightMargin>0</RightMargin>
+				<RightMarginMode>Fixed</RightMarginMode>
+				<FrameType>None</FrameType>
+				<Style>SidePanel</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>PageTitleGroup</Name>
+				<ElementPosition>858993458</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Pattern>FieldsFieldGroups</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls />
+				<AlignChild>No</AlignChild>
+				<ColumnsMode>Fill</ColumnsMode>
+				<FrameType>None</FrameType>
+				<Style>DetailTitleContainer</Style>
+				<ViewEditMode>View</ViewEditMode>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<Type>Tab</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPage</Name>
+						<Pattern>FieldsFieldGroups</Pattern>
+						<PatternVersion>1.1</PatternVersion>
+						<Type>TabPage</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DimensionAttribute1</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute1_DimensionValue1</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DimensionValue1</DataField>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute1_dimAttribute1Name</Name>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataMethod>dimAttribute1Name</DataMethod>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>DimensionAttribute1</DataGroup>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DimensionAttribute2</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute2_DimensionValue2</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DimensionValue2</DataField>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute2_dimAttribute2Name</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataMethod>dimAttribute2Name</DataMethod>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>DimensionAttribute2</DataGroup>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DimensionAttribute3</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute3_DimensionValue3</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DimensionValue3</DataField>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute3_dimAttribute3Name</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataMethod>dimAttribute3Name</DataMethod>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>DimensionAttribute3</DataGroup>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DimensionAttribute4</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute4_DimensionValue4</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DimensionValue4</DataField>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute4_dimAttribute4Name</Name>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataMethod>dimAttribute4Name</DataMethod>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>DimensionAttribute4</DataGroup>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DimensionAttribute5</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute5_DimensionValue5</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DimensionValue5</DataField>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute5_dimAttribute5Name</Name>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataMethod>dimAttribute5Name</DataMethod>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>DimensionAttribute5</DataGroup>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DimensionAttribute6</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute6_DimensionValue6</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DimensionValue6</DataField>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute6_dimAttribute6Name</Name>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataMethod>dimAttribute6Name</DataMethod>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>DimensionAttribute6</DataGroup>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DimensionAttribute7</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute7_DimensionValue7</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DimensionValue7</DataField>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute7_dimAttribute7Name</Name>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataMethod>dimAttribute7Name</DataMethod>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>DimensionAttribute7</DataGroup>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DimensionAttribute8</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute8_DimensionValue8</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DimensionValue8</DataField>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>DimensionAttribute8_dimAttribute8Name</Name>
+										<Type>String</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataMethod>dimAttribute8Name</DataMethod>
+										<DataSource>SPYEmploymentCostDistribution</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>DimensionAttribute8</DataGroup>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormRealControl">
+								<Name>SPYEmploymentCostDistribution_Percent</Name>
+								<ElementPosition>1610612733</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Real</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>Percent</DataField>
+								<DataSource>SPYEmploymentCostDistribution</DataSource>
+								<NoOfDecimals>-1</NoOfDecimals>
+							</AxFormControl>
+						</Controls>
+						<ColumnsMode>Fill</ColumnsMode>
+					</AxFormControl>
+				</Controls>
+				<Style>FastTabs</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

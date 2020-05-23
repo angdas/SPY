@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYCompensationPlanTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYCompensationPlanTable extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>evaluateWorker</Name>
+				<Source><![CDATA[
+    SPYExpressionConditionResultTmp evaluateWorker()
+    {
+        Query                           query = new Query(queryStr(SPYHcmWorkerLookup));
+        QueryRun                        queryRun;
+        HcmWorker                       hcmWorker;
+        SPYExpressionConditionResultTmp expressionConditionResultTmp;
+        Microsoft.Dynamics.AX.Framework.Expression.Model.ExpressionModel    model;
+
+        model = ExpressionTable::loadExpression(ExpressionTable::findRecId(this.SysExpressionRecId));
+        query.dataSourceTable(tableNum(HcmJobDetail)).addRange(fieldNum(HcmJobDetail,SPYCompensationLevelGrade)).value(queryValue(this.CompensationLevelGrade));
+        query.dataSourceTable(tableNum(HcmJobDetail)).addRange(fieldNum(HcmJobDetail,SPYCompensationLevelBand)).value(queryValue(this.CompensationLevelBand));
+        query.dataSourceTable(tableNum(HcmJobDetail)).addRange(fieldNum(HcmJobDetail,SPYCompensationLevelStep)).value(queryValue(this.CompensationLevelStep));
+        queryRun = new QueryRun(query);
+        while(queryRun.next())
+        {
+            hcmWorker = queryRun.get(tableNum(HcmWorker));
+            if(this.SysExpressionRecId && SysWorkflowExpression::evaluateTestExpression(hcmWorker.DataAreaId,
+                                                                                    hcmWorker.TableId,
+                                                                                    hcmWorker.RecId,
+                                                                                    model))
+            {
+                expressionConditionResultTmp.PersonnelNumber    = hcmWorker.PersonnelNumber;
+                expressionConditionResultTmp.Name               = hcmWorker.name();
+                expressionConditionResultTmp.Worker             = hcmWorker.RecId;
+                expressionConditionResultTmp.insert();
+            }
+            else if(!this.SysExpressionRecId)
+            {
+                expressionConditionResultTmp.PersonnelNumber    = hcmWorker.PersonnelNumber;
+                expressionConditionResultTmp.Name               = hcmWorker.name();
+                expressionConditionResultTmp.Worker             = hcmWorker.RecId;
+                expressionConditionResultTmp.insert();
+            }
+        }
+
+        return expressionConditionResultTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByWorkerPosition</Name>
+				<Source><![CDATA[
+    public static SPYCompensationPlanRecId findByWorkerPosition(LegalEntityRecId _legalEntity,
+                                                            TransDateTime _startDateTime,
+                                                            HCMPositionRecId _position = 0)
+    {
+        SPYCompensationPlanTable        compensationPlanTable;
+        HcmPositionDetail               positionDetail = HcmPositionDetail::findByPosition(_position,_startDateTime);
+        HcmCompensationLevelRecId       grade;
+        HcmCompensationLevelRecId       band;
+        HcmCompensationLevelRecId       step;
+        HcmJobDetail                    jobDetail;
+        TransDate                       transDate = DateTimeUtil::date(_startDateTime);
+
+        if(positionDetail.SPYCompensationLevelGrade || positionDetail.SPYCompensationLevelBand || positionDetail.SPYCompensationLevelStep)
+        {
+            grade = positionDetail.SPYCompensationLevelGrade;
+            band = positionDetail.SPYCompensationLevelBand;
+            step = positionDetail.SPYCompensationLevelStep;
+        }
+        else
+        {
+            jobDetail = HcmJobDetail::findByJob(HcmPosition::getJob(_position),_startDateTime);
+            grade = jobDetail.SPYCompensationLevelGrade;
+            band = jobDetail.SPYCompensationLevelBand;
+            step = jobDetail.SPYCompensationLevelStep;
+        }
+
+        select firstOnly validTimeState(transDate) compensationPlanTable
+        where compensationPlanTable.CompensationLevelGrade == grade &&
+              compensationPlanTable.CompensationLevelBand == band &&
+              compensationPlanTable.CompensationLevelStep == step &&
+              compensationPlanTable.LegalEntity == _legalEntity;
+
+        return compensationPlanTable.RecId;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY444</DeveloperDocumentation>
+	<Label>@SPY441</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>CompensationPlanCode</TitleField1>
+	<TitleField2>Description</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>CompensationPlanCode_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<ValidTimeStateFieldType>Date</ValidTimeStateFieldType>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationPlanCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationPlanCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Absence</Name>
+			<Label>@SYS3414</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>AbsenceConfig</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>CompensationLevel</Name>
+			<Label>@SYS302272</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationLevelGrade</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CompensationLevelBand</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CompensationLevelStep</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Dates</Name>
+			<Label>@SYS80293</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ValidFrom</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidTo</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationPlanCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>AbsenceConfig</Name>
+			<ExtendedDataType>SPYAbsenceConfigRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>CompensationLevelBand</Name>
+			<ExtendedDataType>HcmCompensationLevelRecId</ExtendedDataType>
+			<HelpText>@SPY1422</HelpText>
+			<Label>@SYS116554</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>CompensationLevelGrade</Name>
+			<ExtendedDataType>HcmCompensationLevelRecId</ExtendedDataType>
+			<HelpText>@SPY1423</HelpText>
+			<Label>@SYS116553</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>CompensationLevelStep</Name>
+			<ExtendedDataType>HcmCompensationLevelRecId</ExtendedDataType>
+			<HelpText>@SPY1424</HelpText>
+			<Label>@SYS40178</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>CompensationPlanCode</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>SPYCompensationPlanCode</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LegalEntity</Name>
+			<ExtendedDataType>LegalEntityRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SysExpressionRecId</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<Label>@SPY214</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidFrom</Name>
+			<ExtendedDataType>ValidFromDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidTo</Name>
+			<ExtendedDataType>ValidToDate</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>CompensationPlanCode_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>CompensationPlanCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+		<AxTableIndex>
+			<Name>Level_Indx</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<ValidTimeStateKey>Yes</ValidTimeStateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>ValidFrom</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidTo</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>CompensationLevelBand</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>CompensationLevelGrade</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>CompensationLevelStep</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LegalEntity</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>CompanyInfo</Name>
+			<RelatedTable>CompanyInfo</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LegalEntity</Name>
+					<Field>LegalEntity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>ExpressionTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>ExpressionTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SysExpressionRecId</Name>
+					<Field>SysExpressionRecId</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmCompensationLevelBand</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>HcmCompensationLevel</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Band</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintRelatedFixed">
+					<Name>Type</Name>
+					<RelatedField>Type</RelatedField>
+					<Value>2</Value>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>CompensationLevelBand</Name>
+					<Field>CompensationLevelBand</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmCompensationLevelGrade</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>HcmCompensationLevel</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Grade</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintRelatedFixed">
+					<Name>Type</Name>
+					<RelatedField>Type</RelatedField>
+					<Value>1</Value>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>CompensationLevelGrade</Name>
+					<Field>CompensationLevelGrade</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmCompensationLevelStep</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>HcmCompensationLevel</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Step</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintRelatedFixed">
+					<Name>Type</Name>
+					<RelatedField>Type</RelatedField>
+					<Value>3</Value>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>CompensationLevelStep</Name>
+					<Field>CompensationLevelStep</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYAbsenceConfigTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYAbsenceConfigTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>AbsenceConfig</Name>
+					<Field>AbsenceConfig</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

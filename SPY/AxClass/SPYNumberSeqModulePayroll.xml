@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYNumberSeqModulePayroll</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// The <c>SPYNumberSeqModulePayroll</c> class is used to configure number sequences in the Payroll module.
+/// </summary>
+/// <remarks>
+/// The details of configuring number sequence is in method loadModule().
+/// </remarks>
+
+public class SPYNumberSeqModulePayroll extends NumberSeqApplicationModule
+{
+    #Define.MAXSEQRANGE(99999999)
+    /// <summary>
+    ///    Configures all of the data types that are used by the module.
+    /// </summary>
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>loadModule</Name>
+				<Source><![CDATA[
+    protected void loadModule()
+    {
+        NumberSeqDatatype datatype = NumberSeqDatatype::construct();
+    
+        /* Setup pay journal ids */
+        datatype.parmDatatypeId(extendedTypeNum(SPYPayrollJournalId));
+        datatype.parmReferenceHelp(literalStr("@SPY272"));
+        datatype.parmReferenceLabel(literalStr("@SPY273"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(1);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup payroll voucher code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYPayrollVoucher));
+        datatype.parmReferenceHelp(literalStr("@SPY325"));
+        datatype.parmReferenceLabel(literalStr("@SPY326"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(2);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup pay adjustment journal code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYPayAdjustmentCode));
+        datatype.parmReferenceHelp(literalStr("@SPY274"));
+        datatype.parmReferenceLabel(literalStr("@SPY275"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(3);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup benefit journal code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYBenefitJournalCode));
+        datatype.parmReferenceHelp(literalStr("@SPY299"));
+        datatype.parmReferenceLabel(literalStr("@SPY300"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(4);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup loan journal code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYPayLoanCode));
+        datatype.parmReferenceHelp(literalStr("@SPY347"));
+        datatype.parmReferenceLabel(literalStr("@SPY348"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(5);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup leave application code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYLeaveApplicationCode));
+        datatype.parmReferenceHelp(literalStr("@SPY506"));
+        datatype.parmReferenceLabel(literalStr("@SPY507"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(6);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup payroll disbursement code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYPayrollDisbursementCode));
+        datatype.parmReferenceHelp(literalStr("@SPY564"));
+        datatype.parmReferenceLabel(literalStr("@SPY565"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(7);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup document request code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYDocumentRequestCode));
+        datatype.parmReferenceHelp(literalStr("@SPY643"));
+        datatype.parmReferenceLabel(literalStr("@SPY644"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(8);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup overtime journal code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYOvertimeJournalCode));
+        datatype.parmReferenceHelp(literalStr("@SPY866"));
+        datatype.parmReferenceLabel(literalStr("@SPY867"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(9);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup payroll earnings journal code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYPayrollEarningsJournalCode));
+        datatype.parmReferenceHelp(literalStr("@SPY1205"));
+        datatype.parmReferenceLabel(literalStr("@SPY1200"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(10);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    
+        /* Setup absence journal code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYAbsenceJournalCode));
+        datatype.parmReferenceHelp(literalStr("@SPY1609"));
+        datatype.parmReferenceLabel(literalStr("@SPY1587"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(11);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+
+        /* Setup promotion code */
+        datatype.parmDatatypeId(extendedTypeNum(SPYPromotionCode));
+        datatype.parmReferenceHelp(literalStr("@SPY1916"));
+        datatype.parmReferenceLabel(literalStr("@SPY1894"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(12);
+
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+
+        /* Setup disbursement journal ids */
+        datatype.parmDatatypeId(extendedTypeNum(SPYDisbursementJournalId));
+        datatype.parmReferenceHelp(literalStr("@SPY:DisbursementJournalNumSeqHelp"));
+        datatype.parmReferenceLabel(literalStr("@SPY:DisbursementJournalNumber"));
+        datatype.parmWizardIsContinuous(true);
+        datatype.parmWizardIsManual(NoYes::No);
+        datatype.parmWizardIsChangeDownAllowed(NoYes::No);
+        datatype.parmWizardIsChangeUpAllowed(NoYes::No);
+        datatype.parmWizardHighest(#MAXSEQRANGE);
+        datatype.parmSortField(13);
+    
+        datatype.addParameterType(NumberSeqParameterType::DataArea, true, false);
+        this.create(datatype);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>numberSeqModule</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Retrieves the ID of the Payroll module for this class.
+    /// </summary>
+    /// <returns>
+    ///    The module specific ID.
+    /// </returns>
+    
+    public NumberSeqModule numberSeqModule()
+    {
+        return NumberSeqModule::SPYPayroll;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>buildModulesMapSubsciber</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Appends the current class to the map that links modules to number sequence data type generators.
+    /// </summary>
+    [SubscribesTo(classstr(NumberSeqGlobal),delegatestr(NumberSeqGlobal,buildModulesMapDelegate))]
+    static void buildModulesMapSubsciber(Map numberSeqModuleNamesMap)
+    {
+        NumberSeqGlobal::addModuleToMap(classnum(SPYNumberSeqModulePayroll), numberSeqModuleNamesMap);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

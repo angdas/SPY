@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxFormExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>HcmWorker.ExtensionSPY</Name>
+	<ControlModifications />
+	<Controls>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControl1</Name>
+			<FormControl xmlns=""
+				i:type="AxFormActionPaneTabControl">
+				<Name>SPYPayrollActionPaneTab</Name>
+				<AutoDeclaration>Yes</AutoDeclaration>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPaneTab</Type>
+				<WidthMode>Auto</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>SPYPayrollButtonGroup</Name>
+						<Type>ButtonGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYWorkerPositionPayroll</Name>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYWorkerPositionPayroll</MenuItemName>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYWorkerPositionBenefit</Name>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYWorkerPositionBenefit</MenuItemName>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYWorkerPositionAbsenceConfigLine</Name>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYWorkerPositionAbsenceConfigLine</MenuItemName>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SPY17</Caption>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>SPYPayLedger</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>ButtonGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYPayrollLedger</Name>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYPayrollLedger</MenuItemName>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYBenefitLedger</Name>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYBenefitLedger</MenuItemName>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYReferencePayElementLedger</Name>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYReferencePayElementLedger</MenuItemName>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYAbsenceLedger</Name>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYAbsenceLedger</MenuItemName>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS3850</Caption>
+					</AxFormControl>
+				</Controls>
+				<Caption>@SPY246</Caption>
+			</FormControl>
+			<Parent>ActionPane</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControlj05bzwu51</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYDetails</Name>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormStringControl">
+						<Name>SPYDetails_SPYWorkerGroupCode</Name>
+						<Type>String</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>SPYWorkerGroupCode</DataField>
+						<DataSource>HcmEmploymentDetail</DataSource>
+					</AxFormControl>
+				</Controls>
+				<DataGroup>SPYDetails</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControljd35m1vw1</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYPayroll</Name>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormComboBoxControl">
+						<Name>SPYPayroll_SPYPayrollDisbursementMode</Name>
+						<Type>ComboBox</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>SPYPayrollDisbursementMode</DataField>
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<Items />
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormStringControl">
+						<Name>SPYPayroll_SPYDefaultPayrollCurrency</Name>
+						<Type>String</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>SPYDefaultPayrollCurrency</DataField>
+						<DataSource>HcmEmploymentDetail</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>SPYPayroll_SPYDefaultPayrollPeriod</Name>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<ReferenceField>SPYDefaultPayrollPeriod</ReferenceField>
+					</AxFormControl>
+				</Controls>
+				<DataGroup>SPYPayroll</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControlxsh1ada41</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYBenefit</Name>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>FormGroupControl1_SPYBenefitPolicy</Name>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<ReferenceField>SPYBenefitPolicy</ReferenceField>
+					</AxFormControl>
+				</Controls>
+				<DataGroup>SPYBenefit</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControl2hqcxqnr1</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYCostDistribution</Name>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormComboBoxControl">
+						<Name>SPYCostDistribution_SPYCostDistributionBasis</Name>
+						<Type>ComboBox</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>SPYCostDistributionBasis</DataField>
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<Items />
+					</AxFormControl>
+				</Controls>
+				<Caption>@SPY1271</Caption>
+				<DataGroup>SPYCostDistribution</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControlmsvumk1m1</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYAbsence</Name>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>SPYAbsence_SPYAbsenceConfig</Name>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<ReferenceField>SPYAbsenceConfig</ReferenceField>
+					</AxFormControl>
+				</Controls>
+				<DataGroup>SPYAbsence</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControlponfskiv1</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYSocialSecurity</Name>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>SPYSocialSecurity_SPYSocialSecurity</Name>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<ReferenceField>SPYSocialSecurity</ReferenceField>
+					</AxFormControl>
+				</Controls>
+				<DataGroup>SPYSocialSecurity</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionContrololgv3rrm1</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYAirTicket</Name>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>SPYAirTicket_SPYAirTicketFromCity</Name>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<ReferenceField>SPYAirTicketFromCity</ReferenceField>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>SPYAirTicket_SPYAirTicketToCity</Name>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<ReferenceField>SPYAirTicketToCity</ReferenceField>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>SPYAirTicket_SPYAirClass</Name>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<ReferenceField>SPYAirClass</ReferenceField>
+					</AxFormControl>
+				</Controls>
+				<DataGroup>SPYAirTicket</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControlhcf1x5gy1</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYWorkerSponsor</Name>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>SPYWorkerSponsor_SPYWorkerSponsor</Name>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<ReferenceField>SPYWorkerSponsor</ReferenceField>
+					</AxFormControl>
+				</Controls>
+				<DataGroup>SPYWorkerSponsor</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControl2ygblgq31</Name>
+			<FormControl xmlns=""
+				i:type="AxFormMenuFunctionButtonControl">
+				<Name>SPYEmploymentCostDistribution</Name>
+				<AutoDeclaration>Yes</AutoDeclaration>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>MenuFunctionButton</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Big>Yes</Big>
+				<ButtonDisplay>TextOnly</ButtonDisplay>
+				<DataSource>HcmEmploymentDetail</DataSource>
+				<MenuItemName>SPYEmploymentCostDistribution</MenuItemName>
+				<MultiSelect>No</MultiSelect>
+				<Style>Link</Style>
+			</FormControl>
+			<Parent>AdditionalInformation</Parent>
+		</AxFormExtensionControl>
+		<AxFormExtensionControl xmlns="">
+			<Name>FormExtensionControlhmqqivhi1</Name>
+			<FormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>SPYWorkingHour</Name>
+				<ConfigurationKey>SPYPayroll</ConfigurationKey>
+				<Type>Group</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormComboBoxControl">
+						<Name>SPYWorker_SPYPlannedWorkingHourSource</Name>
+						<Type>ComboBox</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>SPYPlannedWorkingHourSource</DataField>
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<Items />
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormComboBoxControl">
+						<Name>SPYWorker_SPYTimesheetProcessSource</Name>
+						<Type>ComboBox</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>SPYTimesheetProcessSource</DataField>
+						<DataSource>HcmEmploymentDetail</DataSource>
+						<Items />
+					</AxFormControl>
+				</Controls>
+				<DataGroup>SPYWorkingHour</DataGroup>
+				<DataSource>HcmEmploymentDetail</DataSource>
+			</FormControl>
+			<Parent>EmploymentContent</Parent>
+		</AxFormExtensionControl>
+	</Controls>
+	<DataSourceModifications />
+	<DataSources />
+	<Parts />
+	<PropertyModifications />
+</AxFormExtension>

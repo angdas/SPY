@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDisbursementJournalPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYDisbursementJournalPostService extends SysOperationServiceBase
+{
+    SPYDisbursementJournalPostContract          contract;
+    LedgerJournalId                     glJournalId;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>createLedgerJournalFromLine</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckSkipStatementValidation","skipDeleteActions is already implemented")]
+    private void createLedgerJournalFromLine(SPYDisbursementJournalTable  _disbursementJournalTable)
+    {
+        LedgerJournalTable          ledgerJournalTable;
+        LedgerJournalTrans          ledgerJournalTrans;
+        SPYDisbursementJournalLine  disbursementJournalLine;
+        RecordInsertList            journalLineList = new RecordInsertList(tableNum(LedgerJournalTrans));
+        boolean                     lineCreated;
+    
+        ledgerJournalTable.initValue();
+        ledgerJournalTable.JournalNum   = NumberSeq::newGetNum(LedgerParameters::numRefJournalNum()).num();
+        
+        ledgerJournalTable.JournalName  = SPYPayrollParameters::find().DisbursementJournalNameId;
+        ledgerJournalTable.initFromLedgerJournalName();
+        ledgerJournalTable.Name         = _disbursementJournalTable.Description;
+
+        if (!ledgerJournalTable.JournalName)
+            throw error("@SPY1309");
+
+        ledgerJournalTable.insert();
+        glJournalId = ledgerJournalTable.JournalNum;
+        
+        while select AmountCurDebit, Currency, DefaultDimension, LedgerDimension, OffsetBankAccount, ExchRate, PayrollPeriodLine from disbursementJournalLine
+            where disbursementJournalLine.DisbursementJournal == _disbursementJournalTable.RecId
+        {
+            if (round(disbursementJournalLine.AmountCurDebit,0.01) != 0)
+            {
+                ledgerJournalTrans.clear();
+                ledgerJournalTrans.initValue();
+                ledgerJournalTrans.JournalNum               = glJournalId;
+                ledgerJournalTrans.Approver                 = HcmWorkerLookup::currentWorker();
+                ledgerJournalTrans.TransDate                = SPYPayrollPeriodLine::find(disbursementJournalLine.PayrollPeriodLine).PeriodEndDate;
+                ledgerJournalTrans.Voucher                  = new JournalVoucherNum(JournalTableData::newTable(ledgerJournalTable)).getNew(false);
+                ledgerJournalTrans.AccountType              = LedgerJournalACType::Ledger;
+                ledgerJournalTrans.LedgerDimension          = LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                              (disbursementJournalLine.LedgerDimension,
+                                                              disbursementJournalLine.DefaultDimension);
+                ledgerJournalTrans.OffsetAccountType        = LedgerJournalACType::Bank;
+                ledgerJournalTrans.parmOffsetAccount(disbursementJournalLine.OffsetBankAccount);
+                ledgerJournalTrans.AmountCurDebit           = round(disbursementJournalLine.AmountCurDebit,0.01);
+                
+                ledgerJournalTrans.CurrencyCode             = disbursementJournalLine.Currency;
+                ledgerJournalTrans.ExchRate                 = ExchangeRateHelper::exchRate(ledgerJournalTrans.CurrencyCode,ledgerJournalTrans.TransDate);
+                ledgerJournalTrans.Txt                      = disbursementJournalLine.Txt;
+                ledgerJournalTrans.Approved                 = true;
+                journalLineList.add(ledgerJournalTrans);
+                lineCreated = true;
+            }
+        }
+        if(lineCreated)
+        {
+            journalLineList.insertDatabase();
+            info(strFmt("@SPY1308",glJournalId),"",SysInfoAction_TableField::newBuffer(ledgerJournalTable));
+        }
+        else
+        {
+            ledgerJournalTable.skipDeleteActions(true);
+            ledgerJournalTable.skipDeleteMethod(true);
+            delete_from ledgerJournalTable
+                where ledgerJournalTable.JournalNum == glJournalId;
+            info("@SPY1156");
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYDisbursementJournalPostContract _contract)
+    {
+        QueryRun                payrollJourQueryRun;
+        SPYDisbursementJournalTable  disbursementJournalTable;
+    
+        payrollJourQueryRun = new QueryRun(_contract.parmDisbursementJourTableQuery());
+        try
+        {
+            setPrefix("Posting disbursement journal");
+            info(strFmt('Started: %1',DateTimeUtil::utcNow()));
+            
+            ttsBegin;
+            if (this.validate(_contract))
+            {
+                while(payrollJourQueryRun.next())
+                {
+                    disbursementJournalTable = payrollJourQueryRun.get(tableNum(SPYDisbursementJournalTable));
+                    if(!disbursementJournalTable.Posted)
+                    {
+                        this.createLedgerJournalFromLine(disbursementJournalTable);
+
+                        this.updateJournalHeader(disbursementJournalTable);
+                    }
+                }
+            }
+            ttsCommit;
+            info(strFmt("@SPY1121",DateTimeUtil::utcNow()));
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateJournalHeader</Name>
+				<Source><![CDATA[
+    private void updateJournalHeader(SPYDisbursementJournalTable _disbursementJournalTable)
+    {
+        SPYDisbursementJournalTable   disbursementJournalTable = SPYDisbursementJournalTable::find(_disbursementJournalTable.RecId,true);
+    
+        if(disbursementJournalTable)
+        {
+            disbursementJournalTable.Posted           = true;
+            disbursementJournalTable.LedgerJournalNum = glJournalId;
+            disbursementJournalTable.doUpdate();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(SPYDisbursementJournalPostContract _contract)
+    {
+        boolean                     ret = true;
+        QueryRun                disbursementJourQueryRun;
+        SPYDisbursementJournalTable  disbursementJournalTable;
+    
+        disbursementJourQueryRun = new QueryRun(_contract.parmDisbursementJourTableQuery());
+        
+        while(disbursementJourQueryRun.next())
+        {
+            disbursementJournalTable = disbursementJourQueryRun.get(tableNum(SPYDisbursementJournalTable));
+            
+            if(disbursementJournalTable.Posted)
+            {
+                ret = false;                
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

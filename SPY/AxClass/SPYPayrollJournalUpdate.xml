@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollJournalUpdate</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayrollJournalUpdate
+{
+    RecordInsertList    journalHeaderList;
+    RecordInsertList    journalLineList;
+    SPYPayrollLedger    payrollLedger;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new()
+    {
+        journalHeaderList = new RecordInsertList(tableNum(SPYPayrollJournalTable));
+        journalLineList = new RecordInsertList(tableNum(SPYPayrollJournalLine));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLineList</Name>
+				<Source><![CDATA[
+    public void updateLineList()
+    {
+        SPYPayrollJournalLine       payrollJournalLineUpdate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

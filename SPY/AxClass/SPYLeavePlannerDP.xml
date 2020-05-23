@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeavePlannerDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classstr(SPYLeavePlannerContract)),
+    SRSReportQueryAttribute(queryStr(SPYSubordinateLookup))
+]
+public class SPYLeavePlannerDP extends SRSReportDataProviderBase
+{
+    SPYLeavePlanTmp     leavePlanTmp;
+    List                subordinates;
+    HcmWorker           hcmWorker;
+    SPYAbsenceLedger    absenceLedger;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYLeavePlanTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tablestr(SPYLeavePlanTmp))]
+    public SPYLeavePlanTmp getSPYLeavePlanTmp()
+    {
+        select leavePlanTmp;
+        return leavePlanTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYLeavePlannerContract             contract = this.parmDataContract() as SPYLeavePlannerContract;
+        ListEnumerator                      le;
+        str                                 workerRange;
+        Query                               q;
+        QueryBuildDataSource                qbd;
+        QueryBuildRange                     qbr;
+        QueryRun                            qr;
+        Set                                 dates = new Set(Types::Date);
+        TransDate                           dateVal;
+        boolean                             recordexists = false;
+        HcmWorkerRecId                      tmpWorkerRecId;
+        container                           userRoles = ["SPYPayrollManager", "sysAdmin"];
+    
+    
+        if ( SPYLeavePlannerDP::isUserInRole(curUserId(), userRoles) )
+        {
+            q = new Query();
+            qbd = q.addDataSource(TableNum(hcmWorker));
+            q = this.parmQuery();
+        }
+        else
+            q = this.parmQuery();
+    
+        qbd = q.dataSourceTable(tableNum(HcmWorker));
+        qbd = qbd.addDataSource(tableNum(SPYAbsenceLedger));
+        qbd.addLink(fieldNum(HcmWorker, RecId), fieldNum(SPYAbsenceLedger, Worker));
+        qbd.joinMode(JoinMode::InnerJoin);
+        qbd.fetchMode(QueryFetchMode::One2One);
+        qbr = qbd.addRange(fieldNum(SPYAbsenceLedger, absenceDate));
+        qbr.value(SysQuery::value(contract.parmFromDate()) + '..' + SysQuery::value(contract.parmToDate()));
+    
+        qr = new QueryRun(q);
+    
+        while(qr.next())
+        {
+            hcmWorker       = qr.get(tableNum(HcmWorker));
+            absenceLedger   = qr.get(tableNum(SPYAbsenceLedger));
+    
+            dates.add(absenceLedger.AbsenceDate);
+    
+            if(tmpWorkerRecId == 0)
+                tmpWorkerRecId = hcmworker.RecId;
+    
+            leavePlanTmp.clear();
+            leavePlanTmp.Worker                 = hcmWorker.RecId;
+            leavePlanTmp.WorkerName             = hcmWorker.name();
+            leavePlanTmp.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+            leavePlanTmp.AbsenceDate            = absenceLedger.AbsenceDate;
+            leavePlanTmp.HRMAbsenceCodeId       = absenceLedger.HRMAbsenceCodeId;
+            leavePlanTmp.AbsenceExists          = NoYes::Yes;
+            leavePlanTmp.insert();
+    
+            recordexists = true;
+        }
+    
+        if(recordexists)
+        {
+            hcmWorker = HcmWorker::find(tmpWorkerRecId);
+    
+            for(dateVal = contract.parmFromDate();dateVal <= contract.parmToDate();dateVal++)
+            {
+                if(!dates.in(dateVal))
+                {
+                    leavePlanTmp.clear();
+                    leavePlanTmp.Worker                 = hcmWorker.RecId;
+                    leavePlanTmp.WorkerName             = hcmWorker.name();
+                    leavePlanTmp.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+                    leavePlanTmp.AbsenceDate            = dateVal;
+                    leavePlanTmp.AbsenceExists          = NoYes::No;
+                    leavePlanTmp.insert();
+                }
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>isUserInRole</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// return true is the specified user is in any of the roles in the roleNames container.
+    /// </summary>
+    /// <param name="axUserId">
+    /// AX user id, e.g. curUserId()
+    /// </param>
+    /// <param name="roleNames">
+    /// container of role names to check. (use role NAME, not label.)
+    /// </param>
+    /// <returns>
+    /// true if user is in ANY of the specified roles.
+    /// </returns>
+    /// <remarks>
+    /// ajh 2014-02-12: previous method req'd admin perm. to run. Doh!
+    /// </remarks>
+    
+    public static boolean isUserInRole(UserId axUserId, container roleNames)
+    {
+        SecurityUserRole securityUserRole;
+        SecurityRole securityRole;
+    
+        while select AotName from securityRole
+        join securityUserRole
+        where securityUserRole.User == axUserId
+        && securityUserRole.SecurityRole == securityRole.RecId
+        {
+            if (conFind(roleNames, securityRole.AotName))
+                return true;
+        }
+        return false;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

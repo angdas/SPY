@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYAirFare</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYAirFare extends FormRun
+{
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        super();
+        //Initialize splitter
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYAirFare</Name>
+				<Methods>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            date    minTransDate = dateNull();
+            date    maxTransDate = dateMax();
+        /*
+        
+            select validTimeState(minTransDate,maxTransDate) SPYAirFare
+                where SPYAirFare.AirFareCity == SPYAirFareCity.RecId;*/
+        
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="" />
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYAirFareCity</Name>
+			<Table>SPYAirFareCity</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DestinationCity</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OriginCity</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>SPYAirFare</Name>
+			<Table>SPYAirFare</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>AirClass</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>AirFareCity</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>AirFareType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Amount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CurrencyCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidFrom</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidTo</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>SPYAirFareCity</JoinSource>
+			<ValidTimeStateAutoQuery>DateRange</ValidTimeStateAutoQuery>
+			<ValidTimeStateUpdate>Correction</ValidTimeStateUpdate>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">Air fare</Caption>
+		<HeightMode xmlns="">Column</HeightMode>
+		<SetCompany xmlns="">No</SetCompany>
+		<Style xmlns="">SimpleListDetails</Style>
+		<TitleDataSource xmlns="">SPYAirFareCity</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>RecordBasics</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYAirFareDetails</Name>
+								<ElementPosition>1879048189</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>MenuFunctionButton</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYAirFareDetails</MenuItemName>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>PageTitleGroup</Name>
+				<ElementPosition>858993458</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<Visible>No</Visible>
+				<WidthMode>Auto</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls />
+				<AlignChild>No</AlignChild>
+				<Style>DetailTitleContainer</Style>
+				<ViewEditMode>View</ViewEditMode>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>CustomFilterGroup</Name>
+				<ElementPosition>1288490187</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<Visible>No</Visible>
+				<WidthMode>Auto</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls />
+				<AlignChild>No</AlignChild>
+				<Style>DetailTitleContainer</Style>
+				<ViewEditMode>Edit</ViewEditMode>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>Body</Name>
+				<ElementPosition>1717986916</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>GridContainer</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>858993458</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Group</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<Width>300</Width>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>Grid</Name>
+								<AllowEdit>No</AllowEdit>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYAirFareCity_OriginCity</Name>
+										<AllowEdit>No</AllowEdit>
+										<Type>ReferenceGroup</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAirFareCity</DataSource>
+										<ReferenceField>OriginCity</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYAirFareCity_DestinationCity</Name>
+										<AllowEdit>No</AllowEdit>
+										<Type>ReferenceGroup</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAirFareCity</DataSource>
+										<ReferenceField>DestinationCity</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<AlternateRowShading>No</AlternateRowShading>
+								<DataSource>SPYAirFareCity</DataSource>
+								<GridLinesStyle>Vertical</GridLinesStyle>
+								<MultiSelect>No</MultiSelect>
+								<ShowRowLabels>No</ShowRowLabels>
+							</AxFormControl>
+						</Controls>
+						<RightMargin>0</RightMargin>
+						<RightMarginMode>Fixed</RightMarginMode>
+						<Style>BorderlessGridContainer</Style>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>VSplitter</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1288490187</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Group</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<Style>SplitterVerticalContainer</Style>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>DetailsContainer</Name>
+						<ElementPosition>1717986916</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Type>Group</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>DetailsHeader</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYAirFareCity_OriginCity1</Name>
+										<Type>ReferenceGroup</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAirFareCity</DataSource>
+										<ReferenceField>OriginCity</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYAirFareCity_DestinationCity1</Name>
+										<Type>ReferenceGroup</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAirFareCity</DataSource>
+										<ReferenceField>DestinationCity</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<FrameType>None</FrameType>
+							</AxFormControl>
+						</Controls>
+						<RightMargin>5</RightMargin>
+						<RightMarginMode>Fixed</RightMarginMode>
+						<TopMargin>5</TopMargin>
+						<TopMarginMode>Fixed</TopMarginMode>
+					</AxFormControl>
+				</Controls>
+				<Columns>3</Columns>
+				<Columnspace>0</Columnspace>
+				<ColumnspaceMode>Fixed</ColumnspaceMode>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

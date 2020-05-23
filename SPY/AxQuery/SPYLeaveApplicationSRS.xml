@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYLeaveApplicationSRS</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYLeaveApplicationSRS extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYLeaveApplicationTable</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYLeaveApplicationTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>HcmWorker</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>HcmWorker</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>DirPerson</Name>
+							<DynamicFields>Yes</DynamicFields>
+							<Table>DirPerson</Table>
+							<DataSources />
+							<DerivedDataSources />
+							<Fields />
+							<Ranges />
+							<UseRelations>Yes</UseRelations>
+							<Relations />
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYLeaveApplicationLine</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYLeaveApplicationLine</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges>
+						<AxQuerySimpleDataSourceRange>
+							<Name>HRMAbsenceCode</Name>
+							<Field>HRMAbsenceCode</Field>
+						</AxQuerySimpleDataSourceRange>
+					</Ranges>
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>LeaveApplicationCode</Name>
+					<Field>LeaveApplicationCode</Field>
+				</AxQuerySimpleDataSourceRange>
+				<AxQuerySimpleDataSourceRange>
+					<Name>WorkflowStatus</Name>
+					<Field>WorkflowStatus</Field>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

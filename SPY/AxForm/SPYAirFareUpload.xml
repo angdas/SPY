@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYAirFareUpload</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYAirFareUpload extends FormRun
+{
+    str fileUrl;
+    AsciiStreamIo                                   file;
+    Array                                           fileLines;
+    FileUploadTemporaryStorageResult                fileUpload;
+    
+}
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="">
+			<Control>
+				<Name>UploadButton</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        public void clicked()
+        {
+            SPYAirFareCity   airfareCity;
+            SPYAirFare       airFare;
+            SPYAirClass      airClass;
+            LogisticsAddressCity des, orig;
+            SPYAirFareType   airFareType;
+
+            FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+            
+            if (result && result.getUploadStatus())
+            {
+                file = AsciiStreamIo::constructForRead(result.openResult());
+                if (file)
+                {
+                    if (file.status())
+                    {
+                        throw error("@SYS52680");
+                    }
+                    file.inFieldDelimiter(',');
+                    file.inRecordDelimiter('\r\n');
+                }
+                container record;
+                int cnt = 0;
+                ttsbegin;
+                while (!file.status())
+                {
+                    cnt++;
+                    record = file.read();
+                    if(cnt != 1 && cnt != 0)
+                    {
+                        int i = conLen(record);
+                        if (conLen(record))
+                        {
+                            orig = LogisticsAddressCity::findCity(conPeek(record,2));
+                            des = LogisticsAddressCity::findCity(conPeek(record,1));
+                            select airClass where airClass.AirClassCode == conPeek(record,3);
+                            select airfareCity where airfareCity.DestinationCity == des.RecId && airfareCity.OriginCity == orig.RecId;
+                           
+                             if(!airfareCity)
+                            {
+                                airfareCity.clear();
+                                airfareCity.DestinationCity = des.RecId;
+                                airfareCity.OriginCity = orig.RecId;
+                                airfareCity.insert();
+                            }
+
+                            airFare.clear();
+                            airFare.AirFareCity = airfareCity.RecId;
+                            airFare.AirClass = airClass.RecId;
+                            airFare.AirFareType = str2Enum(airFareType, conPeek(record,4));
+                            airFare.CurrencyCode = conPeek(record,5);
+                            airFare.Amount = conPeek(record,6);
+                            str dt = conPeek(record,7);
+                            date validFrom = str2DateDMY(dt);
+                            airFare.ValidFrom = validFrom;
+                            airFare.ValidTo = dateMax();
+                            airFare.insert();
+                         
+                        }
+                    }
+                }
+                ttscommit;
+                info(strFmt("%1 Air fare details have been successfully uploaded.", cnt-1));
+            }
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources />
+	<Design>
+		<Caption xmlns="">@SPY:AirFareUpload</Caption>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormButtonGroupControl">
+				<Name>FormButtonGroupControl1</Name>
+				<Type>ButtonGroup</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonControl">
+						<Name>UploadButton</Name>
+						<Type>Button</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Text>@SPY:Upload</Text>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>CancelButton</Name>
+						<Type>CommandButton</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>Cancel</Command>
+						<SaveRecord>No</SaveRecord>
+						<Text>@SPY:Cancel</Text>
+					</AxFormControl>
+				</Controls>
+				<Columns>2</Columns>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

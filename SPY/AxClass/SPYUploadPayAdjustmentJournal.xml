@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYUploadPayAdjustmentJournal</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+class SPYUploadPayAdjustmentJournal extends RunBaseBatch
+{
+    // Packed variables
+    FileName            fileName;
+    Description         journalDesc;
+
+    // Dialog fields
+    DialogField         dlgFileName;
+    DialogField         dlgJrnDesc;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+        fileName,
+        journalDesc
+    #endmacro
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase       dialog = super();
+        #resAppl
+    
+        dialog.addImage(#ImageFolder);
+        dialog.addInfoImage();
+        dlgFileName = dialog.addFieldValue(extendedTypeStr(FileName),fileName);
+        dlgJrnDesc = dialog.addFieldValue(extendedTypeStr(Description),journalDesc,"@SPY1116");
+    
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        fileName   = dlgFileName.value();
+        journalDesc = dlgJrnDesc.value();
+    
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            ttsbegin;
+    
+            this.upload();
+    
+            ttscommit;
+        }
+        catch (Exception::Deadlock)
+        {
+            retry;
+        }
+        catch (Exception::UpdateConflict)
+        {
+            if (appl.ttsLevel() == 0)
+            {
+                if (xSession::currentRetryCount() >= #RetryNum)
+                {
+                    throw Exception::UpdateConflictNotRecovered;
+                }
+                else
+                {
+                    retry;
+                }
+            }
+            else
+            {
+                throw Exception::UpdateConflict;
+            }
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+    ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>upload</Name>
+				<Source><![CDATA[
+    private void upload()
+    {
+        //TODO UPGRADE
+        /*
+        SysExcelApplication         application;
+        SysExcelWorkbooks           workbooks;
+        SysExcelWorkbook            workbook;
+        SysExcelWorksheets          worksheets;
+        SysExcelWorksheet           worksheet;
+        SysExcelCells               cells;
+        int                         row = 1;
+        SPYPayAdjustmentTable       payAdjustmentTable;
+        SPYPayAdjustmentTrans       payAdjustmentTrans;
+        SPYPayrollPeriod            payrollPeriod;
+        SPYPayrollPeriodLine        payrollPeriodLine;
+        COMVariantType              type;
+        HcmWorker                   worker;
+        #AviFiles
+        SysOperationProgress        progressBar = new SysOperationProgress();
+        int                         progressCount,totalCount;
+        boolean                     lineCreated;
+        SPYPayAdjustmentCode        adjustmentCode;
+        HcmPersonnelNumberId        personnelNumber;
+    
+        application = SysExcelApplication::construct();
+        workbooks = application.workbooks();
+        try
+        {
+            workbooks.open(filename);
+        }
+        catch (Exception::Error)
+        {
+            throw error("@SYS19358");
+        }
+        workbook = workbooks.item(1);
+        worksheets = workbook.worksheets();
+        worksheet = worksheets.itemFromNum(1);
+        cells = worksheet.cells();
+    
+        do
+        {
+            row++;
+            totalCount++;
+            type = cells.item(row+1, 1).value().variantType();
+        }
+        while (type != COMVariantType::VT_EMPTY);
+        progressBar.setCaption("@SPY1114");
+        progressBar.setAnimation(#AviUpdate);
+        progressBar.setTotal(totalCount);
+        progressCount = 1;
+        row = 1;
+        ttsBegin;
+        adjustmentCode = NumberSeq::newGetNum(SPYPayrollParameters::numRefPayAdjustmentCode()).num();
+        payAdjustmentTable.PayAdjustmentCode    = adjustmentCode;
+        payAdjustmentTable.Description          = journalDesc;
+        payAdjustmentTable.insert();
+        do
+        {
+            row++;
+            progressBar.setText(strfmt("@SPY1115", progressCount,totalCount));
+            progressBar.setCount(progressCount, 1);
+    
+            personnelNumber = cells.item(row, 1).value().bStr();
+            worker = HcmWorker::findByPersonnelNumber(personnelNumber);
+            if(worker)
+            {
+                payAdjustmentTrans.PayAdjustment    = payAdjustmentTable.RecId;
+                payAdjustmentTrans.LineNum          = row - 1;
+                payAdjustmentTrans.Worker           = HcmWorker::findByPersonnelNumber(cells.item(row, 1).value().bStr()).RecId;
+                if(!SPYPayAdjustmentTypeTable::find(cells.item(row, 2).value().bStr()))
+                {
+                    warning("@SPY1182",cells.item(row, 2).value().bStr());
+                    break;
+                }
+                payAdjustmentTrans.PayAdjustmentType    = cells.item(row, 2).value().bStr();
+                payAdjustmentTrans.Txt                  = cells.item(row, 3).value().bStr();
+                payAdjustmentTrans.TransDate            = cells.item(row, 4).value().date();
+                payAdjustmentTrans.Amount               = cells.item(row, 5).value().double();
+                payAdjustmentTrans.Currency             = cells.item(row, 6).value().bStr();
+                select firstonly RecId from payrollPeriodLine join payrollPeriod
+                    where payrollPeriodLine.PayrollPeriod == payrollPeriod.RecId &&
+                          payrollPeriod.PayrollPeriodCode == cells.item(row, 7).value().bStr() &&
+                          payrollPeriodLine.PeriodStartDate <= payAdjustmentTrans.TransDate &&
+                          payrollPeriodLine.PeriodEndDate >= payAdjustmentTrans.TransDate;
+                payAdjustmentTrans.PayrollPeriodlLine   = payrollPeriodLine.RecId;
+                payAdjustmentTrans.insert();
+                lineCreated = true;
+            }
+            else
+                info( strFmt( "@SPY1183", personnelNumber ) ) ;
+    
+            type = cells.item(row+1, 1).value().variantType();
+            progressCount++;
+        }
+        while (type != COMVariantType::VT_EMPTY);
+        if(!lineCreated)
+            delete_from payAdjustmentTable where payAdjustmentTable.PayAdjustmentCode == adjustmentCode;
+        else
+            info(strFmt("@SPY1129",adjustmentCode),"",
+            SysInfoAction_TableField::newBuffer(SPYPayAdjustmentTable::findByCode(adjustmentCode)));
+        application.quit();
+        ttsCommit;*/
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYUploadPayAdjustmentJournal construct()
+    {
+        return new SPYUploadPayAdjustmentJournal();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    // Here goes a description of the class
+    static ClassDescription description()
+    {
+        return "@SPY1128";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYUploadPayAdjustmentJournal    payAdjustmentJournal;
+    
+        payAdjustmentJournal = SPYUploadPayAdjustmentJournal::construct();
+    
+        if (payAdjustmentJournal.prompt())
+            payAdjustmentJournal.runOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    protected boolean canRunInNewSession()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

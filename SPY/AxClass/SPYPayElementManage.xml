@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayElementManage</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayElementManage
+{
+    SPYPayElementCode   payElementCode;
+    SPYPayElementType   payElementType;
+    Description         payElementDescription;
+    NoYes           referencePayElement;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>createBenefit</Name>
+				<Source><![CDATA[
+    private void createBenefit()
+    {
+        SPYBenefitTable     benefitTable;
+    
+        benefitTable.initValue();
+        benefitTable.PayElementCode = this.parmPayElementCode();
+        benefitTable.Description    = this.parmPayElementDescription();
+        benefitTable.PayElementType = this.parmPayElementType();
+        benefitTable.ReferencePayElement = this.parmReferencePayElement();
+        benefitTable.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createPayElement</Name>
+				<Source><![CDATA[
+    public void createPayElement()
+    {
+        try
+        {
+            ttsBegin;
+            switch(this.parmPayElementType())
+            {
+                case SPYPayElementType::Payroll :
+                    this.createPayroll();
+                    break;
+    
+                case SPYPayElementType::Benefit :
+                    this.createBenefit();
+                    break;
+            }
+            ttsCommit;
+        }
+        catch (Exception::Error)
+        {
+            ttsAbort;
+            throw error("Operation aborted.");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createPayroll</Name>
+				<Source><![CDATA[
+    private void createPayroll()
+    {
+        SPYPayrollTable     payrollTable;
+    
+        payrollTable.initValue();
+        payrollTable.PayElementCode = this.parmPayElementCode();
+        payrollTable.Description    = this.parmPayElementDescription();
+        payrollTable.PayElementType = this.parmPayElementType();
+        payrollTable.ReferencePayElement = this.parmReferencePayElement();
+        payrollTable.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayElementCode</Name>
+				<Source><![CDATA[
+    public SPYPayElementCode parmPayElementCode(SPYPayElementCode _payElementCode = payElementCode)
+    {
+        payElementCode = _payElementCode;
+    
+        return payElementCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayElementDescription</Name>
+				<Source><![CDATA[
+    public Description parmPayElementDescription(Description _payElementDescription = payElementDescription)
+    {
+        payElementDescription = _payElementDescription;
+    
+        return payElementDescription;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayElementType</Name>
+				<Source><![CDATA[
+    public SPYPayElementType parmPayElementType(SPYPayElementType _payElementType = payElementType)
+    {
+        payElementType = _payElementType;
+    
+        return payElementType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmReferencePayElement</Name>
+				<Source><![CDATA[
+    public Noyes parmReferencePayElement(Noyes _referencePayElement = referencePayElement)
+    {
+        referencePayElement = _referencePayElement;
+    
+        return referencePayElement;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validatePayElementNew</Name>
+				<Source><![CDATA[
+    public boolean validatePayElementNew()
+    {
+        boolean     ret = true;
+    
+        if(!this.parmPayElementCode())
+            ret = checkFailed("Pay element code should be entered.");
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

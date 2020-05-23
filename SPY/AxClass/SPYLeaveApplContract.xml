@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYLeaveApplContract
+{
+    SPYLeaveApplicationCode     leaveApplicationCode;
+    str                         workflowStatus;
+    SPYLeaveApplLineContract    leaveApplLineContract;
+    HcmPersonnelNumberId        personnelNumberId;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmLeaveApplicationCode</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Code")]
+    public SPYLeaveApplicationCode parmLeaveApplicationCode(SPYLeaveApplicationCode _leaveApplicationCode = leaveApplicationCode)
+    {
+        leaveApplicationCode = _leaveApplicationCode;
+    
+        return leaveApplicationCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLeaveApplLineContract</Name>
+				<Source><![CDATA[
+    [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYLeaveApplLineContract)),
+    DataMemberAttribute('Line')]
+    public SPYLeaveApplLineContract parmLeaveApplLineContract(SPYLeaveApplLineContract _leaveApplLineContract = leaveApplLineContract)
+    {
+        leaveApplLineContract = _leaveApplLineContract;
+    
+        return leaveApplLineContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPersonnelNumberId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PersonnelNumber")]
+    public HcmPersonnelNumberId parmPersonnelNumberId(HcmPersonnelNumberId _personnelNumberId = personnelNumberId)
+    {
+        personnelNumberId = _personnelNumberId;
+    
+        return personnelNumberId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkflowStatus</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("WorkflowStatus")]
+    public str parmWorkflowStatus(str _workflowStatus = workflowStatus)
+    {
+        workflowStatus = _workflowStatus;
+    
+        return workflowStatus;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYEOSServiceController extends SysOperationServiceController
+{
+    FormRun                         EOSEdit;
+    SPYEOSContract                  EOSContract;
+    SPYEOSRunRecId                  EOSRun;
+    SPYEOSRun                       EOSRunType;
+    container                                   testNumCon;
+    container                   workerQuery;
+    #define.CurrentVersion(1)
+    #localmacro.VersionList
+        workerQuery
+    #endmacro
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!EOSEdit)
+        {
+            EOSEdit = classfactory.formRunClass(SPYEOSServiceController::newClientArgs(formStr(SPYEOSEdit), this));
+            EOSEdit.init();
+        }
+    
+        return EOSEdit as IDialogable;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+    
+        if (this.canGoBatch())
+           this.batchInfo().dialog(dlg);
+    
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cleanupDialog</Name>
+				<Source><![CDATA[
+    protected void  cleanupDialog()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogRun</Name>
+				<Source><![CDATA[
+    protected SysOperationStartResult dialogRun()
+    {
+        SysOperationStartResult result;
+        CompanyId               companyId = curext();
+
+        result = super();
+
+        if (result == SysOperationStartResult::Canceled)
+        {
+            this.cleanupDialog();
+        }
+
+        if(companyId != curext())
+        {
+            appl.setDefaultCompany(companyId, false);
+        }
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEOSContract</Name>
+				<Source><![CDATA[
+    public SPYEOSContract getEOSContract()
+    {
+        return EOSContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEOSRun</Name>
+				<Source><![CDATA[
+    public SPYEOSRunRecId parmEOSRun(SPYEOSRunRecId _EOSRun = EOSRun)
+    {
+        EOSRun = _EOSRun;
+        return EOSRun;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEOSRunType</Name>
+				<Source><![CDATA[
+    public SPYEOSRun parmEOSRunType(SPYEOSRun _EOSRunType = EOSRunType)
+    {
+        EOSRunType = _EOSRunType;
+        return EOSRunType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYEOSContract parmServiceContract(SPYEOSContract _EOSContract = EOSContract)
+    {
+        EOSContract = _EOSContract;
+        workerQuery = EOSContract.parmWorkerQuery();
+        return EOSContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYEOSServiceController construct(IdentifierName _className  = '',
+                                             IdentifierName _methodName = '',
+                                             SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYEOSServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYEOSServiceController                 EOSServiceController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+        SPYEOSRunTable                          EOSRunTable;
+        FormRun                                 formRun;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        EOSServiceController = SPYEOSServiceController::construct(className, methodName, mode);
+        EOSServiceController.parmEOSRunType(args.parmEnum());
+        if(args.parmEnum() == SPYEOSRun::PostToLedger ||
+           args.parmEnum() == SPYEOSRun::PostToRunPayroll ||
+           args.parmEnum() == SPYEOSRun::PostToRunBenefit)
+        {
+            if(args.record() is SPYEOSRunTable)
+                EOSRunTable = args.record() as SPYEOSRunTable;
+            EOSServiceController.parmEOSRun(EOSRunTable.RecId);
+            EOSServiceController.getDataContractObject().parmEOSRun(EOSRunTable.RecId);
+        }
+    
+        if(args.parmEnum() == SPYEOSRun::PostToRunPayroll ||
+           args.parmEnum() == SPYEOSRun::PostToRunBenefit)
+            EOSServiceController.run();
+        else
+            if(EOSServiceController.prompt())
+                EOSServiceController.run();
+        if(args.caller() && args.caller().name() == formStr(SPYEOSRun))
+            args.caller().refreshDataSource();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYEOSServiceController _EOSServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_EOSServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name = "packedState"></param>
+    /// <returns></returns>
+    public boolean unpack(container packedState)
+    {
+        container   packedSuper;
+        boolean     ret;
+        int         version;
+
+        version = SysOperationHelper::getVersion(packedState);
+
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version, #VersionList, packedSuper] = packedState;
+                ret = super(packedSuper);
+                break;
+
+            default:
+                ret = false;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

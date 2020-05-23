@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitJourCancelManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+///    The <c>SPYBenefitJourCancelManager</c> class is used to cancel a pay adjustment journal workflow.
+/// </summary>
+/// <remarks>
+///    This class inherits from the <c>WorkflowCancelManager</c> class and handles the update of the
+///    pay adjustment journal record when the cancel button has been pressed. The default dialog and cancel
+///    functionality from the <c>WorkflowCancelManager</c> class is reused.
+/// </remarks>
+public class    SPYBenefitJourCancelManager
+extends         WorkflowCancelManager
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    private void  new()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDocument</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    The <c>updateDocument</c> method executes the business logic when the workflow is canceled.
+    /// </summary>
+    /// <param name="_args">
+    ///    The arguments of the <c>SPYBenefitJourCancelManager</c> class.
+    /// </param>
+    /// <remarks>
+    ///    If the change management flag on the benefit journal has been switched to no, the benefit journal
+    ///    are set to approved; otherwise, the user must submit the benefit journal again.
+    /// </remarks>
+    public void updateDocument(Args _args)
+    {
+        if (_args.record()  &&  _args.record().TableId == tablenum(SPYBenefitJournalTable))
+            SPYBenefitJournalTable::updateWorkflowStatus(_args.record().RecId, SPYWorkflowStatus::Cancelled);
+    
+        super(_args);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static SPYBenefitJourCancelManager  construct()
+    {
+        return new SPYBenefitJourCancelManager();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void  main(Args _args)
+    {
+        SPYBenefitJourCancelManager   benefitJourCancelManager = SPYBenefitJourCancelManager::construct();
+    
+    
+        benefitJourCancelManager.run(_args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

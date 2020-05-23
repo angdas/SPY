@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYOvertimeJourResubmitActionMgr</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYOvertimeJourResubmitActionMgr
+{
+    SPYOvertimeJournalTable         overtimeJournalTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>actionDialog</Name>
+				<Source><![CDATA[
+    protected boolean actionDialog(WorkflowWorkItemActionDialog _workflowWorkItemActionDialog)
+    {
+        _workflowWorkItemActionDialog.run();
+        return _workflowWorkItemActionDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmOvertimeJournalTable</Name>
+				<Source><![CDATA[
+    private SPYOvertimeJournalTable parmOvertimeJournalTable(SPYOvertimeJournalTable _overtimeJournalTable = overtimeJournalTable)
+    {
+        overtimeJournalTable = _overtimeJournalTable;
+    
+        return overtimeJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>resubmit</Name>
+				<Source><![CDATA[
+    private void resubmit(Args _args)
+    {
+        WorkflowWorkItemActionDialog    workflowWorkItemActionDialog;
+        WorkflowWorkItemTable           workItem;
+        Object                          formRun;
+        FormDataSource                  formDataSource;    
+        
+        workItem = _args.caller().getActiveWorkflowWorkItem();
+        workflowWorkItemActionDialog = WorkflowWorkItemActionDialog::construct( workItem,
+                                                                                WorkflowWorkItemActionType::Resubmit,
+                                                                                new MenuFunction(_args.menuItemName(), _args.menuItemType()));
+        if (this.actionDialog(workflowWorkItemActionDialog))
+        {
+            WorkflowWorkItemActionManager::dispatchWorkItemAction(workItem,
+                                                                    workflowWorkItemActionDialog.parmWorkflowComment(),
+                                                                    workflowWorkItemActionDialog.parmTargetUser(),
+                                                                    WorkflowWorkItemActionType::Resubmit,
+                                                                    _args.menuItemName());
+            SPYOvertimeJournalTable::updateWorkflowStatus(overtimeJournalTable.RecId,SPYWorkflowStatus::Submitted);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYOvertimeJourResubmitActionMgr       overtimeJourResubmit = new SPYOvertimeJourResubmitActionMgr();
+        SPYOvertimeJournalTable                overtimeJournalTable = args.record();
+    
+        overtimeJourResubmit.parmOvertimeJournalTable(overtimeJournalTable);
+        switch (args.menuItemName())
+        {    
+            case menuitemActionStr(SPYOvertimeJourResubmitMenuItem) :
+                overtimeJourResubmit.resubmit(args);
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

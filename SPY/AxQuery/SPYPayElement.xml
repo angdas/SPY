@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYPayElement</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYPayElement extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYPayElementTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYPayElementTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYPayElementDetails_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYPayElementDetails</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges />
+			<GroupBy>
+				<AxQuerySimpleGroupByField>
+					<Name>RecId</Name>
+					<DataSource>SPYPayElementTable_1</DataSource>
+					<Field>RecId</Field>
+				</AxQuerySimpleGroupByField>
+				<AxQuerySimpleGroupByField>
+					<Name>PayElementType</Name>
+					<DataSource>SPYPayElementTable_1</DataSource>
+					<Field>PayElementType</Field>
+				</AxQuerySimpleGroupByField>
+			</GroupBy>
+			<Having />
+			<OrderBy>
+				<AxQuerySimpleOrderByField>
+					<Name>PayElementCode</Name>
+					<DataSource>SPYPayElementTable_1</DataSource>
+					<Field>PayElementCode</Field>
+				</AxQuerySimpleOrderByField>
+				<AxQuerySimpleOrderByField>
+					<Name>PayElementType</Name>
+					<DataSource>SPYPayElementTable_1</DataSource>
+					<Field>PayElementType</Field>
+				</AxQuerySimpleOrderByField>
+			</OrderBy>
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

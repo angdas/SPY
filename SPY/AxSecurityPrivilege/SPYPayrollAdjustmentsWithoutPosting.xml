@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxSecurityPrivilege xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollAdjustmentsWithoutPosting</Name>
+	<Description>@SPY2271</Description>
+	<Label>@SPY2271</Label>
+	<DataEntityPermissions />
+	<DirectAccessPermissions />
+	<EntryPoints>
+		<AxSecurityEntryPointReference>
+			<Name>SPYPayrollEarningsJournalLine</Name>
+			<Grant>
+				<Correct>Allow</Correct>
+				<Create>Allow</Create>
+				<Delete>Allow</Delete>
+				<Read>Allow</Read>
+				<Update>Allow</Update>
+			</Grant>
+			<ObjectName>SPYPayrollEarningsJournalLine</ObjectName>
+			<ObjectType>MenuItemDisplay</ObjectType>
+			<Forms />
+		</AxSecurityEntryPointReference>
+		<AxSecurityEntryPointReference>
+			<Name>SPYPayrollEarningsJournalTable</Name>
+			<Grant>
+				<Correct>Allow</Correct>
+				<Create>Allow</Create>
+				<Delete>Allow</Delete>
+				<Read>Allow</Read>
+				<Update>Allow</Update>
+			</Grant>
+			<ObjectName>SPYPayrollEarningsJournalTable</ObjectName>
+			<ObjectType>MenuItemDisplay</ObjectType>
+			<Forms />
+		</AxSecurityEntryPointReference>
+		<AxSecurityEntryPointReference>
+			<Name>SPYPayrollLedger</Name>
+			<Grant>
+				<Correct>Allow</Correct>
+				<Create>Allow</Create>
+				<Delete>Allow</Delete>
+				<Read>Allow</Read>
+				<Update>Allow</Update>
+			</Grant>
+			<ObjectName>SPYPayrollLedger</ObjectName>
+			<ObjectType>MenuItemDisplay</ObjectType>
+			<Forms />
+		</AxSecurityEntryPointReference>
+	</EntryPoints>
+	<FormControlOverrides>
+		<AxSecurityFormControlReferenceCollection>
+			<Name>SPYPayrollearningsJournal</Name>
+			<Controls>
+				<AxSecurityFormControlReference>
+					<Name>TabFinancialDimensionLine</Name>
+					<Grant>
+						<Correct>Allow</Correct>
+						<Create>Allow</Create>
+						<Delete>Allow</Delete>
+						<Read>Allow</Read>
+						<Update>Allow</Update>
+					</Grant>
+				</AxSecurityFormControlReference>
+			</Controls>
+		</AxSecurityFormControlReferenceCollection>
+		<AxSecurityFormControlReferenceCollection>
+			<Name>SPYPayrollEarningsJournalTable</Name>
+			<Controls>
+				<AxSecurityFormControlReference>
+					<Name>TabFinancialDimensions</Name>
+					<Grant>
+						<Correct>Allow</Correct>
+						<Create>Allow</Create>
+						<Delete>Allow</Delete>
+						<Read>Allow</Read>
+						<Update>Allow</Update>
+					</Grant>
+				</AxSecurityFormControlReference>
+			</Controls>
+		</AxSecurityFormControlReferenceCollection>
+	</FormControlOverrides>
+</AxSecurityPrivilege>

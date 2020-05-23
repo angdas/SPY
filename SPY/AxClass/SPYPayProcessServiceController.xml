@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayProcessServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayProcessServiceController extends SysOperationServiceController
+{
+    FormRun                     payProcessEdit;
+    SPYPayProcessContract       payProcessContract;
+    SPYPayrollParameterState    payrollParameterState;
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!payProcessEdit)
+        {
+            payProcessEdit = classfactory.formRunClass(SPYPayProcessServiceController::newClientArgs(formStr(SPYPayProcessEdit), this));
+            payProcessEdit.init();
+        }
+    
+        return payProcessEdit as IDialogable;    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+    
+        if (this.canGoBatch())
+           this.batchInfo().dialog(dlg);
+    
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cleanupDialog</Name>
+				<Source><![CDATA[
+    protected void  cleanupDialog()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogRun</Name>
+				<Source><![CDATA[
+    protected SysOperationStartResult dialogRun()
+    {
+        SysOperationStartResult result;
+        CompanyId               companyId = curext();
+
+        result = super();
+
+        if (result == SysOperationStartResult::Canceled)
+        {
+            this.cleanupDialog();
+        }
+
+        if(companyId != curext())
+        {
+            appl.setDefaultCompany(companyId, false);
+        }
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPayProcessContract</Name>
+				<Source><![CDATA[
+    public SPYPayProcessContract getPayProcessContract()
+    {
+        return payProcessContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollParameterState</Name>
+				<Source><![CDATA[
+    public SPYPayrollParameterState parmPayrollParameterState(SPYPayrollParameterState _payrollParameterState = payrollParameterState)
+    {
+        payrollParameterState = _payrollParameterState;
+    
+        return payrollParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine = _payrollPeriodLine;
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYPayProcessContract parmServiceContract(SPYPayProcessContract _payProcessContract = payProcessContract)
+    {
+        payProcessContract = _payProcessContract;
+        return payProcessContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYPayProcessServiceController construct(IdentifierName _className  = '',
+                                                    IdentifierName _methodName = '',
+                                                    SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYPayProcessServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayProcessServiceController  payProcessServiceController;
+        str                             className, methodName;
+        SysOperationExecutionMode       mode;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        payProcessServiceController = SPYPayProcessServiceController::construct(className, methodName, mode);
+    
+        if(args.caller() && args.caller().payrollParameterState())
+            payProcessServiceController.parmPayrollParameterState(args.caller().payrollParameterState());
+    
+        if(payProcessServiceController.prompt())
+        {
+            Map mapDataContractObjects = payProcessServiceController.dataContractObjects;
+            Object dataContractObject = mapDataContractObjects.lookup("_contract");
+            SPYPayProcessContract   payProcessContract = dataContractObject.dataContractObject();
+            /*
+            if(payProcessServiceController.isInBatch())
+                info("Batch");
+            */            
+            if(payProcessContract.parmCallFromBatchTask())
+                SPYPayProcessBatch::addTask(payProcessContract);
+            else
+                payProcessServiceController.run();
+        }
+    
+        if(args.caller())
+            args.caller().parmPayrollPeriodLine(payProcessServiceController.parmPayrollPeriodLine());
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYPayProcessServiceController _payProcessServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_payProcessServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>caption</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <returns></returns>
+    public ClassDescription caption()
+    {
+        ClassDescription ret;
+    
+        ret = "@SPY1143";
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

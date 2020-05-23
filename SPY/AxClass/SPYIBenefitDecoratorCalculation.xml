@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIBenefitDecoratorCalculation</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+abstract class SPYIBenefitDecoratorCalculation extends SPYIBenefitCalculation
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>calcAccCurAmt</Name>
+				<Source><![CDATA[
+    public SPYAmount calcAccCurAmt()
+    {
+        return accountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcQty</Name>
+				<Source><![CDATA[
+    public SPYAmount calcQty()
+    {
+        return qty;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcTransCurAmt</Name>
+				<Source><![CDATA[
+    public SPYAmount calcTransCurAmt()
+    {
+        return transactionCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefit</Name>
+				<Source><![CDATA[
+    abstract public SPYBenefitLedgerTmp processBenefit(SPYExpressionEvaluationEngine   _expressionEvaluationEngine)//SPYExpressionContext _expressionContext)
+    {
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

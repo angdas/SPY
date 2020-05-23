@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplLineContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYLeaveApplLineContract
+{
+    hrmAbsenceCodeId    hrmAbsenceCodeId;
+    str                 startDate;
+    str                 endDate;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmEndDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("EndDate")]
+    public str parmEndDate(str _endDate = endDate)
+    {
+        endDate = _endDate;
+    
+        return endDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmHrmAbsenceCodeId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("AbsenceCode")]
+    public HrmAbsenceCodeId parmHrmAbsenceCodeId(HrmAbsenceCodeId _hrmAbsenceCodeId = hrmAbsenceCodeId)
+    {
+        hrmAbsenceCodeId = _hrmAbsenceCodeId;
+    
+        return hrmAbsenceCodeId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmStartDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("StartDate")]
+    public str parmStartDate(str _startDate = startDate)
+    {
+        startDate = _startDate;
+    
+        return startDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

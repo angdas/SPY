@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYSalaryRegisterDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYSalaryRegisterContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerLookup))
+]
+public class SPYSalaryRegisterDP extends SrsReportDataProviderPreProcess
+{
+    SPYHeaderFooterTmp              headerFooterTmp;
+    SPYSalaryRegisterDetailsTmp     salaryRegisterDetailsTmp;
+
+    HcmWorker                       hcmWorker;
+    SPYWorkerPositionPayroll        workerPositionPayroll;
+    SPYPayrollLedger                payrollledger;
+    SPYBenefitLedger                benefitLedger;
+
+    SPYPayrollPeriodLineRecId       payrollPeriodLineRecId;
+    SPYPayrollPeriodLine            payrollPeriodLine, payrollPeriodFrom, payrollPeriodTo;
+    CompanyInfo                     companyInfo;
+
+    Array                           DimArray;
+    DefaultDimensionView            dimensionView;
+
+    SPYPayrollPeriodLineRecId       payrollPeriodLineFrom, payrollPeriodLineTo;
+
+    boolean                         showBenefit;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>financialDimensions</Name>
+				<Source><![CDATA[
+    public void financialDimensions()
+    {
+        DimensionAttribute              dimAttr;
+        DimensionAttributeSetItem       dimAttrSetItem;
+        DimensionAttributeSetItem       dimAttrSetItemEditable;
+        DimensionEnumeration            dimensionSetId;
+        int                             dimCount;
+    
+        dimensionSetId = DimensionCache::getDimensionAttributeSetForLedger();
+    
+        while select dimAttr
+            order by Name
+                where dimAttr.Type != DimensionAttributeType::MainAccount
+            join RecId from dimAttrSetItem
+                where dimAttrSetItem.DimensionAttribute == dimAttr.RecId &&
+                    dimAttrSetItem.DimensionAttributeSet == dimensionSetId
+        {
+            dimCount++;
+            DimArray.value(dimCount, dimAttr.Name);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYHeaderFooterTmp))]
+    public SPYHeaderFooterTmp getSPYHeaderFooterTmp()
+    {
+        select headerFooterTmp;
+        return headerFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYSalaryRegisterDetailsTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYSalaryRegisterDetailsTmp))]
+    public SPYSalaryRegisterDetailsTmp getSPYSalaryRegisterDetailsTmp()
+    {
+        select salaryRegisterDetailsTmp;
+        return salaryRegisterDetailsTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSalaryRegisterDetailsTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSalaryRegisterDetailsTmp(boolean benefit = false)
+    {
+        SPYPayElementTable      payElementTable;
+        HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, companyInfo::current());
+        date                    joinDate =  DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidFrom, DateTimeUtil::getUserPreferredTimeZone()));
+  
+        salaryRegisterDetailsTmp.clear();
+        salaryRegisterDetailsTmp.Worker                    = hcmWorker.RecId;
+        salaryRegisterDetailsTmp.WorkerName                = hcmWorker.name();
+        salaryRegisterDetailsTmp.WorkerPersonnelNumber     = hcmWorker.PersonnelNumber;
+        salaryRegisterDetailsTmp.Joindate                  = joinDate;
+        salaryRegisterDetailsTmp.PayrollPeriodLine         = payrollPeriodLine.RecId;
+        salaryRegisterDetailsTmp.PeriodCode                = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+        salaryRegisterDetailsTmp.PeriodStartDate           = payrollPeriodFrom.PeriodStartDate;
+        salaryRegisterDetailsTmp.PeriodEndDate             = payrollPeriodTo.PeriodEndDate;
+    
+        if(!benefit)
+        {
+            payElementTable = SPYPayElementTable::find(payrollledger.Payroll);
+    
+            salaryRegisterDetailsTmp.Payroll                   = payrollledger.Payroll;
+            salaryRegisterDetailsTmp.PayElementCode            = payElementTable.PayElementCode;
+            salaryRegisterDetailsTmp.PayElementDescription     = payElementTable.Description;
+            salaryRegisterDetailsTmp.CalcStartDate             = payrollledger.CalcStartDate;
+            salaryRegisterDetailsTmp.CalcEndDate               = payrollledger.CalcEndDate;
+            salaryRegisterDetailsTmp.TransDate                 = payrollledger.TransDate;
+            salaryRegisterDetailsTmp.Currency                  = payrollledger.Currency;
+            salaryRegisterDetailsTmp.TransactionCurrencyAmount = payrollledger.TransactionCurrencyAmount;
+            salaryRegisterDetailsTmp.ExchRate                  = payrollledger.ExchRate;
+            salaryRegisterDetailsTmp.AccountingCurrencyAmount  = payrollledger.AccountingCurrencyAmount;
+    
+            if(salaryRegisterDetailsTmp.TransactionCurrencyAmount > 0)
+            {
+                salaryRegisterDetailsTmp.PayrollType           = SPYPayrollType::Earning;
+                salaryRegisterDetailsTmp.PayrollTypeStr        = "Earning";
+            }
+            else
+            {
+                salaryRegisterDetailsTmp.PayrollType           = SPYPayrollType::Deduction;
+                salaryRegisterDetailsTmp.PayrollTypeStr        = "Deduction";
+            }
+    
+            select dimensionView where dimensionView.DefaultDimension == payrollledger.DefaultDimension && dimensionView.Name == DimArray.value(1);
+            if(dimensionView)
+                salaryRegisterDetailsTmp.FinDimension1 = dimensionView.dimensionDiscription();
+            select dimensionView where dimensionView.DefaultDimension == payrollledger.DefaultDimension && dimensionView.Name == DimArray.value(2);
+            if(dimensionView)
+                salaryRegisterDetailsTmp.FinDimension2 = dimensionView.dimensionDiscription();
+            select dimensionView where dimensionView.DefaultDimension == payrollledger.DefaultDimension && dimensionView.Name == DimArray.value(3);
+            if(dimensionView)
+                salaryRegisterDetailsTmp.FinDimension3 = dimensionView.dimensionDiscription();
+    
+            salaryRegisterDetailsTmp.insert();
+        }
+        else
+        {
+            payElementTable = SPYPayElementTable::find(benefitLedger.Benefit);
+    
+            salaryRegisterDetailsTmp.clear();
+            salaryRegisterDetailsTmp.Payroll                   = benefitLedger.Benefit;
+            salaryRegisterDetailsTmp.PayElementCode            = payElementTable.PayElementCode;
+            salaryRegisterDetailsTmp.PayElementDescription     = payElementTable.Description;
+            salaryRegisterDetailsTmp.CalcStartDate             = benefitLedger.CalcStartDate;
+            salaryRegisterDetailsTmp.CalcEndDate               = benefitLedger.CalcEndDate;
+            salaryRegisterDetailsTmp.TransDate                 = benefitLedger.TransDate;
+            salaryRegisterDetailsTmp.Currency                  = benefitLedger.Currency;
+            salaryRegisterDetailsTmp.TransactionCurrencyAmount = benefitLedger.TransactionCurrencyAmount;
+            salaryRegisterDetailsTmp.ExchRate                  = benefitLedger.ExchRate;
+            salaryRegisterDetailsTmp.AccountingCurrencyAmount  = benefitLedger.AccountingCurrencyAmount;
+            salaryRegisterDetailsTmp.PayrollTypeStr            = "Benefit";
+    
+            select dimensionView where dimensionView.DefaultDimension == benefitLedger.DefaultDimension && dimensionView.Name == DimArray.value(1);
+            if(dimensionView)
+                salaryRegisterDetailsTmp.FinDimension1 = dimensionView.dimensionDiscription();
+            select dimensionView where dimensionView.DefaultDimension == benefitLedger.DefaultDimension && dimensionView.Name == DimArray.value(2);
+            if(dimensionView)
+                salaryRegisterDetailsTmp.FinDimension2 = dimensionView.dimensionDiscription();
+            select dimensionView where dimensionView.DefaultDimension == benefitLedger.DefaultDimension && dimensionView.Name == DimArray.value(3);
+            if(dimensionView)
+                salaryRegisterDetailsTmp.FinDimension3 = dimensionView.dimensionDiscription();
+    
+            salaryRegisterDetailsTmp.insert();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYHeaderFooterTmp()
+    {
+        headerFooterTmp.clear();
+        headerFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        headerFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        headerFooterTmp.CompanyName      = companyInfo.Name();
+        headerFooterTmp.CompanyEmail     = companyInfo.email();
+        headerFooterTmp.CompanyPhone     = companyInfo.phone();
+        headerFooterTmp.CompanyURL       = companyInfo.url();
+        headerFooterTmp.PeriodCode       = SPYPayrollPeriod::find(payrollPeriodFrom.PayrollPeriod).PayrollPeriodCode;
+        headerFooterTmp.PeriodStartDate  = payrollPeriodFrom.PeriodStartDate;
+        headerFooterTmp.PeriodEndDate    = payrollPeriodTo.PeriodEndDate;
+        headerFooterTmp.CompanyCurrency  = Ledger::accountingCurrency();
+        if(DimArray.exists(1))
+            headerFooterTmp.FinDim1          = DimArray.value(1);
+        if(DimArray.exists(2))
+            headerFooterTmp.FinDim2          = DimArray.value(2);
+        if(DimArray.exists(3))
+            headerFooterTmp.FinDim3          = DimArray.value(3);
+        headerFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYSalaryRegisterContract   contract = this.parmDataContract() as SPYSalaryRegisterContract;
+        Query                       q, q1;
+        QueryRun                    qr;
+        QueryBuildDataSource        qbdHcmWorker, qbdPayrollLedger, qbdPayrollPeriodLine, qbdBenefitLedger;
+    
+        DimArray = new Array(Types::String);
+    
+        this.setTableConnections();
+    
+        payrollPeriodLineFrom   = contract.parmPayrollPeriodLineFrom();
+        payrollPeriodLineTo     = contract.parmPayrollPeriodLineTo();
+        showBenefit             = contract.parmShowBenefit();
+    
+        companyInfo         = CompanyInfo::find();
+        payrollPeriodFrom   = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        payrollPeriodTo     = SPYPayrollPeriodLine::find(payrollPeriodLineTo);
+    
+        this.financialDimensions();
+    
+        this.insertIntoSPYHeaderFooterTmp();
+    
+        q1 = new Query(this.parmQuery().pack(false));
+    
+        //Data from SPYPayrollLedger
+        q = this.parmQuery();
+        qbdHcmWorker = q.dataSourceTable(tableNum(HcmWorker));
+        qbdPayrollLedger = qbdHcmWorker.addDataSource(tableNum(SPYPayrollLedger), "SPYPayrollLedger");
+        qbdPayrollLedger.joinMode(JoinMode::InnerJoin);
+        qbdPayrollLedger.fetchMode(QueryFetchMode::One2One);
+        qbdPayrollLedger.Relations(true);
+        qbdPayrollPeriodLine = qbdPayrollLedger.addDataSource(tableNum(SPYPayrollPeriodLine), "SPYPayrollPeriodLine");
+        qbdPayrollPeriodLine.joinMode(JoinMode::InnerJoin);
+        qbdPayrollPeriodLine.fetchMode(QueryFetchMode::One2One);
+        qbdPayrollPeriodLine.addLink(fieldNum(SPYPayrollLedger,PayrollPeriodLine),fieldNum(SPYPayrollPeriodLine,RecId));
+        //qbdPayrollPeriodLine.Relations(true);
+        qbdPayrollPeriodLine.addRange(fieldNum(SPYPayrollPeriodLine, PeriodStartDate)).value(strFmt("((PeriodStartDate >= %1) && (PeriodEndDate <= %2))", Date2StrXpp(payrollPeriodFrom.PeriodStartDate), Date2StrXpp(payrollPeriodTo.PeriodEndDate)));
+        qbdPayrollPeriodLine.addRange(fieldNum(SPYPayrollPeriodLine, PayrollPeriod)).value(queryValue(payrollPeriodFrom.PayrollPeriod));
+    
+        qr = new QueryRun(q);
+    
+        while(qr.next())
+        {
+            hcmWorker           = qr.get(tableNum(HcmWorker));
+            payrollledger       = qr.get(tableNum(SPYPayrollLedger));
+            payrollPeriodLine   = qr.get(tableNum(SPYPayrollPeriodLine));
+            this.insertIntoSalaryRegisterDetailsTmp();
+        }
+    
+        //Data from SPYBenefitLedger
+        if(showBenefit)
+        {
+            qbdHcmWorker = q1.dataSourceTable(tableNum(HcmWorker));
+            qbdBenefitLedger = qbdHcmWorker.addDataSource(tableNum(SPYBenefitLedger), "SPYBenefitLedger");
+            qbdBenefitLedger.joinMode(JoinMode::InnerJoin);
+            qbdBenefitLedger.fetchMode(QueryFetchMode::One2One);
+            qbdBenefitLedger.Relations(true);
+            qbdPayrollPeriodLine = qbdBenefitLedger.addDataSource(tableNum(SPYPayrollPeriodLine), "SPYPayrollPeriodLine");
+            qbdPayrollPeriodLine.joinMode(JoinMode::InnerJoin);
+            qbdPayrollPeriodLine.fetchMode(QueryFetchMode::One2One);
+            //qbdPayrollPeriodLine.Relations(true);
+            qbdPayrollPeriodLine.addLink(fieldNum(SPYBenefitLedger,PayrollPeriodLine),fieldNum(SPYPayrollPeriodLine,RecId));
+            qbdPayrollPeriodLine.addRange(fieldNum(SPYPayrollPeriodLine, PeriodStartDate)).value(strFmt("((PeriodStartDate >= %1) && (PeriodEndDate <= %2))", Date2StrXpp(payrollPeriodFrom.PeriodStartDate), Date2StrXpp(payrollPeriodTo.PeriodEndDate)));
+            qbdPayrollPeriodLine.addRange(fieldNum(SPYPayrollPeriodLine, PayrollPeriod)).value(queryValue(payrollPeriodFrom.PayrollPeriod));
+    
+            qr = new QueryRun(q1);
+    
+            while(qr.next())
+            {
+                hcmWorker           = qr.get(tableNum(HcmWorker));
+                benefitLedger       = qr.get(tableNum(SPYBenefitLedger));
+                payrollPeriodLine   = qr.get(tableNum(SPYPayrollPeriodLine));
+                this.insertIntoSalaryRegisterDetailsTmp(showBenefit);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        headerFooterTmp.setConnection(this.parmUserConnection());
+        salaryRegisterDetailsTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

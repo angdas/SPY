@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEmployeeBioDataTmp</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYEmployeeBioDataTmp extends common
+{
+}
+
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<SubscriberAccessLevel>
+		<Read>Allow</Read>
+	</SubscriberAccessLevel>
+	<TableType>InMemory</TableType>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Name</Name>
+			<ExtendedDataType>HcmWorkerName</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PersonnelNumberId</Name>
+			<ExtendedDataType>HcmPersonnelNumberId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>DOB</Name>
+			<ExtendedDataType>HcmBirthDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HrmDescription</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Qualification</Name>
+			<ExtendedDataType>HcmTraining</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PayrollPeriodCode</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>SPYPayrollPeriodCode</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Address</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>LogisticsAddressing</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TotalSalary</Name>
+			<ExtendedDataType>AmountMST</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>NationalityCountryRegion</Name>
+			<AosAuthorization>Yes</AosAuthorization>
+			<ConfigurationKey>HRMAdministration</ConfigurationKey>
+			<ExtendedDataType>LogisticsAddressCountryRegionId</ExtendedDataType>
+			<Label>@HCM:HcmPersonPrivateDetails_NationalityCountryRegion</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>MaritalStatus</Name>
+			<AosAuthorization>Yes</AosAuthorization>
+			<AssetClassification>Customer Content</AssetClassification>
+			<EnumType>HcmPersonMaritalStatus</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>JoinDate</Name>
+			<ExtendedDataType>HcmDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>FatherName</Name>
+			<ExtendedDataType>HcmWorkerName</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>IdentificationType</Name>
+			<AllowEdit>No</AllowEdit>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ConfigurationKey>HRMAdministration</ConfigurationKey>
+			<ExtendedDataType>HcmIdentificationTypeRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>IdentificationNumber</Name>
+			<AosAuthorization>Yes</AosAuthorization>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HcmIdentificationNumber</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>IssuedDate</Name>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HcmIdentificationIssuedDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ExpirationDate</Name>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HcmIdentificationExpirationDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>IssuingAgency</Name>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ConfigurationKey>HRMAdministration</ConfigurationKey>
+			<ExtendedDataType>HcmIssuingAgencyRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>WorkerSponser</Name>
+			<ExtendedDataType>SPYWorkerSponsorCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PayElementCode</Name>
+			<ExtendedDataType>SPYPayElementCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>MonthlyAmt</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY454</HelpText>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Project</Name>
+			<ExtendedDataType>ProjectName</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ProjStartDate</Name>
+			<ExtendedDataType>ProjTransDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ProjEndDate</Name>
+			<ExtendedDataType>ProjTransDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>LeaveId</Name>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>LeaveType</Name>
+			<ExtendedDataType>HcmLeaveTypeId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>LeaveStartDate</Name>
+			<ExtendedDataType>ProjTransDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>LeaveEndDate</Name>
+			<ExtendedDataType>ProjTransDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>LeaveDays</Name>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>IncrementDate</Name>
+			<ExtendedDataType>ProjTransDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>IncrementPayElementCode</Name>
+			<ExtendedDataType>SPYPayElementCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>PayElementAmt</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>BonusAmt</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PositionId</Name>
+			<ExtendedDataType>HcmPositionId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>PositionEndDate</Name>
+			<ExtendedDataType>ProjTransDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>PositionStartDate</Name>
+			<ExtendedDataType>ProjTransDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ReasonCode</Name>
+			<ExtendedDataType>ReasonCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>BioDataCategory</Name>
+			<EnumType>SPYEmplBioDataCategory</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>WorkExp</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>IdentificationDescription</Name>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HrmDescription</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>TitleId</Name>
+			<AllowEdit>No</AllowEdit>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HcmTitleId</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes />
+	<Mappings />
+	<Relations />
+	<StateMachines />
+</AxTable>

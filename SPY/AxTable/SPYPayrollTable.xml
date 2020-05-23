@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayrollTable extends SPYPayElementTable
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Finds the specified record in the <c>SPYPayrollTable</c> table.
+    /// </summary>
+    /// /// <param name="_recId">
+    ///    The record ID of the record to find.
+    /// </param>
+    /// <param name="_forUpdate">
+    ///     A Boolean value that indicates whether to read the record for update; optional.
+    /// </param>
+    /// <param name="_concurrencyModel">
+    ///     An enumeration value that indicates the concurrency setting to use on the table; optional.
+    /// </param>
+    /// <returns>
+    ///     A record in the <c>SPYPayrollTable</c> table; otherwise, an empty record.
+    /// </returns>
+    /// <remarks>
+    ///     Finds the specified record in the <c>SPYPayrollTable</c> table.
+    /// </remarks>
+    public static SPYPayrollTable find(
+        SPYPayElementRecId             _recId,
+        boolean                        _forUpdate = false,
+        ConcurrencyModel               _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayrollTable     payrollTable;
+    
+        payrollTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            payrollTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly payrollTable
+             where payrollTable.RecId == _recId;
+    
+        return payrollTable;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY93</DeveloperDocumentation>
+	<Label>@SPY89</Label>
+	<TableGroup>Reference</TableGroup>
+	<CacheLookup>Found</CacheLookup>
+	<Extends>SPYPayElementTable</Extends>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<SupportInheritance>Yes</SupportInheritance>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayrollType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DisplayOrder</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>DisplayOrder</Name>
+			<ExtendedDataType>Integer</ExtendedDataType>
+			<Label>@SPY1558</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>PayrollType</Name>
+			<HelpText>@SPY94</HelpText>
+			<EnumType>SPYPayrollType</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes />
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayElementTable_Payroll</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<RelatedTable>SPYPayElementTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Payroll</RelatedTableRole>
+			<RelationshipType>Specialization</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>RecId</Name>
+					<Field>RecId</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

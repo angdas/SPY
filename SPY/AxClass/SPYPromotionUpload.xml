@@ -1,0 +1,703 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPromotionUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPromotionUpload extends RunBaseBatch
+{
+    FileName                    fileNameOpen;
+    AsciiStreamIo               fileIO;
+    DialogField                 dlgLeave;
+    Description                 journalDesc;
+    SPYCompensationPlanTable    compensationPlanTable;
+    SPYPromotionWorkerTable     promotionWorkerTable;
+    str                         submit;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+    journalDesc
+    #endmacro
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    // Specifies whether the functionality can run in a new session window
+    public boolean canRunInNewSession()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase           dialog;
+        FormBuildButtonControl  buttonControlUpload;
+        DialogGroup             dlgGroup;
+        FormBuildGroupControl   buttonGroup;
+
+        dialog = super();
+
+        dlgGroup            = dialog.addGroup('');
+        buttonGroup         = dialog.formBuildDesign().control(dlgGroup.formBuildGroup().id());
+        buttonControlUpload = buttonGroup.addControl(FormControlType::Button, "@SPY:SPYUploadPromotion");
+        buttonControlUpload.text("@SPY:SPYUploadPromotion");
+        buttonControlUpload.registerOverrideMethod(methodStr(FormButtonControl, clicked),
+                                        methodStr(SPYPromotionUpload, uploadClickedEvent),
+                                        this);
+
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadClickedEvent</Name>
+				<Source><![CDATA[
+    private void uploadClickedEvent(FormButtonControl _formButtonControl)
+    {
+        FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+        If (result && result.getUploadStatus())
+        {
+            fileIO = AsciiStreamIo::constructForRead(result.openResult());
+            if (fileIO)
+            {
+                if (fileIO.status())
+                {
+                    throw error("@SPY:ImportingProblem");
+                }
+                fileIO.inFieldDelimiter(',');
+                fileIO.inRecordDelimiter('\r\n');
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            this.readCSV(fileIO);
+        }
+        catch(Exception::Error)
+        {
+            ttsabort;
+            throw error("@SPY:ImportingException");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readCSV</Name>
+				<Source><![CDATA[
+    public void readCSV(AsciiStreamIo  file)
+    {
+        COMVariantType                  type;
+        HcmWorkerRecId                  worker;
+        SPYPromotionUploadTmp           uploadTmp;
+        SPYPromotionUploadPayrollTmp    payrollTmp, payrollDlt;
+        SPYPromotionUploadBenefitTmp    benefitTmp, benefitDlt;
+        SPYPayElementTable              payElementCheck;
+        boolean                         errorWorker, errorPayElemenet;
+        container                       record;
+        int                             cnt = 0, numberofUploadedRecords, cntUpdate = 0;
+
+        HcmPersonnelNumberId            employeeId;
+        str                             effectiveDate;
+        str                             promotionType, description, propGrade, propBand, propStep;
+   
+        ttsbegin;
+        while (!file.status())
+        {
+            cnt++;
+            record = file.read();
+       
+            if( cnt > 1)
+            {
+                employeeId     = conpeek(record,1);
+                promotionType  = conpeek(record,2);
+                effectiveDate  = conpeek(record,3);
+                description    = conpeek(record,4);
+                propGrade      = conpeek(record,5);
+                propBand       = conpeek(record,6);
+                propStep       = conpeek(record,7);
+                submit         = conpeek(record,74);
+           
+                errorWorker             = false;
+                errorPayElemenet        = false;
+
+                int i = conLen(record);
+                if (conLen(record))
+                {
+                    //Check for worker
+                    worker = Hcmworker::findByPersonnelNumber(employeeId).RecId;
+                    if(worker == 0)
+                    {
+                        warning(strfmt("@SPY:EmployeeIdnotValid",cnt));
+                        errorWorker = true;
+                    }
+
+                    /*Check whether payelement exists in master. If not available
+                    entire line should not be uploaded*/
+                    for(int x = 8; x<= 26; x+=2)
+                    {
+                        if(conPeek(record, x) != "")
+                        {
+                            payElementCheck = SPYPayElementTable::findByCode(conPeek(record, x));
+                            if(payElementCheck.RecId == 0)
+                            {
+                                warning(strFmt("Payelement %1 is not valid in row %2 column %3", conPeek(record, x), cnt, x));
+                                errorPayElemenet    = true;
+                            }
+                        }
+                    }
+
+                    /*Check whether benefit exists in master. If not available
+                    entire line should not be uploaded*/
+                    for(int y = 28; y <= 73; y += 5)
+                    {
+                        if(conPeek(record, y) != "")
+                        {
+                            payElementCheck = SPYPayElementTable::findByCode(conPeek(record, y));
+                            if(payElementCheck.RecId == 0)
+                            {
+                                warning(strFmt("Benefit %1 is not valid in row %2 column %3", conPeek(record, y), cnt, y));
+                                errorPayElemenet    = true;
+                            }
+                        }
+                    }
+
+                    if(errorWorker == false && errorPayElemenet == false)
+                    {
+                        cntUpdate++;
+                        uploadTmp.clear();
+                        uploadTmp.Worker    = worker;
+                        uploadTmp.PromotionIncrementType    = promotionType == "Promotion" ? SPYPromotionIncrementType::Promotion : SPYPromotionIncrementType::Increment;
+                        uploadTmp.StartDate                 = str2Date(effectiveDate, 213);
+                        uploadTmp.Description               = Description;
+                        uploadTmp.Grade                     = propGrade;
+                        uploadTmp.Band                      = propBand;
+                        uploadTmp.Step                      = propStep;
+                        uploadTmp.insert();
+                        for(int j= 8; j<= 26; j+=2)
+                        {
+                            payElementCheck = SPYPayElementTable::findByCode(conPeek(record, j));
+                            if(conPeek(record, j) != "" && payElementCheck.RecId != 0)
+                            {
+                                payrollTmp.clear();
+                                payrollTmp.PayElement = conPeek(record, j);
+                                payrollTmp.PayAmt     = conPeek(record, j+1);
+                                payrollTmp.PromotionUpload  = uploadTmp.RecId;
+                                payrollTmp.insert();
+                            }
+                        }
+
+                        for(int b = 28; b <= 73; b += 5)
+                        {
+                            payElementCheck = SPYPayElementTable::findByCode(conPeek(record, b));
+                            if(conPeek(record, b) != "" && payElementCheck.RecId != 0)
+                            {
+                                benefitTmp.clear();
+                                benefitTmp.BenefitType      = conPeek(record, b);
+                                benefitTmp.MonthlyAmt       = conPeek(record, b+1);
+                                benefitTmp.MonthlyQty       = conPeek(record, b+2);
+                                benefitTmp.AnnualAmt        = conPeek(record, b+3);
+                                benefitTmp.AnnualQty        = conPeek(record, b+4);
+                                benefitTmp.PromotionUpload  = uploadTmp.RecId;
+                                benefitTmp.insert();
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+        ttscommit;
+        info(strfmt("@SPY:UploadedRecords",cntUpdate));
+        this.promotionUpload();
+        delete_from payrollDlt;
+        delete_from benefitDlt;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    // Unpacking of parameters
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+        ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    // Validation
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYPromotionUpload construct()
+    {
+        return new SPYPromotionUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "Promotion upload";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYPromotionUpload    promotionUpload;
+    
+        promotionUpload = SPYPromotionUpload::construct();
+    
+        if (promotionUpload.prompt())
+            promotionUpload.runOperationNow();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>promotionUpload</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while "),
+    SuppressBPWarningAttribute("BPCheckInsertMethodInLoop","Record is immediately required inside while loop to insert/update other table record")]
+    public void promotionUpload()
+    {
+        SPYPromotionTable               promotionTable;
+        SPYPromotionUploadTmp           promotionUploadTmp, promotionUploadTmpCheck, promotionUploadTmpDlt, promotionUploadTmpUpdate;
+        SPYPromotionProcessService      promotionProcessService = new SPYPromotionProcessService();
+        WorkflowTable                   workFlowtable;
+
+        select workFlowtable where workFlowtable.TemplateName == "SPYPromotion";
+        
+        while select promotionUploadTmp 
+        {
+            promotionTable.clear();
+            promotionTable.PromotionCode            = NumberSeq::newGetNum(SPYPayrollParameters::numRefPromotionCode()).num();
+            promotionTable.StartDate                = promotionUploadTmp.StartDate;
+            promotionTable.PromotionIncrementType   = promotionUploadTmp.PromotionIncrementType;;
+            promotionTable.Description              = promotionUploadTmp.Description;
+            promotionTable.WorkflowStatus           = SPYWorkflowStatus::Created;
+            if(submit == "Yes")
+            {
+                workflow::activateFromWorkflowSequenceNumber(workFlowtable.SequenceNumber, promotionTable.RecId, "@SPY:SPYSystemUpload", false, curUserId());
+                SPYPromotionTable::updateWorkflowStatus(promotionTable.RecId,SPYWorkflowStatus::Submitted);
+            }         
+            promotionTable.insert();
+
+            while select promotionUploadTmpCheck
+            where promotionUploadTmpCheck.StartDate == promotionUploadTmp.StartDate
+            && promotionUploadTmpCheck.PromotionIncrementType == promotionUploadTmp.PromotionIncrementType
+            {
+                this.insertIntoPromotionWorkerTable(promotionTable, promotionUploadTmpCheck);
+                this.insertIntoPromotionWorkerCurrentPayroll(promotionWorkerTable, promotionUploadTmpCheck);
+                this.insertIntoPromotionWorkerCurrentBenefit(promotionWorkerTable, promotionUploadTmpCheck);
+                this.insertIntoPromotionWorkerProposedPayroll(promotionWorkerTable, promotionUploadTmpCheck);
+                this.insertIntoPromotionWorkerProposedBenefit(promotionWorkerTable, promotionUploadTmpCheck);
+            }
+
+            delete_from promotionUploadTmp
+                    where promotionUploadTmp.StartDate == promotionTable.StartDate
+                    && promotionUploadTmp.PromotionIncrementType == promotionTable.PromotionIncrementType;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerTable</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerTable(SPYPromotionTable _promotionTable, SPYPromotionUploadTmp _promotionUploadTmp)
+    {
+        HcmPositionDetail                           hcmpositionDetail;
+        HcmWorker                                   hcmWorker;
+        
+
+        hcmWorker                                   = HcmWorker::find(_promotionUploadTmp.Worker);
+        hcmpositionDetail                           = HcmpositionDetail::findByPosition(HcmPosition::find(this.getPrimaryPosition(hcmWorker.RecId)).RecId);
+
+        select compensationPlanTable where compensationPlanTable.CompensationLevelGrade == hcmpositionDetail.SPYCompensationLevelGrade
+                                 &&    compensationPlanTable.CompensationLevelBand == hcmpositionDetail.SPYCompensationLevelBand
+                                 &&    compensationPlanTable.CompensationLevelStep == hcmpositionDetail.SPYCompensationLevelStep;
+
+        promotionWorkerTable.clear();
+        promotionWorkerTable.Promotion              = _promotionTable.RecId;
+        promotionWorkerTable.Worker                 = hcmWorker.RecId;
+        promotionWorkerTable.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+        promotionWorkerTable.WorkerName             = hcmWorker.name();
+        promotionWorkerTable.StartDate              = DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone());
+        promotionWorkerTable.PromotionIncrementType = _promotionTable.PromotionIncrementType;
+        promotionWorkerTable.CurrentDepartment      = this.getPrimaryDepartmentRecId(hcmWorker.RecId);
+        promotionWorkerTable.CurrentPosition        = this.getPrimaryPosition(hcmWorker.RecId);
+        promotionWorkerTable.CurrentGrade           = hcmpositionDetail.SPYCompensationLevelGrade;
+        promotionWorkerTable.CurrentBand            = hcmpositionDetail.SPYCompensationLevelBand;
+        promotionWorkerTable.CurrentStep            = hcmpositionDetail.SPYCompensationLevelStep;
+        promotionWorkerTable.ProposedGrade          = HcmCompensationLevel::findByCompensationLevel(_promotionUploadTmp.Grade).RecId;
+        promotionWorkerTable.ProposedBand           = HcmCompensationLevel::findByCompensationLevel(_promotionUploadTmp.Band).RecId;
+        promotionWorkerTable.ProposedStep           = HcmCompensationLevel::findByCompensationLevel(_promotionUploadTmp.Step).RecId;
+        promotionWorkerTable.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerProposedPayroll</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerProposedPayroll(SPYPromotionWorkerTable _promotionWorkerTable, SPYPromotionUploadTmp _promotionUploadTmp)
+    {
+        SPYPromotionWorkerProposedPayroll           promotionWorkerProposedPayroll;
+        SPYPromotionUploadPayrollTmp                uploadPayrollTmp;
+        RecordInsertList                            promotionWorkerProposedPayrollList;
+
+        promotionWorkerProposedPayrollList          = new RecordInsertList(tableNum(SPYPromotionWorkerProposedPayroll));
+
+        while select uploadPayrollTmp
+            where uploadPayrollTmp.PromotionUpload == _promotionUploadTmp.RecId
+        {
+            promotionWorkerProposedPayroll.clear();
+            promotionWorkerProposedPayroll.PromotionWorker        = _promotionWorkerTable.RecId;
+            promotionWorkerProposedPayroll.Payroll                = SPYPayElementTable::findByCode(uploadPayrollTmp.PayElement).RecId;
+            promotionWorkerProposedPayroll.Monthly                = uploadPayrollTmp.PayAmt;
+            //promotionWorkerProposedPayroll.insert();
+            promotionWorkerProposedPayrollList.add(promotionWorkerProposedPayroll);
+        }
+
+        promotionWorkerProposedPayrollList.insertDatabase();
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerProposedBenefit</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerProposedBenefit(SPYPromotionWorkerTable _promotionWorkerTable, SPYPromotionUploadTmp _promotionUploadTmp)
+    {
+        SPYPromotionWorkerProposedBenefit          promotionWorkerProposedBenefit;
+        SPYPromotionUploadBenefitTmp               uploadBenefitTmp;
+        SPYBenefitTypeTable                        benefitTypeTable;
+        RecordInsertList                           promotionWorkerProposedBenefitlList;
+
+        promotionWorkerProposedBenefitlList          = new RecordInsertList(tableNum(SPYPromotionWorkerProposedBenefit));
+
+        while select uploadBenefitTmp
+            where uploadBenefitTmp.PromotionUpload == _promotionUploadTmp.RecId
+        {
+            promotionWorkerProposedBenefit.clear();
+            promotionWorkerProposedBenefit.PromotionWorker        = _promotionWorkerTable.RecId;
+            promotionWorkerProposedBenefit.Benefit                = SPYPayElementTable::findByCode(uploadBenefitTmp.BenefitType).RecId;
+            promotionWorkerProposedBenefit.Monthly                = uploadBenefitTmp.MonthlyAmt;
+            promotionWorkerProposedBenefit.QtyMonthly             = uploadBenefitTmp.MonthlyQty;
+            promotionWorkerProposedBenefit.AmountAnnual           = uploadBenefitTmp.AnnualAmt;
+            promotionWorkerProposedBenefit.QtyAnnual              = uploadBenefitTmp.AnnualQty;
+           // promotionWorkerProposedBenefit.insert();
+            promotionWorkerProposedBenefitlList.add(promotionWorkerProposedBenefit);
+        }
+        promotionWorkerProposedBenefitlList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerCurrentBenefit</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerCurrentBenefit(SPYPromotionWorkerTable _promotionWorkerTable, SPYPromotionUploadTmp _promotionUploadTmp)
+    {
+        SPYPromotionWorkerCurrentBenefit           promotionWorkerCurrBenefit;
+        SPYWorkerPositionBenefit                   workerPositionBenefit;
+        HcmWorker                                  hcmWorker;
+        FromDate                                   fromDate = _promotionUploadTmp.StartDate;
+        hcmWorker                                  = HcmWorker::find(_promotionUploadTmp.Worker);
+        RecordInsertList                           promotionWorkerCurrBenefitList;
+
+        promotionWorkerCurrBenefitList             = new RecordInsertList(tableNum(SPYPromotionWorkerCurrentBenefit));
+
+
+        while select validTimeState(fromDate, fromDate) workerPositionBenefit
+        where workerPositionBenefit.Worker == hcmWorker.RecId &&
+              (workerPositionBenefit.AmountAnnual != 0 || workerPositionBenefit.AmountMonthly != 0
+              || workerPositionBenefit.QtyAnnual != 0 || workerPositionBenefit.QtyMonthly != 0)
+        {
+            promotionWorkerCurrBenefit.clear();
+            promotionWorkerCurrBenefit.PromotionWorker        = _promotionWorkerTable.RecId;
+            promotionWorkerCurrBenefit.Benefit                = workerPositionBenefit.Benefit;
+            promotionWorkerCurrBenefit.Monthly                = workerPositionBenefit.AmountMonthly;
+            promotionWorkerCurrBenefit.QtyMonthly             = workerPositionBenefit.QtyMonthly;
+            promotionWorkerCurrBenefit.AmountAnnual           = workerPositionBenefit.AmountAnnual;
+            promotionWorkerCurrBenefit.QtyAnnual              = workerPositionBenefit.QtyAnnual;
+            //promotionWorkerCurrBenefit.insert();
+            promotionWorkerCurrBenefitList.add(promotionWorkerCurrBenefit);
+        }
+        promotionWorkerCurrBenefitList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPromotionWorkerCurrentPayroll</Name>
+				<Source><![CDATA[
+    public void insertIntoPromotionWorkerCurrentPayroll(SPYPromotionWorkerTable _promotionWorkerTable, SPYPromotionUploadTmp _promotionUploadTmp)
+    {
+        SPYPromotionWorkerCurrentPayroll           promotionWorkerCurrPayroll;
+        SPYWorkerPositionPayroll                   workerPositionPayroll;
+        HcmWorker                                  hcmWorker;
+        FromDate                                   fromDate = _promotionUploadTmp.StartDate;
+        RecordInsertList                           promotionWorkerCurrPayrollList;
+
+        promotionWorkerCurrPayrollList             = new RecordInsertList(tableNum(SPYPromotionWorkerCurrentPayroll));
+        hcmWorker                                  = HcmWorker::find(_promotionUploadTmp.Worker);
+
+        while select validTimeState(fromDate, fromDate) workerPositionPayroll
+        where workerPositionPayroll.Worker == hcmWorker.RecId && workerPositionPayroll.Monthly != 0
+        {
+            promotionWorkerCurrPayroll.clear();
+            promotionWorkerCurrPayroll.PromotionWorker        = _promotionWorkerTable.RecId;
+            promotionWorkerCurrPayroll.Payroll                = workerPositionPayroll.Payroll;
+            promotionWorkerCurrPayroll.Monthly                = workerPositionPayroll.Monthly;
+            //promotionWorkerCurrPayroll.insert();
+            promotionWorkerCurrPayrollList.add(promotionWorkerCurrPayroll);
+        }
+        promotionWorkerCurrPayrollList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPrimaryDepartmentRecId</Name>
+				<Source><![CDATA[
+    public OMDepartmentRecId getPrimaryDepartmentRecId(HcmWorkerRecId _workerRecId, utcdatetime _asOfDate = DateTimeUtil::utcNow())
+    {
+        HcmPositionRecId            positionRecId;
+        HcmPositionDetail           positionDetail;
+
+        // Determine the primary position of the worker.
+        positionRecId = this.getPrimaryPosition(_workerRecId, _asOfDate);
+
+        if (positionRecId)
+        {
+            // Retrieve the corresponding position.
+            positionDetail = HcmPositionDetail::findByPosition(positionRecId, _asOfDate);
+        }
+
+        return positionDetail.Department;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPrimaryPosition</Name>
+				<Source><![CDATA[
+    public HcmPositionRecId getPrimaryPosition(HcmWorkerRecId _workerRecId, utcdatetime _asOfDate = DateTimeUtil::utcNow())
+    {
+        HcmPositionRecId                    positionRecId = 0;
+        HcmPositionWorkerAssignment         hcmPositionWorkerAssignment;
+        HcmPositionWorkerAssignmentRecId    hcmPositionWorkerAssignmentRecId;
+
+        hcmPositionWorkerAssignmentRecId = this.getPrimaryPositionAssignment(_workerRecId, _asOfDate);
+
+        hcmPositionWorkerAssignment = HcmPositionWorkerAssignment::find(hcmPositionWorkerAssignmentRecId);
+        if (hcmPositionWorkerAssignment)
+        {
+            positionRecId = hcmPositionWorkerAssignment.Position;
+        }
+
+        return positionRecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPrimaryPositionAssignment</Name>
+				<Source><![CDATA[
+    public HcmPositionWorkerAssignmentRecId getPrimaryPositionAssignment(HcmWorkerRecId _workerRecId, utcdatetime _asOfDate = DateTimeUtil::utcNow())
+    {
+        HcmPositionRecId                    positionRecId = 0;
+        HcmPositionWorkerAssignmentRecId    positionWorkerAssignmentRecId = 0;
+        HcmPositionWorkerAssignment         hcmPositionWorkerAssignment;
+        HcmPositionDuration                 hcmPositionDuration;
+        boolean                             isValidPosition = true;
+        HcmWorkerPrimaryPosition            hcmWorkerPrimaryPosition;
+
+        // check whether the worker has a primary position assignment
+        select firstonly ValidTimeState(_asOfDate) PositionAssignment from hcmWorkerPrimaryPosition
+            where hcmWorkerPrimaryPosition.Worker == _workerRecId
+        exists join hcmPositionWorkerAssignment
+            where hcmPositionWorkerAssignment.Worker == hcmWorkerPrimaryPosition.Worker
+                    && hcmPositionWorkerAssignment.RecId == hcmWorkerPrimaryPosition.PositionAssignment
+        exists join hcmPositionDuration
+            where hcmPositionWorkerAssignment.Position == hcmPositionWorkerAssignment.Position;
+
+        positionWorkerAssignmentRecId = hcmWorkerPrimaryPosition.PositionAssignment;
+
+        if (positionWorkerAssignmentRecId == 0)
+        {
+            // no valid primary position existed for the worker, so retrieve the position
+            // assignment for the worker in which the worker has the longest active seniority
+            select ValidTimeState(_asOfDate) Position, RecId from hcmPositionWorkerAssignment
+            order by ValidFrom asc
+                where hcmPositionWorkerAssignment.Worker == _workerRecId
+            exists join hcmPositionDuration
+                where hcmPositionDuration.Position == hcmPositionWorkerAssignment.Position;
+
+            positionWorkerAssignmentRecId = hcmPositionWorkerAssignment.RecId;
+        }
+
+        return positionWorkerAssignmentRecId;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

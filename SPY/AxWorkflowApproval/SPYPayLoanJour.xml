@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYPayLoanJour</Name>
+	<CanceledEventHandler>SPYPayLoanJourEventHandler1</CanceledEventHandler>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DelegateMenuItem>SPYPayLoanJourDelegateMenuItem</DelegateMenuItem>
+	<Document>SPYPayLoanJourDocument</Document>
+	<DocumentMenuItem>SPYPayLoan</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>Details</DocumentPreviewFieldGroup>
+	<HelpText>@SPY422</HelpText>
+	<Label>@SPY421</Label>
+	<ResubmitMenuItem>SPYPayLoanJourResubmitMenuItem</ResubmitMenuItem>
+	<StartedEventHandler>SPYPayLoanJourEventHandler1</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYPayLoanJourEventHandler1</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYPayLoanJourApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYPayLoanJourEventHandler1</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<ActionMenuItem xmlns="">SPYPayAdjustmentJourDeny</ActionMenuItem>
+		<Enabled xmlns="">No</Enabled>
+		<EventHandler xmlns="">SPYPayAdjustmentJourEventHandler1</EventHandler>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYPayLoanJourReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYPayLoanJourEventHandler1</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYPayLoanJourRequestChange</ActionMenuItem>
+		<EventHandler xmlns="">SPYPayLoanJourEventHandler1</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

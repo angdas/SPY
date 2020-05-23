@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitJourResubmitActionMgr</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYBenefitJourResubmitActionMgr
+{
+    SPYBenefitJournalTable          benefitJournalTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>actionDialog</Name>
+				<Source><![CDATA[
+    protected boolean actionDialog(WorkflowWorkItemActionDialog _workflowWorkItemActionDialog)
+    {
+        _workflowWorkItemActionDialog.run();
+        return _workflowWorkItemActionDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBenefitJournalTable</Name>
+				<Source><![CDATA[
+    private SPYBenefitJournalTable parmBenefitJournalTable(SPYBenefitJournalTable _benefitJournalTable = benefitJournalTable)
+    {
+        benefitJournalTable = _benefitJournalTable;
+    
+        return benefitJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>resubmit</Name>
+				<Source><![CDATA[
+    private void resubmit(Args _args)
+    {
+        WorkflowWorkItemActionDialog    workflowWorkItemActionDialog;
+        WorkflowWorkItemTable           workItem = _args.caller().getActiveWorkflowWorkItem();
+        Object                          formRun;    
+        
+        workflowWorkItemActionDialog = WorkflowWorkItemActionDialog::construct( workItem,
+                                                                                WorkflowWorkItemActionType::Resubmit,
+                                                                                new MenuFunction(_args.menuItemName(), _args.menuItemType()));
+        if (this.actionDialog(workflowWorkItemActionDialog))
+        {
+            WorkflowWorkItemActionManager::dispatchWorkItemAction(workItem,
+                                                                    workflowWorkItemActionDialog.parmWorkflowComment(),
+                                                                    workflowWorkItemActionDialog.parmTargetUser(),
+                                                                    WorkflowWorkItemActionType::Resubmit,
+                                                                    _args.menuItemName());
+            SPYBenefitJournalTable::updateWorkflowStatus(benefitJournalTable.RecId,SPYWorkflowStatus::Submitted);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYBenefitJourResubmitActionMgr       benefitJourResubmit = new SPYBenefitJourResubmitActionMgr();
+        SPYBenefitJournalTable                benefitJournalTable = args.record();
+    
+        benefitJourResubmit.parmBenefitJournalTable(benefitJournalTable);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYBenefitJourResubmitMenuItem))
+            benefitJourResubmit.resubmit(args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

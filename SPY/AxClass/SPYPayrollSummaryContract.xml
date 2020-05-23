@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollSummaryContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute,
+    //SysOperationContractProcessingAttribute(classStr(SPYUIBuilderBase)),
+    SysOperationGroupAttribute('PayrollPeriod','Payroll period','1'),
+    SysOperationGroupAttribute('FinancialDimensions','Financial dimensions','2'),
+    SysOperationGroupAttribute('Details','Details','3')
+]
+class SPYPayrollSummaryContract
+{
+    boolean             showPayElements;
+    SPYContractBase     contractBase;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmContractBase</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYContractBase  parmContractBase(SPYContractBase _contractBase = contractBase)
+    {
+        contractBase = _contractBase;
+    
+        return contractBase;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowPayElements</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('showPayElements'),
+        SysOperationLabelAttribute(literalStr('@SPY567')),
+        SysOperationHelpTextAttribute(literalStr('@SPY568')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public boolean  parmShowPayElements(boolean _showPayElements = showPayElements)
+    {
+        showPayElements = _showPayElements;
+    
+        return showPayElements;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

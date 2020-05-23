@@ -1,0 +1,1058 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebDocumentLogUpdate</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWebDocumentLogUpdate
+{
+    
+
+    
+
+    
+
+    
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>HcmWorker_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmWorker), DataEventType::Updated)]
+    public static void HcmWorker_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmWorker_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmWorker), DataEventType::Inserted)]
+    public static void HcmWorker_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>DirPersonName_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(DirPersonName), DataEventType::Inserted)]
+    public static void DirPersonName_onInserted(Common sender, DataEventArgs e)
+    {
+        DirPersonName   dirPersonName = sender as DirPersonName;
+        HcmWorker   hcmWorker = HcmWorker::findByPerson(dirPersonName.Person);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>DirPersonName_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(DirPersonName), DataEventType::Updated)]
+    public static void DirPersonName_onUpdated(Common sender, DataEventArgs e)
+    {
+        DirPersonName   dirPersonName = sender as DirPersonName;
+        HcmWorker       hcmWorker = HcmWorker::findByPerson(dirPersonName.Person);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmWorkerTitle_onInserted</Name>
+				<Source><![CDATA[
+    //HcmWorkerTitle Inserted
+    [DataEventHandler(tableStr(HcmWorkerTitle), DataEventType::Inserted)]
+    public static void HcmWorkerTitle_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmWorkerTitle  hcmWorkerTitle = sender as HcmWorkerTitle;
+        HcmWorker       hcmWorker = HcmWorker::find(hcmWorkerTitle.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmWorkerTitle_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmWorkerTitle updated
+    [DataEventHandler(tableStr(HcmWorkerTitle), DataEventType::Updated)]
+    public static void HcmWorkerTitle_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmWorkerTitle  hcmWorkerTitle = sender as HcmWorkerTitle;
+        HcmWorker       hcmWorker = HcmWorker::find(hcmWorkerTitle.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonDetails_onInserted</Name>
+				<Source><![CDATA[
+    //HcmPersonDetails Inserted
+    [DataEventHandler(tableStr(HcmPersonDetails), DataEventType::Inserted)]
+    public static void HcmPersonDetails_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmPersonDetails    hcmPersonDetails = sender as HcmPersonDetails;
+        HcmWorker           hcmWorker = HcmWorker::findByPerson(hcmPersonDetails.Person);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonDetails_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmPersonDetails updated
+    [DataEventHandler(tableStr(HcmPersonDetails), DataEventType::Updated)]
+    public static void HcmPersonDetails_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmPersonDetails    hcmPersonDetails = sender as HcmPersonDetails;
+        HcmWorker           hcmWorker = HcmWorker::findByPerson(hcmPersonDetails.Person);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonPrivateDetails_onInserted</Name>
+				<Source><![CDATA[
+    //HcmPersonPrivateDetails Inserted
+    [DataEventHandler(tableStr(HcmPersonPrivateDetails), DataEventType::Inserted)]
+    public static void HcmPersonPrivateDetails_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmPersonPrivateDetails     hcmPersonPrivateDetails = sender as HcmPersonPrivateDetails;
+        HcmWorker                   hcmWorker = HcmWorker::findByPerson(hcmPersonPrivateDetails.Person);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonPrivateDetails_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmPersonPrivateDetails updated
+    [DataEventHandler(tableStr(HcmPersonPrivateDetails), DataEventType::Updated)]
+    public static void HcmPersonPrivateDetails_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmPersonPrivateDetails     hcmPersonPrivateDetails = sender as HcmPersonPrivateDetails;
+        HcmWorker                   hcmWorker = HcmWorker::findByPerson(hcmPersonPrivateDetails.Person);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Dirperson_onInserted</Name>
+				<Source><![CDATA[
+    //DirPerson Inserted
+    [DataEventHandler(tableStr(DirPerson), DataEventType::Inserted)]
+    public static void Dirperson_onInserted(Common sender, DataEventArgs e)
+    {
+        DirPerson       dirPerson = sender as DirPerson;
+        HcmWorker       hcmWorker = HcmWorker::findByPerson(dirPerson.RecId);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Dirperson_onUpdated</Name>
+				<Source><![CDATA[
+    //DirPerson updated
+    [DataEventHandler(tableStr(DirPerson), DataEventType::Updated)]
+    public static void Dirperson_onUpdated(Common sender, DataEventArgs e)
+    {
+        DirPerson       dirPerson = sender as DirPerson;
+        HcmWorker       hcmWorker = HcmWorker::findByPerson(dirPerson.RecId);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonSkillMapping_onInserted</Name>
+				<Source><![CDATA[
+    //HcmPersonSkillMapping Inserted
+    [DataEventHandler(tableStr(HcmPersonSkillMapping), DataEventType::Inserted)]
+    public static void HcmPersonSkillMapping_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmPersonSkillMapping   hcmPersonSkillMapping = sender as HcmPersonSkillMapping;
+        HcmWorker               hcmWorker = HcmWorker::findByPerson(hcmPersonSkillMapping.Person);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonSkillMapping_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmPersonSkillMapping updated
+    [DataEventHandler(tableStr(HcmPersonSkillMapping), DataEventType::Updated)]
+    public static void HcmPersonSkillMapping_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmPersonSkillMapping   hcmPersonSkillMapping = sender as HcmPersonSkillMapping;
+        HcmWorker               hcmWorker = HcmWorker::findByPerson(hcmPersonSkillMapping.Person);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmployment_onInserted</Name>
+				<Source><![CDATA[
+    //HcmEmployment Inserted
+    [DataEventHandler(tableStr(HcmEmployment), DataEventType::Inserted)]
+    public static void HcmEmployment_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmEmployment   hcmEmployment = sender as HcmEmployment;
+        HcmWorker       hcmWorker = HcmWorker::find(hcmEmployment.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        SPYWebDocumentLog::updateLog(hcmEmployment.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmployment_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmEmployment updated
+    [DataEventHandler(tableStr(HcmEmployment), DataEventType::Updated)]
+    public static void HcmEmployment_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmEmployment   hcmEmployment = sender as HcmEmployment;
+        HcmWorker       hcmWorker = HcmWorker::find(hcmEmployment.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        SPYWebDocumentLog::updateLog(hcmEmployment.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmployment_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmEmployment), DataEventType::Deleted)]
+    public static void HcmEmployment_onDeleted(Common sender, DataEventArgs e)
+    {
+        HcmEmployment   hcmEmployment = sender as HcmEmployment;
+        HcmWorker       hcmWorker = HcmWorker::find(hcmEmployment.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        SPYWebDocumentLog::updateLog(hcmEmployment.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmploymentDetail_onInserted</Name>
+				<Source><![CDATA[
+    //HcmEmploymentDetail Inserted
+    [DataEventHandler(tableStr(HcmEmploymentDetail), DataEventType::Inserted)]
+    public static void HcmEmploymentDetail_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmEmploymentDetail     hcmEmploymentDetail = sender as HcmEmploymentDetail;
+        HcmWorker               hcmWorker           = HcmWorker::find(HcmEmployment::find(hcmEmploymentDetail.Employment).Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmploymentDetail_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmEmploymentDetail updated
+    [DataEventHandler(tableStr(HcmEmploymentDetail), DataEventType::Updated)]
+    public static void HcmEmploymentDetail_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmEmploymentDetail     hcmEmploymentDetail = sender as HcmEmploymentDetail;
+        HcmWorker               hcmWorker           = HcmWorker::find(HcmEmployment::find(hcmEmploymentDetail.Employment).Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmploymentEmployee_onInserted</Name>
+				<Source><![CDATA[
+    //HcmEmploymentEmployee Inserted
+    [DataEventHandler(tableStr(HcmEmploymentEmployee), DataEventType::Inserted)]
+    public static void HcmEmploymentEmployee_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmEmploymentEmployee   hcmEmploymentEmployee   = sender as HcmEmploymentEmployee;
+        HcmWorker               hcmWorker               = HcmWorker::find(HcmEmployment::find(hcmEmploymentEmployee.Employment).Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmploymentEmployee_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmEmploymentEmployee updated
+    [DataEventHandler(tableStr(HcmEmploymentEmployee), DataEventType::Updated)]
+    public static void HcmEmploymentEmployee_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmEmploymentEmployee   hcmEmploymentEmployee   = sender as HcmEmploymentEmployee;
+        HcmWorker               hcmWorker               = HcmWorker::find(HcmEmployment::find(hcmEmploymentEmployee.Employment).Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmploymentAbsenceSetup_onInserted</Name>
+				<Source><![CDATA[
+    //HcmEmploymentAbsenceSetup Inserted
+    [DataEventHandler(tableStr(HcmEmploymentAbsenceSetup), DataEventType::Inserted)]
+    public static void HcmEmploymentAbsenceSetup_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmEmploymentAbsenceSetup   hcmEmploymentAbsenceSetup   = sender as HcmEmploymentAbsenceSetup;
+        HcmWorker                   hcmWorker                   = HcmWorker::find(HcmEmployment::find(hcmEmploymentAbsenceSetup.Employment).Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmEmploymentAbsenceSetup_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmEmploymentAbsenceSetup updated
+    [DataEventHandler(tableStr(HcmEmploymentAbsenceSetup), DataEventType::Updated)]
+    public static void HcmEmploymentAbsenceSetup_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmEmploymentAbsenceSetup   hcmEmploymentAbsenceSetup   = sender as HcmEmploymentAbsenceSetup;
+        HcmWorker                   hcmWorker                   = HcmWorker::find(HcmEmployment::find(hcmEmploymentAbsenceSetup.Employment).Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmACACoverageGroupAssignment_onInserted</Name>
+				<Source><![CDATA[
+    //HcmACACoverageGroupAssignment Inserted
+    [DataEventHandler(tableStr(HcmACACoverageGroupAssignment), DataEventType::Inserted)]
+    public static void HcmACACoverageGroupAssignment_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmACACoverageGroupAssignment   hcmACACoverageGroupAssignment   = sender as HcmACACoverageGroupAssignment;
+        HcmWorker                       hcmWorker                       = HcmWorker::find(hcmACACoverageGroupAssignment.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmACACoverageGroupAssignment_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmACACoverageGroupAssignment updated
+    [DataEventHandler(tableStr(HcmACACoverageGroupAssignment), DataEventType::Updated)]
+    public static void HcmACACoverageGroupAssignment_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmACACoverageGroupAssignment   hcmACACoverageGroupAssignment   = sender as HcmACACoverageGroupAssignment;
+        HcmWorker                       hcmWorker                       = HcmWorker::find(hcmACACoverageGroupAssignment.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LogisticsElectronicAddress_onInserted</Name>
+				<Source><![CDATA[
+    //LogisticsElectronicAddress Inserted
+    [DataEventHandler(tableStr(LogisticsElectronicAddress), DataEventType::Inserted)]
+    public static void LogisticsElectronicAddress_onInserted(Common sender, DataEventArgs e)
+    {
+        LogisticsElectronicAddress      logisticsElectronicAddress  = sender as LogisticsElectronicAddress;
+        HcmWorker                       hcmWorker                   = HcmWorker::findByPerson(logisticsElectronicAddress.PrivateForParty);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LogisticsElectronicAddress_onUpdated</Name>
+				<Source><![CDATA[
+    //LogisticsElectronicAddress updated
+    [DataEventHandler(tableStr(LogisticsElectronicAddress), DataEventType::Updated)]
+    public static void LogisticsElectronicAddress_onUpdated(Common sender, DataEventArgs e)
+    {
+        LogisticsElectronicAddress      logisticsElectronicAddress  = sender as LogisticsElectronicAddress;
+        HcmWorker                       hcmWorker                   = HcmWorker::findByPerson(logisticsElectronicAddress.PrivateForParty);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmWorkerRehire_onInserted</Name>
+				<Source><![CDATA[
+    //HcmWorkerRehire Inserted
+    [DataEventHandler(tableStr(HcmWorkerRehire), DataEventType::Inserted)]
+    public static void HcmWorkerRehire_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmWorkerRehire     hcmWorkerRehire = sender as HcmWorkerRehire;
+        HcmWorker           hcmWorker       = HcmWorker::find(hcmWorkerRehire.WorkerReference);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmWorkerRehire_onUpdated</Name>
+				<Source><![CDATA[
+    //HcmWorkerRehire updated
+    [DataEventHandler(tableStr(LogisticsElectronicAddress), DataEventType::Updated)]
+    public static void HcmWorkerRehire_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmWorkerRehire     hcmWorkerRehire = sender as HcmWorkerRehire;
+        HcmWorker           hcmWorker       = HcmWorker::find(hcmWorkerRehire.WorkerReference);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonIdentificationNumber_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPersonIdentificationNumber), DataEventType::Inserted)]
+    public static void HcmPersonIdentificationNumber_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmPersonIdentificationNumber     personIdentificationNumber = sender as HcmPersonIdentificationNumber;
+        HcmWorker                   hcmWorker = HcmWorker::findByPerson(personIdentificationNumber.Person);
+        SPYWebDocumentLog::updateLog(personIdentificationNumber.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonIdentificationNumber_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPersonIdentificationNumber), DataEventType::Updated)]
+    public static void HcmPersonIdentificationNumber_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmPersonIdentificationNumber     personIdentificationNumber = sender as HcmPersonIdentificationNumber;
+        HcmWorker                   hcmWorker = HcmWorker::findByPerson(personIdentificationNumber.Person);
+        SPYWebDocumentLog::updateLog(personIdentificationNumber.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonIdentificationNumber_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPersonIdentificationNumber), DataEventType::Deleted)]
+    public static void HcmPersonIdentificationNumber_onDeleted(Common sender, DataEventArgs e)
+    {
+        HcmPersonIdentificationNumber     personIdentificationNumber = sender as HcmPersonIdentificationNumber;
+        HcmWorker                   hcmWorker = HcmWorker::findByPerson(personIdentificationNumber.Person);
+        //insert all active identification records
+        SPYWebDocumentLog::updateLog(personIdentificationNumber.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYLeaveApplicationTable_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYLeaveApplicationTable), DataEventType::Inserted)]
+    public static void SPYLeaveApplicationTable_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYLeaveApplicationTable_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYLeaveApplicationTable), DataEventType::Updated)]
+    public static void SPYLeaveApplicationTable_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYLeaveApplicationLine_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYLeaveApplicationLine), DataEventType::Inserted)]
+    public static void SPYLeaveApplicationLine_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine = sender as SPYLeaveApplicationLine;
+        SPYWebDocumentLog::updateLog(leaveApplicationLine.leaveApplicationTable().TableId, leaveApplicationLine.leaveApplicationTable().RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYLeaveApplicationLine_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYLeaveApplicationLine), DataEventType::Updated)]
+    public static void SPYLeaveApplicationLine_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine = sender as SPYLeaveApplicationLine;
+        SPYWebDocumentLog::updateLog(leaveApplicationLine.leaveApplicationTable().TableId, leaveApplicationLine.leaveApplicationTable().RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYAbsenceLedger_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYAbsenceLedger), DataEventType::Inserted)]
+    public static void SPYAbsenceLedger_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYAbsenceLedger_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYAbsenceLedger), DataEventType::Updated)]
+    public static void SPYAbsenceLedger_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ProjPeriodEmpl_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(ProjPeriodEmpl), DataEventType::Inserted)]
+    public static void ProjPeriodEmpl_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ProjPeriodEmpl_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(ProjPeriodEmpl), DataEventType::Updated)]
+    public static void ProjPeriodEmpl_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYAbsenceLedger_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYAbsenceLedger), DataEventType::Deleted)]
+    public static void SPYAbsenceLedger_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ProjValEmplProjSetup_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(ProjValEmplProjSetup), DataEventType::Inserted)]
+    public static void ProjValEmplProjSetup_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ProjValEmplProjSetup_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(ProjValEmplProjSetup), DataEventType::Updated)]
+    public static void ProjValEmplProjSetup_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ProjValEmplProjSetup_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(ProjValEmplProjSetup), DataEventType::Deleted)]
+    public static void ProjValEmplProjSetup_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSTimesheetTable_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSTimesheetTable), DataEventType::Inserted)]
+    public static void TSTimesheetTable_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSTimesheetTable_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSTimesheetTable), DataEventType::Updated)]
+    public static void TSTimesheetTable_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSTimesheetTable_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSTimesheetTable), DataEventType::Deleted)]
+    public static void TSTimesheetTable_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSTimesheetLine_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSTimesheetLine), DataEventType::Inserted)]
+    public static void TSTimesheetLine_onInserted(Common sender, DataEventArgs e)
+    {
+        TSTimesheetLine     timesheetLine = sender as TSTimesheetLine;
+        TSTimesheetTable    timesheetTable = timesheetLine.timesheetTable();
+        SPYWebDocumentLog::updateLog(timesheetTable.TableId, timesheetTable.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSTimesheetLine_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSTimesheetLine), DataEventType::Updated)]
+    public static void TSTimesheetLine_onUpdated(Common sender, DataEventArgs e)
+    {
+        TSTimesheetLine     timesheetLine = sender as TSTimesheetLine;
+        TSTimesheetTable    timesheetTable = timesheetLine.timesheetTable();
+        SPYWebDocumentLog::updateLog(timesheetTable.TableId, timesheetTable.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSTimesheetLineWeek_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSTimesheetLineWeek), DataEventType::Inserted)]
+    public static void TSTimesheetLineWeek_onInserted(Common sender, DataEventArgs e)
+    {
+        TSTimesheetLineWeek     timesheetLineWeek = sender as TSTimesheetLineWeek;
+        TSTimesheetTable    timesheetTable = timesheetLineWeek.timesheetTable();
+        SPYWebDocumentLog::updateLog(timesheetTable.TableId, timesheetTable.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSTimesheetLineWeek_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSTimesheetLineWeek), DataEventType::Updated)]
+    public static void TSTimesheetLineWeek_onUpdated(Common sender, DataEventArgs e)
+    {
+        TSTimesheetLineWeek     timesheetLineWeek = sender as TSTimesheetLineWeek;
+        TSTimesheetTable    timesheetTable = timesheetLineWeek.timesheetTable();
+        SPYWebDocumentLog::updateLog(timesheetTable.TableId, timesheetTable.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestType_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestType), DataEventType::Inserted)]
+    public static void SPYDocumentRequestType_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestType_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestType), DataEventType::Updated)]
+    public static void SPYDocumentRequestType_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestType_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestType), DataEventType::Deleted)]
+    public static void SPYDocumentRequestType_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestAddress_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestAddress), DataEventType::Inserted)]
+    public static void SPYDocumentRequestAddress_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestAddress_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestAddress), DataEventType::Updated)]
+    public static void SPYDocumentRequestAddress_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestAddress_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestAddress), DataEventType::Deleted)]
+    public static void SPYDocumentRequestAddress_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestLine_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestLine), DataEventType::Inserted)]
+    public static void SPYDocumentRequestLine_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYDocumentRequestLine     documentRequestLine = sender as SPYDocumentRequestLine;
+        SPYWebDocumentLog::updateLog(documentRequestLine.documentRequestTable().TableId, documentRequestLine.documentRequestTable().RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestLine_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestLine), DataEventType::Updated)]
+    public static void SPYDocumentRequestLine_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYDocumentRequestLine     documentRequestLine = sender as SPYDocumentRequestLine;
+        SPYWebDocumentLog::updateLog(documentRequestLine.documentRequestTable().TableId, documentRequestLine.documentRequestTable().RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestLine_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestLine), DataEventType::Deleted)]
+    public static void SPYDocumentRequestLine_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYDocumentRequestLine     documentRequestLine = sender as SPYDocumentRequestLine;
+        SPYWebDocumentLog::updateLog(documentRequestLine.documentRequestTable().TableId, documentRequestLine.documentRequestTable().RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestTable_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestTable), DataEventType::Inserted)]
+    public static void SPYDocumentRequestTable_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestTable_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestTable), DataEventType::Updated)]
+    public static void SPYDocumentRequestTable_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYDocumentRequestTable_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYDocumentRequestTable), DataEventType::Deleted)]
+    public static void SPYDocumentRequestTable_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonImage_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPersonImage), DataEventType::Inserted)]
+    public static void HcmPersonImage_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmPersonImage     hcmPersonImage = sender as HcmPersonImage;
+        HcmWorker                   hcmWorker = HcmWorker::findByPerson(hcmPersonImage.Person);
+        SPYWebDocumentLog::updateLog(hcmPersonImage.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonImage_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPersonImage), DataEventType::Updated)]
+    public static void HcmPersonImage_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmPersonImage     hcmPersonImage = sender as HcmPersonImage;
+        HcmWorker                   hcmWorker = HcmWorker::findByPerson(hcmPersonImage.Person);
+        SPYWebDocumentLog::updateLog(hcmPersonImage.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPersonImage_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPersonImage), DataEventType::Deleted)]
+    public static void HcmPersonImage_onDeleted(Common sender, DataEventArgs e)
+    {
+        HcmPersonImage     hcmPersonImage = sender as HcmPersonImage;
+        HcmWorker                   hcmWorker = HcmWorker::findByPerson(hcmPersonImage.Person);
+        SPYWebDocumentLog::updateLog(hcmPersonImage.TableId, hcmWorker.RecId, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSAppEmplSub_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSAppEmplSub), DataEventType::Inserted)]
+    public static void TSAppEmplSub_onInserted(Common sender, DataEventArgs e)
+    {
+        TSAppEmplSub        tsAppEmplSub = sender as TSAppEmplSub;
+        ResourceWorkerView  resourceWorkerView;
+
+        select * from resourceWorkerView
+            where resourceWorkerView.RecId == tsAppEmplSub.TimesheetResource;
+        SPYWebDocumentLog::updateLog(tableNum(HcmWorker), HcmWorker::userId2Worker(tsAppEmplSub.DelegatedUser));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSAppEmplSub_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSAppEmplSub), DataEventType::Updated)]
+    public static void TSAppEmplSub_onUpdated(Common sender, DataEventArgs e)
+    {
+        TSAppEmplSub        tsAppEmplSub = sender as TSAppEmplSub;
+        ResourceWorkerView  resourceWorkerView;
+
+        select * from resourceWorkerView
+            where resourceWorkerView.RecId == tsAppEmplSub.TimesheetResource;
+        SPYWebDocumentLog::updateLog(tableNum(HcmWorker), HcmWorker::userId2Worker(tsAppEmplSub.DelegatedUser));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>TSAppEmplSub_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(TSAppEmplSub), DataEventType::Deleted)]
+    public static void TSAppEmplSub_onDeleted(Common sender, DataEventArgs e)
+    {
+        TSAppEmplSub        tsAppEmplSub = sender as TSAppEmplSub;
+        ResourceWorkerView  resourceWorkerView;
+
+        select * from resourceWorkerView
+            where resourceWorkerView.RecId == tsAppEmplSub.TimesheetResource;
+        SPYWebDocumentLog::updateLog(tableNum(HcmWorker), HcmWorker::userId2Worker(tsAppEmplSub.DelegatedUser), true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPositionWorkerAssignment_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPositionWorkerAssignment), DataEventType::Inserted)]
+    public static void HcmPositionWorkerAssignment_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmPositionWorkerAssignment        positionWorkerAssignment = sender as HcmPositionWorkerAssignment;
+        SPYWebDocumentLog::updateLog(tableNum(HcmWorker),positionWorkerAssignment.Worker);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPositionWorkerAssignment_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPositionWorkerAssignment), DataEventType::Updated)]
+    public static void HcmPositionWorkerAssignment_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmPositionWorkerAssignment        positionWorkerAssignment = sender as HcmPositionWorkerAssignment;
+        SPYWebDocumentLog::updateLog(tableNum(HcmWorker),positionWorkerAssignment.Worker);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPositionWorkerAssignment_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPositionWorkerAssignment), DataEventType::Deleted)]
+    public static void HcmPositionWorkerAssignment_onDeleted(Common sender, DataEventArgs e)
+    {
+        HcmPositionWorkerAssignment        positionWorkerAssignment = sender as HcmPositionWorkerAssignment;
+        SPYWebDocumentLog::updateLog(tableNum(HcmWorker),positionWorkerAssignment.Worker, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYPayrollParametersShared_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(SPYPayrollParametersShared), DataEventType::Updated)]
+    public static void SPYPayrollParametersShared_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HRMAbsenceCode_onInserted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HRMAbsenceCode), DataEventType::Inserted)]
+    public static void HRMAbsenceCode_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HRMAbsenceCode_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HRMAbsenceCode), DataEventType::Updated)]
+    public static void HRMAbsenceCode_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HRMAbsenceCode_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HRMAbsenceCode), DataEventType::Deleted)]
+    public static void HRMAbsenceCode_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId, true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPositionHierarchy_onInserted</Name>
+				<Source><![CDATA[
+    /*
+    [DataEventHandler(tableStr(SPYWorkerTeamMember), DataEventType::Inserted)]
+    public static void SPYWorkerTeamMember_onInserted(Common sender, DataEventArgs e)
+    {
+        SPYWorkerTeamMember   workerTeamMember = sender as SPYWorkerTeamMember;
+        HcmWorker       hcmWorker = HcmWorker::find(workerTeamMember.TeamMember);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        hcmWorker = HcmWorker::find(workerTeamMember.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+    [DataEventHandler(tableStr(SPYWorkerTeamMember), DataEventType::Updated)]
+    public static void SPYWorkerTeamMember_onUpdated(Common sender, DataEventArgs e)
+    {
+        SPYWorkerTeamMember   workerTeamMember = sender as SPYWorkerTeamMember;
+        HcmWorker       hcmWorker = HcmWorker::find(workerTeamMember.TeamMember);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        hcmWorker = HcmWorker::find(workerTeamMember.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+    [DataEventHandler(tableStr(SPYWorkerTeamMember), DataEventType::Deleted)]
+    public static void SPYWorkerTeamMember_onDeleted(Common sender, DataEventArgs e)
+    {
+        SPYWorkerTeamMember   workerTeamMember = sender as SPYWorkerTeamMember;
+        HcmWorker       hcmWorker = HcmWorker::find(workerTeamMember.TeamMember);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        hcmWorker = HcmWorker::find(workerTeamMember.Worker);
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+    */
+    [DataEventHandler(tableStr(HcmPositionHierarchy), DataEventType::Inserted)]
+    public static void HcmPositionHierarchy_onInserted(Common sender, DataEventArgs e)
+    {
+        HcmPositionHierarchy   hcmPositionHierarchy = sender as HcmPositionHierarchy;
+        HcmWorker       hcmWorker = HcmWorker::find(HcmPosition::getWorker(hcmPositionHierarchy.ParentPosition, today()));
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        hcmWorker = HcmWorker::find(HcmPosition::getWorker(hcmPositionHierarchy.Position, today()));
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPositionHierarchy_onUpdated</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPositionHierarchy), DataEventType::Updated)]
+    public static void HcmPositionHierarchy_onUpdated(Common sender, DataEventArgs e)
+    {
+        HcmPositionHierarchy   hcmPositionHierarchy = sender as HcmPositionHierarchy;
+        HcmWorker       hcmWorker = HcmWorker::find(HcmPosition::getWorker(hcmPositionHierarchy.ParentPosition, today()));
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        hcmWorker = HcmWorker::find(HcmPosition::getWorker(hcmPositionHierarchy.Position, today()));
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmPositionHierarchy_onDeleted</Name>
+				<Source><![CDATA[
+    [DataEventHandler(tableStr(HcmPositionHierarchy), DataEventType::Deleted)]
+    public static void HcmPositionHierarchy_onDeleted(Common sender, DataEventArgs e)
+    {
+        HcmPositionHierarchy   hcmPositionHierarchy = sender as HcmPositionHierarchy;
+        HcmWorker       hcmWorker = HcmWorker::find(HcmPosition::getWorker(hcmPositionHierarchy.ParentPosition, today()));
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+        hcmWorker = HcmWorker::find(HcmPosition::getWorker(hcmPositionHierarchy.Position, today()));
+        SPYWebDocumentLog::updateLog(hcmWorker.TableId, hcmWorker.RecId);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

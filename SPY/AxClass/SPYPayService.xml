@@ -1,0 +1,2526 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayService extends SysOperationServiceBase implements SPYIObservable
+{
+    LegalEntityRecId                legalEntity;
+    SPYPayrollPeriodRecId           payrollPeriod;
+    SPYPayrollPeriodLineRecId       payrollPeriodLine;
+    HcmWorker                       worker;
+    TransDate                       transDate;
+    SPYPayrollPeriodLine            payrollPeriodLineTab;
+    TransDate                       periodStart;
+    TransDate                       periodEnd;
+    TransDate                       calcStart;
+    TransDate                       calcEnd;
+    SPYPayElementRecId              payElement;
+    SPYWorkerPayrollRecId           workerPayroll;
+    SPYWorkerBenefitRecId           workerBenefit;
+    SPYExpressionReturnValue        expressionReturn;
+    TransDate                       timesheetStart;
+    TransDate                       timesheetEnd;
+    container                       ledgerSource;
+    CalendarId                      workerCalendarId;
+    HcmEmployment                   hcmEmployment;
+    HcmEmploymentDetail             hcmEmploymentDetail;
+    boolean                         payArrear;
+    SPYPayrollPeriodLineRecId       postedPeriodLine;
+    List                            workerList;
+    Map                             payElementMap,appForAllPayrollMap,appForAllBenefitMap;
+    date                            employmentStartDate,employmentEndDate;
+    boolean                         leaveSettlement;
+    SPYLeaveApplicationRecId        leaveApplication;
+    TransDate                       payElementPeriodStart, payElementPeriodEnd;
+    boolean     callFromBatchTask;
+
+    SPYExpressionEvaluationMap      expressionEvaluationMap;
+    SPYPayLedgerUpdate              payLedgerUpdate;
+    SPYEOSRunUpdate                 EOSRunUpdate;
+    SPYEOSRunRecId                  EOSRun;
+    SPYExpressionContextTmp         expressionContextTmp;
+    SPYExpressionContext            expressionContext;
+
+    Array                           observers;
+    SPYObserver                     tracer;
+
+    SPYExpressionEvaluationEngine   expressionEvaluationEngine;
+
+    SPYPayProcessLog                payProcessLog;
+    str                             workerValidationText;
+
+    SPYPayElementTmp                payElementTmp;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>addObserver</Name>
+				<Source><![CDATA[
+    public void addObserver(SPYIObserver    _iObserver,
+                            int             _key)
+    {
+        observers.value(_key, _iObserver);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>amtQtyFromBenefitLedgerTmp</Name>
+				<Source><![CDATA[
+    protected container amtQtyFromBenefitLedgerTmp(SPYBenefitLedgerTmp _benefitLedgerTmp)
+    {
+        container           ret;
+    
+        select sum(Quantity),sum(TransactionCurrencyAmount),sum(AccountingCurrencyAmount) from _benefitLedgerTmp;
+        ret = [_benefitLedgerTmp.TransactionCurrencyAmount,_benefitLedgerTmp.AccountingCurrencyAmount,_benefitLedgerTmp.Quantity];
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>benefitCurrency</Name>
+				<Source><![CDATA[
+    protected CurrencyCode benefitCurrency(SPYBenefitRecId _benefit)
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        date                        validFrom = dateNull(),validTo = dateMax();
+    
+        select firstOnly validTimeState(validFrom,validTo) workerPositionBenefit order by ValidTo desc
+            where workerPositionBenefit.Worker == worker.RecId &&
+                  workerPositionBenefit.LegalEntity == legalEntity &&
+                  workerPositionBenefit.Benefit == _benefit;
+    
+        if(workerPositionBenefit.Currency)
+            return workerPositionBenefit.Currency;
+        else if(hcmEmploymentDetail.SPYDefaultPayrollCurrency)
+            return hcmEmploymentDetail.SPYDefaultPayrollCurrency;
+        else
+            return Ledger::accountingCurrency();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkTrace</Name>
+				<Source><![CDATA[
+    void checkTrace(Filename _filePath = "")
+    {             
+        SPYPayService::saveOpen(_filePath,tracer.getTraceFormatted());        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>clearWorkerValidationText</Name>
+				<Source><![CDATA[
+    protected void clearWorkerValidationText()
+    {
+        workerValidationText = "";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>defaultCurAndExchRate</Name>
+				<Source><![CDATA[
+    private container defaultCurAndExchRate(SPYPayElementRecId  _benefit)
+    {
+        CurrencyExchangeHelper      currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), transDate);
+        container                   ret;
+        CurrencyCode                transCur = this.benefitCurrency(_benefit);
+    
+        ret = [transCur,currencyExchangeHelper.calculateTransactionToAccounting(transCur,1,false)];
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>diffWorkerBenefitCurrency</Name>
+				<Source><![CDATA[
+    private int diffWorkerBenefitCurrency(SPYPayElementRecId _benefit)
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        int                         ret;
+    
+        while select  validTimeState(periodStart,periodEnd) workerPositionBenefit group by Currency
+                where workerPositionBenefit.Worker == worker.RecId &&
+                      workerPositionBenefit.LegalEntity == legalEntity &&
+                      workerPositionBenefit.PayrollPeriod == payrollPeriod &&
+                      workerPositionBenefit.Benefit == _benefit
+        {
+            ret++;
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>diffWorkerPayrollCurrency</Name>
+				<Source><![CDATA[
+    private int diffWorkerPayrollCurrency(SPYPayElementRecId _payroll)
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        int                         ret;
+    
+        while select  validTimeState(periodStart,periodEnd) workerPositionPayroll group by Currency
+                where workerPositionPayroll.Worker == worker.RecId &&
+                      workerPositionPayroll.LegalEntity == legalEntity &&
+                      workerPositionPayroll.PayrollPeriod == payrollPeriod &&
+                      workerPositionPayroll.Payroll == _payroll
+        {
+            ret++;
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>excludePostedBenefitAmtQty</Name>
+				<Source><![CDATA[
+    public container excludePostedBenefitAmtQty(SPYPayElementRecId      _benefit,
+                                                 SPYAmount               _transCurAmt,
+                                                 SPYAmount               _accCurAmt,
+                                                 SPYAmount               _qty,
+                                                 CurrencyCode            _currency)
+    {
+        SPYBenefitLedger        benefitLedger;
+        container               ret;
+    
+        //--if posted ledger have diff currencies
+        select count(recid) from benefitLedger
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  benefitLedger.Benefit == _benefit &&
+                  benefitLedger.Currency != _currency &&
+                  benefitLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  benefitLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+        if(benefitLedger.RecId)
+        {
+            select sum(AccountingCurrencyAmount), sum(Quantity) from benefitLedger
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.PayrollPeriodLine ==  payrollPeriodLine &&
+                  !benefitLedger.ArrearPeriodLine &&
+                  benefitLedger.Benefit == _benefit &&
+                  benefitLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  benefitLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+            //>>2015-10-20_SNK
+            //changed from sum to difference and multplied all totals with -1
+            ret = [_transCurAmt - conPeek(this.setTranCurAmtAndExchRate(benefitLedger.AccountingCurrencyAmount,_currency),1),
+                    _accCurAmt - benefitLedger.AccountingCurrencyAmount, _qty - benefitLedger.Quantity];
+            //<<2015-10-20_SNK
+        }
+        else
+        {
+            select sum(TransactionCurrencyAmount), sum(AccountingCurrencyAmount), sum(Quantity) from benefitLedger
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !benefitLedger.ArrearPeriodLine &&
+                  benefitLedger.Benefit == _benefit &&
+                  benefitLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  benefitLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+    
+            ret = [_transCurAmt - benefitLedger.TransactionCurrencyAmount,
+                   _accCurAmt - benefitLedger.AccountingCurrencyAmount, _qty - benefitLedger.Quantity];
+        }
+    
+        //Consider arrear transaction
+        //--if posted ledger have diff currencies
+        select count(recid) from benefitLedger
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  benefitLedger.Benefit == _benefit &&
+                  benefitLedger.Currency != _currency &&
+                  benefitLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  benefitLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+        if(benefitLedger.RecId)
+        {
+            select sum(AccountingCurrencyAmount), sum(Quantity) from benefitLedger
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.ArrearPeriodLine ==  payrollPeriodLine &&
+                  benefitLedger.Benefit == _benefit &&
+                  benefitLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  benefitLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+            //>>2015-10-20_SNK
+            //changed from sum to difference and multplied all totals with -1
+            ret = [conPeek(ret,1) - conPeek(this.setTranCurAmtAndExchRate(benefitLedger.AccountingCurrencyAmount,_currency),1),
+                   conPeek(ret,2) - benefitLedger.AccountingCurrencyAmount,
+                   conpeek(ret,3) - benefitLedger.Quantity];
+            //<<2015-10-20_SNK
+        }
+        else
+        {
+            select sum(TransactionCurrencyAmount), sum(AccountingCurrencyAmount), sum(Quantity) from benefitLedger
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  benefitLedger.Benefit == _benefit &&
+                  benefitLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  benefitLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+            ret = [conPeek(ret,1) - benefitLedger.TransactionCurrencyAmount,
+                   conPeek(ret,2) - benefitLedger.AccountingCurrencyAmount,
+                   conPeek(ret,3) - benefitLedger.Quantity];
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>excludePostedBenefitAmtQtyFromRefPayLedger</Name>
+				<Source><![CDATA[
+    public container excludePostedBenefitAmtQtyFromRefPayLedger(SPYPayElementRecId      _benefit,
+                                                 SPYAmount               _transCurAmt,
+                                                 SPYAmount               _accCurAmt,
+                                                 SPYAmount               _qty,
+                                                 CurrencyCode            _currency)
+    {
+        SPYReferencePayElementLedger        refPayElementLedger;
+        container               ret;
+    
+        //--if posted ledger have diff currencies
+        select count(recid) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  refPayElementLedger.PayElement == _benefit &&
+                  refPayElementLedger.Currency != _currency &&
+                  refPayElementLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+        if(refPayElementLedger.RecId)
+        {
+            select sum(AccountingCurrencyAmount), sum(Quantity) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.PayrollPeriodLine ==  payrollPeriodLine &&
+                  !refPayElementLedger.ArrearPeriodLine &&
+                  refPayElementLedger.PayElement == _benefit &&
+                  refPayElementLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+            
+            //changed from sum to difference and multplied all totals with -1
+            ret = [_transCurAmt - conPeek(this.setTranCurAmtAndExchRate(refPayElementLedger.AccountingCurrencyAmount,_currency),1),
+                    _accCurAmt - refPayElementLedger.AccountingCurrencyAmount, _qty - refPayElementLedger.Quantity];
+        }
+        else
+        {
+            select sum(TransactionCurrencyAmount), sum(AccountingCurrencyAmount), sum(Quantity) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !refPayElementLedger.ArrearPeriodLine &&
+                  refPayElementLedger.PayElement == _benefit &&
+                  refPayElementLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+    
+            ret = [_transCurAmt - refPayElementLedger.TransactionCurrencyAmount,
+                   _accCurAmt - refPayElementLedger.AccountingCurrencyAmount, _qty - refPayElementLedger.Quantity];
+        }
+    
+        //Consider arrear transaction
+        //--if posted ledger have diff currencies
+        select count(recid) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  refPayElementLedger.PayElement == _benefit &&
+                  refPayElementLedger.Currency != _currency &&
+                  refPayElementLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+        if(refPayElementLedger.RecId)
+        {
+            select sum(AccountingCurrencyAmount), sum(Quantity) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.ArrearPeriodLine ==  payrollPeriodLine &&
+                  refPayElementLedger.PayElement == _benefit &&
+                  refPayElementLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+            
+            //changed from sum to difference and multplied all totals with -1
+            ret = [conPeek(ret,1) - conPeek(this.setTranCurAmtAndExchRate(refPayElementLedger.AccountingCurrencyAmount,_currency),1),
+                   conPeek(ret,2) - refPayElementLedger.AccountingCurrencyAmount,
+                   conpeek(ret,3) - refPayElementLedger.Quantity];
+        }
+        else
+        {
+            select sum(TransactionCurrencyAmount), sum(AccountingCurrencyAmount), sum(Quantity) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  refPayElementLedger.PayElement == _benefit &&
+                  refPayElementLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYBenefitJournalTable);
+            ret = [conPeek(ret,1) - refPayElementLedger.TransactionCurrencyAmount,
+                   conPeek(ret,2) - refPayElementLedger.AccountingCurrencyAmount,
+                   conPeek(ret,3) - refPayElementLedger.Quantity];
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>excludePostedPayrollAmt</Name>
+				<Source><![CDATA[
+    private container excludePostedPayrollAmt(SPYPayElementRecId      _payroll,
+                                                SPYAmount               _transCurAmt,
+                                                SPYAmount               _accCurAmt,
+                                                CurrencyCode            _currency)
+    {
+        SPYPayrollLedger        payrollLedger;
+        container               ret;
+    
+        //--if posted ledger have diff currencies
+        select count(recid) from payrollLedger
+            where payrollLedger.Worker == worker.RecId &&
+                  payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  payrollLedger.Payroll == _payroll &&
+                  payrollLedger.Currency != _currency &&
+                  payrollLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+        if(payrollLedger.RecId)
+        {
+            select sum(AccountingCurrencyAmount) from payrollLedger
+            where payrollLedger.Worker == worker.RecId &&
+                  payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !payrollLedger.ArrearPeriodLine &&
+                  payrollLedger.Payroll == _payroll &&
+                  payrollLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+            ret = [_transCurAmt - conPeek(this.setTranCurAmtAndExchRate(payrollLedger.AccountingCurrencyAmount,_currency),1),
+                   _accCurAmt - payrollLedger.AccountingCurrencyAmount];
+        }
+        else
+        {
+            select sum(TransactionCurrencyAmount),sum(AccountingCurrencyAmount) from payrollLedger
+            where payrollLedger.Worker == worker.RecId &&
+                  payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !payrollLedger.ArrearPeriodLine &&
+                  payrollLedger.Payroll == _payroll &&
+                  payrollLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+            ret = [_transCurAmt - payrollLedger.TransactionCurrencyAmount,_accCurAmt - payrollLedger.AccountingCurrencyAmount];
+        }
+    
+        //Consider arrear transaction
+        //--if posted ledger have diff currencies
+        select count(recid) from payrollLedger
+            where payrollLedger.Worker == worker.RecId &&
+                  payrollLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  payrollLedger.Payroll == _payroll &&
+                  payrollLedger.Currency != _currency &&
+                  payrollLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+        if(payrollLedger.RecId)
+        {
+            select sum(AccountingCurrencyAmount) from payrollLedger
+            where payrollLedger.Worker == worker.RecId &&
+                  payrollLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  payrollLedger.Payroll == _payroll &&
+                  payrollLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+            ret = [conPeek(ret,1) - conPeek(this.setTranCurAmtAndExchRate(payrollLedger.AccountingCurrencyAmount,_currency),1),
+                   conPeek(ret,2) - payrollLedger.AccountingCurrencyAmount];
+        }
+        else
+        {
+            select sum(TransactionCurrencyAmount),sum(AccountingCurrencyAmount) from payrollLedger
+            where payrollLedger.Worker == worker.RecId &&
+                  payrollLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  payrollLedger.Payroll == _payroll &&
+                  payrollLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+            ret = [conPeek(ret,1) - payrollLedger.TransactionCurrencyAmount,
+                   conPeek(ret,2) - payrollLedger.AccountingCurrencyAmount];
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>excludePostedPayrollAmtFromRefPayLedger</Name>
+				<Source><![CDATA[
+    private container excludePostedPayrollAmtFromRefPayLedger(SPYPayElementRecId      _payroll,
+                                                SPYAmount               _transCurAmt,
+                                                SPYAmount               _accCurAmt,
+                                                CurrencyCode            _currency)
+    {
+        SPYReferencePayElementLedger        refPayElementLedger;
+        container               ret;
+    
+        //--if posted ledger have diff currencies
+        select count(recid) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  refPayElementLedger.PayElement == _payroll &&
+                  refPayElementLedger.Currency != _currency &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+        if(refPayElementLedger.RecId)
+        {
+            select sum(AccountingCurrencyAmount) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !refPayElementLedger.ArrearPeriodLine &&
+                  refPayElementLedger.PayElement == _payroll &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+            ret = [_transCurAmt - conPeek(this.setTranCurAmtAndExchRate(refPayElementLedger.AccountingCurrencyAmount,_currency),1),
+                   _accCurAmt - refPayElementLedger.AccountingCurrencyAmount];
+        }
+        else
+        {
+            select sum(TransactionCurrencyAmount),sum(AccountingCurrencyAmount) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.PayrollPeriodLine == payrollPeriodLine &&
+                  !refPayElementLedger.ArrearPeriodLine &&
+                  refPayElementLedger.PayElement == _payroll &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+            ret = [_transCurAmt - refPayElementLedger.TransactionCurrencyAmount,_accCurAmt - refPayElementLedger.AccountingCurrencyAmount];
+        }
+    
+        //Consider arrear transaction
+        //--if posted ledger have diff currencies
+        select count(recid) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  refPayElementLedger.PayElement == _payroll &&
+                  refPayElementLedger.Currency != _currency &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+        if(refPayElementLedger.RecId)
+        {
+            select sum(AccountingCurrencyAmount) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  refPayElementLedger.PayElement == _payroll &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+            ret = [conPeek(ret,1) - conPeek(this.setTranCurAmtAndExchRate(refPayElementLedger.AccountingCurrencyAmount,_currency),1),
+                   conPeek(ret,2) - refPayElementLedger.AccountingCurrencyAmount];
+        }
+        else
+        {
+            select sum(TransactionCurrencyAmount),sum(AccountingCurrencyAmount) from refPayElementLedger
+            where refPayElementLedger.Worker == worker.RecId &&
+                  refPayElementLedger.ArrearPeriodLine == payrollPeriodLine &&
+                  refPayElementLedger.PayElement == _payroll &&
+                  refPayElementLedger.SourceDocument != tableNum(SPYPayrollEarningsJournalTable); //Exclude entries coming from earning journal
+    
+            ret = [conPeek(ret,1) - refPayElementLedger.TransactionCurrencyAmount,
+                   conPeek(ret,2) - refPayElementLedger.AccountingCurrencyAmount];
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>finalizeProcess</Name>
+				<Source><![CDATA[
+    public void finalizeProcess()
+    {
+        //--<Commit ledger>--
+        //payLedgerUpdate.updateLedger();
+        //--</Commit ledger>--
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getTxt</Name>
+				<Source><![CDATA[
+    protected NotesLine getTxt(SPYPayElementRecId     _payElement)
+    {
+        NotesLine           txt;
+    
+        if(payArrear && postedPeriodLine != payrollPeriodLine)
+        {
+            txt = strFmt("@SPY1136",SPYPayElementTable::find(_payElement).PayElementCode,
+                          worker.name(),periodStart,periodEnd);
+        }
+        else
+        {
+            txt = strFmt("@SPY374",SPYPayElementTable::find(_payElement).PayElementCode,
+                         worker.name(),periodStart,periodEnd);
+        }
+    
+        return txt;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initialize</Name>
+				<Source><![CDATA[
+    public void initialize()
+    {
+        workerList                  = new List(Types::Int64);
+        payElementMap               = new Map(Types::Int64,Types::Enum);
+        appForAllPayrollMap         = new Map(Types::Int64,Types::Container);
+        appForAllBenefitMap         = new Map(Types::Int64,Types::Container);
+        expressionEvaluationMap     = new SPYExpressionEvaluationMap();
+        payLedgerUpdate             = new SPYPayLedgerUpdate();
+        expressionContext           = new SPYExpressionContext();
+        observers                   = new Array(Types::Class);
+        tracer                      = new SPYObserver();
+        tracer.parmCallerObservable(this);
+        expressionEvaluationEngine  = new SPYExpressionEvaluationEngine(SPYProcess::PayProcess);
+        this.refreshExpressionContextTmp();
+        if(!callFromBatchTask)
+            SPYObjectCache::flushAllUserCache();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeAllPayElementMap</Name>
+				<Source><![CDATA[
+    protected void initializeAllPayElementMap()
+    {
+        this.setPayElementPeriod();
+        this.initializeAppForAllPayrollMap();
+        this.initializeAppForAllBenefitMap();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayElementPeriod</Name>
+				<Source><![CDATA[
+    public void setPayElementPeriod()
+    {
+        payElementPeriodStart = periodStart;
+        payElementPeriodEnd = periodEnd;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeAppForAllBenefitMap</Name>
+				<Source><![CDATA[
+    protected void initializeAppForAllBenefitMap() //Applicable for all benefit
+    {
+        SPYPayElementDetails        payElementDetails,childPayElementDetails;
+        SPYPayElementTable          payElementTable,childPayElementTable;
+    
+        //Regular benefit process for 'Applicable For All' benefit
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from payElementTable join payElementDetails
+            where payElementDetails.PayElement == payElementTable.RecId &&
+                  payElementDetails.LegalEntity == legalEntity &&
+                  payElementTable.PayElementType == SPYPayElementType::Benefit &&
+                  payElementDetails.ApplicableForAll &&
+                  payElementDetails.EOSPayElement == expressionContext.endOfSettlement() &&
+                  !payElementTable.ParentPayElement
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllBenefitMap.exists(payElementTable.RecId))
+            {
+                appForAllBenefitMap.insert(payElementTable.RecId,[0,payElementDetails.CalculationOrder]);
+                //calculate child Benefit
+                while select RecId from childPayElementTable
+                    where childPayElementTable.ParentPayElement == payElementTable.RecId &&
+                          childPayElementTable.PayElementType == SPYPayElementType::Benefit
+                    outer join CalculationOrder from childPayElementDetails
+                    where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                          childPayElementDetails.LegalEntity == legalEntity
+                {
+                    if(!appForAllBenefitMap.exists(childPayElementTable.RecId))
+                    {
+                        appForAllBenefitMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+                    }
+                }
+            }
+        }
+        //Regular payroll process for child benefit of parent: 'Applicable For All' payroll
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from childPayElementTable
+            join RecId from payElementTable join payElementDetails
+            where payElementDetails.PayElement == payElementTable.RecId &&
+                  payElementDetails.LegalEntity == legalEntity &&
+                  payElementTable.PayElementType == SPYPayElementType::Payroll &&
+                  payElementDetails.ApplicableForAll &&
+                  payElementDetails.EOSPayElement == expressionContext.endOfSettlement() &&
+                  !payElementTable.ParentPayElement &&
+                  childPayElementTable.ParentPayElement == payElementTable.RecId &&
+                  childPayElementTable.PayElementType == SPYPayElementType::Benefit
+            outer join CalculationOrder from childPayElementDetails
+            where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                  childPayElementDetails.LegalEntity == legalEntity
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllBenefitMap.exists(childPayElementTable.RecId))
+            {
+                payElementMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+            }
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeAppForAllPayrollMap</Name>
+				<Source><![CDATA[
+    protected void initializeAppForAllPayrollMap() //Applicable for all payroll
+    {
+        SPYPayElementDetails        payElementDetails,childPayElementDetails;
+        SPYPayElementTable          payElementTable,childPayElementTable;
+    
+        //Regular payroll process for 'Applicable For All' payroll
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from payElementTable join payElementDetails
+            where payElementDetails.PayElement == payElementTable.RecId &&
+                  payElementDetails.LegalEntity == legalEntity &&
+                  payElementTable.PayElementType == SPYPayElementType::Payroll &&
+                  payElementDetails.ApplicableForAll &&
+                  payElementDetails.EOSPayElement == expressionContext.endOfSettlement() &&
+                  !payElementTable.ParentPayElement
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllPayrollMap.exists(payElementTable.RecId))
+            {
+                appForAllPayrollMap.insert(payElementTable.RecId,[0,payElementDetails.CalculationOrder]);
+                //calculate child payroll
+                while select RecId from childPayElementTable
+                    where childPayElementTable.ParentPayElement == payElementTable.RecId &&
+                          childPayElementTable.PayElementType == SPYPayElementType::Payroll
+                    outer join CalculationOrder from childPayElementDetails
+                    where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                          childPayElementDetails.LegalEntity == legalEntity
+                {
+                    if(!appForAllPayrollMap.exists(childPayElementTable.RecId))
+                    {
+                        appForAllPayrollMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+                    }
+                }
+            }
+        }
+        //Regular payroll process for child payroll of parent: 'Applicable For All' benefit
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from childPayElementTable
+            join RecId from payElementTable join payElementDetails
+            where payElementDetails.PayElement == payElementTable.RecId &&
+                  payElementDetails.LegalEntity == legalEntity &&
+                  payElementTable.PayElementType == SPYPayElementType::Benefit &&
+                  payElementDetails.ApplicableForAll &&
+                  payElementDetails.EOSPayElement == expressionContext.endOfSettlement() &&
+                  !payElementTable.ParentPayElement &&
+                  childPayElementTable.ParentPayElement == payElementTable.RecId &&
+                  childPayElementTable.PayElementType == SPYPayElementType::Payroll
+            outer join CalculationOrder from childPayElementDetails
+            where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                  childPayElementDetails.LegalEntity == legalEntity
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllPayrollMap.exists(childPayElementTable.RecId))
+            {
+                appForAllPayrollMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeEOSRunFromBenefit</Name>
+				<Source><![CDATA[
+    protected SPYEOSRunBenefit initializeEOSRunFromBenefit(SPYPayElementRecId     _benefit,
+                                                           SPYAmount              _transCurAmt,
+                                                           SPYAmount              _AccCurAmt,
+                                                           SPYAmount              _qty,
+                                                           CurrencyCode           _currency,
+                                                           SPYAmount              _exchRate,
+                                                           boolean                _eos = false)
+    {
+        SPYEOSRunBenefit    EOSRunBenefit;
+        int                 sign;
+    
+        if(_eos)
+            sign = -1;
+        else
+            sign = 1;
+        EOSRunBenefit.initValue();
+        EOSRunBenefit.EOSRun                    = EOSRun;
+        EOSRunBenefit.Worker                    = worker.RecId;
+        if(_eos)
+            EOSRunBenefit.JournalType           = SPYBenefitJournalType::Encashment;
+        else
+            EOSRunBenefit.JournalType           = SPYBenefitJournalType::Accrual;
+        EOSRunBenefit.Benefit                   = _benefit;
+        EOSRunBenefit.PayrollPeriodLine         = payrollPeriodLine;
+        EOSRunBenefit.Currency                  = _currency;
+        EOSRunBenefit.TransactionCurrencyAmount = sign * _transCurAmt;
+        EOSRunBenefit.ExchRate                  = _exchRate;
+        EOSRunBenefit.AccountingCurrencyAmount  = sign * _AccCurAmt;
+        EOSRunBenefit.Quantity                  = sign * _qty;
+        EOSRunBenefit.TransDate                 = transDate;
+        EOSRunBenefit.Txt                       = strFmt("@SPY1567",SPYPayElementTable::find(_benefit).PayElementCode,
+                                                         worker.name(),periodStart,periodEnd);
+        EOSRunBenefit.setAccount(periodStart,legalEntity,payrollPeriodLine,_eos);
+        if(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn() != conNull())
+            EOSRunBenefit.PayLedgerSource = this.updateLedgerSource(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn());
+    
+        return EOSRunBenefit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeEOSRunFromPayroll</Name>
+				<Source><![CDATA[
+    protected SPYEOSRunPayroll initializeEOSRunFromPayroll(SPYPayElementRecId     _payroll,
+                                                         SPYAmount              _transCurAmt,
+                                                         SPYAmount              _AccCurAmt,
+                                                         CurrencyCode           _currency,
+                                                         SPYAmount              _exchRate)
+    {
+        SPYEOSRunPayroll    EOSRunPayroll;
+    
+        EOSRunPayroll.initValue();
+        EOSRunPayroll.EOSRun                    = EOSRun;
+        EOSRunPayroll.Worker                    = worker.RecId;
+        EOSRunPayroll.Payroll                   = _payroll;
+        EOSRunPayroll.PayrollPeriodLine         = payrollPeriodLine;
+        EOSRunPayroll.Currency                  = _currency;
+        EOSRunPayroll.TransactionCurrencyAmount = _transCurAmt;
+        EOSRunPayroll.ExchRate                  = _exchRate;
+        EOSRunPayroll.AccountingCurrencyAmount  = _AccCurAmt;
+        EOSRunPayroll.TransDate                 = transDate;
+        EOSRunPayroll.Txt                       = strFmt("@SPY1567",SPYPayElementTable::find(_payroll).PayElementCode,
+                                                         worker.name(),periodStart,periodEnd);
+        EOSRunPayroll.setAccount(periodStart,legalEntity,payrollPeriodLine);
+        if(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn() != conNull())
+            EOSRunPayroll.PayLedgerSource = this.updateLedgerSource(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn());
+        
+        return EOSRunPayroll;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeLedgerFromBenefit</Name>
+				<Source><![CDATA[
+    private SPYBenefitLedger initializeLedgerFromBenefit(SPYPayElementRecId     _benefit,
+                                                         SPYAmount              _transCurAmt,
+                                                         SPYAmount              _AccCurAmt,
+                                                         SPYAmount              _qty,
+                                                         CurrencyCode           _currency,
+                                                         SPYAmount              _exchRate)
+    {
+        SPYBenefitLedger    benefitLedger;
+
+        benefitLedger.initValue();
+        benefitLedger.Worker                    = worker.RecId;
+        benefitLedger.Benefit                   = _benefit;
+        if(payArrear && postedPeriodLine != payrollPeriodLine)
+        {
+            benefitLedger.PayrollPeriodLine     = postedPeriodLine;
+            benefitLedger.ArrearPeriodLine      = payrollPeriodLine;
+        }
+        else
+        {
+            benefitLedger.PayrollPeriodLine     = payrollPeriodLine;
+        }
+        benefitLedger.Currency                  = _currency;
+        benefitLedger.CalcStartDate             = periodStart;
+        benefitLedger.CalcEndDate               = periodEnd;
+        benefitLedger.TransactionCurrencyAmount = _transCurAmt;
+        benefitLedger.ExchRate                  = _exchRate;
+        benefitLedger.AccountingCurrencyAmount  = _AccCurAmt;
+        benefitLedger.Quantity                  = _qty;
+        benefitLedger.TransDate                 = transDate;
+        benefitLedger.Txt                       = this.getTxt(_benefit);
+        benefitLedger.JournalType               = SPYBenefitJournalType::Accrual;
+        benefitLedger.setAccount(transDate,legalEntity,payrollPeriodLine);
+        if(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn() != conNull())
+            benefitLedger.PayLedgerSource = this.updateLedgerSource(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn());
+        if(leaveSettlement)
+        {
+            benefitLedger.SourceDocument        = tableNum(SPYLeaveApplicationTable);
+            benefitLedger.LeaveApplication      = leaveApplication;
+        }
+        benefitLedger.ExpressionTrace = this.getExpressionTrace();
+        return benefitLedger;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeRefLedgerFromBenefit</Name>
+				<Source><![CDATA[
+    private SPYReferencePayElementLedger initializeRefLedgerFromBenefit(SPYPayElementRecId     _benefit,
+                                                         SPYAmount              _transCurAmt,
+                                                         SPYAmount              _AccCurAmt,
+                                                         SPYAmount              _qty,
+                                                         CurrencyCode           _currency,
+                                                         SPYAmount              _exchRate)
+    {
+        SPYReferencePayElementLedger    refPayElementLedger;
+    
+        refPayElementLedger.initValue();
+        refPayElementLedger.Worker                    = worker.RecId;
+        refPayElementLedger.PayElement                   = _benefit;
+        if(payArrear && postedPeriodLine != payrollPeriodLine)
+        {
+            refPayElementLedger.PayrollPeriodLine     = postedPeriodLine;
+            refPayElementLedger.ArrearPeriodLine      = payrollPeriodLine;
+        }
+        else
+        {
+            refPayElementLedger.PayrollPeriodLine     = payrollPeriodLine;
+        }
+        refPayElementLedger.Currency                  = _currency;
+        refPayElementLedger.CalcStartDate             = periodStart;
+        refPayElementLedger.CalcEndDate               = periodEnd;
+        refPayElementLedger.TransactionCurrencyAmount = _transCurAmt;
+        refPayElementLedger.ExchRate                  = _exchRate;
+        refPayElementLedger.AccountingCurrencyAmount  = _AccCurAmt;
+        refPayElementLedger.Quantity                  = _qty;
+        refPayElementLedger.TransDate                 = transDate;
+        refPayElementLedger.Txt                       = this.getTxt(_benefit);
+        refPayElementLedger.JournalType               = SPYBenefitJournalType::Accrual;
+        if(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn() != conNull())
+            refPayElementLedger.PayLedgerSource = this.updateLedgerSource(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn());
+        if(leaveSettlement)
+        {
+            refPayElementLedger.SourceDocument        = tableNum(SPYLeaveApplicationTable);
+            refPayElementLedger.LeaveApplication      = leaveApplication;
+        }
+        refPayElementLedger.ExpressionTrace = this.getExpressionTrace();
+
+        return refPayElementLedger;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeLedgerFromPayroll</Name>
+				<Source><![CDATA[
+    private SPYPayrollLedger initializeLedgerFromPayroll(SPYPayElementRecId _payroll,
+                                                         SPYAmount          _transCurAmt,
+                                                         SPYAmount          _AccCurAmt,
+                                                         CurrencyCode       _currency,
+                                                         SPYAmount          _exchRate)
+    {
+        SPYPayrollLedger    payrollLedger;
+
+        payrollLedger.initValue();
+        payrollLedger.Worker                    = worker.RecId;
+        payrollLedger.Payroll                   = _payroll;
+        if(payArrear && postedPeriodLine != payrollPeriodLine)
+        {
+            payrollLedger.PayrollPeriodLine     = postedPeriodLine;
+            payrollLedger.ArrearPeriodLine      = payrollPeriodLine;
+        }
+        else
+        {
+            payrollLedger.PayrollPeriodLine     = payrollPeriodLine;
+        }
+        payrollLedger.Currency                  = _currency;
+        payrollLedger.CalcStartDate             = periodStart;
+        payrollLedger.CalcEndDate               = periodEnd;
+        payrollLedger.TransactionCurrencyAmount = _transCurAmt;
+        payrollLedger.ExchRate                  = _exchRate;
+        payrollLedger.AccountingCurrencyAmount  = _AccCurAmt;
+        payrollLedger.TransDate                 = transDate;
+        payrollLedger.Txt                       = this.getTxt(_payroll);
+        payrollLedger.setAccount(transDate,legalEntity,payrollPeriodLine);
+        if(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn() != conNull())
+            payrollLedger.PayLedgerSource = this.updateLedgerSource(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn());
+        if(leaveSettlement)
+        {
+            payrollLedger.SourceDocument        = tableNum(SPYLeaveApplicationTable);
+            payrollLedger.LeaveApplication      = leaveApplication;
+        }
+        payrollLedger.ExpressionTrace = this.getExpressionTrace();
+        
+        return payrollLedger;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeRefLedgerFromPayroll</Name>
+				<Source><![CDATA[
+    private SPYReferencePayElementLedger initializeRefLedgerFromPayroll(SPYPayElementRecId _payroll,
+                                                         SPYAmount          _transCurAmt,
+                                                         SPYAmount          _AccCurAmt,
+                                                         CurrencyCode       _currency,
+                                                         SPYAmount          _exchRate)
+    {
+        SPYReferencePayElementLedger    refPayElementLedger;
+    
+        refPayElementLedger.initValue();
+        refPayElementLedger.Worker                    = worker.RecId;
+        refPayElementLedger.PayElement                   = _payroll;
+        if(payArrear && postedPeriodLine != payrollPeriodLine)
+        {
+            refPayElementLedger.PayrollPeriodLine     = postedPeriodLine;
+            refPayElementLedger.ArrearPeriodLine      = payrollPeriodLine;
+        }
+        else
+        {
+            refPayElementLedger.PayrollPeriodLine     = payrollPeriodLine;
+        }
+        refPayElementLedger.Currency                  = _currency;
+        refPayElementLedger.CalcStartDate             = periodStart;
+        refPayElementLedger.CalcEndDate               = periodEnd;
+        refPayElementLedger.TransactionCurrencyAmount = _transCurAmt;
+        refPayElementLedger.ExchRate                  = _exchRate;
+        refPayElementLedger.AccountingCurrencyAmount  = _AccCurAmt;
+        refPayElementLedger.TransDate                 = transDate;
+        refPayElementLedger.Txt                       = this.getTxt(_payroll);
+        if(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn() != conNull())
+            refPayElementLedger.PayLedgerSource = this.updateLedgerSource(expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn());
+        if(leaveSettlement)
+        {
+            refPayElementLedger.SourceDocument        = tableNum(SPYLeaveApplicationTable);
+            refPayElementLedger.LeaveApplication      = leaveApplication;
+        }
+        refPayElementLedger.ExpressionTrace = this.getExpressionTrace();
+
+        return refPayElementLedger;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializePayElementMap</Name>
+				<Source><![CDATA[
+    protected void initializePayElementMap(boolean _calledFromMasterProcess,container _payElementContainer)
+    {
+        int                 payElementContainerLineCount = 1;
+        QueryRun            payElementQueryRun;
+        SPYPayElementTable  payElementTable;
+        SPYPayElementRecId  payElementRecId;
+    
+        if(_calledFromMasterProcess)
+        {
+            while(payElementContainerLineCount <= conLen(_payElementContainer))
+            {
+                payElementRecId = conPeek(_payElementContainer,payElementContainerLineCount);
+                payElementMap.insert(payElementRecId,SPYPayElementTable::find(payElementRecId).PayElementType);
+                payElementContainerLineCount++;
+            }
+        }
+        else
+        {
+            if(_payElementContainer != conNull())
+                payElementQueryRun = new QueryRun(_payElementContainer);
+            else
+                payElementQueryRun = new QueryRun(new Query(queryStr(SPYPayElement)));
+    
+            while(payElementQueryRun.next())
+            {
+                payElementTable = payElementQueryRun.get(tableNum(SPYPayElementTable));
+                payElementMap.insert(payElementTable.RecId,payElementTable.PayElementType);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeWorkerBenefitMap</Name>
+				<Source><![CDATA[
+    protected Map initializeWorkerBenefitMap()
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefitGroup;
+        SPYWorkerPositionPayroll    workerPositionPayrollGroup;
+        SPYPayElementDetails        payElementDetails,childPayElementDetails;
+        SPYPayElementTable          payElementTable,childPayElementTable;
+        Map                         workerPayElementMap = new Map(Types::Int64,Types::Container);
+
+        //Regular payroll process for attachecd benefit
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) workerPositionBenefitGroup group by Benefit
+        where workerPositionBenefitGroup.Worker == worker.RecId &&
+              workerPositionBenefitGroup.LegalEntity == legalEntity &&
+              workerPositionBenefitGroup.PayrollPeriod == payrollPeriod
+        join payElementTable
+        where payElementTable.RecId == workerPositionBenefitGroup.Benefit &&
+              !payElementTable.ParentPayElement
+        join RecId from payElementDetails group by CalculationOrder
+        where payElementDetails.PayElement == workerPositionBenefitGroup.Benefit &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementDetails.EOSPayElement == expressionContext.endOfSettlement()
+        {
+            if(payElementMap.exists(workerPositionBenefitGroup.Benefit) && !appForAllBenefitMap.exists(workerPositionBenefitGroup.Benefit) &&
+           !workerPayElementMap.exists(workerPositionBenefitGroup.Benefit))
+            {
+                workerPayElementMap.insert(workerPositionBenefitGroup.Benefit,[0,payElementDetails.CalculationOrder]);
+                //calculate child benefit
+                while select RecId from childPayElementTable
+                where childPayElementTable.ParentPayElement == workerPositionBenefitGroup.Benefit &&
+                      childPayElementTable.PayElementType == SPYPayElementType::Benefit
+                outer join CalculationOrder from childPayElementDetails
+                where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                      childPayElementDetails.LegalEntity == legalEntity
+                {
+                    if(!appForAllBenefitMap.exists(childPayElementTable.RecId) &&
+                   !workerPayElementMap.exists(childPayElementTable.RecId))
+                    {
+                        workerPayElementMap.insert(childPayElementTable.RecId,[workerPositionBenefitGroup.Benefit,childPayElementDetails.CalculationOrder]);
+                    }
+                }
+            }
+        }
+        //Regular payroll process for child benfit of parent: attachecd payroll
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from childPayElementTable
+        join RecId from payElementTable join payElementDetails
+        where payElementDetails.PayElement == payElementTable.RecId &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementTable.PayElementType == SPYPayElementType::Payroll &&
+              payElementDetails.EOSPayElement == expressionContext.endOfSettlement() &&
+              !payElementTable.ParentPayElement &&
+              childPayElementTable.ParentPayElement == payElementTable.RecId &&
+              childPayElementTable.PayElementType == SPYPayElementType::Benefit
+        join Payroll from workerPositionPayrollGroup
+        where workerPositionPayrollGroup.Payroll == payElementTable.RecId &&
+              workerPositionPayrollGroup.Worker == worker.RecId &&
+              workerPositionPayrollGroup.LegalEntity == legalEntity &&
+              workerPositionPayrollGroup.PayrollPeriod == payrollPeriod
+        outer join CalculationOrder from childPayElementDetails
+        where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+              childPayElementDetails.LegalEntity == legalEntity
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllBenefitMap.exists(childPayElementTable.RecId) &&
+            !workerPayElementMap.exists(childPayElementTable.RecId))
+            {
+                workerPayElementMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+            }
+        }
+
+        return workerPayElementMap;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeWorkerList</Name>
+				<Source><![CDATA[
+    protected void initializeWorkerList(boolean _calledFromMasterProcess,container _workerContainer)
+    {
+        int                 workerContainerLenCount = 1;
+        QueryRun            workerQueryRun;
+        HcmWorker           hcmWorker;
+    
+        if(_calledFromMasterProcess)
+        {
+            while(workerContainerLenCount <= conLen(_workerContainer))
+            {
+                workerList.addEnd(conPeek(_workerContainer,workerContainerLenCount));
+                workerContainerLenCount++;
+            }
+        }
+        else
+        {
+            if(_workerContainer)
+                workerQueryRun = new QueryRun(_workerContainer);
+            else
+                workerQueryRun = new QueryRun(new Query(queryStr(HcmWorkerLookup)));
+    
+            while(workerQueryRun.next())
+            {
+                hcmWorker = workerQueryRun.get(tableNum(HcmWorker));
+                workerList.addEnd(hcmWorker.RecId);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeWorkerPayrollMap</Name>
+				<Source><![CDATA[
+    protected Map initializeWorkerPayrollMap()
+    {
+        SPYWorkerPositionPayroll    workerPositionPayrollGroup;
+        SPYWorkerPositionBenefit    workerPositionBenefitGroup;
+        SPYPayElementDetails        payElementDetails,childPayElementDetails;
+        SPYPayElementTable          payElementTable,childPayElementTable;
+        Map                         workerPayElementMap = new Map(Types::Int64,Types::Container);
+
+        //Regular payroll process for attachecd payroll
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) workerPositionPayrollGroup group by Payroll
+        where workerPositionPayrollGroup.Worker == worker.RecId &&
+              workerPositionPayrollGroup.LegalEntity == legalEntity &&
+              workerPositionPayrollGroup.PayrollPeriod == payrollPeriod
+        join RecId from payElementTable
+        where payElementTable.RecId == workerPositionPayrollGroup.Payroll &&
+              !payElementTable.ParentPayElement
+        join RecId from payElementDetails group by CalculationOrder
+        where payElementDetails.PayElement == workerPositionPayrollGroup.Payroll &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementDetails.EOSPayElement == expressionContext.endOfSettlement()
+        {
+            if(payElementMap.exists(workerPositionPayrollGroup.Payroll) && !appForAllPayrollMap.exists(workerPositionPayrollGroup.Payroll) &&
+           !workerPayElementMap.exists(workerPositionPayrollGroup.Payroll))
+            {
+                workerPayElementMap.insert(workerPositionPayrollGroup.Payroll,[0,payElementDetails.CalculationOrder]);
+                //calculate child payroll
+                while select RecId from childPayElementTable
+                where childPayElementTable.ParentPayElement == workerPositionPayrollGroup.Payroll &&
+                      childPayElementTable.PayElementType == SPYPayElementType::Payroll
+                outer join CalculationOrder from childPayElementDetails
+                where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                      childPayElementDetails.LegalEntity == legalEntity
+                {
+                    if(!appForAllPayrollMap.exists(childPayElementTable.RecId) &&
+                   !workerPayElementMap.exists(childPayElementTable.RecId))
+                    {
+                        workerPayElementMap.insert(childPayElementTable.RecId,[workerPositionPayrollGroup.Payroll,childPayElementDetails.CalculationOrder]);
+                    }
+                }
+            }
+        }
+        //Regular payroll process for child payroll of parent: attachecd benefit
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from childPayElementTable
+        join RecId from payElementTable join payElementDetails
+        where payElementDetails.PayElement == payElementTable.RecId &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementTable.PayElementType == SPYPayElementType::Benefit &&
+              payElementDetails.EOSPayElement == expressionContext.endOfSettlement() &&
+              !payElementTable.ParentPayElement &&
+              childPayElementTable.ParentPayElement == payElementTable.RecId &&
+              childPayElementTable.PayElementType == SPYPayElementType::Payroll
+        join Benefit from workerPositionBenefitGroup
+        where workerPositionBenefitGroup.Benefit == payElementTable.RecId &&
+              workerPositionBenefitGroup.Worker == worker.RecId &&
+              workerPositionBenefitGroup.LegalEntity == legalEntity &&
+              workerPositionBenefitGroup.PayrollPeriod == payrollPeriod
+        outer join CalculationOrder from childPayElementDetails
+        where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+              childPayElementDetails.LegalEntity == legalEntity
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllPayrollMap.exists(childPayElementTable.RecId) &&
+            !workerPayElementMap.exists(childPayElementTable.RecId))
+            {
+                workerPayElementMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+            }
+        }
+
+
+        return workerPayElementMap;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>notifyObserver</Name>
+				<Source><![CDATA[
+    public void notifyObserver(str      _propertyName,
+                               str      _propertyValue,
+                               int      _heading = 0,
+                               int      _space = 0)
+    {
+        SPYIObserver    localObserver;
+        int             ctr;
+    
+        for (Ctr = 1; Ctr <= observers.lastIndex(); Ctr++ )
+        {
+            localObserver = observers.value(Ctr);
+            localObserver.changed(this, _propertyName, _propertyValue,_heading,_space);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getExpressionTrace</Name>
+				<Source><![CDATA[
+    public SPYExpressionTraceRecId getExpressionTrace()
+    {
+        SPYIObserver                localObserver;
+        int                         ctr;
+        SPYExpressionTraceRecId     expressionTrace;
+    
+        for (Ctr = 1; Ctr <= observers.lastIndex(); Ctr++ )
+        {
+            localObserver = observers.value(Ctr);
+            expressionTrace = localObserver.getExpressionTrace();
+        }
+
+        return expressionTrace;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payElementPostEventHandler_old</Name>
+				<Source><![CDATA[
+    protected void payElementPostEventHandler_old(SPYPayEventFrequency _frequency)
+    {
+        SPYPayEventHandlerSetup             payEventHandlerSetup;
+    
+        this.refreshContext();
+        expressionEvaluationEngine.parmExpressionContextTmp(expressionContextTmp);
+        expressionEvaluationEngine.parmExpressionContext(expressionContext);
+        while select PostEventHandler from payEventHandlerSetup
+            where payEventHandlerSetup.LegalEntity == legalEntity &&
+                  payEventHandlerSetup.Worker == worker.RecId &&
+                  payEventHandlerSetup.PayElement == payElement &&
+                  payEventHandlerSetup.PostEventHandler &&
+                  payEventHandlerSetup.PayEventFrequency == _frequency &&
+                  payEventHandlerSetup.Process == SPYProcess::PayProcess
+        {
+            expressionEvaluationEngine.evaluateEventHandler_old(payEventHandlerSetup.PostEventHandler);
+        }
+        while select PostEventHandler from payEventHandlerSetup
+            where payEventHandlerSetup.LegalEntity == legalEntity &&
+                  payEventHandlerSetup.Worker == worker.RecId &&
+                  !payEventHandlerSetup.PayElement&&
+                  payEventHandlerSetup.PostEventHandler &&
+                  payEventHandlerSetup.PayEventFrequency == _frequency &&
+                  payEventHandlerSetup.Process == SPYProcess::PayProcess
+        {
+            expressionEvaluationEngine.evaluateEventHandler_old(payEventHandlerSetup.PostEventHandler);
+        }
+        while select PostEventHandler from payEventHandlerSetup
+            where payEventHandlerSetup.LegalEntity == legalEntity &&
+                  !payEventHandlerSetup.Worker &&
+                  payEventHandlerSetup.PayElement == payElement &&
+                  payEventHandlerSetup.PostEventHandler &&
+                  payEventHandlerSetup.PayEventFrequency == _frequency &&
+                  payEventHandlerSetup.Process == SPYProcess::PayProcess
+        {
+            expressionEvaluationEngine.evaluateEventHandler_old(payEventHandlerSetup.PostEventHandler);
+        }
+        while select PostEventHandler from payEventHandlerSetup
+            where payEventHandlerSetup.LegalEntity == legalEntity &&
+                  !payEventHandlerSetup.Worker &&
+                  !payEventHandlerSetup.PayElement&&
+                  payEventHandlerSetup.PostEventHandler &&
+                  payEventHandlerSetup.PayEventFrequency == _frequency &&
+                  payEventHandlerSetup.Process == SPYProcess::PayProcess
+        {
+            expressionEvaluationEngine.evaluateEventHandler_old(payEventHandlerSetup.PostEventHandler);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payElementPreEventHandler_old</Name>
+				<Source><![CDATA[
+    protected void payElementPreEventHandler_old(SPYPayEventFrequency _frequency)
+    {
+        SPYPayEventHandlerSetup             payEventHandlerSetup;
+    
+        this.refreshContext();
+        expressionEvaluationEngine.parmExpressionContextTmp(expressionContextTmp);
+        expressionEvaluationEngine.parmExpressionContext(expressionContext);
+        while select PreEventHandler from payEventHandlerSetup
+            where payEventHandlerSetup.LegalEntity == legalEntity &&
+                  payEventHandlerSetup.Worker == worker.RecId &&
+                  payEventHandlerSetup.PayElement == payElement &&
+                  payEventHandlerSetup.PreEventHandler &&
+                  payEventHandlerSetup.PayEventFrequency == _frequency &&
+                  payEventHandlerSetup.Process == SPYProcess::PayProcess
+        {
+            expressionEvaluationEngine.evaluateEventHandler_old(payEventHandlerSetup.PreEventHandler);
+        }
+        while select PreEventHandler from payEventHandlerSetup
+            where payEventHandlerSetup.LegalEntity == legalEntity &&
+                  payEventHandlerSetup.Worker == worker.RecId &&
+                  !payEventHandlerSetup.PayElement &&
+                  payEventHandlerSetup.PreEventHandler &&
+                  payEventHandlerSetup.PayEventFrequency == _frequency &&
+                  payEventHandlerSetup.Process == SPYProcess::PayProcess
+        {
+            expressionEvaluationEngine.evaluateEventHandler_old(payEventHandlerSetup.PreEventHandler);
+        }
+        while select PreEventHandler from payEventHandlerSetup
+            where payEventHandlerSetup.LegalEntity == legalEntity &&
+                  !payEventHandlerSetup.Worker &&
+                  payEventHandlerSetup.PayElement == payElement &&
+                  payEventHandlerSetup.PreEventHandler &&
+                  payEventHandlerSetup.PayEventFrequency == _frequency &&
+                  payEventHandlerSetup.Process == SPYProcess::PayProcess
+        {
+            expressionEvaluationEngine.evaluateEventHandler_old(payEventHandlerSetup.PreEventHandler);
+        }
+        while select PreEventHandler from payEventHandlerSetup
+            where payEventHandlerSetup.LegalEntity == legalEntity &&
+                  !payEventHandlerSetup.Worker &&
+                  !payEventHandlerSetup.PayElement&&
+                  payEventHandlerSetup.PreEventHandler &&
+                  payEventHandlerSetup.PayEventFrequency == _frequency &&
+                  payEventHandlerSetup.Process == SPYProcess::PayProcess
+        {
+            expressionEvaluationEngine.evaluateEventHandler_old(payEventHandlerSetup.PreEventHandler);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payProcessApplicable</Name>
+				<Source><![CDATA[
+    protected boolean payProcessApplicable()
+    {
+        boolean     ret = true;
+    
+    
+        if(employmentStartDate > periodEnd)
+        {
+            ret = false;
+            workerValidationText = workerValidationText + "\n" + (strFmt("@SPY1429",
+            worker.name(),worker.PersonnelNumber,periodEnd));
+        }
+        if(employmentEndDate < periodStart)
+        {
+            ret = false;
+            workerValidationText = workerValidationText + "\n" + (strFmt("@SPY1430",
+            worker.name(),worker.PersonnelNumber,periodStart));
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payrollCurrency</Name>
+				<Source><![CDATA[
+    protected CurrencyCode payrollCurrency(SPYPayrollRecId _payroll)
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        date                        validFrom = dateNull(),validTo = dateMax();
+    
+        select firstOnly validTimeState(validFrom,validTo) workerPositionPayroll order by ValidTo desc
+            where workerPositionPayroll.Worker == worker.RecId &&
+                  workerPositionPayroll.LegalEntity == legalEntity &&
+                  workerPositionPayroll.Payroll == _payroll;
+    
+        if(workerPositionPayroll.Currency)
+            return workerPositionPayroll.Currency;
+        else if(hcmEmploymentDetail.SPYDefaultPayrollCurrency)
+            return hcmEmploymentDetail.SPYDefaultPayrollCurrency;
+        else
+            return Ledger::accountingCurrency();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payrollExpression</Name>
+				<Source><![CDATA[
+    public SPYAmount payrollExpression(SPYPayElementRecId _payroll)
+    {
+        SPYExpressionRecId              expression;
+        SPYExpressionCondition          expressionCondition;
+        SPYAmount                       expressionValue;
+    
+        expressionEvaluationEngine.addObserver(tracer,1);
+        expression = SPYPayrollDetails::findByPayroll(_payroll,legalEntity,periodStart,periodEnd).Expression;
+        this.refreshContext();
+        while select RecId from expressionCondition
+            where expressionCondition.Expression == expression
+        {
+            if(expressionEvaluationEngine.validateCondition(expressionCondition.RecId,legalEntity,worker.RecId))
+            {
+                expressionEvaluationEngine.parmExpressionContext(expressionContext);
+                expressionValue += expressionEvaluationEngine.evaluateExpression(expressionCondition.RecId);
+            }
+        }
+    
+        return expressionValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postLegalEntityPayrollProcess</Name>
+				<Source><![CDATA[
+    protected void postLegalEntityPayrollProcess()
+    {
+        //this.payElementPostEventHandler(SPYPayEventFrequency::LegalEntity);  Grid to be obsoleted
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerPayrollProcess</Name>
+				<Source><![CDATA[
+    protected void postWorkerPayrollProcess()
+    {/*
+        payProcessLog.Worker              = worker;
+        payProcessLog.PayrollPeriodLine   = payrollPeriodLine;
+        payProcessLog.insert();*/
+        //this.payElementPostEventHandler(SPYPayEventFrequency::Worker);  Grid to be obsoleted
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>preLegalEntityPayrollProcess</Name>
+				<Source><![CDATA[
+    protected void preLegalEntityPayrollProcess()
+    {
+        //this.payElementPreEventHandler(SPYPayEventFrequency::LegalEntity); Grid to be obsoleted
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>preWorkerPayrollProcess</Name>
+				<Source><![CDATA[
+    protected void preWorkerPayrollProcess()
+    {
+        MapEnumerator       mapEnumerator;
+        SPYPayElementRecId  payElementRecId;
+        SPYPayElementType   payElementType;
+    
+        mapEnumerator = payElementMap.getEnumerator();
+        while(mapEnumerator.moveNext())
+        {
+            payElementRecId = mapEnumerator.currentKey();
+            payElementType = mapEnumerator.currentValue();
+            if(SPYPayElementTable::find(payElementRecId).ReferencePayElement)
+                payLedgerUpdate.deleteRefPayElementLedger(worker.RecId,payElementRecId,payrollPeriodLine,payArrear);
+            else
+            {
+                if(payElementType == SPYPayElementType::Payroll)
+                    payLedgerUpdate.deletePayrollLedger(worker.RecId,payElementRecId,payrollPeriodLine,payArrear);
+                else
+                    payLedgerUpdate.deleteBenefitLedger(worker.RecId,payElementRecId,payrollPeriodLine,payArrear);
+            }
+        }
+        //this.payElementPreEventHandler(SPYPayEventFrequency::Worker); Grid to be obsoleted
+        if(!callFromBatchTask)
+            SPYObjectCache::flushAllUserCache();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefitForPeriod</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    public container processBenefitForPeriod(TransDate _calcStart,TransDate _calcEnd) //For monthly payroll
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYIBenefitCalculation      benefitCalculation;
+        SPYBenefitDetailsDecorator  benefitDetailsDecorator;
+        SPYBenefitLedgerTmp         benefitLedgerTmp;
+        SPYBenefitDetails           benefitDetails;
+        SPYAmount                   totalTransCurAmount,totalAccCurAmount,totalQty;
+    
+        this.initialize();
+        while select validTimeState(_calcStart,_CalcEnd)
+            ValidFrom,ValidTo,RecId,Benefit,Currency from workerPositionBenefit
+            where workerPositionBenefit.Worker == worker.RecId &&
+                  workerPositionBenefit.LegalEntity == legalEntity &&
+                  workerPositionBenefit.PayrollPeriod == payrollPeriod &&
+                  workerPositionBenefit.Benefit == payElement
+        {
+            calcStart = max(_calcStart,workerPositionBenefit.ValidFrom);
+            calcEnd = min(_calcEnd,workerPositionBenefit.ValidTo);
+            this.setWorkerBenefit(workerPositionBenefit.RecId);
+            this.refreshContext();
+            benefitCalculation = new SPYBenefitCalculation(legalEntity,
+                                                           worker.RecId,
+                                                           payrollPeriodLine,
+                                                           workerPositionBenefit.Benefit,
+                                                           transDate,
+                                                           periodStart,
+                                                           periodEnd,
+                                                           workerPositionBenefit,
+                                                           workerPositionBenefit.Currency,
+                                                           benefitLedgerTmp);
+            benefitDetails = SPYBenefitDetails::findByBenefit(workerPositionBenefit.Benefit,legalEntity,periodStart,periodEnd);
+            while select RecId from benefitDetailsDecorator order by LineNum
+                where benefitDetailsDecorator.BenefitDetails == benefitDetails.RecId
+            {
+                benefitCalculation = new SPYBenefitDecoratorCalculation(legalEntity,
+                                                                        worker.RecId,
+                                                                        payrollPeriodLine,
+                                                                        workerPositionBenefit.Benefit,
+                                                                        transDate,
+                                                                        periodStart,
+                                                                        periodEnd,
+                                                                        workerPositionBenefit,
+                                                                        benefitLedgerTmp,
+                                                                        benefitCalculation,
+                                                                        benefitDetailsDecorator.RecId
+                                                                        );
+            }
+            benefitLedgerTmp = benefitCalculation.processBenefit(expressionEvaluationEngine);
+            [totalTransCurAmount,totalAccCurAmount,totalQty] = this.amtQtyFromBenefitLedgerTmp(benefitLedgerTmp);
+        }
+    
+        return [totalTransCurAmount,totalAccCurAmount,totalQty];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processPayrollForPeriod</Name>
+				<Source><![CDATA[
+    public SPYAmount processPayrollForPeriod(TransDate _calcStart,TransDate _calcEnd)
+    {
+        SPYAmount                   amount,payElementTotalAmount;
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+    
+        this.initialize();
+        while select validTimeState(_calcStart,_CalcEnd)
+            ValidFrom,ValidTo,RecId,Payroll,Currency from workerPositionPayroll
+            where workerPositionPayroll.Worker == worker.RecId &&
+                  workerPositionPayroll.LegalEntity == legalEntity &&
+                  workerPositionPayroll.PayrollPeriod == payrollPeriod &&
+                  workerPositionPayroll.Payroll == payElement
+        {
+            calcStart = max(_calcStart,workerPositionPayroll.ValidFrom);
+            calcEnd = min(_calcEnd,workerPositionPayroll.ValidTo);
+            this.setWorkerPayroll(workerPositionPayroll.RecId);
+            this.refreshContext();
+            amount = this.payrollExpression(workerPositionPayroll.Payroll);
+            //accCurAmount = SPYPayService::convert2AccCurAmt(legalEntity,transDate,amount,workerPositionPayroll.Currency);
+            payElementTotalAmount += amount;
+        }
+    
+        return payElementTotalAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshContext</Name>
+				<Source><![CDATA[
+    public void refreshContext()
+    {
+        expressionContext.worker(worker.RecId);
+        expressionContext.legalEntity(legalEntity);
+        expressionContext.payrollPeriodLine(payrollPeriodLine);
+        expressionContext.transDate(transDate);
+        expressionContext.calcFromDate(calcStart);
+        expressionContext.calcToDate(calcEnd);
+        expressionContext.payElement(payElement);
+        expressionContext.workerPayroll(workerPayroll);
+        expressionContext.workerBenefit(workerBenefit);
+        expressionContext.expressionReturn(expressionReturn);
+        expressionContext.timesheetFromDate(timesheetStart);
+        expressionContext.timesheetToDate(timesheetEnd);
+        expressionContext.workerCalendarId(workerCalendarId);
+        expressionContext.periodFromDate(periodStart);
+        expressionContext.periodToDate(periodEnd);
+        expressionContext.payArrear(payArrear);
+        expressionContext.leaveSettlement(leaveSettlement);
+        expressionContext.leaveApplication(leaveApplication);
+        expressionContext.traceObservers(observers);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshExpressionContextTmp</Name>
+				<Source><![CDATA[
+    private void refreshExpressionContextTmp()
+    {
+        SPYExpressionContextInitialize      contextInitialize = new SPYExpressionContextInitialize();
+        Map                                 contextMap;
+        MapEnumerator                       contextMapEnumerator;
+        container                           contextAttribute;
+    
+        contextMap = contextInitialize.getContext();
+        contextMapEnumerator = contextMap.getEnumerator();
+    
+        delete_from expressionContextTmp;
+        while(contextMapEnumerator.moveNext())
+        {
+            contextAttribute = contextMapEnumerator.currentValue();
+            container  contextModules = conPeek(contextAttribute,4);
+            if(conFind(contextModules, SPYExpressionContextModule::All) || contextModules == conNull() || conFind(contextModules, SPYExpressionContextModule::HumanResource))
+            {
+                expressionContextTmp.Name   = contextMapEnumerator.currentKey();
+                expressionContextTmp.Type   = conPeek(contextAttribute,1);
+                expressionContextTmp.Label  = conPeek(contextAttribute,2);
+                expressionContextTmp.DisplayOrder   = conPeek(contextAttribute,3);
+                expressionContextTmp.ContextModules = conPeek(contextAttribute,4);
+                //expressionContextTmp.EventHandlerContext_old    = conPeek(contextAttribute,4);
+                expressionContextTmp.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>removeObserver</Name>
+				<Source><![CDATA[
+    public void removeObserver(int _key)
+    {
+        observers.value(_key, null);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setAccCurAmtAndExchRate</Name>
+				<Source><![CDATA[
+    private container setAccCurAmtAndExchRate(SPYAmount _transCurAmount,CurrencyCode _transCurrency)
+    {
+        CurrencyExchangeHelper  currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), transDate);
+        SPYAmount               accCurAmount;
+        SPYAmount               exchRate;
+    
+        accCurAmount = currencyExchangeHelper.calculateTransactionToAccounting(_transCurrency,_transCurAmount,false);
+        if(_transCurAmount)
+            exchRate = accCurAmount / _transCurAmount;
+    
+        return [accCurAmount,exchRate];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setAmtForDiffCur</Name>
+				<Source><![CDATA[
+    private container setAmtForDiffCur(SPYAmount _accCurAmt)
+    {
+        SPYAmount                   transCurAmt;
+        CurrencyCode                transCurrency;
+        SPYAmount                   exchangeRate;
+        container                   ret;
+    
+        transCurAmt = _accCurAmt;
+        transCurrency = Ledger::accountingCurrency();
+        exchangeRate = 100;
+    
+        ret = [transCurAmt,transCurrency,exchangeRate];
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setCurrentExpressionReturn</Name>
+				<Source><![CDATA[
+    private void setCurrentExpressionReturn(SPYAmount _amount,SPYAmount _qty)
+    {
+        expressionReturn = [_amount,_qty];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEOSRun</Name>
+				<Source><![CDATA[
+    public void setEOSRun(SPYEOSRunRecId _EOSRun)
+    {
+        EOSRun = _EOSRun;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setLeaveApplication</Name>
+				<Source><![CDATA[
+    public void setLeaveApplication(SPYLeaveApplicationRecId _leaveApplication)
+    {
+        leaveApplication = _leaveApplication;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setLeaveSettlement</Name>
+				<Source><![CDATA[
+    public void setLeaveSettlement(boolean _leaveSettlement)
+    {
+        leaveSettlement = _leaveSettlement;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setLegalEntity</Name>
+				<Source><![CDATA[
+    public void setLegalEntity(LegalEntityRecId _legalEntity)
+    {
+        legalEntity = _legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayArrear</Name>
+				<Source><![CDATA[
+    public void setPayArrear(boolean _payArrear)
+    {
+        payArrear = _payArrear;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayElement</Name>
+				<Source><![CDATA[
+    public void setPayElement(SPYPayElementRecId _payElement)
+    {
+        payElement = _payElement;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollCalcDate</Name>
+				<Source><![CDATA[
+    public void setPayrollCalcDate(TransDate _validFrom,TransDate _validTo)
+    {
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollFromDate</Name>
+				<Source><![CDATA[
+    public void setPayrollFromDate(TransDate _validFrom)
+    {
+        calcStart = _validFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollPeriod</Name>
+				<Source><![CDATA[
+    public void setPayrollPeriod(SPYPayrollPeriodRecId _payrollPeriod)
+    {
+        payrollPeriod = _payrollPeriod;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    public void setPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine)
+    {
+        payrollPeriodLine = _payrollPeriodLine;
+        payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+        periodStart = payrollPeriodLineTab.PeriodStartDate;
+        periodEnd = payrollPeriodLineTab.PeriodEndDate;
+        payrollPeriod = payrollPeriodLineTab.PayrollPeriod;
+        this.setPayrollTimesheetDate(payrollPeriodLineTab);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollTimesheetDate</Name>
+				<Source><![CDATA[
+    public void setPayrollTimesheetDate(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollToDate</Name>
+				<Source><![CDATA[
+    public void setPayrollToDate(TransDate _validTo)
+    {
+        calcEnd = _validTo;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPeriodFromPeriodLine</Name>
+				<Source><![CDATA[
+    private void setPeriodFromPeriodLine()
+    {
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPostedPeriodLine</Name>
+				<Source><![CDATA[
+    public void setPostedPeriodLine(SPYPayrollPeriodLineRecId _postedPeriodLine)
+    {
+        postedPeriodLine = _postedPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTranCurAmtAndExchRate</Name>
+				<Source><![CDATA[
+    private container setTranCurAmtAndExchRate(SPYAmount _amount,CurrencyCode _currency)
+    {
+        ExchangeRateHelper  exchangeRateHelper;
+    
+        exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::findByLegalEntity(legalEntity).RecId,_currency);
+        exchangeRateHelper.parmExchangeDate(transDate);
+    
+        return [_amount * 100 / exchangeRateHelper.getExchangeRate1(),exchangeRateHelper.getExchangeRate1()];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTransDate</Name>
+				<Source><![CDATA[
+    public void setTransDate(TransDate _transDate)
+    {
+        transDate = _transDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setCallFromBatchTask</Name>
+				<Source><![CDATA[
+    public void setCallFromBatchTask(boolean  _callFromBatchTask)
+    {
+        callFromBatchTask = _callFromBatchTask;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorker</Name>
+				<Source><![CDATA[
+    public void setWorker(HcmWorker _worker)
+    {
+        worker = _worker;
+        this.setWorkerEmployment();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerBenefit</Name>
+				<Source><![CDATA[
+    public void setWorkerBenefit(SPYWorkerBenefitRecId _workerBenefit)
+    {
+        workerBenefit = _workerBenefit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerCalendarId</Name>
+				<Source><![CDATA[
+    public void setWorkerCalendarId(HcmEmployment _hcmEmployment)
+    {
+        WorkCalendarEmployment      workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(_hcmEmployment.RecId);
+    
+        workerCalendarId = workCalendarEmployment.CalendarId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerEmployment</Name>
+				<Source><![CDATA[
+    public void setWorkerEmployment()
+    {
+        StartDateTime   startDateTime = DateTimeUtil::newDateTime(periodStart,00-00);
+        EndDateTime     endDateTime = DateTimeUtil::newDateTime(periodEnd,00-00);
+    
+        hcmEmployment       = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,startDateTime,endDateTime);
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,startDateTime,endDateTime);
+        if(!hcmEmployment)
+        {
+            startDateTime = DateTimeUtil::minValue();
+            endDateTime = DateTimeUtil::maxValue();
+            hcmEmployment   = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,startDateTime,endDateTime);
+            hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,startDateTime,endDateTime);
+        }
+        employmentStartDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidFrom,DateTimeUtil::getCompanyTimeZone()));
+        employmentEndDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidTo,DateTimeUtil::getCompanyTimeZone()));
+        this.setWorkerCalendarId(hcmEmployment);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setWorkerPayroll</Name>
+				<Source><![CDATA[
+    public void setWorkerPayroll(SPYWorkerPayrollRecId _workerPayroll)
+    {
+        workerPayroll = _workerPayroll;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>showWorkerValidationText</Name>
+				<Source><![CDATA[
+    protected void showWorkerValidationText()
+    {
+        warning(workerValidationText);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLedgerSource</Name>
+				<Source><![CDATA[
+    private SPYPayLedgerSourceRecId updateLedgerSource(container _source)
+    {
+        SPYPayLedgerSource      payLedgerSource;
+        TableId                 sourceTable = conPeek(_source,1);
+        container               sourceLine = conPeek(_source,2);
+    
+        payLedgerSource.initValue();
+        payLedgerSource.insert();
+    
+        this.updateLedgerSourceLine(payLedgerSource.RecId,sourceTable,sourceLine);
+    
+        return payLedgerSource.RecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLedgerSourceLine</Name>
+				<Source><![CDATA[
+    private void updateLedgerSourceLine(SPYPayLedgerSourceRecId _payLedgerSource,TableId _sourceTable,container _sourceLine)
+    {
+        int                     lineCounter = 1;
+        SPYPayLedgerSourceLine  payLedgerSourceLine;
+        RecordInsertList        recordInsertSourceLine;
+
+        recordInsertSourceLine = new RecordInsertList(tableNum(SPYPayLedgerSourceLine));
+        while(lineCounter <= conLen(_sourceLine))
+        {
+            payLedgerSourceLine.initValue();
+            payLedgerSourceLine.PayLedgerSource     = _payLedgerSource;
+            payLedgerSourceLine.TableReference      = _sourceTable;
+            payLedgerSourceLine.RecordReference     = conPeek(_sourceLine,lineCounter);
+            recordInsertSourceLine.add(payLedgerSourceLine);
+    
+            lineCounter++;
+        }
+        recordInsertSourceLine.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerBenefit</Name>
+				<Source><![CDATA[
+    public void workerBenefit()
+    {
+        MapEnumerator           mapEnumerator;
+        RecordSortedList        sortedList = new RecordSortedList(tableNum(SPYPayElementTmp));
+    
+        this.addObserver(tracer,1);
+        sortedList.sortOrder(fieldNum(SPYPayElementTmp,CalculationOrder));
+        //Benefit attached to worker
+        mapEnumerator = this.initializeWorkerBenefitMap().getEnumerator();
+        while(mapEnumerator.moveNext())
+        {
+            payElementTmp.clear();
+            payElementTmp.PayElement = mapEnumerator.currentKey();
+            payElementTmp.ParentPayElement = conPeek(mapEnumerator.currentValue(),1);
+            payElementTmp.CalculationOrder = conPeek(mapEnumerator.currentValue(),2);
+            payElementTmp.ApplicableForAll = false;
+            payElementTmp.insert();
+            //sortedList.ins(payElementTmp);
+        }
+        //Applicable for all benefit
+        mapEnumerator = appForAllBenefitMap.getEnumerator();
+        while(mapEnumerator.moveNext())
+        {
+            payElementTmp.clear();
+            payElementTmp.PayElement = mapEnumerator.currentKey();
+            payElementTmp.ParentPayElement = conPeek(mapEnumerator.currentValue(),1);
+            payElementTmp.CalculationOrder = conPeek(mapEnumerator.currentValue(),2);
+            payElementTmp.ApplicableForAll = true;
+            payElementTmp.insert();
+            //sortedList.ins(payElementTmp);
+        }
+        //sortedList.insertDatabase();
+        while select payElementTmp order by CalculationOrder
+        {
+            this.workerBenefitProcess(payElementTmp.PayElement,payElementTmp.ApplicableForAll,expressionContext.endOfSettlement(),
+                payElementTmp.ParentPayElement);
+        }
+        delete_from payElementTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerBenefitProcess</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    protected void workerBenefitProcess(SPYPayElementRecId _benefit,boolean _applicableForAll = false,boolean _eos = false,SPYPayElementRecId _parentPayelement = 0)
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        SPYBenefitDetails           benefitDetails;
+        SPYBenefitDetailsDecorator  benefitDetailsDecorator;
+        SPYIBenefitCalculation      benefitCalculation;
+        SPYBenefitLedgerTmp         benefitLedgerTmp;
+        SPYAmount                   ledgerUpdateTranCurAmt,ledgerUpdateAccCurAmt,ledgerUpdateQty;
+        SPYAmount                   totalTransCurAmount,totalAccCurAmount,totalQty;
+        int                         benefitCurrencyCount;
+        CurrencyCode                TransCurrency;
+        SPYAmount                   exchangeRate;
+        SPYBenefitTable             benefitTable = SPYBenefitTable::find(_benefit);
+        SPYPayElementRecId          benefit;
+    
+        expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn(conNull());
+        this.notifyObserver("@SPY46",strFmt("%1",benefitTable.PayElementCode),4,1);
+        this.setPayElement(_benefit);
+        //this.payElementPreEventHandler_old(SPYPayEventFrequency::PayElement); //obselete
+        totalTransCurAmount = 0;
+        totalAccCurAmount = 0;
+        totalQty = 0;
+        benefit = _benefit;
+        delete_from benefitLedgerTmp;
+        if(_applicableForAll)
+        {
+            this.setPayrollCalcDate(dateNull(),dateMax());
+            this.setWorkerBenefit(0);
+            this.refreshContext();
+            benefitCalculation = new SPYBenefitCalculation(legalEntity,
+                                                            worker.RecId,
+                                                            payrollPeriodLine,
+                                                            _benefit,
+                                                            transDate,
+                                                            periodStart,
+                                                            periodEnd,
+                                                            workerPositionBenefit,
+                                                            "",
+                                                            benefitLedgerTmp);
+            benefitDetails = SPYBenefitDetails::findByBenefit(_benefit,legalEntity,periodStart,periodEnd);
+            while select RecId from benefitDetailsDecorator order by LineNum
+                where benefitDetailsDecorator.BenefitDetails == benefitDetails.RecId
+            {
+                benefitCalculation = new SPYBenefitDecoratorCalculation(legalEntity,
+                                                                        worker.RecId,
+                                                                        payrollPeriodLine,
+                                                                        _benefit,
+                                                                        transDate,
+                                                                        periodStart,
+                                                                        periodEnd,
+                                                                        workerPositionBenefit,
+                                                                        benefitLedgerTmp,
+                                                                        benefitCalculation,
+                                                                        benefitDetailsDecorator.RecId
+                                                                        );
+            }
+            benefitCalculation.parmTracer(tracer);
+            benefitLedgerTmp = benefitCalculation.processBenefit(expressionEvaluationEngine);
+        }
+        else
+        {
+            if(!_parentPayelement || SPYPayElementTable::find(_parentPayelement).PayElementType == SPYPayElementType::Benefit) //If parent element is absent and if parent element is benefit, calculate child benefit
+            {
+                if(_parentPayelement)
+                    benefit = _parentPayelement;
+                while select validTimeState(periodStart,periodEnd) workerPositionBenefit
+                    where workerPositionBenefit.Worker == worker.RecId &&
+                          workerPositionBenefit.LegalEntity == legalEntity &&
+                          workerPositionBenefit.PayrollPeriod == payrollPeriod &&
+                          workerPositionBenefit.Benefit == benefit
+                {
+                    this.setPayrollCalcDate(workerPositionBenefit.ValidFrom,workerPositionBenefit.ValidTo);
+                    this.setWorkerBenefit(workerPositionBenefit.RecId);
+                    this.refreshContext();
+                    benefitCalculation = new SPYBenefitCalculation(legalEntity,
+                                                                    worker.RecId,
+                                                                    payrollPeriodLine,
+                                                                    _benefit,
+                                                                    transDate,
+                                                                    periodStart,
+                                                                    periodEnd,
+                                                                    workerPositionBenefit,
+                                                                    workerPositionBenefit.Currency,
+                                                                    benefitLedgerTmp);
+                    benefitDetails = SPYBenefitDetails::findByBenefit(workerPositionBenefit.Benefit,legalEntity,periodStart,periodEnd);
+                    while select RecId from benefitDetailsDecorator order by LineNum
+                        where benefitDetailsDecorator.BenefitDetails == benefitDetails.RecId
+                    {
+                        benefitCalculation = new SPYBenefitDecoratorCalculation(legalEntity,
+                                                                                worker.RecId,
+                                                                                payrollPeriodLine,
+                                                                                _benefit,
+                                                                                transDate,
+                                                                                periodStart,
+                                                                                periodEnd,
+                                                                                workerPositionBenefit,
+                                                                                benefitLedgerTmp,
+                                                                                benefitCalculation,
+                                                                                benefitDetailsDecorator.RecId
+                                                                                );
+                    }
+                    benefitCalculation.parmTracer(tracer);
+                    benefitLedgerTmp = benefitCalculation.processBenefit(expressionEvaluationEngine);//expressionContext);
+                }
+            }
+            else if(SPYPayElementTable::find(_parentPayelement).PayElementType == SPYPayElementType::Payroll) //If parent element is benefit, calculate child payroll
+            {
+                while select validTimeState(periodStart,periodEnd) ValidFrom,ValidTo,RecId,Currency from workerPositionPayroll
+                    where workerPositionPayroll.Worker == worker.RecId &&
+                            workerPositionPayroll.LegalEntity == legalEntity &&
+                            workerPositionPayroll.PayrollPeriod == payrollPeriod &&
+                            workerPositionPayroll.Payroll == _parentPayelement
+                {
+                    this.setPayrollCalcDate(workerPositionPayroll.ValidFrom,workerPositionPayroll.ValidTo);
+                    this.setWorkerBenefit(0);
+                    this.refreshContext();
+                    benefitCalculation = new SPYBenefitCalculation(legalEntity,
+                                                                    worker.RecId,
+                                                                    payrollPeriodLine,
+                                                                    _benefit,
+                                                                    transDate,
+                                                                    periodStart,
+                                                                    periodEnd,
+                                                                    workerPositionBenefit,
+                                                                    workerPositionPayroll.Currency,
+                                                                    benefitLedgerTmp);
+                    benefitDetails = SPYBenefitDetails::findByBenefit(_benefit,legalEntity,periodStart,periodEnd);
+                    while select RecId from benefitDetailsDecorator order by LineNum
+                        where benefitDetailsDecorator.BenefitDetails == benefitDetails.RecId
+                    {
+                        benefitCalculation = new SPYBenefitDecoratorCalculation(legalEntity,
+                                                                                worker.RecId,
+                                                                                payrollPeriodLine,
+                                                                                _benefit,
+                                                                                transDate,
+                                                                                periodStart,
+                                                                                periodEnd,
+                                                                                workerPositionBenefit,
+                                                                                benefitLedgerTmp,
+                                                                                benefitCalculation,
+                                                                                benefitDetailsDecorator.RecId
+                                                                                );
+                    }
+                    benefitCalculation.parmTracer(tracer);
+                    benefitLedgerTmp = benefitCalculation.processBenefit(expressionEvaluationEngine);
+                }
+            }
+        }
+        [totalTransCurAmount,totalAccCurAmount,totalQty] = this.amtQtyFromBenefitLedgerTmp(benefitLedgerTmp);
+        this.notifyObserver(strFmt("@SYS90673",benefitTable.PayElementCode),strFmt("@SPY778",totalTransCurAmount,totalQty),5,2);
+        benefitCurrencyCount = this.diffWorkerBenefitCurrency(_benefit);
+        if(_applicableForAll)
+        {
+            if(hcmEmploymentDetail.SPYDefaultPayrollCurrency)
+                transCurrency = hcmEmploymentDetail.SPYDefaultPayrollCurrency;
+            else
+                transCurrency = Ledger::accountingCurrency();
+        }
+        else
+        {
+            if(benefitCurrencyCount > 1)
+                [totalTransCurAmount,transCurrency,exchangeRate] = this.setAmtForDiffCur(totalAccCurAmount);
+            else
+                [transCurrency,exchangeRate] = this.defaultCurAndExchRate(_benefit);
+        }
+    
+        if(benefitTable.ReferencePayElement)
+            [ledgerUpdateTranCurAmt,ledgerUpdateAccCurAmt,ledgerUpdateQty] = this.excludePostedBenefitAmtQtyFromRefPayLedger(_benefit,
+                                                                                                                                         totalTransCurAmount,
+                                                                                                                                         totalAccCurAmount,
+                                                                                                                                         totalQty,
+                                                                                                                                         transCurrency);
+        else
+            [ledgerUpdateTranCurAmt,ledgerUpdateAccCurAmt,ledgerUpdateQty] = this.excludePostedBenefitAmtQty(_benefit,
+                                                                                                                                            totalTransCurAmount,
+                                                                                                                                            totalAccCurAmount,
+                                                                                                                                            totalQty,
+                                                                                                                                            transCurrency);
+        this.setCurrentExpressionReturn(totalTransCurAmount,totalQty);
+        //this.payElementPostEventHandler_old(SPYPayEventFrequency::PayElement);  //obselete
+        if(benefitTable.ReferencePayElement)
+        {
+            payLedgerUpdate.updateRefPayElementLedger(this.initializeRefLedgerFromBenefit(_benefit,
+                                                                                               ledgerUpdateTranCurAmt,
+                                                                                               ledgerUpdateAccCurAmt,
+                                                                                               ledgerUpdateQty,
+                                                                                               transCurrency,
+                                                                                               exchangeRate));
+        }
+        else
+        {
+            if(expressionContext.endOfSettlement() == true)
+                EOSRunUpdate.updateBenefit(this.initializeEOSRunFromBenefit(_benefit,
+                                                                            ledgerUpdateTranCurAmt,
+                                                                            ledgerUpdateAccCurAmt,
+                                                                            ledgerUpdateQty,
+                                                                            transCurrency,
+                                                                            exchangeRate));
+            else
+                payLedgerUpdate.updateBenefit(this.initializeLedgerFromBenefit(_benefit,
+                                                                               ledgerUpdateTranCurAmt,
+                                                                               ledgerUpdateAccCurAmt,
+                                                                               ledgerUpdateQty,
+                                                                               transCurrency,
+                                                                               exchangeRate));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerBenefitProcessForEncashment</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    protected void workerBenefitProcessForEncashment(SPYBenefitRecId _benefit,
+                                                     SPYAmount       _totalTransCurAmount,
+                                                     SPYAmount       _totalAccCurAmount,
+                                                     SPYAmount       _totalQty)
+    {
+        SPYBenefitTable             benefitTable = SPYBenefitTable::find(_benefit);
+    
+        expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn(conNull());
+        this.notifyObserver("@SPY1648",strFmt("%1",benefitTable.PayElementCode),4,1);
+        this.setPayElement(_benefit);
+        //this.payElementPreEventHandler_old(SPYPayEventFrequency::PayElement);
+        this.notifyObserver(strFmt("@SYS90673",benefitTable.PayElementCode),strFmt("@SPY778",_totalTransCurAmount,_totalQty),5,2);
+        this.setCurrentExpressionReturn(_totalTransCurAmount,_totalQty);
+        //this.payElementPostEventHandler_old(SPYPayEventFrequency::PayElement);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerPayroll</Name>
+				<Source><![CDATA[
+    public void workerPayroll()
+    {
+        MapEnumerator           mapEnumerator;
+        RecordSortedList        sortedList = new RecordSortedList(tableNum(SPYPayElementTmp));
+    
+        this.addObserver(tracer,1);
+        sortedList.sortOrder(fieldNum(SPYPayElementTmp,CalculationOrder));
+        //Payroll attached to worker
+        mapEnumerator = this.initializeWorkerPayrollMap().getEnumerator();
+        while(mapEnumerator.moveNext())
+        {
+            payElementTmp.clear();
+            payElementTmp.PayElement = mapEnumerator.currentKey();
+            payElementTmp.ParentPayElement = conPeek(mapEnumerator.currentValue(),1);
+            payElementTmp.CalculationOrder = conPeek(mapEnumerator.currentValue(),2);
+            payElementTmp.ApplicableForAll = false;
+            payElementTmp.insert();
+            //sortedList.ins(payElementTmp);
+        }
+        //Applicable for all payroll
+        mapEnumerator = appForAllPayrollMap.getEnumerator();
+        while(mapEnumerator.moveNext())
+        {
+            payElementTmp.clear();
+            payElementTmp.PayElement = mapEnumerator.currentKey();
+            payElementTmp.ParentPayElement = conPeek(mapEnumerator.currentValue(),1);
+            payElementTmp.CalculationOrder = conPeek(mapEnumerator.currentValue(),2);
+            payElementTmp.ApplicableForAll = true;
+            payElementTmp.insert();
+            //sortedList.ins(payElementTmp);
+        }
+        //sortedList.insertDatabase();
+        while select payElementTmp order by CalculationOrder
+        {
+            this.workerPayrollProcess(payElementTmp.PayElement,payElementTmp.ApplicableForAll,payElementTmp.ParentPayElement);
+        }
+        delete_from payElementTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerPayrollProcess</Name>
+				<Source><![CDATA[
+    private void workerPayrollProcess(SPYPayElementRecId _payroll,boolean _applicableForAll = false,SPYPayElementRecId _parentPayelement = 0)
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYAmount                   totalTransCurAmount,totalAccCurAmount;
+        SPYAmount                   ledgerUpdateTranCurAmt,ledgerUpdateAccCurAmt;
+        SPYAmount                   transactionCurrencyAmount,accountingCurrencyAmount;
+        CurrencyCode                transCurrency;
+        SPYAmount                   exchangeRate;
+        int                         payrollCurrencyCount;
+        int                         sign;
+        SPYPayrollTable             payrollTable = SPYPayrollTable::find(_payroll);
+        SPYPayElementRecId          payroll;
+        
+        expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn(conNull());
+        this.notifyObserver("@SPY2",strFmt("%1",payrollTable.PayElementCode),4,1);
+        this.setPayElement(_payroll);
+        //this.payElementPreEventHandler_old(SPYPayEventFrequency::PayElement); //obselete
+        totalTransCurAmount = 0;
+        totalAccCurAmount = 0;
+        ledgerUpdateTranCurAmt = 0;
+        ledgerUpdateAccCurAmt = 0;
+        sign = payrollTable.PayrollType == SPYPayrollType::Earning ? 1 : -1;
+        payroll = _payroll;
+        if(_applicableForAll)
+        {
+            this.setPayrollCalcDate(dateNull(),dateMax());
+            this.setWorkerPayroll(0);
+            transactionCurrencyAmount = this.payrollExpression(_payroll) * sign;
+            //transCurrency = Ledger::accountingCurrency();
+            transCurrency = hcmEmploymentDetail.SPYDefaultPayrollCurrency ? hcmEmploymentDetail.SPYDefaultPayrollCurrency : Ledger::accountingCurrency();
+            [accountingCurrencyAmount,exchangeRate] = this.setAccCurAmtAndExchRate(transactionCurrencyAmount,transCurrency);
+            totalTransCurAmount += transactionCurrencyAmount;
+            totalAccCurAmount += accountingCurrencyAmount;
+        }
+        else
+        {
+            if(!_parentPayelement || SPYPayElementTable::find(_parentPayelement).PayElementType == SPYPayElementType::Payroll) //If parent element is absent and if parent element is payroll, calculate child payroll
+            {
+                if(_parentPayelement)
+                    payroll = _parentPayelement;
+                while select validTimeState(periodStart,periodEnd) ValidFrom,ValidTo,RecId,Currency from workerPositionPayroll
+                    where workerPositionPayroll.Worker == worker.RecId &&
+                            workerPositionPayroll.LegalEntity == legalEntity &&
+                            workerPositionPayroll.PayrollPeriod == payrollPeriod &&
+                            workerPositionPayroll.Payroll == payroll
+                {
+                    this.setPayrollCalcDate(workerPositionPayroll.ValidFrom,workerPositionPayroll.ValidTo);
+                    this.setWorkerPayroll(workerPositionPayroll.RecId);
+                    transactionCurrencyAmount = this.payrollExpression(_payroll) * sign;
+                    transCurrency = workerPositionPayroll.Currency;
+                    [accountingCurrencyAmount,exchangeRate] = this.setAccCurAmtAndExchRate(transactionCurrencyAmount,transCurrency);
+                    totalTransCurAmount += transactionCurrencyAmount;
+                    totalAccCurAmount += accountingCurrencyAmount;
+                }
+            }
+            else if(SPYPayElementTable::find(_parentPayelement).PayElementType == SPYPayElementType::Benefit) //If parent element is benefit, calculate child payroll
+            {
+                while select validTimeState(periodStart,periodEnd) ValidFrom,ValidTo,RecId,Currency from workerPositionBenefit
+                    where workerPositionBenefit.Worker == worker.RecId &&
+                            workerPositionBenefit.LegalEntity == legalEntity &&
+                            workerPositionBenefit.PayrollPeriod == payrollPeriod &&
+                            workerPositionBenefit.Benefit == _parentPayelement
+                {
+                    this.setPayrollCalcDate(workerPositionBenefit.ValidFrom,workerPositionBenefit.ValidTo);
+                    this.setWorkerPayroll(0);
+                    transactionCurrencyAmount = this.payrollExpression(_payroll) * sign;
+                    transCurrency = workerPositionBenefit.Currency;
+                    [accountingCurrencyAmount,exchangeRate] = this.setAccCurAmtAndExchRate(transactionCurrencyAmount,transCurrency);
+                    totalTransCurAmount += transactionCurrencyAmount;
+                    totalAccCurAmount += accountingCurrencyAmount;
+                }
+            }
+        }
+        this.notifyObserver(strFmt("@SYS90673",payrollTable.PayElementCode),strFmt("%1",totalTransCurAmount),5,2);
+        //---if worker payroll position have different currency then assume ledger currency as transaction currency
+        payrollCurrencyCount = this.diffWorkerPayrollCurrency(_payroll);
+        if(payrollCurrencyCount > 1)
+            [totalTransCurAmount,transCurrency,exchangeRate] = this.setAmtForDiffCur(totalAccCurAmount);
+    
+        if(payrollTable.ReferencePayElement)
+            [ledgerUpdateTranCurAmt,ledgerUpdateAccCurAmt] = this.excludePostedPayrollAmtFromRefPayLedger(_payroll,
+                                                                                      totalTransCurAmount,
+                                                                                      totalAccCurAmount,
+                                                                                      transCurrency);
+        else
+            [ledgerUpdateTranCurAmt,ledgerUpdateAccCurAmt] = this.excludePostedPayrollAmt(_payroll,
+                                                                                          totalTransCurAmount,
+                                                                                          totalAccCurAmount,
+                                                                                          transCurrency);
+        this.setCurrentExpressionReturn(totalTransCurAmount,0);
+        //this.payElementPostEventHandler_old(SPYPayEventFrequency::PayElement);
+        if(payrollTable.ReferencePayElement)
+        {
+            payLedgerUpdate.updateRefPayElementLedger(this.initializeRefLedgerFromPayroll(_payroll,
+                                                                                                ledgerUpdateTranCurAmt,
+                                                                                                ledgerUpdateAccCurAmt,
+                                                                                                transCurrency,
+                                                                                                exchangeRate));
+        }
+        else
+        {
+            if(expressionContext.endOfSettlement() == true)
+                EOSRunUpdate.updatePayroll(this.initializeEOSRunFromPayroll(_payroll,
+                                                                            ledgerUpdateTranCurAmt,
+                                                                            ledgerUpdateAccCurAmt,
+                                                                            transCurrency,
+                                                                            exchangeRate));
+            else
+                payLedgerUpdate.updatePayroll(this.initializeLedgerFromPayroll(_payroll,
+                                                                               ledgerUpdateTranCurAmt,
+                                                                               ledgerUpdateAccCurAmt,
+                                                                               transCurrency,
+                                                                               exchangeRate));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerPayrollProcessForEncashment</Name>
+				<Source><![CDATA[
+    protected void workerPayrollProcessForEncashment(SPYPayElementRecId _payroll,
+                                                     SPYAmount          _totalTransCurAmount,
+                                                     SPYAmount          _totalAccCurAmount)
+    {
+        SPYPayrollTable             payrollTable = SPYPayrollTable::find(_payroll);
+    
+        expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn(conNull());
+        this.notifyObserver("@SPY1649",strFmt("%1",payrollTable.PayElementCode),4,1);
+        this.setPayElement(_payroll);
+        //this.payElementPreEventHandler_old(SPYPayEventFrequency::PayElement);
+        this.notifyObserver(strFmt("@SYS90673",payrollTable.PayElementCode),strFmt("%1",_totalTransCurAmount),4,2);
+        this.setCurrentExpressionReturn(_totalTransCurAmount,0);
+        //this.payElementPostEventHandler_old(SPYPayEventFrequency::PayElement);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>convert2AccCurAmt</Name>
+				<Source><![CDATA[
+    static SPYAmount convert2AccCurAmt(LegalEntityRecId _legalEntity,
+                                       TransDate        _transDate,
+                                       SPYAmount        _amount,
+                                       CurrencyCode     _transCurrency)
+    {
+        SPYAmount                   accountingCurrencyAmount;
+        ExchangeRateHelper          exchangeRateHelper;
+    
+        exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::findByLegalEntity(_legalEntity).RecId,
+                                                             _transCurrency);
+        exchangeRateHelper.parmExchangeDate(_transDate);
+        accountingCurrencyAmount = _amount * exchangeRateHelper.getExchangeRate1() / 100;
+    
+        return accountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>saveOpen</Name>
+				<Source><![CDATA[
+    public client static void saveOpen(Filename _filePath,str _text)
+    {
+        FileIOPermission        fioPermission;
+        TextStreamIo            txIoWrite;        
+        System.IO.StreamWriter  writer;
+        InteropPermission       perm = new InteropPermission(InteropKind::ClrInterop);
+        System.IO.FileStream    stream;
+        #define.FileRW("RW")
+        #define.FileW("W")        
+
+        perm.assert();
+        writer = new System.IO.StreamWriter(_filePath);
+        writer.WriteLine(_text); 
+        writer.Close();
+        stream = System.IO.File::OpenRead(_filePath);
+        File::SendFileToUser(stream, _filePath);
+        CodeAccessPermission::revertAssert();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

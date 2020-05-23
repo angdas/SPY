@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSTimesheetCreate</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYTSTimesheetCreate
+{
+    HcmWorkerRecId worker;
+    int            monthDiff;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmMonthdiff</Name>
+				<Source><![CDATA[
+    public Counter parmMonthdiff(Counter _monthdiff = monthdiff)
+    {
+        monthdiff = _monthdiff;
+    
+        return monthdiff;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorker</Name>
+				<Source><![CDATA[
+    public HCMworkerRecid parmWorker(HCMworkerRecid _worker = worker)
+    {
+        worker = _worker;
+    
+        return worker;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public  void run()
+    {
+        try
+        {
+            this.updTimesheetMnth();
+        }
+        catch
+        {
+            error(strFmt("%1","Timesheet not created"));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updTimesheetMnth</Name>
+				<Source><![CDATA[
+    public void updTimesheetMnth()
+    {
+        TSTimesheetTable        TSTimesheetTable;
+        TSTimesheetTable        TSTimesheetTableCreate;
+        ProjPeriodTimesheetWeek projTimesheetweek;
+        ProjPeriodId            PeriodId;
+        StartDate               startmthdate;
+        EndDate                 endmthdate;
+        HCMWorkerRecid          _worker;  
+        ResourceWorkerView      resourceWorkerView;
+    
+        _worker = worker;
+        PeriodId = "Weekly";  //"Monthly";
+        startmthdate = dateStartMth(dateMthFwd(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),monthDiff));
+        endmthdate = dateEndMth(dateMthFwd(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),monthDiff));
+    
+        while select projTimesheetweek where projTimesheetweek.PeriodId == PeriodId
+        && projTimesheetweek.PeriodFrom >= startmthdate && projTimesheetweek.PeriodTo <= endmthdate  // This logic might fail due to weekly setting
+        {
+            select TimesheetNbr, ProjPeriodTimesheetWeek, RecId from TSTimesheetTable 
+                join resourceWorkerView
+                where TSTimesheetTable.Resource == resourceWorkerView.RecId &&
+                      resourceWorkerView.Worker == _worker &&
+                      TSTimesheetTable.PeriodFrom == startmthdate && 
+                      TSTimesheetTable.PeriodTo == endmthdate && 
+                      TSTimesheetTable.ProjPeriodId == PeriodId && 
+                      TSTimesheetTable.ProjPeriodTimesheetWeek == projTimesheetweek.RecId;
+    
+            if(!TSTimesheetTable.RecId)
+            {
+                select firstonly resourceWorkerView
+                    where resourceWorkerView.Worker == _worker;
+                TSTimesheetTableCreate = null;
+                TSTimesheetTableCreate.initValue();
+                TSTimesheetTableCreate.Resource = resourceWorkerView.RecId;
+                TSTimesheetTableCreate.PeriodFrom = startmthdate;
+                TSTimesheetTableCreate.PeriodTo = endmthdate;
+                TSTimesheetTableCreate.ProjPeriodId = PeriodId;
+                TSTimesheetTableCreate.ProjPeriodTimesheetWeek = projTimesheetweek.RecId;
+                TSTimesheetTableCreate.insert();
+    
+                TSTimesheetFavorites::transferAllFavorites(TSTimesheetTableCreate.TimesheetNbr, TSTimesheetTableCreate.ProjPeriodTimesheetWeek);
+            }
+            else
+                TSTimesheetFavorites::transferAllFavorites(TSTimesheetTable.TimesheetNbr, TSTimesheetTable.ProjPeriodTimesheetWeek);
+    
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYtsTimesheetCreate    tsTimesheetCreate;
+        TSAppEmplSub            TSAppEmplSub;
+        int                     monthDiff;
+        ResourceWorkerView      resourceWorkerView;
+    
+        if( args.dataset()  == tableNum(TSAppEmplSub))
+        {
+            TSAppEmplSub = args.record();
+        }
+
+        select firstonly resourceWorkerView
+            where resourceWorkerView.RecId == TSAppEmplSub.Resource;
+        tsTimesheetCreate = new SPYtsTimesheetCreate();
+        tsTimesheetCreate.parmworker(resourceWorkerView.Worker);
+    
+        if(args.menuItemName() == webActionItemStr(SPYCurrentMonth))
+            monthDiff = 0;
+        else if(args.menuItemName() == webActionItemStr(SPYPrevMonth))
+            monthDiff = -1;
+        else if(args.menuItemName() == webActionItemStr(SPYNextMonth))
+            monthDiff = 1;
+    
+        tsTimesheetCreate.parmMonthdiff(monthDiff);
+        tsTimesheetCreate.run();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

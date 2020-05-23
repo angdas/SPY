@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitJournalPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYBenefitJournalPostService extends SysOperationServiceBase
+{
+    SPYPayAdjustmentPostContract        contract;
+    RecordInsertList                    benefitLedgerList;
+    RecordInsertList                    payrollLedgerList;
+    RecordInsertList                    absenceLedgerList;
+    boolean                             callFromPost;
+    boolean                             error;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>commitLedger</Name>
+				<Source><![CDATA[
+    private void commitLedger()
+    {
+        benefitLedgerList.insertDatabase();
+        payrollLedgerList.insertDatabase();
+        absenceLedgerList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2AbsenceLedger</Name>
+				<Source><![CDATA[
+    private void insert2AbsenceLedger(SPYBenefitJournalTrans _benefitJournalTrans)
+    {
+        HRMAbsenceCode                      hrmAbsenceCode;
+        SPYAbsenceLedger                    absenceLedger;
+        TransDateTime                       startDateTime,endDateTime;
+        WorkCalendarTable                   workCalendarTable;
+        SPYPayrollPeriodLine                payrollPeriodLineTab;
+        date                                periodStart,periodEnd;
+        HcmEmployment                       hcmEmployment;
+        HcmEmploymentDetail                 hcmEmploymentDetail;
+        SPYAbsenceConfigLine                absenceConfigLine;
+
+        payrollPeriodLineTab = SPYPayrollPeriodLine::find(_benefitJournalTrans.PayrollPeriodlLine);
+        periodStart = payrollPeriodLineTab.PeriodStartDate;
+        periodEnd = payrollPeriodLineTab.PeriodEndDate;
+        startDateTime = DateTimeUtil::newDateTime(periodStart,00-00);
+        endDateTime = DateTimeUtil::newDateTime(periodEnd,00-00);
+        hcmEmployment = HcmEmployment::findByWorkerLegalEntity(_benefitJournalTrans.Worker,CompanyInfo::current(),startDateTime,endDateTime);
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,startDateTime,endDateTime);
+        select hrmAbsenceCode
+            join absenceConfigLine
+            where hrmAbsenceCode.hrmAbsenceCodeId == absenceConfigLine.HRMAbsenceCodeId &&
+                  absenceConfigLine.AbsenceConfig == hcmEmploymentDetail.SPYAbsenceConfig &&
+                  hrmAbsenceCode.SPYBenefit == _benefitJournalTrans.Benefit;
+        if(!hrmAbsenceCode)
+            select hrmAbsenceCode
+                where hrmAbsenceCode.SPYBenefit == _benefitJournalTrans.Benefit;
+
+        if(hrmAbsenceCode && _benefitJournalTrans.Quantity)
+        {   
+            workCalendarTable = WorkCalendarTable::find(WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId).CalendarId);
+            absenceLedger.initValue();
+            absenceLedger.Worker                = _benefitJournalTrans.Worker;
+            absenceLedger.EntryType             = SPYAbsenceLedgerEntryType::Transaction;
+            absenceLedger.HRMAbsenceCodeId      = hrmAbsenceCode.hrmAbsenceCodeId;
+            absenceLedger.AbsenceDate           = _benefitJournalTrans.TransDate;
+            absenceLedger.TransDate           = _benefitJournalTrans.TransDate;
+            absenceLedger.AbsenceDays           = _benefitJournalTrans.Quantity;
+            absenceLedger.AbsenceHours          = _benefitJournalTrans.Quantity * workCalendarTable.StandardWorkDayHours;
+            absenceLedger.EntryType             = SPYAbsenceLedgerEntryType::Transaction;
+            absenceLedger.Txt                   = _benefitJournalTrans.Txt;
+            absenceLedger.SourceDocument        = tableNum(SPYBenefitJournalTable);
+            absenceLedger.BenefitJournalTrans   = _benefitJournalTrans.RecId;
+            absenceLedgerList.add(absenceLedger);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2Ledger</Name>
+				<Source><![CDATA[
+    private void insert2Ledger(SPYBenefitJournalTable _benefitJournalTable)
+    {
+        SPYBenefitJournalTrans      benefitJournalTrans;
+        SPYBenefitLedger            benefitLedger;
+        SPYPayrollLedger            payrollLedger;
+        ExchangeRateHelper          exchangeRateHelper;
+        SPYBenefitTable             benefitTable;
+        SPYPayrollRecId             payroll;
+    
+        while select benefitJournalTrans
+            where benefitJournalTrans.BenefitJournal == _benefitJournalTable.RecId
+        {
+            benefitLedger.clear();
+            benefitLedger.BenefitJournalTrans         = benefitJournalTrans.RecId;
+            benefitLedger.Worker                      = benefitJournalTrans.Worker;
+            benefitLedger.PayrollPeriodLine           = benefitJournalTrans.PayrollPeriodlLine;
+            benefitLedger.Benefit                     = benefitJournalTrans.Benefit;
+            benefitLedger.TransDate                   = benefitJournalTrans.TransDate;
+            benefitLedger.Txt                         = benefitJournalTrans.Txt ? benefitJournalTrans.Txt :
+                                                        strFmt("@SPY967",
+                                                        SPYPayElementTable::find(benefitJournalTrans.Benefit).PayElementCode,
+                                                        HcmWorker::find(benefitJournalTrans.Worker).name(),
+                                                        SPYPayrollPeriodLine::find(benefitJournalTrans.PayrollPeriodlLine).PeriodStartDate,
+                                                        SPYPayrollPeriodLine::find(benefitJournalTrans.PayrollPeriodlLine).PeriodEndDate,
+                                                        _benefitJournalTable.JournalType);
+            benefitLedger.Currency                    = benefitJournalTrans.Currency;
+            exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::current(),benefitJournalTrans.Currency);
+            exchangeRateHelper.parmExchangeDate(benefitJournalTrans.TransDate);
+            benefitLedger.ExchRate                    = exchangeRateHelper.getExchangeRate1();
+            benefitLedger.JournalType                 = _benefitJournalTable.JournalType;
+            benefitLedger.DistributeCost            = benefitJournalTrans.DistributeCost;
+            switch(_benefitJournalTable.JournalType)
+            {
+                case SPYBenefitJournalType::Accrual :
+                    benefitLedger.Quantity                    = benefitJournalTrans.Quantity;
+                    benefitLedger.TransactionCurrencyAmount   = benefitJournalTrans.TransactionCurrencyAmount;
+                    benefitLedger.AccountingCurrencyAmount    = benefitJournalTrans.TransactionCurrencyAmount * benefitLedger.ExchRate / 100;
+                    benefitLedger.setAccount(benefitJournalTrans.TransDate,CompanyInfo::current(),benefitJournalTrans.PayrollPeriodlLine);
+                    break;
+    
+                case SPYBenefitJournalType::Encashment :
+                    benefitTable = SPYBenefitTable::find(benefitJournalTrans.Benefit);
+                    benefitLedger.Quantity          = benefitJournalTrans.Quantity;
+                    benefitLedger.EncashmentPayout  = benefitJournalTrans.Payout;
+                    benefitLedger.TransactionCurrencyAmount = benefitJournalTrans.TransactionCurrencyAmount;
+                    benefitLedger.AccountingCurrencyAmount  = benefitJournalTrans.TransactionCurrencyAmount * benefitLedger.ExchRate / 100;
+                    benefitLedger.TransactionCurPnLAmount   = benefitJournalTrans.TransactionCurPnLAmount;
+                    benefitLedger.AccountingCurPnLAmount    = benefitJournalTrans.TransactionCurPnLAmount * benefitLedger.ExchRate / 100;
+                    /*
+                    balanceQty = benefitTable.balanceQty(benefitLedger.Worker);
+                    if(round(balanceQty,0.01) != 0)
+                    {
+                        ledgerAmount = benefitTable.balanceAccountingCurAmount(benefitJournalTrans.Worker) * benefitJournalTrans.Quantity
+                                        / balanceQty;
+                        benefitLedger.TransactionCurPnLAmount   = ledgerAmount - benefitJournalTrans.TransactionCurrencyAmount;
+                        benefitLedger.AccountingCurPnLAmount    = benefitJournalTrans.TransactionCurPnLAmount * benefitLedger.ExchRate / 100;
+                    }
+                    else
+                    {
+                        warning(strFmt("Balance qty cannot be zero of worker %1 for encashment journal.",HcmWorker::find(benefitJournalTrans.Worker).name()));
+                        benefitLedger.TransactionCurPnLAmount   = - benefitJournalTrans.TransactionCurrencyAmount;
+                        benefitLedger.AccountingCurPnLAmount    = benefitJournalTrans.TransactionCurPnLAmount * benefitLedger.ExchRate / 100;
+    
+                    }
+                    */
+                    benefitLedger.setAccount(benefitJournalTrans.TransDate,CompanyInfo::current(),benefitJournalTrans.PayrollPeriodlLine,true);
+                    break;
+            }
+            if(benefitJournalTrans.DefaultDimension)
+                benefitLedger.DefaultDimension                  = benefitJournalTrans.DefaultDimension;
+            benefitLedger.SourceDocument                        = tableNum(SPYBenefitJournalTable);
+            benefitLedger.ImmediateDisbursement                 = _benefitJournalTable.ImmediateDisbursement;
+            benefitLedger.IsFinalised   = _benefitJournalTable.ImmediateDisbursement;
+            benefitLedgerList.add(benefitLedger);
+    
+
+            if(benefitJournalTrans.Payout)
+            {
+                payroll = SPYBenefitDetails::findByBenefit(benefitJournalTrans.Benefit,CompanyInfo::current()).EncashmentPayroll;
+                if(payroll)
+                {
+                    payrollLedger.clear();
+                    payrollLedger.initValue();
+                    payrollLedger.Worker                    = benefitJournalTrans.Worker;
+                    payrollLedger.Payroll                   = payroll;
+                    payrollLedger.PayrollPeriodLine         = benefitJournalTrans.PayrollPeriodlLine;
+                    payrollLedger.Currency                  = benefitJournalTrans.Currency;
+                    payrollLedger.TransactionCurrencyAmount = -benefitLedger.TransactionCurrencyAmount;
+                    payrollLedger.ExchRate                  = benefitLedger.ExchRate;
+                    payrollLedger.AccountingCurrencyAmount  = -benefitLedger.AccountingCurrencyAmount;
+                    payrollLedger.TransDate                 = benefitJournalTrans.TransDate;
+                    payrollLedger.Txt                       = benefitJournalTrans.Txt ? benefitJournalTrans.Txt :
+                                                              strFmt("@SPY967",
+                                                              SPYPayElementTable::find(benefitJournalTrans.Benefit).PayElementCode,
+                                                              HcmWorker::find(benefitJournalTrans.Worker).name(),
+                                                              SPYPayrollPeriodLine::find(benefitJournalTrans.PayrollPeriodlLine).PeriodStartDate,
+                                                              SPYPayrollPeriodLine::find(benefitJournalTrans.PayrollPeriodlLine).PeriodEndDate,
+                                                              _benefitJournalTable.JournalType);
+                    payrollLedger.SourceDocument            = tableNum(SPYBenefitJournalTable);
+                    payrollLedger.setAccount(benefitJournalTrans.TransDate,CompanyInfo::current(),benefitJournalTrans.PayrollPeriodlLine);
+                    if(benefitJournalTrans.DefaultDimension)
+                        payrollLedger.DefaultDimension      = benefitJournalTrans.DefaultDimension;
+                    payrollLedger.BenefitJournalTrans       = benefitJournalTrans.RecId;
+                    payrollLedger.ImmediateDisbursement     = _benefitJournalTable.ImmediateDisbursement;
+                    payrollLedger.DistributeCost            = benefitJournalTrans.DistributeCost;
+                    payrollLedger.IsFinalised = _benefitJournalTable.ImmediateDisbursement;
+                    payrollLedgerList.add(payrollLedger);
+                }
+                else
+                    warning(strFmt("@SPY1240",SPYPayElementTable::find(benefitJournalTrans.Benefit).PayElementCode));
+            }
+    
+            this.insert2AbsenceLedger(benefitJournalTrans);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYBenefitJournalPostContract _contract)
+    {
+        QueryRun                    benefitJournalQueryRun;
+        SPYBenefitJournalTable      benefitJournalTable;
+    
+        benefitJournalQueryRun = new QueryRun(_contract.parmBenefitJournalQuery());
+        benefitLedgerList = new RecordInsertList(tableNum(SPYBenefitLedger));
+        payrollLedgerList = new RecordInsertList(tableNum(SPYPayrollLedger));
+        absenceLedgerList = new RecordInsertList(tableNum(SPYAbsenceLedger));
+    
+        try
+        {
+            setPrefix("@SPY304");
+            ttsBegin;
+            callFromPost = true;
+            if(this.validate(_contract))
+            {
+                while(benefitJournalQueryRun.next())
+                {
+                    benefitJournalTable = benefitJournalQueryRun.get(tableNum(SPYBenefitJournalTable));
+                    if(!benefitJournalTable.Posted)
+                    {
+                        this.insert2Ledger(benefitJournalTable);
+                        if(error)
+                            throw error("@SPY1181");
+                        this.updateBenefitJournalHeader(benefitJournalTable);
+                        info(strFmt("@SPY303",benefitJournalTable.BenefitJournalCode));
+                    }
+                }
+                this.commitLedger();
+            }
+            else
+                error("@SPY293");
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefitJournalHeader</Name>
+				<Source><![CDATA[
+    private void updateBenefitJournalHeader(SPYBenefitJournalTable _benefitJournalTable)
+    {
+        SPYBenefitJournalTable   benefitJournalTableUpdate = SPYBenefitJournalTable::find(_benefitJournalTable.RecId,true);
+    
+        if(benefitJournalTableUpdate)
+        {
+            benefitJournalTableUpdate.Posted = true;
+            benefitJournalTableUpdate.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(SPYBenefitJournalPostContract _contract)
+    {
+        boolean                     ret = true;
+        QueryRun                    benefitJournalQueryRun;
+        SPYBenefitJournalTable      benefitJournalTable;
+    
+        benefitJournalQueryRun = new QueryRun(_contract.parmBenefitJournalQuery());
+        if(!callFromPost)
+            setPrefix("@SPY305");
+        while(benefitJournalQueryRun.next())
+        {
+            benefitJournalTable = benefitJournalQueryRun.get(tableNum(SPYBenefitJournalTable));
+            if(!benefitJournalTable.Posted)
+            {
+                if(!this.validateBenefitJournal(benefitJournalTable))
+                    ret = checkFailed(strFmt("@SPY306",benefitJournalTable.BenefitJournalCode));
+                else
+                {
+                    if(!callFromPost)
+                        info(strFmt("@SPY307",benefitJournalTable.BenefitJournalCode));
+                }
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateBenefitJournal</Name>
+				<Source><![CDATA[
+    private boolean validateBenefitJournal(SPYBenefitJournalTable _benefitJournalTable)
+    {
+        boolean                     ret = true;
+        SPYBenefitJournalTrans      benefitJournalTrans;
+        SPYPayrollPeriodLine        payrollPeriodLine;
+        SPYWorkerPositionBenefit    workerBenefit;
+        date                        validDate;
+        SPYPayrollPeriodRecId       payrollPeriod;
+        HcmEmployment               employment;
+        HcmEmploymentDetail         employmentDetail;
+        boolean                     isWorkflowEnabled = WorkflowTable::findActiveTemplate(workflowtypestr(SPYBenefitJournal)) ? true : false;
+        
+        if(isWorkflowEnabled || _benefitJournalTable.WorkflowStatus != SPYWorkFlowStatus::Approved)
+            ret = checkFailed(strFmt("@SPY416",_benefitJournalTable.BenefitJournalCode));
+    
+        while select Worker,PayrollPeriodlLine,TransDate,Benefit,Currency,LineNum,Payout from benefitJournalTrans
+            where benefitJournalTrans.BenefitJournal == _benefitJournalTable.RecId
+        {
+            if(!benefitJournalTrans.Worker)
+                ret = checkFailed(strFmt("@SPY286",benefitJournalTrans.LineNum));
+            if(!benefitJournalTrans.PayrollPeriodlLine)
+                ret = checkFailed(strFmt("@SPY287",benefitJournalTrans.LineNum));
+            if(!benefitJournalTrans.TransDate)
+                ret = checkFailed(strFmt("@SPY288",benefitJournalTrans.LineNum));
+            if(!benefitJournalTrans.Benefit)
+                ret = checkFailed(strFmt("@SPY311",benefitJournalTrans.LineNum));
+            if(!benefitJournalTrans.Currency)
+                ret = checkFailed(strFmt("@SPY291",benefitJournalTrans.LineNum));
+            payrollPeriodLine = SPYPayrollPeriodLine::find(benefitJournalTrans.PayrollPeriodlLine);
+            if(payrollPeriodLine.PeriodStatus == SPYPayrollPeriodStatus::Closed)
+                ret = checkFailed(strFmt("@SPY1147",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,benefitJournalTrans.LineNum));
+            if(payrollPeriodLine.PeriodStatus == SPYPayrollPeriodStatus::Stopped)
+                ret = checkFailed(strFmt("@SPY1148",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,benefitJournalTrans.LineNum));
+            validDate = benefitJournalTrans.TransDate;
+            select firstonly validTimeState(validDate) workerBenefit
+                where workerBenefit.Worker == benefitJournalTrans.Worker &&
+                      workerBenefit.LegalEntity == CompanyInfo::current() &&
+                      workerBenefit.Benefit == benefitJournalTrans.Benefit;
+            if(workerBenefit)
+                payrollPeriod = workerBenefit.PayrollPeriod;
+            else
+            {
+                employment = HcmEmployment::findByWorkerLegalEntity(benefitJournalTrans.Worker,CompanyInfo::current());
+                employmentDetail = HcmEmploymentDetail::findByEmployment(employment.RecId);
+                payrollPeriod = employmentDetail.SPYDefaultPayrollPeriod;
+            }
+            if(payrollPeriod != payrollPeriodLine.PayrollPeriod)
+                ret = checkFailed(strFmt("@SPY1624",
+                SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode,benefitJournalTrans.LineNum));
+            if(benefitJournalTrans.Payout && !SPYBenefitDetails::findByBenefit(benefitJournalTrans.Benefit,CompanyInfo::current()).EncashmentPayroll)
+                ret = checkFailed(strFmt("@SPY1240",SPYPayElementTable::find(benefitJournalTrans.Benefit).PayElementCode,benefitJournalTrans.LineNum));
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

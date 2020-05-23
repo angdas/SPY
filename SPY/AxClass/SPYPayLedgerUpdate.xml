@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLedgerUpdate</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayLedgerUpdate
+{
+    RecordInsertList        payrollInsertList;
+    RecordInsertList        benefitInsertList;
+    RecordInsertList        refPayElementInsertList;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>deleteAllBenefitLedger</Name>
+				<Source><![CDATA[
+    public void deleteAllBenefitLedger(HcmWorkerRecId              _worker,
+                                       SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                                       boolean                     _payArrear)
+    {
+        SPYBenefitLedger            benefitLedger;
+        SPYPayrollJournalTable      payrollJournalTable;
+        SPYPayrollJournalLine       payrollJournalLine;
+    
+        if(!_payArrear)
+        {
+            delete_from benefitLedger
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                      !benefitLedger.PayrollJournalLine &&
+                      !benefitLedger.SourceDocument &&
+                      !benefitLedger.ArrearPeriodLine;
+    
+            while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                      benefitLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted
+            {
+                this.deletePayrollJournalLine(benefitLedger.PayrollJournalLine);
+                if(!benefitLedger.SourceDocument && !benefitLedger.ArrearPeriodLine)
+                    benefitLedger.doDelete();
+            }
+    
+            while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                      benefitLedger.PnLPayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted
+            {
+                this.deletePayrollJournalLine(benefitLedger.PnLPayrollJournalLine);
+                if(!benefitLedger.SourceDocument && !benefitLedger.ArrearPeriodLine)
+                    benefitLedger.doDelete();
+            }
+        }
+        else //delete arrear transaction
+        {
+            delete_from benefitLedger
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      !benefitLedger.PayrollJournalLine &&
+                      !benefitLedger.SourceDocument;
+    
+            while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      benefitLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted
+            {
+                this.deletePayrollJournalLine(benefitLedger.PayrollJournalLine);
+                if(!benefitLedger.SourceDocument)
+                    benefitLedger.doDelete();
+            }
+    
+            while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      benefitLedger.PnLPayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted
+            {
+                this.deletePayrollJournalLine(benefitLedger.PnLPayrollJournalLine);
+                if(!benefitLedger.SourceDocument)
+                    benefitLedger.doDelete();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteAllPayrollLedger</Name>
+				<Source><![CDATA[
+    public void deleteAllPayrollLedger(HcmWorkerRecId              _worker,
+                                       SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                                       boolean                     _payArrear)
+    {
+        SPYPayrollLedger            payrollLedger;
+        SPYPayrollJournalTable      payrollJournalTable;
+        SPYPayrollJournalLine       payrollJournalLine;
+    
+        if(!_payArrear)
+        {
+            delete_from payrollLedger
+                where payrollLedger.Worker == _worker &&
+                      payrollLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                      !payrollLedger.PayrollJournalLine &&
+                      !payrollLedger.SourceDocument &&
+                      !payrollLedger.ArrearPeriodLine;
+    
+            while select forUpdate payrollLedger join payrollJournalLine join payrollJournalTable
+                where payrollLedger.Worker == _worker &&
+                      payrollLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                      payrollLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted &&
+                      !payrollLedger.SourceDocument &&
+                      !payrollLedger.ArrearPeriodLine
+            {
+                this.deletePayrollJournalLine(payrollLedger.PayrollJournalLine);
+                payrollLedger.doDelete();
+            }
+        }
+        else  //delete arrear transaction
+        {
+            delete_from payrollLedger
+                where payrollLedger.Worker == _worker &&
+                      payrollLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      !payrollLedger.PayrollJournalLine &&
+                      !payrollLedger.SourceDocument;
+    
+            while select forUpdate payrollLedger join payrollJournalLine join payrollJournalTable
+                where payrollLedger.Worker == _worker &&
+                      payrollLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      payrollLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted &&
+                      !payrollLedger.SourceDocument
+            {
+                this.deletePayrollJournalLine(payrollLedger.PayrollJournalLine);
+                payrollLedger.doDelete();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteAllRefPayElementLedger</Name>
+				<Source><![CDATA[
+    public void deleteAllRefPayElementLedger(HcmWorkerRecId              _worker,
+                                       SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                                       boolean                     _payArrear)
+    {
+        SPYReferencePayElementLedger            refPayElementLedger;
+    
+        if(!_payArrear)
+        {
+            delete_from refPayElementLedger
+                where refPayElementLedger.Worker == _worker &&
+                      refPayElementLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                      !refPayElementLedger.IsFinalised &&
+                      !refPayElementLedger.SourceDocument &&
+                      !refPayElementLedger.ArrearPeriodLine;
+        }
+        else  //delete arrear transaction
+        {
+            delete_from refPayElementLedger
+                where refPayElementLedger.Worker == _worker &&
+                      refPayElementLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      !refPayElementLedger.IsFinalised &&
+                      !refPayElementLedger.SourceDocument;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteBenefitLedger</Name>
+				<Source><![CDATA[
+    public void deleteBenefitLedger(HcmWorkerRecId              _worker,
+                                    SPYPayElementRecId          _benefit,
+                                    SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                                    boolean                     _payArrear)
+    {
+        SPYBenefitLedger            benefitLedger;
+        SPYPayrollJournalTable      payrollJournalTable;
+        SPYPayrollJournalLine       payrollJournalLine;
+    
+        delete_from benefitLedger
+            where benefitLedger.Worker == _worker &&
+                    benefitLedger.Benefit == _benefit &&
+                    benefitLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                    // !benefitLedger.PayrollJournalLine &&
+                    !benefitLedger.IsFinalised &&
+                    (benefitLedger.SourceDocument == 0 || benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)) &&
+                    !benefitLedger.ArrearPeriodLine;
+        /*
+        while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+            where benefitLedger.Worker == _worker &&
+                    benefitLedger.Benefit == _benefit &&
+                    benefitLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                    benefitLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                    payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                    !payrollJournalTable.Posted
+        {
+            this.deletePayrollJournalLine(benefitLedger.PayrollJournalLine);
+            if((benefitLedger.SourceDocument == 0 || benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)) && !benefitLedger.ArrearPeriodLine)
+                benefitLedger.doDelete();
+        }
+        
+        while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+            where benefitLedger.Worker == _worker &&
+                    benefitLedger.Benefit == _benefit &&
+                    benefitLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                    benefitLedger.PnLPayrollJournalLine == payrollJournalLine.RecId &&
+                    payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                    !payrollJournalTable.Posted
+        {
+            this.deletePayrollJournalLine(benefitLedger.PnLPayrollJournalLine);
+            if((benefitLedger.SourceDocument == 0 || benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)) && !benefitLedger.ArrearPeriodLine)
+                benefitLedger.doDelete();
+        }
+        */
+        if(_payArrear) //delete arrear transaction
+        {
+            delete_from benefitLedger
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.Benefit == _benefit &&
+                      benefitLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      //!benefitLedger.PayrollJournalLine &&
+                      !benefitLedger.IsFinalised &&
+                      (benefitLedger.SourceDocument == 0 || benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable));
+            /*
+            while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.Benefit == _benefit &&
+                      benefitLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      benefitLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted
+            {
+                this.deletePayrollJournalLine(benefitLedger.PayrollJournalLine);
+                if((benefitLedger.SourceDocument == 0 || benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)))
+                    benefitLedger.doDelete();
+            }
+    
+            while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+                where benefitLedger.Worker == _worker &&
+                      benefitLedger.Benefit == _benefit &&
+                      benefitLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      benefitLedger.PnLPayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted
+            {
+                this.deletePayrollJournalLine(benefitLedger.PnLPayrollJournalLine);
+                if((benefitLedger.SourceDocument == 0 || benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)))
+                    benefitLedger.doDelete();
+            }
+            */
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deletePayrollJournalHeader</Name>
+				<Source><![CDATA[
+    private void deletePayrollJournalHeader(SPYPayrollJournalRecId _journal)
+    {
+        SPYPayrollJournalTable   payrollJournalTable = SPYPayrollJournalTable::find(_journal,true);
+    
+        if(payrollJournalTable && payrollJournalTable.journalLineCount() == 0)
+        {
+            payrollJournalTable.doDelete();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deletePayrollJournalLine</Name>
+				<Source><![CDATA[
+    private void deletePayrollJournalLine(SPYPayrollJournalLineRecId _journalLine)
+    {
+        SPYPayrollJournalLine   payrollJournalLine = SPYPayrollJournalLine::find(_journalLine,true);
+        SPYPayrollJournalRecId  payrollJournal = payrollJournalLine.PayrollJournal;
+    
+        if(payrollJournalLine)
+        {
+            payrollJournalLine.doDelete();
+        }
+        this.deletePayrollJournalHeader(payrollJournal);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deletePayrollLedger</Name>
+				<Source><![CDATA[
+    public void deletePayrollLedger(HcmWorkerRecId              _worker,
+                                    SPYPayElementRecId          _payroll,
+                                    SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                                    boolean                     _payArrear)
+    {
+        SPYPayrollLedger            payrollLedger;
+        SPYPayrollJournalTable      payrollJournalTable;
+        SPYPayrollJournalLine       payrollJournalLine;
+    
+        delete_from payrollLedger
+            where payrollLedger.Worker == _worker &&
+                    payrollLedger.Payroll  == _payroll &&
+                    payrollLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                    //!payrollLedger.PayrollJournalLine &&
+                    !payrollLedger.IsFinalised &&
+                    (payrollLedger.SourceDocument == 0 || payrollLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)) &&
+                    !payrollLedger.ArrearPeriodLine;
+        /*
+        while select forUpdate payrollLedger join payrollJournalLine join payrollJournalTable
+            where payrollLedger.Worker == _worker &&
+                    payrollLedger.Payroll  == _payroll &&
+                    payrollLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                    payrollLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                    payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                    !payrollJournalTable.Posted &&
+                    (payrollLedger.SourceDocument == 0 || payrollLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)) &&
+                    !payrollLedger.ArrearPeriodLine
+        {
+            this.deletePayrollJournalLine(payrollLedger.PayrollJournalLine);
+            payrollLedger.doDelete();
+        }
+        */
+        if(_payArrear)  //delete arrear transaction
+        {
+            delete_from payrollLedger
+                where payrollLedger.Worker == _worker &&
+                      payrollLedger.Payroll  == _payroll &&
+                      payrollLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      //!payrollLedger.PayrollJournalLine &&
+                      !payrollLedger.IsFinalised &&
+                      (payrollLedger.SourceDocument == 0 || payrollLedger.SourceDocument == tableNum(SPYLeaveApplicationTable));
+            /*
+            while select forUpdate payrollLedger join payrollJournalLine join payrollJournalTable
+                where payrollLedger.Worker == _worker &&
+                      payrollLedger.Payroll  == _payroll &&
+                      payrollLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      payrollLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                      payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                      !payrollJournalTable.Posted &&
+                      (payrollLedger.SourceDocument == 0 || payrollLedger.SourceDocument == tableNum(SPYLeaveApplicationTable))
+            {
+                this.deletePayrollJournalLine(payrollLedger.PayrollJournalLine);
+                payrollLedger.doDelete();
+            }
+            */
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteRefPayElementLedger</Name>
+				<Source><![CDATA[
+    public void deleteRefPayElementLedger(HcmWorkerRecId              _worker,
+                                    SPYPayElementRecId          _payroll,
+                                    SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                                    boolean                     _payArrear)
+    {
+        SPYReferencePayElementLedger            refPayElementLedger;
+    
+        delete_from refPayElementLedger
+            where refPayElementLedger.Worker == _worker &&
+                    refPayElementLedger.PayElement  == _payroll &&
+                    refPayElementLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                    !refPayElementLedger.IsFinalised &&
+                    (refPayElementLedger.SourceDocument == 0 || refPayElementLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)) &&
+            !refPayElementLedger.ArrearPeriodLine;
+    
+        if(_payArrear)  //delete arrear transaction
+        {
+            delete_from refPayElementLedger
+                where refPayElementLedger.Worker == _worker &&
+                      refPayElementLedger.PayElement  == _payroll &&
+                      refPayElementLedger.ArrearPeriodLine == _payrollPeriodLine &&
+                      !refPayElementLedger.IsFinalised &&
+                (refPayElementLedger.SourceDocument == 0 || refPayElementLedger.SourceDocument == tableNum(SPYLeaveApplicationTable));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new()
+    {
+        payrollInsertList = new RecordInsertList(tableNum(SPYPayrollLedger));
+        benefitInsertList = new RecordInsertList(tableNum(SPYBenefitLedger));
+        refPayElementInsertList = new RecordInsertList(tableNum(SPYReferencePayElementLedger));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefit</Name>
+				<Source><![CDATA[
+    public void updateBenefit(SPYBenefitLedger _BenefitLedger)
+    {
+        SPYAmount  amount = round(_BenefitLedger.TransactionCurrencyAmount, 0.000001);
+        SPYAmount  qty = round(_BenefitLedger.Quantity, 0.000001);
+        if(!SPYPayrollParameters::find().NullIncludedLedger && !amount && !qty)
+            return;
+    
+        //benefitInsertList.add(_benefitLedger);
+        _benefitLedger.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLedger</Name>
+				<Source><![CDATA[
+    public void updateLedger()
+    {
+        payrollInsertList.insertDatabase();
+        benefitInsertList.insertDatabase();
+        //refPayElementInsertList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updatePayroll</Name>
+				<Source><![CDATA[
+    public void updatePayroll(SPYPayrollLedger _payrollLedger)
+    {
+        SPYAmount  amount = round(_payrollLedger.TransactionCurrencyAmount, 0.000001);
+        if(!SPYPayrollParameters::find().NullIncludedLedger && !amount)
+            return;
+        //payrollInsertList.add(_payrollLedger);
+        _payrollLedger.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateRefPayElementLedger</Name>
+				<Source><![CDATA[
+    public void updateRefPayElementLedger(SPYReferencePayElementLedger _refPayElementLedger)
+    {
+        SPYAmount  amount = round(_refPayElementLedger.TransactionCurrencyAmount, 0.000001);
+        if(!SPYPayrollParameters::find().NullIncludedLedger && !amount)
+            return;
+        _refPayElementLedger.insert();
+        //refPayElementInsertList.add(_refPayElementLedger);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteLedgerForLeaveApplication</Name>
+				<Source><![CDATA[
+    public void deleteLedgerForLeaveApplication(HcmWorkerRecId _worker, SPYLeaveApplicationRecId _leaveApplication)
+    {
+        SPYPayrollLedger               payrollLedger;
+        SPYBenefitLedger              benefitLedger;
+        SPYReferencePayElementLedger    refPayElementLedger;
+        SPYPayrollJournalTable      payrollJournalTable;
+        SPYPayrollJournalLine       payrollJournalLine;
+    
+        delete_from payrollLedger
+            where payrollLedger.Worker == _worker &&
+                    !payrollLedger.PayrollJournalLine &&
+                    payrollLedger.SourceDocument == tableNum(SPYLeaveApplicationTable) &&
+                    payrollLedger.LeaveApplication == _leaveApplication;
+    
+        while select forUpdate payrollLedger join payrollJournalLine join payrollJournalTable
+            where payrollLedger.Worker == _worker &&
+                    payrollLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                    payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                    !payrollJournalTable.Posted &&
+                    payrollLedger.SourceDocument == tableNum(SPYLeaveApplicationTable) &&
+                    payrollLedger.LeaveApplication == _leaveApplication
+        {
+            this.deletePayrollJournalLine(payrollLedger.PayrollJournalLine);
+            payrollLedger.doDelete();
+        }
+    
+        delete_from benefitLedger
+            where benefitLedger.Worker == _worker &&
+                    !benefitLedger.PayrollJournalLine &&
+                    benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable) &&
+                    benefitLedger.LeaveApplication == _leaveApplication;
+    
+        while select forUpdate benefitLedger join payrollJournalLine join payrollJournalTable
+            where benefitLedger.Worker == _worker &&
+                    benefitLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                    payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                    !payrollJournalTable.Posted &&
+                    benefitLedger.SourceDocument == tableNum(SPYLeaveApplicationTable) &&
+                    benefitLedger.LeaveApplication == _leaveApplication
+        {
+            this.deletePayrollJournalLine(benefitLedger.PayrollJournalLine);
+            benefitLedger.doDelete();
+        }
+
+        delete_from refPayElementLedger
+            where refPayElementLedger.Worker == _worker &&
+                    !refPayElementLedger.IsFinalised &&
+                    refPayElementLedger.SourceDocument == tableNum(SPYLeaveApplicationTable) &&
+                    refPayElementLedger.LeaveApplication == _leaveApplication;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

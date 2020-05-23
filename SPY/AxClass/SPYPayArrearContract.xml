@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayArrearContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayArrearContract extends SPYPayProcessContract
+{
+    SPYPayrollPeriodLineRecId   arrearPeriodFrom;
+    SPYPayrollPeriodLineRecId   arrearPeriodTo;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmArrearPeriodFrom</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmArrearPeriodFrom(SPYPayrollPeriodLineRecId _arrearPeriodFrom = arrearPeriodFrom)
+    {
+        arrearPeriodFrom = _arrearPeriodFrom;
+        return arrearPeriodFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmArrearPeriodTo</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmArrearPeriodTo(SPYPayrollPeriodLineRecId _arrearPeriodTo = arrearPeriodTo)
+    {
+        arrearPeriodTo = _arrearPeriodTo;
+        return arrearPeriodTo;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

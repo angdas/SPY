@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxSecurityPrivilege xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLoanLedgerView</Name>
+	<Description>@SPY2258</Description>
+	<Label>@SPY2258</Label>
+	<DataEntityPermissions />
+	<DirectAccessPermissions />
+	<EntryPoints>
+		<AxSecurityEntryPointReference>
+			<Name>SPYPayLoanLedger</Name>
+			<Grant>
+				<Correct>Allow</Correct>
+				<Create>Allow</Create>
+				<Delete>Allow</Delete>
+				<Read>Allow</Read>
+				<Update>Allow</Update>
+			</Grant>
+			<ObjectName>SPYPayLoanLedger</ObjectName>
+			<ObjectType>MenuItemDisplay</ObjectType>
+			<Forms />
+		</AxSecurityEntryPointReference>
+	</EntryPoints>
+	<FormControlOverrides>
+		<AxSecurityFormControlReferenceCollection>
+			<Name>SPYPayloanLedger</Name>
+			<Controls>
+				<AxSecurityFormControlReference>
+					<Name>TabFinancialDimensions</Name>
+					<Grant>
+						<Correct>Allow</Correct>
+						<Create>Allow</Create>
+						<Delete>Allow</Delete>
+						<Read>Allow</Read>
+						<Update>Allow</Update>
+					</Grant>
+				</AxSecurityFormControlReference>
+			</Controls>
+		</AxSecurityFormControlReferenceCollection>
+	</FormControlOverrides>
+</AxSecurityPrivilege>

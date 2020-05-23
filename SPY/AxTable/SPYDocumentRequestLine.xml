@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDocumentRequestLine</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYDocumentRequestLine extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>nextLineNum</Name>
+				<Source><![CDATA[
+    LineNum nextLineNum(SPYDocumentRequestRecId _documentRequest)
+    {
+        SPYDocumentRequestLine          documentRequestLine;
+        LineNum                         ret;
+    
+        select maxOf(LineNum) from documentRequestLine
+            where documentRequestLine.DocumentRequest == _documentRequest;
+    
+        ret = documentRequestLine.LineNum + 1;
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>documentRequestTable</Name>
+				<Source><![CDATA[
+    public SPYDocumentRequestTable documentRequestTable()
+    {
+        return SPYDocumentRequestTable::find(this.DocumentRequest);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYDocumentRequest</ConfigurationKey>
+	<DeveloperDocumentation>@SPY:HRRequestTransactionLine</DeveloperDocumentation>
+	<Label>@SPY:HRRequestLine</Label>
+	<TableGroup>WorksheetLine</TableGroup>
+	<TitleField1>DocumentRequest</TitleField1>
+	<TitleField2>LineNum</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<ModifiedBy>Yes</ModifiedBy>
+	<ModifiedDateTime>Yes</ModifiedDateTime>
+	<ReplacementKey>Line_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequest</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequest</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequest</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Document</Name>
+			<Label>@SYS124781</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CertificateType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ConsulateType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>IncludeSalary</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DocumentLanguage</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DocumentRequestAddress</Name>
+			<Label>@SPY618</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestAddress</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DocumentRequestType</Name>
+			<Label>@SPY588</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestType</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Log</Name>
+			<Label>@SYS2515</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>createdBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>createdDateTime</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>modifiedBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>modifiedDateTime</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Overview</Name>
+			<Label>@SYS50012</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestAddress</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CertificateType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ConsulateType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>IncludeSalary</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DocumentLanguage</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Purpose</Name>
+			<Label>@SYS40775</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Purpose</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Remarks</Name>
+			<Label>@GLS90257</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Remarks</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>EmpRequisitionRequest</Name>
+			<Label>@SPY:EmployeeRequisitionRequest</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>HcmJob</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>JobDescription</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>NoOfOpenings</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>EmpTrainingRequest</Name>
+			<Label>@SPY:EmployeeTrainingRequest</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CourseId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CourseDescription</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>TrainingDays</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>NoOfParticipants</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>EmpDisciplinaryRequest</Name>
+			<Label>@SPY:EmployeeDisciplinaryRequest</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ReportedBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ReportedDate</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ActionTaken</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>EmpDismissalRequest</Name>
+			<Label>@SPY:EmployeeDismissalRequest</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ReasonCodeId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>TerminationDate</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>CertificateType</Name>
+			<Visible>No</Visible>
+			<EnumType>SPYDocumentCertificateType</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ConsulateType</Name>
+			<EnumType>SPYDocumentConsulateType</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DocumentLanguage</Name>
+			<ExtendedDataType>LanguageId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DocumentRequest</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>SPYDocumentRequestRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DocumentRequestAddress</Name>
+			<ExtendedDataType>SPYDocumentRequestAddressRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DocumentRequestType</Name>
+			<ExtendedDataType>SPYDocumentRequestTypeRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>IncludeSalary</Name>
+			<HelpText>@SPY608</HelpText>
+			<Label>@SPY607</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>LineNum</Name>
+			<ExtendedDataType>SPYLineNum</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Purpose</Name>
+			<ExtendedDataType>NotesLine</ExtendedDataType>
+			<HelpText>@SPY625</HelpText>
+			<Label>@SYS40775</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Remarks</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<HelpText>@SPY624</HelpText>
+			<Label>@SYS86005</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>NoOfOpenings</Name>
+			<ExtendedDataType>NumberOf</ExtendedDataType>
+			<Label>@SYS319297</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>TrainingDays</Name>
+			<ExtendedDataType>NumberOfResources</ExtendedDataType>
+			<Label>@SPY:TrainingDays</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>NoOfParticipants</Name>
+			<ExtendedDataType>NumberOf</ExtendedDataType>
+			<Label>@SPY:NumberOfParticipants</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>ReportedBy</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+			<Label>@SYS54968</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ReportedDate</Name>
+			<ExtendedDataType>TransDate</ExtendedDataType>
+			<Label>@SPY:ReportedDate</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ReasonCodeId</Name>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HcmReasonCodeId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ActionTaken</Name>
+			<Label>@SPY:ActionTaken</Label>
+			<EnumType>SPYDisciplinaryActionType</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>TerminationDate</Name>
+			<ExtendedDataType>TransDate</ExtendedDataType>
+			<Label>@SYS113911</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>HcmJob</Name>
+			<ExtendedDataType>HcmJobRecId</ExtendedDataType>
+			<Label>@PersonnelCore:Job</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>CourseId</Name>
+			<ExtendedDataType>HcmCourseTypeRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>JobDescription</Name>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HrmDescription</ExtendedDataType>
+			<Label>@SYS114518</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>CourseDescription</Name>
+			<AssetClassification>Customer Content</AssetClassification>
+			<ExtendedDataType>HrmDescription</ExtendedDataType>
+			<Label>@SYS30518</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>Line_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>DocumentRequest</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LineNum</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>LanguageTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>LanguageTable</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DocumentLanguage</Name>
+					<SourceEDT>LanguageId</SourceEDT>
+					<Field>DocumentLanguage</Field>
+					<RelatedField>LanguageId</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintRelatedFixed">
+					<Name>LabelFile</Name>
+					<SourceEDT>LanguageId</SourceEDT>
+					<RelatedField>LabelFile</RelatedField>
+					<Value>1</Value>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYDocumentRequestAddress</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYDocumentRequestAddress</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DocumentRequestAddress</Name>
+					<Field>DocumentRequestAddress</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYDocumentRequestTable</Name>
+			<Cardinality>OneMore</Cardinality>
+			<OnDelete>Cascade</OnDelete>
+			<RelatedTable>SPYDocumentRequestTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Contains</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>BelongsTo</Role>
+			<UseDefaultRoleNames>No</UseDefaultRoleNames>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DocumentRequest</Name>
+					<Field>DocumentRequest</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYDocumentRequestType</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYDocumentRequestType</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DocumentRequestType</Name>
+					<Field>DocumentRequestType</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>HcmWorker</Name>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>ReportedBy</Name>
+					<Field>ReportedBy</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>HcmJob</Name>
+			<RelatedTable>HcmJob</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>HcmJob</Name>
+					<Field>HcmJob</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>HcmCourseType</Name>
+			<RelatedTable>HcmCourseType</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>CourseId</Name>
+					<Field>CourseId</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

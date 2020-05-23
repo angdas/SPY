@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollJournalTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayrollJournalTable extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow(str _workflowType = '')
+    {
+        boolean                 ret;
+        SPYPayrollJournalLine   payrollJournalLine;
+    
+        ret = super(_workflowType);
+    
+        if(this.WorkflowStatus == SPYWorkflowStatus::Created && !this.Posted)
+        {
+            select count(recid) from payrollJournalLine
+                where payrollJournalLine.PayrollJournal == this.RecId;
+            if(payrollJournalLine.RecId > 0)
+                ret = true;
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>exchRate</Name>
+				<Source><![CDATA[
+    display CustExchRate exchRate(date _date = this.TransDate)
+    {
+        /*
+        if (this.CurrencyCode)
+            return Currency::exchRate(this.CurrencyCode, _date);
+        else*/
+            return 0;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>exchRateSecondary</Name>
+				<Source><![CDATA[
+    //BP Deviation Documented
+    display ExchrateSecondary exchRateSecondary(date _date = this.TransDate)
+    {/*
+        if (this.CurrencyCode)
+            return Currency::exchRateSecond(this.CurrencyCode, _date);
+        else*/
+            return 0;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert</Name>
+				<Source><![CDATA[
+    public void insert()
+    {
+        SourceDocumentProcessorFacade::submitSourceDocumentImplementation(this);
+    
+        //SourceDocumentProcessorFacade::submitSourceDocumentLineImplementation(this);
+    
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>journalLineCount</Name>
+				<Source><![CDATA[
+    int journalLineCount()
+    {
+        SPYPayrollJournalLine   payrollJournalLine;
+    
+        select count(RecId) from payrollJournalLine
+            where payrollJournalLine.PayrollJournal == this.RecId;
+    
+        return int642int(payrollJournalLine.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmExchangeRateDate</Name>
+				<Source><![CDATA[
+    public AccountingDate parmExchangeRateDate()
+    {
+        return this.TransDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmParentSourceDocumentLine</Name>
+				<Source><![CDATA[
+    public SourceDocumentLine parmParentSourceDocumentLine()
+    {
+        return null;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSourceDocHeaderTypeEnumName</Name>
+				<Source><![CDATA[
+    public EnumName parmSourceDocHeaderTypeEnumName()
+    {
+        return enumStr(SPYSourceDocument_PayrollJournal);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSourceDocHeaderTypeEnumValue</Name>
+				<Source><![CDATA[
+    public SourceDocumentTypeEnumValue parmSourceDocHeaderTypeEnumValue()
+    {
+        return SPYSourceDocument_PayrollJournal::Journal;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSourceDocLineTypeEnumName</Name>
+				<Source><![CDATA[
+    public EnumName parmSourceDocLineTypeEnumName()
+    {
+        return enumStr(SPYSourceDocumentLine_PayrollJournal);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSourceDocLineTypeEnumValue</Name>
+				<Source><![CDATA[
+    public SourceDocumentTypeEnumValue parmSourceDocLineTypeEnumValue()
+    {
+        return SPYSourceDocumentLine_PayrollJournal::JournalLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSourceDocumentHeader</Name>
+				<Source><![CDATA[
+    public SourceDocumentHeader parmSourceDocumentHeader()
+    {
+        SourceDocumentHeader    sourceDocumentHeader;
+    
+        sourceDocumentHeader = SourceDocumentHeader::find(this.SourceDocumentHeader);
+    
+        return sourceDocumentHeader;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Source</Name>
+				<Source><![CDATA[
+    public display SPYLedgerSource Source()
+    {
+        if(this.SourceDocument == tableNum(SPYEOSRunTable))
+            return "@SPY585";
+        else if(this.SourceDocument == tableNum(SPYBenefitJournalTable))
+            return "@SPY296";
+        else if(this.SourceDocument == tableNum(SPYAbsenceLedger))
+            return "@SPY61";
+        else if(this.SourceDocument == tableNum(SPYPayrollEarningsJournalTable))
+            return "@SPY1227";
+        else if(this.SourceDocument == tableNum(SPYLeaveApplicationTable))
+            return "@SPY109";
+        else
+            return "@SPY473";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitToWorkflow</Name>
+				<Source><![CDATA[
+    public void  submitToWorkflow(WorkflowTypeName      _workflowTemplateName,
+                                  WorkflowComment       _workflowComment,
+                                  boolean               _activatingFromWeb = false)
+    {
+        Workflow::activateFromWorkflowType(_workflowTemplateName,
+                                           this.RecId,
+                                           _workflowComment,
+                                           _activatingFromWeb,
+                                           curUserId());
+    
+        SPYPayrollJournalTable::updateWorkflowStatus(this.RecId,SPYWorkflowStatus::Submitted);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYPayrollJournalTable find(
+    SPYPayrollJournalRecId      _recId,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayrollJournalTable payrollJournalTable;
+    
+        payrollJournalTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            payrollJournalTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly payrollJournalTable
+             where payrollJournalTable.RecId == _recId;
+    
+        return payrollJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByJournalId</Name>
+				<Source><![CDATA[
+    static SPYPayrollJournalTable findByJournalId(SPYPayrollJournalId  _journalId, boolean _update = false)
+    {
+        SPYPayrollJournalTable payrollJournalTable;
+    
+        payrollJournalTable.selectForUpdate(_update);
+    
+        select firstonly payrollJournalTable
+                index hint JournalId_AK
+            where payrollJournalTable.JournalId     == _journalId;
+    
+        return payrollJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findBySourceDocumentHeader</Name>
+				<Source><![CDATA[
+    public static SPYPayrollJournalTable findBySourceDocumentHeader(RefRecId   _sourceDocumentHeader)
+    {
+        SPYPayrollJournalTable payrollJournalTable;
+    
+        select firstonly payrollJournalTable
+            where payrollJournalTable.SourceDocumentHeader == _sourceDocumentHeader;
+    
+        return payrollJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWorkflowStatus</Name>
+				<Source><![CDATA[
+    static void updateWorkflowStatus(SPYPayrollJournalRecId _payrollJournal,SPYWorkflowStatus _status)
+    {
+        SPYPayrollJournalTable   payrollJournalTableUpdate;
+    
+        ttsBegin;
+        payrollJournalTableUpdate = SPYPayrollJournalTable::find(_payrollJournal,true);
+        if(payrollJournalTableUpdate)
+        {
+            payrollJournalTableUpdate.WorkflowStatus = _status;
+            payrollJournalTableUpdate.update();
+        }
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY321</DeveloperDocumentation>
+	<Label>@SPY84</Label>
+	<SingularLabel>@SPY84</SingularLabel>
+	<TableGroup>WorksheetHeader</TableGroup>
+	<TitleField1>JournalId</TitleField1>
+	<TitleField2>Description</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<ModifiedBy>Yes</ModifiedBy>
+	<ModifiedDateTime>Yes</ModifiedDateTime>
+	<ReplacementKey>JournalId_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>JournalId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>JournalId</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>JournalId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Dimension</Name>
+			<Label>@SYS342338</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DefaultDimension</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Log</Name>
+			<Label>@SYS2515</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>createdBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>createdDateTime</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>modifiedBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>modifiedDateTime</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Posted</Name>
+			<Label>@SYS1711</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Posted</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LedgerJournalNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SourceDocument</Name>
+			<Label>@SYS127863</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Source</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SourceDocumentRef</Name>
+			<Label>@SYS127863</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SourceDocumentHeader</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SourceDocumentLine</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>WorkflowStatus</Name>
+			<Label>@SPY138</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>WorkflowStatus</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DefaultDimension</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>JournalId</Name>
+			<ExtendedDataType>SPYPayrollJournalId</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>LedgerJournalNum</Name>
+			<ExtendedDataType>LedgerJournalId</ExtendedDataType>
+			<HelpText>@SPY1311</HelpText>
+			<Label>@SPY1310</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Posted</Name>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<HelpText>@SPY207</HelpText>
+			<Label>@SYS1711</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SourceDocument</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<Label>@SYS127863</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SourceDocumentHeader</Name>
+			<ExtendedDataType>SourceDocumentHeaderRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SourceDocumentLine</Name>
+			<ExtendedDataType>SourceDocumentLineRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SourceDocumentRef</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<Label>@SPY1669</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>TransDate</Name>
+			<ExtendedDataType>TransDate</ExtendedDataType>
+			<Visible>No</Visible>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>WorkflowStatus</Name>
+			<EnumType>SPYWorkflowStatus</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>JournalId_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>JournalId</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+		<AxTableIndex>
+			<Name>SourceDocumentHeader_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>SourceDocumentHeader</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings>
+		<AxTableMapping>
+			<MappingTable>SourceDocumentHeaderImplementation</MappingTable>
+			<Connections>
+				<AxTableMappingConnection>
+					<MapField>SourceDocumentHeader</MapField>
+					<MapFieldTo>SourceDocumentHeader</MapFieldTo>
+				</AxTableMappingConnection>
+			</Connections>
+		</AxTableMapping>
+	</Mappings>
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>DefaultDimension</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>DimensionAttributeValueSet</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DefaultDimension</Name>
+					<Field>DefaultDimension</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SourceDocumentHeader</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SourceDocumentHeader</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SourceDocumentHeader</Name>
+					<Field>SourceDocumentHeader</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SourceDocumentLine</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SourceDocumentLine</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SourceDocumentLine</Name>
+					<Field>SourceDocumentLine</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

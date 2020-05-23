@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerPositionAbsenceConfigLineStaging</Name>
+	<SourceCode>
+		<Methods />
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@DMF:StagingDeveloperDocumentation</DeveloperDocumentation>
+	<Label>@SPY1508</Label>
+	<TableGroup>Staging</TableGroup>
+	<TitleField1>HcmWorker_PersonnelNumber</TitleField1>
+	<TitleField2>HRMAbsenceCodeId</TitleField2>
+	<PrimaryIndex>StagingIdx</PrimaryIndex>
+	<ReplacementKey>StagingIdx</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>ExtensionList</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@DMF:StagingExtensionGroup</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DefinitionGroup</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>IsSelected</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>TransferStatus</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ExecutionId</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DefinitionGroup</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>DMFDefinitionGroupName</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Mandatory>Yes</Mandatory>
+			<StringSize>60</StringSize>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ExecutionId</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>DMFExecutionId</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Mandatory>Yes</Mandatory>
+			<StringSize>90</StringSize>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>IsSelected</Name>
+			<ExtendedDataType>DMFIsSelected</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>TransferStatus</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<EnumType>DMFTransferStatus</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AbsenceCycle</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<EnumType>SPYAbsenceCycle</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AccruedDate</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<EnumType>SPYAbsenceAccruedDate</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AccruedQty</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY1101</Label>
+			<EnumType>SPYAbsenceAccruedQty</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>CarryBackward</Name>
+			<ExtendedDataType>Qty</ExtendedDataType>
+			<HelpText>@SPY1525</HelpText>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY1524</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>CarryForward</Name>
+			<ExtendedDataType>Qty</ExtendedDataType>
+			<HelpText>@SPY1523</HelpText>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY1522</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>FetchBenefitQty</Name>
+			<HelpText>@SPY1569</HelpText>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY1568</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>HRMAbsenceCodeId</Name>
+			<ExtendedDataType>HRMAbsenceCodeId</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Qty</Name>
+			<ExtendedDataType>Qty</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>RestrictInNotice</Name>
+			<HelpText>@SPY1571</HelpText>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY1570</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>RestrictInProbation</Name>
+			<HelpText>@SPY1573</HelpText>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY1572</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AllowNegativeInCarryFwd</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY:AllowNegativeInCarryFwd</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>PeriodCloseNotApplicable</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY:PeriodCloseNotApplicable</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AllowFullBalanceCarryFwdInFirstYr</Name>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Label>@SPY:AllowFullBalanceCarryFwdInFirstYr</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidTo</Name>
+			<ExtendedDataType>ValidToDate</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidFrom</Name>
+			<ExtendedDataType>ValidFromDate</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>SPYAbsenceConfigTable_AbsenceConfigCode</Name>
+			<ExtendedDataType>SPYAbsenceConfigCode</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>SPYPayrollPeriod_PayrollPeriodCode</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>SPYPayrollPeriodCode</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>HcmPosition_PositionId</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>HcmPositionId</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>HcmWorker_PersonnelNumber</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>HcmPersonnelNumberId</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DirPerson_FK_PartyNumber</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>DirPartyNumber</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>CompanyInfo_PartyNumber</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>DirPartyNumber</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>CompanyInfo_DataArea</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>SelectableDataArea</ExtendedDataType>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>LedgerTransDateCalcFromLeave</Name>
+			<EnumType>SPYAbsenceLedgerTransDateCalcFromLeave</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>LedgerTransDateCalcFromPeriodClose</Name>
+			<EnumType>SPYAbsenceLedgerTransDateCalcFromPeriodClose</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>StagingIdx</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>DefinitionGroup</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ExecutionId</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>HcmWorker_PersonnelNumber</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>DirPerson_FK_PartyNumber</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>HcmPosition_PositionId</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>CompanyInfo_DataArea</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>HRMAbsenceCodeId</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidTo</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidFrom</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation>
+			<Name>SPYAbsenceConfigTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<RelatedTable>SPYAbsenceConfigTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>AbsenceConfigCode</Name>
+					<Field>SPYAbsenceConfigTable_AbsenceConfigCode</Field>
+					<RelatedField>AbsenceConfigCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYPayrollPeriod</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<RelatedTable>SPYPayrollPeriod</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollPeriodCode</Name>
+					<Field>SPYPayrollPeriod_PayrollPeriodCode</Field>
+					<RelatedField>PayrollPeriodCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>HcmPosition</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<RelatedTable>HcmPosition</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PositionId</Name>
+					<Field>HcmPosition_PositionId</Field>
+					<RelatedField>PositionId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>CompanyInfo</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<RelatedTable>CompanyInfo</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DataArea</Name>
+					<Field>CompanyInfo_DataArea</Field>
+					<RelatedField>DataArea</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DirPerson_FK</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<RelatedTable>DirPerson</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Aggregation</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PartyNumber</Name>
+					<Field>DirPerson_FK_PartyNumber</Field>
+					<RelatedField>PartyNumber</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>DataEntity</Name>
+			<Cardinality>ExactlyOne</Cardinality>
+			<EntityRelationshipRole>@DMF:StagingToDataEntityRelationshipRole</EntityRelationshipRole>
+			<IsSystemGenerated>Yes</IsSystemGenerated>
+			<RelatedTable>SPYWorkerPositionAbsenceConfigLineEntity</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Link</RelationshipType>
+			<Validate>No</Validate>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>HcmWorker_PersonnelNumber</Name>
+					<Field>HcmWorker_PersonnelNumber</Field>
+					<RelatedField>HcmWorker_PersonnelNumber</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DirPerson_FK_PartyNumber</Name>
+					<Field>DirPerson_FK_PartyNumber</Field>
+					<RelatedField>DirPerson_FK_PartyNumber</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>HcmPosition_PositionId</Name>
+					<Field>HcmPosition_PositionId</Field>
+					<RelatedField>HcmPosition_PositionId</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>CompanyInfo_DataArea</Name>
+					<Field>CompanyInfo_DataArea</Field>
+					<RelatedField>CompanyInfo_DataArea</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>HRMAbsenceCodeId</Name>
+					<Field>HRMAbsenceCodeId</Field>
+					<RelatedField>HRMAbsenceCodeId</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>ValidTo</Name>
+					<Field>ValidTo</Field>
+					<RelatedField>ValidTo</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>ValidFrom</Name>
+					<Field>ValidFrom</Field>
+					<RelatedField>ValidFrom</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

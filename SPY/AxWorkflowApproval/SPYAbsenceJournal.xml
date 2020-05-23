@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYAbsenceJournal</Name>
+	<CanceledEventHandler>SPYAbsenceJourEventHandler1</CanceledEventHandler>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DelegateMenuItem>SPYAbsenceJournalDelegate</DelegateMenuItem>
+	<Document>SPYAbsenceJourDocument</Document>
+	<DocumentMenuItem>SPYAbsenceJournalLine</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>Details</DocumentPreviewFieldGroup>
+	<HelpText>@SPY1608</HelpText>
+	<Label>@SPY1607</Label>
+	<ResubmitMenuItem>SPYAbsenceJournalResubmit</ResubmitMenuItem>
+	<StartedEventHandler>SPYAbsenceJourEventHandler1</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYAbsenceJourEventHandler1</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYAbsenceJournalApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYAbsenceJourEventHandler1</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<Enabled xmlns="">No</Enabled>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYAbsenceJournalReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYAbsenceJourEventHandler1</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYAbsenceJournalRequestChange</ActionMenuItem>
+		<EventHandler xmlns="">SPYAbsenceJourEventHandler1</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

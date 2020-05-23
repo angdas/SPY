@@ -1,0 +1,1560 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.SPYBenefitDetails_ID(1)
+    #define.CompanyInfo_ID(2)
+    #define.SPYBenefitTable_ID(3)
+    #define.SPYExpressionTable_Amount_ID(4)
+    #define.SPYExpressionTable_EncashmentAmount_ID(5)
+    #define.SPYExpressionTable_EncashmentQuantity_ID(6)
+    #define.SPYExpressionTable_Quantity_ID(7)
+    #define.SPYPayrollTable1_ID(8)
+    
+    // Data source buffers
+    SPYBenefitDetails m_SPYBenefitDetails;
+    CompanyInfo m_CompanyInfo;
+    SPYBenefitTable m_SPYBenefitTable;
+    SPYExpressionTable m_SPYExpressionTable_Amount;
+    SPYExpressionTable m_SPYExpressionTable_EncashmentAmount;
+    SPYExpressionTable m_SPYExpressionTable_EncashmentQuantity;
+    SPYExpressionTable m_SPYExpressionTable_Quantity;
+    SPYPayrollTable m_SPYPayrollTable1;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYBenefitDetails'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('CompanyInfo'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYBenefitTable'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYExpressionTable_Amount'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentAmount'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentQuantity'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYExpressionTable_Quantity'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollTable1'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private boolean isAnyFieldSet_DS2(CompanyInfo _companyInfo, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_companyInfo.isFieldSet(fieldnum(CompanyInfo,PartyNumber)))
+        {
+            return true;
+        }
+        if(_companyInfo.isFieldSet(fieldnum(CompanyInfo,DataArea)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _companyInfo) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS3(SPYBenefitTable _sPYBenefitTable, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitTable.isFieldSet(fieldnum(SPYBenefitTable,PayElementCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYBenefitTable) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS4(SPYExpressionTable _sPYExpressionTable_Amount, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYExpressionTable_Amount.isFieldSet(fieldnum(SPYExpressionTable,ExpressionCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYExpressionTable_Amount) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS5(SPYExpressionTable _sPYExpressionTable_EncashmentAmount, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYExpressionTable_EncashmentAmount.isFieldSet(fieldnum(SPYExpressionTable,ExpressionCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYExpressionTable_EncashmentAmount) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS6(SPYExpressionTable _sPYExpressionTable_EncashmentQuantity, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYExpressionTable_EncashmentQuantity.isFieldSet(fieldnum(SPYExpressionTable,ExpressionCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYExpressionTable_EncashmentQuantity) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS7(SPYExpressionTable _sPYExpressionTable_Quantity, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYExpressionTable_Quantity.isFieldSet(fieldnum(SPYExpressionTable,ExpressionCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYExpressionTable_Quantity) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS8(SPYPayrollTable _sPYPayrollTable1, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollTable1.isFieldSet(fieldnum(SPYPayrollTable,PayElementCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYPayrollTable1) ? true : false;
+        return rtrn;
+    }
+    private void foreignKeyPropagation_DS1(DataEntityRuntimeContext _entityCtx, SPYBenefitDetails _sPYBenefitDetails)
+    {
+        CompanyInfo companyInfo_ = _entityCtx.getRuntimeContextByName('CompanyInfo').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('CompanyInfo').conflictDetectionInvoked() || companyInfo_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYBenefitDetails.LegalEntity != companyInfo_.RecId)
+            {
+                _sPYBenefitDetails.LegalEntity = companyInfo_.RecId;
+            }
+        }
+        
+        SPYBenefitTable sPYBenefitTable_ = _entityCtx.getRuntimeContextByName('SPYBenefitTable').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_sPYBenefitDetails.Benefit != sPYBenefitTable_.RecId)
+        {
+            _sPYBenefitDetails.Benefit = sPYBenefitTable_.RecId;
+        }
+        
+        SPYExpressionTable sPYExpressionTable_Amount_ = _entityCtx.getRuntimeContextByName('SPYExpressionTable_Amount').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('SPYExpressionTable_Amount').conflictDetectionInvoked() || sPYExpressionTable_Amount_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYBenefitDetails.AmountExp != sPYExpressionTable_Amount_.RecId)
+            {
+                _sPYBenefitDetails.AmountExp = sPYExpressionTable_Amount_.RecId;
+            }
+        }
+        
+        SPYExpressionTable sPYExpressionTable_EncashmentAmount_ = _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentAmount').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentAmount').conflictDetectionInvoked() || sPYExpressionTable_EncashmentAmount_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYBenefitDetails.EncashmentAmountExp != sPYExpressionTable_EncashmentAmount_.RecId)
+            {
+                _sPYBenefitDetails.EncashmentAmountExp = sPYExpressionTable_EncashmentAmount_.RecId;
+            }
+        }
+        
+        SPYExpressionTable sPYExpressionTable_EncashmentQuantity_ = _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentQuantity').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentQuantity').conflictDetectionInvoked() || sPYExpressionTable_EncashmentQuantity_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYBenefitDetails.EncahmentQuantityExp != sPYExpressionTable_EncashmentQuantity_.RecId)
+            {
+                _sPYBenefitDetails.EncahmentQuantityExp = sPYExpressionTable_EncashmentQuantity_.RecId;
+            }
+        }
+        
+        SPYExpressionTable sPYExpressionTable_Quantity_ = _entityCtx.getRuntimeContextByName('SPYExpressionTable_Quantity').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('SPYExpressionTable_Quantity').conflictDetectionInvoked() || sPYExpressionTable_Quantity_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYBenefitDetails.QuantityExp != sPYExpressionTable_Quantity_.RecId)
+            {
+                _sPYBenefitDetails.QuantityExp = sPYExpressionTable_Quantity_.RecId;
+            }
+        }
+        
+        SPYPayrollTable sPYPayrollTable1_ = _entityCtx.getRuntimeContextByName('SPYPayrollTable1').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('SPYPayrollTable1').conflictDetectionInvoked() || sPYPayrollTable1_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYBenefitDetails.EncashmentPayroll != sPYPayrollTable1_.RecId)
+            {
+                _sPYBenefitDetails.EncashmentPayroll = sPYPayrollTable1_.RecId;
+            }
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('SPYBenefitDetails').getDatabaseOperation();
+        SPYBenefitDetailsEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYBenefitDetailsEntity, LegalEntity)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYBenefitDetails'), _entityCtx.getRuntimeContextByName('CompanyInfo'), dataSourceDBOperation, 'SPYBenefitDetails.LegalEntity', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, LegalEntity), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYBenefitDetailsEntity, Benefit)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYBenefitDetails'), _entityCtx.getRuntimeContextByName('SPYBenefitTable'), dataSourceDBOperation, 'SPYBenefitDetails.Benefit', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, Benefit), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYBenefitDetailsEntity, AmountExp)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYBenefitDetails'), _entityCtx.getRuntimeContextByName('SPYExpressionTable_Amount'), dataSourceDBOperation, 'SPYBenefitDetails.AmountExp', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, AmountExp), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYBenefitDetailsEntity, EncashmentAmountExp)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYBenefitDetails'), _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentAmount'), dataSourceDBOperation, 'SPYBenefitDetails.EncashmentAmountExp', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentAmountExp), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYBenefitDetailsEntity, EncahmentQuantityExp)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYBenefitDetails'), _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentQuantity'), dataSourceDBOperation, 'SPYBenefitDetails.EncahmentQuantityExp', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncahmentQuantityExp), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYBenefitDetailsEntity, QuantityExp)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYBenefitDetails'), _entityCtx.getRuntimeContextByName('SPYExpressionTable_Quantity'), dataSourceDBOperation, 'SPYBenefitDetails.QuantityExp', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, QuantityExp), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYBenefitDetailsEntity, EncashmentPayroll)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYBenefitDetails'), _entityCtx.getRuntimeContextByName('SPYPayrollTable1'), dataSourceDBOperation, 'SPYBenefitDetails.EncashmentPayroll', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentPayroll), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // save/update data sources referenced by [SPYBenefitDetails].
+            {
+                // handle datasources which are part of extensions and need to be saved before [CompanyInfo]
+                if(!this.preSaveDataSource(_entityCtx, 'CompanyInfo'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('CompanyInfo');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS2(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        CompanyInfo companyInfo_ = _dataSourceCtx.getBuffer();
+                        if((companyInfo_.DataArea) || (companyInfo_.PartyNumber))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [CompanyInfo].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYBenefitTable]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYBenefitTable'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYBenefitTable');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS3(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYBenefitTable sPYBenefitTable_ = _dataSourceCtx.getBuffer();
+                        if((sPYBenefitTable_.PayElementCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYBenefitTable].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYExpressionTable_Amount]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYExpressionTable_Amount'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYExpressionTable_Amount');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS4(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYExpressionTable sPYExpressionTable_Amount_ = _dataSourceCtx.getBuffer();
+                        if((sPYExpressionTable_Amount_.ExpressionCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYExpressionTable_Amount].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYExpressionTable_EncashmentAmount]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYExpressionTable_EncashmentAmount'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentAmount');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS5(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYExpressionTable sPYExpressionTable_EncashmentAmount_ = _dataSourceCtx.getBuffer();
+                        if((sPYExpressionTable_EncashmentAmount_.ExpressionCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYExpressionTable_EncashmentAmount].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYExpressionTable_EncashmentQuantity]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYExpressionTable_EncashmentQuantity'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentQuantity');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS6(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYExpressionTable sPYExpressionTable_EncashmentQuantity_ = _dataSourceCtx.getBuffer();
+                        if((sPYExpressionTable_EncashmentQuantity_.ExpressionCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYExpressionTable_EncashmentQuantity].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYExpressionTable_Quantity]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYExpressionTable_Quantity'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYExpressionTable_Quantity');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS7(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYExpressionTable sPYExpressionTable_Quantity_ = _dataSourceCtx.getBuffer();
+                        if((sPYExpressionTable_Quantity_.ExpressionCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYExpressionTable_Quantity].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollTable1]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollTable1'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollTable1');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS8(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYPayrollTable sPYPayrollTable1_ = _dataSourceCtx.getBuffer();
+                        if((sPYPayrollTable1_.PayElementCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYPayrollTable1].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            // handle datasources which are part of extensions and need to be saved before [SPYBenefitDetails]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYBenefitDetails'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYBenefitDetails');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // propagates foreign key values from referenced data sources.
+            this.foreignKeyPropagation_DS1(_entityCtx, _dataSourceCtx.getBuffer());
+            // inserts/updates data source [SPYBenefitDetails].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [SPYBenefitDetails]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYBenefitDetails'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYBenefitDetails');
+            // deletes data source [SPYBenefitDetails].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+            // deletes data sources referenced by [SPYBenefitDetails].
+            {
+                // handle datasources which are part of extensions and need to be saved before [CompanyInfo]
+                if(!this.preSaveDataSource(_entityCtx, 'CompanyInfo'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('CompanyInfo');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [CompanyInfo].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYBenefitTable]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYBenefitTable'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYBenefitTable');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYBenefitTable].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYExpressionTable_Amount]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYExpressionTable_Amount'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYExpressionTable_Amount');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYExpressionTable_Amount].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYExpressionTable_EncashmentAmount]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYExpressionTable_EncashmentAmount'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentAmount');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYExpressionTable_EncashmentAmount].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYExpressionTable_EncashmentQuantity]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYExpressionTable_EncashmentQuantity'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYExpressionTable_EncashmentQuantity');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYExpressionTable_EncashmentQuantity].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYExpressionTable_Quantity]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYExpressionTable_Quantity'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYExpressionTable_Quantity');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYExpressionTable_Quantity].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollTable1]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollTable1'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollTable1');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYPayrollTable1].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYBenefitDetails _sPYBenefitDetails, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, AmountExp), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, AmountExp), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, Benefit), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, Benefit), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncahmentQuantityExp), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncahmentQuantityExp), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncashmentAmountExp), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentAmountExp), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncashmentCostDistribution), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentCostDistribution), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncashmentPayroll), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentPayroll), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, LegalEntity), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, LegalEntity), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, QuantityExp), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, QuantityExp), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, ValidFrom), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, ValidFrom), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, ValidTo), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, ValidTo), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYBenefitDetails, _sPYBenefitDetailsEntity);
+        _sPYBenefitDetails.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS2(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, CompanyInfo _companyInfo, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, CompanyInfo_PartyNumber), _companyInfo, fieldnum(CompanyInfo, PartyNumber), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, CompanyInfo_DataArea), _companyInfo, fieldnum(CompanyInfo, DataArea), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _companyInfo, _sPYBenefitDetailsEntity);
+        _companyInfo.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS3(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYBenefitTable _sPYBenefitTable, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYBenefitTable_PayElementCode), _sPYBenefitTable, fieldnum(SPYBenefitTable, PayElementCode), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYBenefitTable, _sPYBenefitDetailsEntity);
+        _sPYBenefitTable.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS4(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_Amount, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_Amount_ExpressionCode), _sPYExpressionTable_Amount, fieldnum(SPYExpressionTable, ExpressionCode), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYExpressionTable_Amount, _sPYBenefitDetailsEntity);
+            _sPYExpressionTable_Amount.trackFieldExternallySet(false);
+        }
+    }
+    private void mapToDataSource_DS5(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_EncashmentAmount, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_EncashmentAmount_ExpressionCode), _sPYExpressionTable_EncashmentAmount, fieldnum(SPYExpressionTable, ExpressionCode), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYExpressionTable_EncashmentAmount, _sPYBenefitDetailsEntity);
+            _sPYExpressionTable_EncashmentAmount.trackFieldExternallySet(false);
+        }
+    }
+    private void mapToDataSource_DS6(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_EncashmentQuantity, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_EncashmentQuantity_ExpressionCode), _sPYExpressionTable_EncashmentQuantity, fieldnum(SPYExpressionTable, ExpressionCode), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYExpressionTable_EncashmentQuantity, _sPYBenefitDetailsEntity);
+            _sPYExpressionTable_EncashmentQuantity.trackFieldExternallySet(false);
+        }
+    }
+    private void mapToDataSource_DS7(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_Quantity, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_Quantity_ExpressionCode), _sPYExpressionTable_Quantity, fieldnum(SPYExpressionTable, ExpressionCode), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYExpressionTable_Quantity, _sPYBenefitDetailsEntity);
+            _sPYExpressionTable_Quantity.trackFieldExternallySet(false);
+        }
+    }
+    private void mapToDataSource_DS8(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable1, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYPayrollTable1_PayElementCode), _sPYPayrollTable1, fieldnum(SPYPayrollTable, PayElementCode), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollTable1, _sPYBenefitDetailsEntity);
+        _sPYPayrollTable1.trackFieldExternallySet(false);
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYBenefitDetails_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #CompanyInfo_ID:
+                this.mapToDataSource_DS2(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYBenefitTable_ID:
+                this.mapToDataSource_DS3(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_Amount_ID:
+                this.mapToDataSource_DS4(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_EncashmentAmount_ID:
+                this.mapToDataSource_DS5(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_EncashmentQuantity_ID:
+                this.mapToDataSource_DS6(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_Quantity_ID:
+                this.mapToDataSource_DS7(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollTable1_ID:
+                this.mapToDataSource_DS8(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYBenefitDetails _sPYBenefitDetails, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, AmountExp), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, AmountExp), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, Benefit), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, Benefit), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncahmentQuantityExp), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncahmentQuantityExp), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentAmountExp), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncashmentAmountExp), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentCostDistribution), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncashmentCostDistribution), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentPayroll), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncashmentPayroll), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, LegalEntity), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, LegalEntity), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, QuantityExp), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, QuantityExp), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, ValidFrom), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, ValidFrom), false);
+        this.mapDataSourceFieldToEntityField(_sPYBenefitDetails, fieldnum(SPYBenefitDetails, ValidTo), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, ValidTo), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYBenefitDetails, _sPYBenefitDetailsEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYBenefitDetailsEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYBenefitDetails);
+    }
+    private void mapFromDataSource_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, CompanyInfo _companyInfo, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_companyInfo, fieldnum(CompanyInfo, PartyNumber), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, CompanyInfo_PartyNumber), false);
+        this.mapDataSourceFieldToEntityField(_companyInfo, fieldnum(CompanyInfo, DataArea), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, CompanyInfo_DataArea), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _companyInfo, _sPYBenefitDetailsEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYBenefitDetailsEntity.fromViewDataSource(_dataSourceCtx.id(), _companyInfo);
+    }
+    private void mapFromDataSource_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYBenefitTable _sPYBenefitTable, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYBenefitTable, fieldnum(SPYBenefitTable, PayElementCode), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYBenefitTable_PayElementCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYBenefitTable, _sPYBenefitDetailsEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYBenefitDetailsEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYBenefitTable);
+    }
+    private void mapFromDataSource_DS4(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_Amount, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYExpressionTable_Amount, fieldnum(SPYExpressionTable, ExpressionCode), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_Amount_ExpressionCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYExpressionTable_Amount, _sPYBenefitDetailsEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYBenefitDetailsEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYExpressionTable_Amount);
+    }
+    private void mapFromDataSource_DS5(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_EncashmentAmount, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYExpressionTable_EncashmentAmount, fieldnum(SPYExpressionTable, ExpressionCode), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_EncashmentAmount_ExpressionCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYExpressionTable_EncashmentAmount, _sPYBenefitDetailsEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYBenefitDetailsEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYExpressionTable_EncashmentAmount);
+    }
+    private void mapFromDataSource_DS6(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_EncashmentQuantity, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYExpressionTable_EncashmentQuantity, fieldnum(SPYExpressionTable, ExpressionCode), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_EncashmentQuantity_ExpressionCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYExpressionTable_EncashmentQuantity, _sPYBenefitDetailsEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYBenefitDetailsEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYExpressionTable_EncashmentQuantity);
+    }
+    private void mapFromDataSource_DS7(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_Quantity, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYExpressionTable_Quantity, fieldnum(SPYExpressionTable, ExpressionCode), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_Quantity_ExpressionCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYExpressionTable_Quantity, _sPYBenefitDetailsEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYBenefitDetailsEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYExpressionTable_Quantity);
+    }
+    private void mapFromDataSource_DS8(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable1, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollTable1, fieldnum(SPYPayrollTable, PayElementCode), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, SPYPayrollTable1_PayElementCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollTable1, _sPYBenefitDetailsEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYBenefitDetailsEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollTable1);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYBenefitDetails_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #CompanyInfo_ID:
+                this.mapFromDataSource_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYBenefitTable_ID:
+                this.mapFromDataSource_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_Amount_ID:
+                this.mapFromDataSource_DS4(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_EncashmentAmount_ID:
+                this.mapFromDataSource_DS5(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_EncashmentQuantity_ID:
+                this.mapFromDataSource_DS6(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_Quantity_ID:
+                this.mapFromDataSource_DS7(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollTable1_ID:
+                this.mapFromDataSource_DS8(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYBenefitDetails_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #CompanyInfo_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS2(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYBenefitTable_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS3(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYExpressionTable_Amount_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS4(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYExpressionTable_EncashmentAmount_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS5(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYExpressionTable_EncashmentQuantity_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS6(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYExpressionTable_Quantity_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS7(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYPayrollTable1_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS8(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, AmountExp)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, Benefit)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, EncahmentQuantityExp)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, EncashmentAmountExp)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, EncashmentCostDistribution)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, EncashmentPayroll)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, LegalEntity)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, QuantityExp)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, ValidFrom)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, ValidTo)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYBenefitDetailsEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS2(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, CompanyInfo_PartyNumber)))
+        {
+            return true;
+        }
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, CompanyInfo_DataArea)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYBenefitDetailsEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS3(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, SPYBenefitTable_PayElementCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYBenefitDetailsEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS4(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_Amount_ExpressionCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYBenefitDetailsEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS5(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_EncashmentAmount_ExpressionCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYBenefitDetailsEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS6(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_EncashmentQuantity_ExpressionCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYBenefitDetailsEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS7(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, SPYExpressionTable_Quantity_ExpressionCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYBenefitDetailsEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS8(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYBenefitDetailsEntity.isFieldSet(fieldnum(SPYBenefitDetailsEntity, SPYPayrollTable1_PayElementCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYBenefitDetailsEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYBenefitDetails_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            case #CompanyInfo_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS2(_entityCtx.getEntityRecord());
+                break;
+            case #SPYBenefitTable_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS3(_entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_Amount_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS4(_entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_EncashmentAmount_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS5(_entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_EncashmentQuantity_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS6(_entityCtx.getEntityRecord());
+                break;
+            case #SPYExpressionTable_Quantity_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS7(_entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollTable1_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS8(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYBenefitDetails _sPYBenefitDetails)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, EncashmentCostDistribution), 'SPYBenefitDetailsEntity.EncashmentCostDistribution', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentCostDistribution), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, ValidFrom), 'SPYBenefitDetailsEntity.ValidFrom', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, ValidFrom), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYBenefitDetailsEntity, fieldnum(SPYBenefitDetailsEntity, ValidTo), 'SPYBenefitDetailsEntity.ValidTo', _sPYBenefitDetails, fieldnum(SPYBenefitDetails, ValidTo), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYBenefitDetailsEntity, _dataSourceCtx, _sPYBenefitDetails) ? rtrn : false;
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYBenefitDetails_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYBenefitDetails _sPYBenefitDetails, SPYBenefitDetails _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, AmountExp), _matchingRecord, fieldnum(SPYBenefitDetails, AmountExp), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, Benefit), _matchingRecord, fieldnum(SPYBenefitDetails, Benefit), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncahmentQuantityExp), _matchingRecord, fieldnum(SPYBenefitDetails, EncahmentQuantityExp), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentAmountExp), _matchingRecord, fieldnum(SPYBenefitDetails, EncashmentAmountExp), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentCostDistribution), _matchingRecord, fieldnum(SPYBenefitDetails, EncashmentCostDistribution), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, EncashmentPayroll), _matchingRecord, fieldnum(SPYBenefitDetails, EncashmentPayroll), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, LegalEntity), _matchingRecord, fieldnum(SPYBenefitDetails, LegalEntity), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, QuantityExp), _matchingRecord, fieldnum(SPYBenefitDetails, QuantityExp), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, ValidFrom), _matchingRecord, fieldnum(SPYBenefitDetails, ValidFrom), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitDetails, fieldnum(SPYBenefitDetails, ValidTo), _matchingRecord, fieldnum(SPYBenefitDetails, ValidTo), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYBenefitDetailsEntity), _sPYBenefitDetails, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, CompanyInfo _companyInfo, CompanyInfo _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _companyInfo, fieldnum(CompanyInfo, PartyNumber), _matchingRecord, fieldnum(CompanyInfo, PartyNumber), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _companyInfo, fieldnum(CompanyInfo, DataArea), _matchingRecord, fieldnum(CompanyInfo, DataArea), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYBenefitDetailsEntity), _companyInfo, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYBenefitTable _sPYBenefitTable, SPYBenefitTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYBenefitTable, fieldnum(SPYBenefitTable, PayElementCode), _matchingRecord, fieldnum(SPYBenefitTable, PayElementCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYBenefitDetailsEntity), _sPYBenefitTable, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS4(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_Amount, SPYExpressionTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYExpressionTable_Amount, fieldnum(SPYExpressionTable, ExpressionCode), _matchingRecord, fieldnum(SPYExpressionTable, ExpressionCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYBenefitDetailsEntity), _sPYExpressionTable_Amount, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS5(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_EncashmentAmount, SPYExpressionTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYExpressionTable_EncashmentAmount, fieldnum(SPYExpressionTable, ExpressionCode), _matchingRecord, fieldnum(SPYExpressionTable, ExpressionCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYBenefitDetailsEntity), _sPYExpressionTable_EncashmentAmount, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS6(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_EncashmentQuantity, SPYExpressionTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYExpressionTable_EncashmentQuantity, fieldnum(SPYExpressionTable, ExpressionCode), _matchingRecord, fieldnum(SPYExpressionTable, ExpressionCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYBenefitDetailsEntity), _sPYExpressionTable_EncashmentQuantity, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS7(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYExpressionTable _sPYExpressionTable_Quantity, SPYExpressionTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYExpressionTable_Quantity, fieldnum(SPYExpressionTable, ExpressionCode), _matchingRecord, fieldnum(SPYExpressionTable, ExpressionCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYBenefitDetailsEntity), _sPYExpressionTable_Quantity, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS8(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable1, SPYPayrollTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTable1, fieldnum(SPYPayrollTable, PayElementCode), _matchingRecord, fieldnum(SPYPayrollTable, PayElementCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYBenefitDetailsEntity), _sPYPayrollTable1, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYBenefitDetails_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #CompanyInfo_ID:
+                this.mapToMatchingRecord_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYBenefitTable_ID:
+                this.mapToMatchingRecord_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYExpressionTable_Amount_ID:
+                this.mapToMatchingRecord_DS4(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYExpressionTable_EncashmentAmount_ID:
+                this.mapToMatchingRecord_DS5(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYExpressionTable_EncashmentQuantity_ID:
+                this.mapToMatchingRecord_DS6(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYExpressionTable_Quantity_ID:
+                this.mapToMatchingRecord_DS7(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYPayrollTable1_ID:
+                this.mapToMatchingRecord_DS8(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        // Ensure that the entity configuration key is enabled
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            // Entity configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityConfigKeyDisabled",'SPYPayroll'));
+        }
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            if(this.isAnyMappedDataSourceFieldSet_DS4(_entityCtx.getEntityRecord(), 'SPYExpression'))
+            {
+                // Outer joined data source configuration key is disabled and fields mapped to this data source are set
+                throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'SPYExpressionTable_Amount','SPYExpression'));
+            }
+        }
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            if(this.isAnyMappedDataSourceFieldSet_DS5(_entityCtx.getEntityRecord(), 'SPYExpression'))
+            {
+                // Outer joined data source configuration key is disabled and fields mapped to this data source are set
+                throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'SPYExpressionTable_EncashmentAmount','SPYExpression'));
+            }
+        }
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            if(this.isAnyMappedDataSourceFieldSet_DS6(_entityCtx.getEntityRecord(), 'SPYExpression'))
+            {
+                // Outer joined data source configuration key is disabled and fields mapped to this data source are set
+                throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'SPYExpressionTable_EncashmentQuantity','SPYExpression'));
+            }
+        }
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            if(this.isAnyMappedDataSourceFieldSet_DS7(_entityCtx.getEntityRecord(), 'SPYExpression'))
+            {
+                // Outer joined data source configuration key is disabled and fields mapped to this data source are set
+                throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'SPYExpressionTable_Quantity','SPYExpression'));
+            }
+        }
+    }
+    protected int getValidTimeStateUpdateModeForDataSource(DataEntityRuntimeContext _entityCtx, int _dataSourceId, str _dataSourceName)
+    {
+        int validTimeStateUpdate_ = ValidTimeStateUpdate::CreateNewTimePeriod;
+        
+        // returns ValidTimeStateUpdate value for date effective data sources.
+        
+        switch (_dataSourceId)
+        {
+            case #SPYBenefitDetails_ID:
+                validTimeStateUpdate_ = ValidTimeStateUpdate::CreateNewTimePeriod;
+                break;
+            default : validTimeStateUpdate_ = super(_entityCtx,_dataSourceId,_dataSourceName);
+        }
+        return validTimeStateUpdate_;
+    }
+    protected boolean hasDataSourceRecordChanged(int _dataSourceId, common _originalRecord, common _updatedRecord)
+    {
+        boolean hasDataSourceRecordChanged_ = true;
+        
+        // The method is called for OCC validation and only upon data sources that have One-to-Many relationships.
+        
+        switch (_dataSourceId)
+        {
+            case #CompanyInfo_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS2(_originalRecord, _updatedRecord);
+                break;
+            case #SPYBenefitTable_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS3(_originalRecord, _updatedRecord);
+                break;
+            case #SPYExpressionTable_Amount_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS4(_originalRecord, _updatedRecord);
+                break;
+            case #SPYExpressionTable_EncashmentAmount_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS5(_originalRecord, _updatedRecord);
+                break;
+            case #SPYExpressionTable_EncashmentQuantity_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS6(_originalRecord, _updatedRecord);
+                break;
+            case #SPYExpressionTable_Quantity_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS7(_originalRecord, _updatedRecord);
+                break;
+            case #SPYPayrollTable1_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS8(_originalRecord, _updatedRecord);
+                break;
+        }
+        return hasDataSourceRecordChanged_;
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'SPYBenefitDetails', m_SPYBenefitDetails, this.getDataSourceId('SPYBenefitDetails'), this.getDataSourceId('SPYBenefitDetails'), false/* optional */, false/* readonly */, false/* oneToMany */, true/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'CompanyInfo', m_CompanyInfo, this.getDataSourceId('CompanyInfo'), this.getDataSourceId('CompanyInfo'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYBenefitTable', m_SPYBenefitTable, this.getDataSourceId('SPYBenefitTable'), this.getDataSourceId('SPYBenefitTable'), false/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYExpressionTable_Amount', m_SPYExpressionTable_Amount, this.getDataSourceId('SPYExpressionTable_Amount'), this.getDataSourceId('SPYExpressionTable_Amount'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYExpressionTable_EncashmentAmount', m_SPYExpressionTable_EncashmentAmount, this.getDataSourceId('SPYExpressionTable_EncashmentAmount'), this.getDataSourceId('SPYExpressionTable_EncashmentAmount'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYExpressionTable_EncashmentQuantity', m_SPYExpressionTable_EncashmentQuantity, this.getDataSourceId('SPYExpressionTable_EncashmentQuantity'), this.getDataSourceId('SPYExpressionTable_EncashmentQuantity'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYExpressionTable_Quantity', m_SPYExpressionTable_Quantity, this.getDataSourceId('SPYExpressionTable_Quantity'), this.getDataSourceId('SPYExpressionTable_Quantity'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYPayrollTable1', m_SPYPayrollTable1, this.getDataSourceId('SPYPayrollTable1'), this.getDataSourceId('SPYPayrollTable1'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private boolean hasDataSourceRecordChanged_DS2(CompanyInfo _originalRecord, CompanyInfo _updatedRecord)
+    {
+        if (_originalRecord.PartyNumber != _updatedRecord.PartyNumber)
+        {
+            return true;
+        }
+        if (_originalRecord.DataArea != _updatedRecord.DataArea)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS3(SPYBenefitTable _originalRecord, SPYBenefitTable _updatedRecord)
+    {
+        if (_originalRecord.PayElementCode != _updatedRecord.PayElementCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS4(SPYExpressionTable _originalRecord, SPYExpressionTable _updatedRecord)
+    {
+        if (_originalRecord.ExpressionCode != _updatedRecord.ExpressionCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS5(SPYExpressionTable _originalRecord, SPYExpressionTable _updatedRecord)
+    {
+        if (_originalRecord.ExpressionCode != _updatedRecord.ExpressionCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS6(SPYExpressionTable _originalRecord, SPYExpressionTable _updatedRecord)
+    {
+        if (_originalRecord.ExpressionCode != _updatedRecord.ExpressionCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS7(SPYExpressionTable _originalRecord, SPYExpressionTable _updatedRecord)
+    {
+        if (_originalRecord.ExpressionCode != _updatedRecord.ExpressionCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS8(SPYPayrollTable _originalRecord, SPYPayrollTable _updatedRecord)
+    {
+        if (_originalRecord.PayElementCode != _updatedRecord.PayElementCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private SPYBenefitDetails LookForUniqueKeyMatch_DS1(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, SPYBenefitDetails _sPYBenefitDetails)
+    {
+        SPYBenefitDetails sPYBenefitDetails_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+            // Applying min/max date range since ApplyDateFilter is No for date effective data source.
+            validTimeState(minimumDateTime, maximumDateTime)
+                sPYBenefitDetails_
+        where
+            sPYBenefitDetails_.Benefit == _sPYBenefitDetails.Benefit && sPYBenefitDetails_.LegalEntity == _sPYBenefitDetails.LegalEntity && sPYBenefitDetails_.ValidFrom == _sPYBenefitDetails.ValidFrom && sPYBenefitDetails_.ValidTo == _sPYBenefitDetails.ValidTo
+        ;
+        
+        if (sPYBenefitDetails_)
+        {
+            return sPYBenefitDetails_;
+        }
+        
+        return sPYBenefitDetails_;
+    }
+    private CompanyInfo LookForUniqueKeyMatch_DS2(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, CompanyInfo _companyInfo)
+    {
+        CompanyInfo companyInfo_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        companyInfo_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PartyNumber, DataArea, RecId
+            from
+                companyInfo_
+        where
+            companyInfo_.DataArea == _companyInfo.DataArea
+        ;
+        
+        if (companyInfo_)
+        {
+            return companyInfo_;
+        }
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PartyNumber, DataArea, RecId
+            from
+                companyInfo_
+        where
+            companyInfo_.PartyNumber == _companyInfo.PartyNumber
+        ;
+        
+        if (companyInfo_)
+        {
+            return companyInfo_;
+        }
+        
+        return companyInfo_;
+    }
+    private SPYBenefitTable LookForUniqueKeyMatch_DS3(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, SPYBenefitTable _sPYBenefitTable)
+    {
+        SPYBenefitTable sPYBenefitTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYBenefitTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PayElementCode, RecId
+            from
+                sPYBenefitTable_
+        where
+            sPYBenefitTable_.PayElementCode == _sPYBenefitTable.PayElementCode
+        ;
+        
+        if (sPYBenefitTable_)
+        {
+            return sPYBenefitTable_;
+        }
+        
+        return sPYBenefitTable_;
+    }
+    private SPYExpressionTable LookForUniqueKeyMatch_DS4(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, SPYExpressionTable _sPYExpressionTable_Amount)
+    {
+        SPYExpressionTable sPYExpressionTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYExpressionTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                ExpressionCode, RecId
+            from
+                sPYExpressionTable_
+        where
+            sPYExpressionTable_.ExpressionCode == _sPYExpressionTable_Amount.ExpressionCode
+        ;
+        
+        if (sPYExpressionTable_)
+        {
+            return sPYExpressionTable_;
+        }
+        
+        return sPYExpressionTable_;
+    }
+    private SPYExpressionTable LookForUniqueKeyMatch_DS5(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, SPYExpressionTable _sPYExpressionTable_EncashmentAmount)
+    {
+        SPYExpressionTable sPYExpressionTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYExpressionTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                ExpressionCode, RecId
+            from
+                sPYExpressionTable_
+        where
+            sPYExpressionTable_.ExpressionCode == _sPYExpressionTable_EncashmentAmount.ExpressionCode
+        ;
+        
+        if (sPYExpressionTable_)
+        {
+            return sPYExpressionTable_;
+        }
+        
+        return sPYExpressionTable_;
+    }
+    private SPYExpressionTable LookForUniqueKeyMatch_DS6(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, SPYExpressionTable _sPYExpressionTable_EncashmentQuantity)
+    {
+        SPYExpressionTable sPYExpressionTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYExpressionTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                ExpressionCode, RecId
+            from
+                sPYExpressionTable_
+        where
+            sPYExpressionTable_.ExpressionCode == _sPYExpressionTable_EncashmentQuantity.ExpressionCode
+        ;
+        
+        if (sPYExpressionTable_)
+        {
+            return sPYExpressionTable_;
+        }
+        
+        return sPYExpressionTable_;
+    }
+    private SPYExpressionTable LookForUniqueKeyMatch_DS7(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, SPYExpressionTable _sPYExpressionTable_Quantity)
+    {
+        SPYExpressionTable sPYExpressionTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYExpressionTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                ExpressionCode, RecId
+            from
+                sPYExpressionTable_
+        where
+            sPYExpressionTable_.ExpressionCode == _sPYExpressionTable_Quantity.ExpressionCode
+        ;
+        
+        if (sPYExpressionTable_)
+        {
+            return sPYExpressionTable_;
+        }
+        
+        return sPYExpressionTable_;
+    }
+    private SPYPayrollTable LookForUniqueKeyMatch_DS8(SPYBenefitDetailsEntity _sPYBenefitDetailsEntity, SPYPayrollTable _sPYPayrollTable1)
+    {
+        SPYPayrollTable sPYPayrollTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYPayrollTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PayElementCode, RecId
+            from
+                sPYPayrollTable_
+        where
+            sPYPayrollTable_.PayElementCode == _sPYPayrollTable1.PayElementCode
+        ;
+        
+        if (sPYPayrollTable_)
+        {
+            return sPYPayrollTable_;
+        }
+        
+        return sPYPayrollTable_;
+    }
+
+}
+

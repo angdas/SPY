@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBankFileGenerationContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYBankFileGenerationContract
+{
+    container                   workerQuery;
+    LegalEntityRecId            legalEntity;
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+    FromDate                    fromDate;
+    ToDate                      toDate;
+    CompanyBankAccountId        bankAccountId;
+    SPYWorkerSponsorRecId       workerSponsor;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmBankAccountId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public CompanyBankAccountId parmBankAccountId(CompanyBankAccountId _bankAccountId = bankAccountId)
+    {
+        bankAccountId = _bankAccountId;
+    
+        return bankAccountId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmFromDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public FromDate parmFromDate(FromDate _fromDate = fromDate)
+    {
+        fromDate = _fromDate;
+        return fromDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLegalEntity</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public LegalEntityRecId parmLegalEntity(LegalEntityRecId _legalEntity = legalEntity)
+    {
+        legalEntity = _legalEntity;
+        return legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine = _payrollPeriodLine;
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmToDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public ToDate parmToDate(ToDate _toDate = toDate)
+    {
+        toDate = _toDate;
+        return toDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerQuery(container _workerQuery = workerQuery)
+    {
+        workerQuery = _workerQuery;
+        return workerQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerSponsor</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYWorkerSponsorRecId parmWorkerSponsor(SPYWorkerSponsorRecId _workerSponsor = workerSponsor)
+    {
+        workerSponsor = _workerSponsor;
+    
+        return workerSponsor;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

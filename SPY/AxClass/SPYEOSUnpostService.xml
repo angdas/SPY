@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSUnpostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYEOSUnpostService  extends SysOperationServiceBase
+{
+    SPYPayrollLedger    spyPayrollLedger;
+    SPYBenefitLedger    spyBenefitLedger;
+    SPYEOSRunBenefit    spyEOSRunBenefit;
+    SPYEOSRunPayroll    spyEOSRunPayroll;
+    SPYEOSRunTable      spyEOSRunTable;
+    SPYEOSRunRecId      spyEOSRunRecId;
+    int64                 recordCount;
+                              
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>unPost</Name>
+				<Source><![CDATA[
+    public void unPost(SPYEOSUnpostContract spyEosUnpostContract)
+    {
+        spyEOSRunRecId = spyEosUnpostContract.parmSPYEOSRunRecId();
+        spyEOSRunTable = spyEOSRunTable::find( spyEOSRunRecId );
+
+        if ( spyEOSRunTable )
+        {
+            select count(RecId) 
+            from spyPayrollLedger 
+            join spyEOSRunPayroll
+                where spyEOSRunPayroll.PayrollLedger == spyPayrollLedger.RecId
+                && SPYPayrollLedger.IsFinalised == NoYes::Yes
+            join spyEOSRunTable 
+                where spyEOSRunTable.RecId == SPYEOSRunPayroll.EOSRun;
+
+            recordCount = spyPayrollLedger.RecId;
+
+            select count(RecId)
+            from spyBenefitLedger
+            join spyEOSRunBenefit
+                where spyEOSRunBenefit.BenefitLedger == spyBenefitLedger.RecId
+                && spyBenefitLedger.IsFinalised == NoYes::Yes
+            join spyEOSRunTable
+                where spyEOSRunTable.RecId == spyEOSRunBenefit.EOSRun;
+
+            recordCount += spyBenefitLedger.RecId;
+
+            if ( recordCount) 
+            {
+                Error("Cannot unpost due to finalized ledgers.");
+            }
+            else
+            {
+                delete_from spyPayrollLedger
+                    exists join spyEOSRunPayroll
+                    where spyEOSRunPayroll.PayrollLedger == SPYPayrollLedger.RecId
+                        && spyEOSRunPayroll.EOSRun == spyEOSRunRecId
+                    && spyPayrollLedger.IsFinalised == NoYes::No;
+
+                delete_from spyBenefitLedger
+                    exists join spyEOSRunBenefit                    
+                    where spyEOSRunBenefit.BenefitLedger == spyBenefitLedger.RecId
+                        && spyEOSRunBenefit.EOSRun == spyEOSRunRecId
+                    && spyBenefitLedger.IsFinalised == NoYes::No;
+
+                update_recordset spyEOSRunTable
+                    setting PostedToLedger = NoYes::No
+                    , WorkflowStatus = SPYWorkflowStatus::Created
+                    where spyEOSRunTable.RecId == spyEOSRunRecId;
+
+                update_recordset spyEOSRunBenefit
+                    setting BenefitLedger = 0
+                    where spyEOSRunBenefit.EOSRun == spyEOSRunRecId;
+
+                update_recordset spyEOSRunPayroll
+                setting PayrollLedger = 0
+                where spyEOSRunPayroll.EOSRun  == spyEOSRunRecId;
+
+                Info( "EOS unposted");
+            }
+        }
+        else
+        {
+            Error( "EOS record not found" );
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

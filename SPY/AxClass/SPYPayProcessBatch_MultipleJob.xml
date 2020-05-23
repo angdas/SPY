@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayProcessBatch_MultipleJob</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayProcessBatch_MultipleJob
+{
+}
+
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args _args)
+    {
+        BatchHeader batchHeader;
+        SysOperationServiceController controller;
+        SPYPayProcessContract payProcessContract;
+
+        SPYPayrollParameterState        payrollParameterState = new SPYPayrollParameterState();
+        HcmWorker   hcmWorker;
+        SPYPayElementTable      payElementTable;
+        container        workerContainer,payElementContainer;
+
+        //create batch header
+        batchHeader = BatchHeader::construct();
+        batchHeader.parmCaption("Payroll (100 - 1)");   
+        controller = new SysOperationServiceController(
+        classStr(SPYPayProcessService),
+        methodStr(SPYPayProcessService, process),
+        SysOperationExecutionMode::Synchronous);
+        controller.parmLoadFromSysLastValue(false); // Don't use SysLastValue (so no values will be retrieved and no one will be stored)
+        payProcessContract = controller.getDataContractObject();
+        payProcessContract.parmLegalEntity(22565422580);
+        payProcessContract.parmPayrollPeriodLine(5637144693);
+        payrollParameterState = new SPYPayrollParameterState();
+        while select hcmWorker
+            where hcmWorker.PersonnelNumber >= 'EMP00001' &&
+            hcmWorker.PersonnelNumber < 'EMP00100'
+        {
+            workerContainer = conPoke(workerContainer,conLen(workerContainer)+1,hcmWorker.RecId);
+        }
+        while select payElementTable
+        {
+            payElementContainer = conPoke(payElementContainer,conLen(payElementContainer)+1,payElementTable.RecId);
+        }
+        payrollParameterState.parmWorkerContainer(workerContainer);
+        payrollParameterState.parmPayElementContainer(payElementContainer);
+        payrollParameterState.parmCalledFromMasterProcess(true);
+        payProcessContract.parmPayrollParameterState(payrollParameterState);
+        payProcessContract.parmTransDate(systemDateGet());
+        batchHeader.addTask(controller);
+        batchHeader.save();
+        //////////////////////////////////////////////////////
+        //create batch header
+        workerContainer = conNull();
+        payElementContainer = conNull();
+        batchHeader = BatchHeader::construct();
+        batchHeader.parmCaption("Payroll (100 - 2)");
+        controller = new SysOperationServiceController(
+        classStr(SPYPayProcessService),
+        methodStr(SPYPayProcessService, process),
+        SysOperationExecutionMode::Synchronous);
+        controller.parmLoadFromSysLastValue(false); // Don't use SysLastValue (so no values will be retrieved and no one will be stored)
+        payProcessContract = controller.getDataContractObject();
+        payProcessContract.parmLegalEntity(22565422580);
+        payProcessContract.parmPayrollPeriodLine(5637144693);
+        payrollParameterState = new SPYPayrollParameterState();
+        while select hcmWorker
+            where hcmWorker.PersonnelNumber >= 'EMP00101' &&
+            hcmWorker.PersonnelNumber < 'EMP00200'
+        {
+            workerContainer = conPoke(workerContainer,conLen(workerContainer)+1,hcmWorker.RecId);
+        }
+        while select payElementTable
+        {
+            payElementContainer = conPoke(payElementContainer,conLen(payElementContainer)+1,payElementTable.RecId);
+        }
+        payrollParameterState.parmWorkerContainer(workerContainer);
+        payrollParameterState.parmPayElementContainer(payElementContainer);
+        payrollParameterState.parmCalledFromMasterProcess(true);
+        payProcessContract.parmPayrollParameterState(payrollParameterState);
+        payProcessContract.parmTransDate(systemDateGet());
+        batchHeader.addTask(controller);
+        batchHeader.save();
+        ////////////////////////////////////////////////////////////
+        //create batch header
+        workerContainer = conNull();
+        payElementContainer = conNull();
+        batchHeader = BatchHeader::construct();
+        batchHeader.parmCaption("Payroll (100 - 3)");
+        controller = new SysOperationServiceController(
+        classStr(SPYPayProcessService),
+        methodStr(SPYPayProcessService, process),
+        SysOperationExecutionMode::Synchronous);
+        controller.parmLoadFromSysLastValue(false); // Don't use SysLastValue (so no values will be retrieved and no one will be stored)
+        payProcessContract = controller.getDataContractObject();
+        payProcessContract.parmLegalEntity(22565422580);
+        payProcessContract.parmPayrollPeriodLine(5637144693);
+        payrollParameterState = new SPYPayrollParameterState();
+        while select hcmWorker
+            where hcmWorker.PersonnelNumber >= 'EMP00201' &&
+            hcmWorker.PersonnelNumber < 'EMP00300'
+        {
+            workerContainer = conPoke(workerContainer,conLen(workerContainer)+1,hcmWorker.RecId);
+        }
+        while select payElementTable
+        {
+            payElementContainer = conPoke(payElementContainer,conLen(payElementContainer)+1,payElementTable.RecId);
+        }
+        payrollParameterState.parmWorkerContainer(workerContainer);
+        payrollParameterState.parmPayElementContainer(payElementContainer);
+        payrollParameterState.parmCalledFromMasterProcess(true);
+        payProcessContract.parmPayrollParameterState(payrollParameterState);
+        payProcessContract.parmTransDate(systemDateGet());
+        batchHeader.addTask(controller);
+        batchHeader.save();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

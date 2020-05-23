@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDisbursementJournalPostContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYDisbursementJournalPostContract
+{
+    container                   disbursementJourTableQuery;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmDisbursementJourTableQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmDisbursementJourTableQuery(container _disbursementJourTableQuery = disbursementJourTableQuery)
+    {
+        disbursementJourTableQuery = _disbursementJourTableQuery;
+
+        return disbursementJourTableQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

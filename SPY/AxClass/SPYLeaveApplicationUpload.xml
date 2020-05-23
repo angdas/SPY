@@ -1,0 +1,689 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplicationUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+class SPYLeaveApplicationUpload extends RunBaseBatch
+{
+    FileName               fileNameOpen;
+    //DialogField             dlgfileName;
+    AsciiStreamIo           fileIO;
+    DialogField             dlgLeave;
+    Description             journalDesc;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+    journalDesc
+    #endmacro
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    // Specifies whether the functionality can run in a new session window
+    public boolean canRunInNewSession()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase           dialog; //= super();
+        FormBuildButtonControl  buttonControlUpload;
+        DialogGroup             dlgGroup;
+        FormBuildGroupControl   buttonGroup;
+
+        dialog = super();
+
+        dlgGroup            = dialog.addGroup('');
+        buttonGroup         = dialog.formBuildDesign().control(dlgGroup.formBuildGroup().id());
+        buttonControlUpload = buttonGroup.addControl(FormControlType::Button, "@SPY:UploadLeaveApplication");
+        buttonControlUpload.text("@SPY:UploadLeaveApplication");
+        buttonControlUpload.registerOverrideMethod(methodStr(FormButtonControl, clicked),
+                                        methodStr(SPYLeaveApplicationUpload, uploadClickedEvent),
+                                        this);
+
+       // dlgLeave = dialog.addFieldValue(extendedTypeStr(Description),journalDesc,"Leave");
+        
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadClickedEvent</Name>
+				<Source><![CDATA[
+    private void uploadClickedEvent(FormButtonControl _formButtonControl)
+    {
+        FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+        If (result && result.getUploadStatus())
+        {
+            fileIO = AsciiStreamIo::constructForRead(result.openResult());
+            if (fileIO)
+            {
+                if (fileIO.status())
+                {
+                    throw error("@SPY:ImportingProblem");
+                }
+                fileIO.inFieldDelimiter(',');
+                fileIO.inRecordDelimiter('\r\n');
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+       // journalDesc = dlgLeave.value();
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            this.readCSV(fileIO);
+        }
+        catch(Exception::Error)
+        {
+            ttsabort;
+            throw error("@SPY:ImportingException");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readCSV</Name>
+				<Source><![CDATA[
+    public void readCSV(AsciiStreamIo  file)
+    {
+        COMVariantType                  type;
+        HcmWorkerRecId                  worker;
+        boolean                         errorWorker, errorAbsenceCode, errorRecordExist;
+        container                       record;
+        int                             cnt = 0, numberofUploadedRecords, cntUpdate = 0;
+        HcmEmploymentDetail             employmentdetails;
+        SPYLeaveApplicationTable        leaveApplicationTable, leaveApplicationTableCheck;
+        SPYLeaveApplicationLine         leaveApplicationLine, leaveApplicationLineCheck;
+        SPYAbsenceLedger                absenceLedgerCheck;
+        SPYAbsenceConfigLine            absenceConfigLine;
+        HcmPersonnelNumberId            employeeId;
+        SPYLeaveApplicationCode         leaveCode;
+        ValidFromDate                   startDate;
+        ValidToDate                     endDate;
+        Hours                           hours;
+        Notes                           remarks;
+        str                             airticket, leaveSettled, submit, approved, leaveStartDate, leaveEndDate;
+        
+        ttsbegin;
+        while (!file.status())
+        {
+            cnt++;
+            record = file.read();
+            
+            if( cnt > 1)
+            {
+                employeeId         = conpeek(record,1);
+                leaveCode          = conpeek(record,2);
+                leaveStartDate     = conpeek(record,3);
+                leaveEndDate       = conpeek(record,4);
+                hours              = conpeek(record,5);
+                remarks            = conpeek(record,6);
+                airticket          = conpeek(record,7);
+                leaveSettled       = conpeek(record,8);
+                submit             = conpeek(record,9);
+                approved           = conpeek(record,10);
+
+                errorWorker             = false;
+                errorAbsenceCode        = false;
+                errorRecordExist        = false;
+
+                int i = conLen(record);
+                if (conLen(record))
+                {
+                    //Check for worker
+                    worker = Hcmworker::findByPersonnelNumber(employeeId).RecId;
+                    if(worker == 0)
+                    {
+                        warning(strfmt("@SPY:EmployeeIdnotValid",cnt));
+                        errorWorker = true;
+                    }
+
+                    //Check leave already taken on the given date
+                    for(TransDate dateCtr = str2Date(leaveStartDate,213); dateCtr <= str2Date(leaveEndDate,213); dateCtr++)
+                    {
+                        select firstonly absenceLedgerCheck
+                            where absenceLedgerCheck.Worker == worker
+                            && absenceLedgerCheck.AbsenceDate == dateCtr;
+                        if(absenceLedgerCheck)
+                        {
+                            errorRecordExist = true;
+                        }
+                    }
+
+                    if( errorRecordExist == true)
+                    {
+                        warning(strfmt("@SPY:LeaveExists",employeeId));
+                    }
+
+                    //Check leave type is applicable for the employee
+                    employmentdetails   = HcmEmploymentDetail::findByWorkerLegalEntity(worker, CompanyInfo::current(), DateTimeUtil::newDateTime(str2Date(leaveStartDate,213),00-00), DateTimeUtil::newDateTime(str2Date(leaveStartDate,213),00-00));
+                        
+                    absenceConfigLine   = SPYAbsenceConfigLine::findByAbsenceCode(employmentdetails.SPYAbsenceConfig, leaveCode);
+                    if(!absenceConfigLine)
+                    {
+                        errorAbsenceCode = true;
+                        warning(strfmt("@SPY:LeaveNotApplicable",employeeId));
+                    }
+                    
+                    
+                    if(errorWorker == false && errorRecordExist == false && errorAbsenceCode == false)
+                    {
+                        cntUpdate++;
+                        leaveApplicationTable.LeaveApplicationCode      = Numberseq::newGetNum(SPYPayrollParameters::numRefLeaveApplicationCode()).num();
+                        leaveApplicationTable.Worker                    = worker;
+                        leaveApplicationTable.Remarks                   = remarks;
+                        leaveApplicationTable.AirTicketNeeded           = airticket == "Yes" ? NoYes::Yes : NoYes::No;
+                        leaveApplicationTable.LeaveSettlementRequired   = leaveSettled == "Yes" ? NoYes::Yes : NoYes::No;
+
+                        leaveApplicationTable.UploadText                = "@SPY:SPYSystemUpload";
+                        leaveApplicationTable.insert();
+
+                        
+                        leaveApplicationLine.LeaveApplication   = leaveApplicationTable.RecId;
+                        leaveApplicationLine.HRMAbsenceCode     = leaveCode;
+                        leaveApplicationLine.ValidFrom          = str2Date(leaveStartDate,213);
+                        leaveApplicationLine.ValidTo            = str2Date(leaveEndDate,213);
+                        leaveApplicationLine.ActualStartDate    = leaveApplicationLine.ValidFrom;
+                        leaveApplicationLine.ActualEndDate      = leaveApplicationLine.ValidTo;
+                        leaveApplicationLine.Hours              = hours;
+                        leaveApplicationLine.LeaveApplied       = this.appliedLeaveDays(leaveApplicationLine);
+                        leaveApplicationLine.LeaveBalance       = this.leaveBalanceCalc(leaveApplicationLine);
+                        leaveApplicationLine.insert();
+
+                        if(approved == "Yes")
+                        {
+                            SPYLeaveApplicationTable::updateWorkflowStatus(leaveApplicationTable.RecId,SPYWorkflowStatus::Approved);
+                            this.updateAbsenceLedgerTable(leaveApplicationTable);
+                        }
+                        else if(approved == "No")
+                        {
+                            if(submit   == "Yes")
+                            {
+                                //workflow::activateFromWorkflowSequenceNumber("000246", leaveApplicationTable.RecId,
+                                //    "Uploaded from system", false, curUserId());
+                                workflow::activateFromWorkflowType("SPYLeaveApplication", leaveApplicationTable.RecId,
+                                    "@SPY:SPYSystemUpload", false, curUserId());
+                                SPYLeaveApplicationTable::updateWorkflowStatus(leaveApplicationTable.RecId,SPYWorkflowStatus::Submitted);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ttscommit;
+        info(strfmt("@SPY:UploadedRecords",cntUpdate));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    // Unpacking of parameters
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+        ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    // Validation
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYLeaveApplicationUpload construct()
+    {
+        return new SPYLeaveApplicationUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "Leave application upload";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYLeaveApplicationUpload    leaveApplicationUpload;
+    
+        leaveApplicationUpload = SPYLeaveApplicationUpload::construct();
+    
+        if (leaveApplicationUpload.prompt())
+            leaveApplicationUpload.runOperationNow();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>appliedLeaveDays</Name>
+				<Source><![CDATA[
+    public SPYAmount appliedLeaveDays(SPYLeaveApplicationLine _leaveApplicationLineAppliedDays)
+    {
+        Hours                       workingHours;
+        SPYAmount                   absentDays;
+        SPYLeaveApplicationLine     leaveApplicationLineAppliedDays = _leaveApplicationLineAppliedDays;
+        SPYLeaveApplicationTable    leaveApplicationTableUpdate = leaveApplicationLineAppliedDays.leaveApplicationTable();
+        HRMAbsenceCode              hrmAbsenceCode = HRMAbsenceCode::find(leaveApplicationLineAppliedDays.HRMAbsenceCode);
+        date                        leaveStartDate,leaveEndDate,leaveDate;
+        HcmEmployment               hcmEmployment;
+        WorkCalendarEmployment      workCalendarEmployment;
+        CalendarId                  calendarId;
+    
+
+        leaveStartDate  = leaveApplicationLineAppliedDays.ValidFrom;
+        leaveEndDate    = leaveApplicationLineAppliedDays.ValidTo;
+        leaveDate = leaveStartDate;
+
+        if(hrmAbsenceCode.SPYLeaveAccrualBasis == SPYLeaveAccrualBasis::WorkingDays)
+        {
+            while(leaveDate <= leaveEndDate)
+            {
+                workingHours = this.workingHours(leaveApplicationLineAppliedDays, leaveDate);
+ 
+                if(workingHours)
+                    absentDays++;
+                leaveDate++;
+            }
+            if(leaveStartDate == leaveEndDate && workingHours)
+                absentDays = leaveApplicationLineAppliedDays.Hours / workingHours;
+        }
+        else if(hrmAbsenceCode.SPYLeaveAccrualBasis == SPYLeaveAccrualBasis::CalendarDays)
+        {
+            while(leaveDate <= leaveEndDate)
+            {
+                absentDays++;
+                leaveDate++;
+            }
+            if(leaveStartDate == leaveEndDate)
+            {
+                workingHours = this.workingHours(leaveApplicationLineAppliedDays, dateNull());
+                if(!workingHours)
+                    throw error(strFmt("@SPY966",HcmWorker::find(leaveApplicationLineAppliedDays.leaveApplicationTable().Worker).name()));
+                absentDays = leaveApplicationLineAppliedDays.Hours / workingHours;
+            }
+        }
+        return absentDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workingHours</Name>
+				<Source><![CDATA[
+    public SPYAmount workingHours(SPYLeaveApplicationLine _lineWorkingHrs, TransDate _date)
+    {
+        CalendarId              calendarId;
+        Hours                   workingHours;
+        TransDateTime           transDateTime = DateTimeUtil::newDateTime(_lineWorkingHrs.ActualStartDate,00-00);
+        HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(_lineWorkingHrs.leaveApplicationTable().Worker,CompanyInfo::current(),transDateTime);
+        WorkCalendarEmployment  workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+    
+        calendarId = workCalendarEmployment.CalendarId;
+        if ( _date == dateNull() )
+            workingHours = WorkCalendarTable::find( calendarId ).StandardWorkDayHours;
+        else
+            workingHours = WorkCalendarDate::calcDefinedHours(calendarId,_date);
+    
+        return workingHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAbsenceLedgerTable</Name>
+				<Source><![CDATA[
+    public void updateAbsenceLedgerTable(SPYLeaveApplicationTable   _leaveTable)
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        SPYAbsenceLedger            absenceLedger;
+        int                         counter;
+        date                        absenceDate;
+        HcmEmployment               hcmEmployment;
+        WorkCalendarEmployment      workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+        CalendarId                  calendarId;
+        Hours                       workingHours;
+        date                        fromDate = dateNull();
+        date                        toDate = dateMax();
+        boolean                     abort;
+        boolean                     callFromCancellation = false;
+        HRMAbsenceCode              hrmAbsenceCode;
+        int                         sign = -1;
+        real                        absenceHours,absenceDays;
+        Map                         absenceDateMap = new Map(Types::Date,Types::Integer);
+                
+        try
+        {
+            ttsBegin;
+            while select validTimeState(fromDate,toDate) HRMAbsenceCode,ActualStartDate,ActualEndDate,Hours,LeaveApplied,RecId from leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == _leaveTable.RecId
+            {
+                counter = 0;
+                absenceDateMap = new Map(Types::Date,Types::Integer);
+                hcmEmployment = HcmEmployment::findByWorkerLegalEntity(_leaveTable.Worker,
+                                                                   CompanyInfo::current(),
+                                                                   DateTimeUtil::newDateTime(leaveApplicationLine.ActualStartDate,00-00));
+                workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+                calendarId = workCalendarEmployment.CalendarId;
+                hrmAbsenceCode = HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode);
+                while(calendarId && leaveApplicationLine.ActualStartDate + counter <= leaveApplicationLine.ActualEndDate)
+                {
+                    abort = false;
+                    absenceDate = leaveApplicationLine.ActualStartDate + counter;
+                    workingHours = WorkCalendarDate::calcDefinedHours(calendarId,absenceDate);
+                    if(workingHours)
+                    {
+                        if(leaveApplicationLine.ActualStartDate != leaveApplicationLine.ActualEndDate)
+                        {
+                            absenceDays       = 1 * sign;
+                            absenceHours      = workingHours * sign;
+                        }
+                        else
+                        {
+                            if(leaveApplicationLine.LeaveApplied == 1)
+                            {
+                                absenceDays       = 1 * sign;
+                                absenceHours      = workingHours * sign;
+                            }
+                            else
+                            {
+                                absenceDays       = leaveApplicationLine.Hours / workingHours * sign;
+                                absenceHours      = leaveApplicationLine.Hours * sign;
+                                if(!absenceDays)
+                                {
+                                    absenceDays       = leaveApplicationLine.LeaveApplied * sign;
+                                    absenceHours      = leaveApplicationLine.LeaveApplied * workingHours * sign;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(hrmAbsenceCode.SPYLeaveAccrualBasis == SPYLeaveAccrualBasis::WorkingDays)
+                        {
+                            absenceDays       = 0;
+                            absenceHours      = 0;
+                        }
+                        else
+                        {
+                            absenceDays       = 1 * sign;
+                            absenceHours      = WorkCalendarTable::find(calendarId).StandardWorkDayHours * sign;
+                        }
+                    }
+                    if(!callFromCancellation)
+                    {
+                        [absenceDays,absenceHours] = this.checkAbsenceLedger(_leaveTable, absenceDate,leaveApplicationLine.HRMAbsenceCode,absenceDays,absenceHours);
+                        if(absenceDays || absenceHours)
+                        {
+                            absenceLedger.clear();
+                            absenceLedger.initValue();
+                            absenceLedger.Worker                = _leaveTable.Worker;
+                            absenceLedger.EntryType             = SPYAbsenceLedgerEntryType::Transaction;
+                            absenceLedger.HRMAbsenceCodeId      = leaveApplicationLine.HRMAbsenceCode;
+                            absenceLedger.AbsenceDate           = absenceDate;
+                            absenceLedger.AbsenceDays           = absenceDays;
+                            absenceLedger.AbsenceHours          = absenceHours;
+                            absenceLedger.SourceDocument        = tableNum(SPYLeaveApplicationTable);
+                            absenceLedger.LeaveApplicationLine  = leaveApplicationLine.RecId;
+                            absenceLedger.UtilityUpload         = NoYes::Yes;
+                            absenceLedger.Txt                   = strFmt("@SPY1732",_leaveTable.LeaveApplicationCode);
+                            absenceLedger.insert();
+                        }
+                        select sum(AbsenceDays), sum(AbsenceHours) from  absenceLedger
+                        where absenceLedger.Worker == _leaveTable.Worker &&
+                              absenceLedger.AbsenceDate == absenceDate &&
+                              absenceLedger.HRMAbsenceCodeId == leaveApplicationLine.HRMAbsenceCode &&
+                              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable);
+                        if(absenceLedger.AbsenceDays || absenceLedger.AbsenceHours)
+                        absenceDateMap.insert(absenceDate,1);
+                    }
+                    counter++;
+                }
+                this.checkExtraDateInAbsenceLedger(_leaveTable, leaveApplicationLine.HRMAbsenceCode,absenceDateMap,leaveApplicationLine.RecId);
+            }
+            /*
+            absenceDate = this.fromAbsenceDate();
+            while(absenceDate <= this.toAbsenceDate())
+            {
+
+            hcmEmployment = HcmEmployment::findByWorkerLegalEntity(this.Worker,
+            CompanyInfo::current(),
+            DateTimeUtil::newDateTime(absenceDate,00-00));
+            workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+            calendarId = workCalendarEmployment.CalendarId;
+            workingHours = WorkCalendarDate::calcDefinedHours(calendarId,absenceDate);
+            this.updateLedgerTS(absenceDate,workingHours,this.absenceHours(absenceDate));
+            absenceDate++;
+            }
+            */
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            error("@SPY707");
+            ttsAbort;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkAbsenceLedger</Name>
+				<Source><![CDATA[
+    private container checkAbsenceLedger(SPYLeaveApplicationTable _leaveAppTable, Date _absenceDate,HRMAbsenceCodeId _absenceCode,Real _absenceDays,Hours _absenceHours)
+    {
+        SPYAbsenceLedger    absenceLedger;
+
+        select sum(AbsenceDays), sum(AbsenceHours) from  absenceLedger
+        where absenceLedger.Worker == _leaveAppTable.Worker &&
+              absenceLedger.AbsenceDate == _absenceDate &&
+              absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable);
+
+        return [_absenceDays - absenceLedger.AbsenceDays,_absenceHours - absenceLedger.AbsenceHours];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkExtraDateInAbsenceLedger</Name>
+				<Source><![CDATA[
+    private void checkExtraDateInAbsenceLedger(SPYLeaveApplicationTable _leaveApplictnTable, HRMAbsenceCodeId _absenceCode,Map _DateMap,SPYLeaveApplicationLineRecId _leaveApplicationLine)
+    {
+        SPYAbsenceLedger    absenceLedger,absenceLedgerInsert;
+
+        while select sum(AbsenceDays),sum(AbsenceHours) from absenceLedger group by AbsenceDate
+        where absenceLedger.Worker == _leaveApplictnTable.Worker &&
+              absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable) &&
+              absenceLedger.LeaveApplicationLine == _leaveApplicationLine
+        {
+            if((absenceLedger.AbsenceDays || absenceLedger.AbsenceHours) && !_DateMap.exists(absenceLedger.AbsenceDate))
+            {
+                absenceLedgerInsert.clear();
+                absenceLedgerInsert.initValue();
+                absenceLedgerInsert.Worker                = _leaveApplictnTable.Worker;
+                absenceLedgerInsert.EntryType             = SPYAbsenceLedgerEntryType::Transaction;
+                absenceLedgerInsert.HRMAbsenceCodeId      = _absenceCode;
+                absenceLedgerInsert.AbsenceDate           = absenceLedger.AbsenceDate;
+                absenceLedgerInsert.AbsenceDays           = -absenceLedger.AbsenceDays;
+                absenceLedgerInsert.AbsenceHours          = -absenceLedger.AbsenceHours;
+                absenceLedgerInsert.SourceDocument        = tableNum(SPYLeaveApplicationTable);
+                absenceLedgerInsert.LeaveApplicationLine  = _leaveApplicationLine;
+                absenceLedgerInsert.Txt                   = strFmt("(Reverse Entry)",absenceLedger.Txt);
+                absenceLedgerInsert.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>leaveBalanceCalc</Name>
+				<Source><![CDATA[
+    public SPYAmount leaveBalanceCalc(SPYLeaveApplicationLine   _leaveAppLine)
+    {    
+        SPYAbsenceWorkerService     absenceWorkerService = new SPYAbsenceWorkerService(_leaveAppLine.leaveApplicationTable().Worker);    
+        return absenceWorkerService.balanceDays(_leaveAppLine.ValidFrom, _leaveAppLine.HRMAbsenceCode);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

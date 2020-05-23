@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEmployeeIdentificationsContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute,
+    SysOperationContractProcessingAttribute(classStr(SPYEmployeeIdentificationsUIBuilder))
+]
+class SPYEmployeeIdentificationsContract implements SysOperationValidatable
+{
+    FromDate                            fromDate;
+    ToDate                              toDate;
+    OMOperatingUnitNumber               department;
+    List                                identificationTypeList;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmDepartment</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('Department'),
+        SysOperationLabelAttribute(literalStr("@SYS181623"))
+    ]
+    public OMOperatingUnitNumber parmDepartment(OMOperatingUnitNumber _department = department)
+    {
+        department = _department;
+    
+        return department;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmFromDate</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('FromDate'),
+        SysOperationLabelAttribute(literalStr("@SPY1278"))
+    ]
+    public FromDate parmFromDate(FromDate _fromDate = fromDate)
+    {
+        fromDate =_fromDate;
+    
+        return fromDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmIdentificationTypeList</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('IdentificationType'),
+        AifCollectionTypeAttribute(literalStr("@SPY1281"), Types::String)
+    ]
+    public List parmIdentificationTypeList(List _identificationTypeList = identificationTypeList)
+    {
+        identificationTypeList = _identificationTypeList;
+    
+        return identificationTypeList;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmToDate</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('ToDate'),
+        SysOperationLabelAttribute(literalStr("@SYS35904"))
+    ]
+    public FromDate parmToDate(ToDate _toDate = toDate)
+    {
+        toDate =_toDate;
+    
+        return toDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate()
+    {
+        boolean                 ret = true;
+    
+        if(fromDate == dateNull())
+            ret = checkFailed("@SPY1280");
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

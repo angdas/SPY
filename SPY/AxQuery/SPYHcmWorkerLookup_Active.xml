@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYHcmWorkerLookup_Active</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYHcmWorkerLookup_Active extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>HcmWorker</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>HcmWorker</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>DirPerson</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>DirPerson</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations>
+						<AxQuerySimpleDataSourceRelation>
+							<Name>Relation</Name>
+							<JoinDataSource>HcmWorker</JoinDataSource>
+							<JoinRelationName>DirPerson</JoinRelationName>
+						</AxQuerySimpleDataSourceRelation>
+					</Relations>
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>HcmEmployment</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>HcmEmployment</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges>
+						<AxQuerySimpleDataSourceRange>
+							<Name>LegalEntity</Name>
+							<Field>LegalEntity</Field>
+						</AxQuerySimpleDataSourceRange>
+						<AxQuerySimpleDataSourceRange>
+							<Name>Worker</Name>
+							<Field>Worker</Field>
+						</AxQuerySimpleDataSourceRange>
+						<AxQuerySimpleDataSourceRange>
+							<Name>ValidTo</Name>
+							<Field>ValidTo</Field>
+						</AxQuerySimpleDataSourceRange>
+						<AxQuerySimpleDataSourceRange>
+							<Name>ValidFrom</Name>
+							<Field>ValidFrom</Field>
+						</AxQuerySimpleDataSourceRange>
+						<AxQuerySimpleDataSourceRange>
+							<Name>EmploymentType</Name>
+							<Field>EmploymentType</Field>
+						</AxQuerySimpleDataSourceRange>
+					</Ranges>
+					<JoinMode>ExistsJoin</JoinMode>
+					<UseRelations>Yes</UseRelations>
+					<Relations>
+						<AxQuerySimpleDataSourceRelation>
+							<Name>Relation</Name>
+							<JoinDataSource>HcmWorker</JoinDataSource>
+							<JoinRelationName>HcmWorker</JoinRelationName>
+						</AxQuerySimpleDataSourceRelation>
+					</Relations>
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges />
+			<GroupBy />
+			<Having />
+			<OrderBy>
+				<AxQuerySimpleOrderByField>
+					<Name>QueryOrderByField1</Name>
+					<DataSource>HcmWorker</DataSource>
+					<Field>PersonnelNumber</Field>
+				</AxQuerySimpleOrderByField>
+			</OrderBy>
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

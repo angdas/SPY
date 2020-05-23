@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYWorkerContract
+{
+    HcmPersonnelNumberId    personnelNumberId;
+    HcmWorkerName           workerName;
+    Notes                   imageStr;
+    LogisticsAddressing     address;
+    Phone                   phone;
+    Email                   email;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAddress</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Address")]
+    public LogisticsAddressing parmAddress(LogisticsAddressing _address = address)
+    {
+        address = _address;
+    
+        return address;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEmail</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Email")]
+    public Email parmEmail(Email _email = email)
+    {
+        email = _email;
+    
+        return email;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmImageStr</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ImageStr")]
+    public Notes parmImageStr(Notes _imageStr = imageStr)
+    {
+        imageStr = _imageStr;
+    
+        return imageStr;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPersonnelNumberId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PersonnelNumber")]
+    public HcmPersonnelNumberId parmPersonnelNumberId(HcmPersonnelNumberId _personnelNumberId = personnelNumberId)
+    {
+        personnelNumberId = _personnelNumberId;
+    
+        return personnelNumberId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPhone</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Phone")]
+    public Phone parmPhone(Phone _phone = phone)
+    {
+        phone = _phone;
+    
+        return phone;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Name")]
+    public HcmWorkerName parmWorkerName(HcmWorkerName _workerName = workerName)
+    {
+        workerName = _workerName;
+    
+        return workerName;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplicationTmp</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYLeaveApplicationTmp extends common
+{
+}
+
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<Label>@SPY:LeaveApplicationTmp</Label>
+	<TitleField2>HRMAbsenceCode</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<TableType>InMemory</TableType>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>AbsenceDays</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY177</HelpText>
+			<Label>@SPY176</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ActualEndDate</Name>
+			<ExtendedDataType>EndDate</ExtendedDataType>
+			<HelpText>@SPY504</HelpText>
+			<Label>@SYS22885</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ActualStartDate</Name>
+			<ExtendedDataType>StartDate</ExtendedDataType>
+			<HelpText>@SPY503</HelpText>
+			<Label>@SYS22883</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Hours</Name>
+			<ExtendedDataType>Hours</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>HRMAbsenceCode</Name>
+			<ExtendedDataType>HRMAbsenceCodeId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>LeaveApplicationCode</Name>
+			<ExtendedDataType>SPYLeaveApplicationCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Remarks</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<Label>@SYS86005</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ServiceResumed</Name>
+			<HelpText>@SPY703</HelpText>
+			<Label>@SPY702</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>WorkerName</Name>
+			<ExtendedDataType>HcmWorkerName</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>WorkerPersonnelNumber</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>HcmPersonnelNumberId</ExtendedDataType>
+			<MinReadAccess>Yes</MinReadAccess>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>WorkflowStatus</Name>
+			<EnumType>SPYWorkflowStatus</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes />
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HRMAbsenceCode</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>HRMAbsenceCode</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>HRMAbsenceCode</Name>
+					<Field>HRMAbsenceCode</Field>
+					<RelatedField>hrmAbsenceCodeId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>IdIdx</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

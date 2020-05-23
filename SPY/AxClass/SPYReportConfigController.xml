@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYReportConfigController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYReportConfigController extends SysOperationServiceController
+{
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+         // This tells the controller what method it should execute as the service.         
+        this.parmClassName( classStr(SPYReportConfigService) );
+        this.parmMethodName( methodStr(SPYReportConfigService, runReport) );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args _args)
+    {
+        SPYReportConfigController      controller = new SPYReportConfigController();
+       
+       // SPYReportConfigContract         contract;
+
+        //contract = controller.getDataContractObject('_contract');
+        
+        controller.parmArgs(_args);
+        controller.parmExecutionMode( SysOperationExecutionMode::Synchronous);
+        controller.parmShowDialog(true); // Actually the default value
+        controller.parmShowProgressForm(false);
+
+        //contract.initQuery();
+        //controller.queryChanged('_contract.parmPackedQuery', contract.getQuery());        
+        //controller.parmLoadFromSysLastValue(false);
+        
+        controller.startOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    protected boolean validate()
+    {
+        SPYReportConfigContract         contract;
+        boolean                         ret = true;
+    
+        contract = this.getDataContractObject();
+    
+        if (contract.parmReportConfigRecId() == 0 )
+        {
+            // Failing the validate will not close the dialog, and the user will have another chance of inputting the correct values
+            ret = checkFailed('Report configuration is missing');
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>defaultCaption</Name>
+				<Source><![CDATA[
+    protected ClassDescription defaultCaption()
+    {
+        // This will be the dialog's caption
+        return 'Generate report';
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

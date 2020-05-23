@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplicationValidation</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLeaveApplicationValidation
+{
+    SPYLeaveApplicationTable            leaveApplicationTable;
+    SPYLeaveApplicationLine             leaveApplicationLine;
+    HcmEmployment                       hcmEmployment;
+    HcmEmploymentDetail                 hcmEmploymentDetail;
+    SPYWorkerPositionAbsenceConfigLine      workerPositionAbsenceConfigLine;
+    //SPYAbsenceConfigLine        absenceConfigLine;
+    date                                leaveStartDate,leaveEndDate;
+    HcmWorker                           hcmWorker;
+    SPYPlannedWorkingHourSource         plannedWorkingHourSource;
+    CalendarId                          calendarId;
+    JmgProfileId                        profileId;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    void new(SPYLeaveApplicationTable _leaveApplicationTable, SPYLeaveApplicationLine _leaveApplicationLine)
+    {
+        leaveApplicationTable = _leaveApplicationTable;
+        leaveApplicationLine = _leaveApplicationLine;
+        leaveStartDate = leaveApplicationLine.ActualStartDate;
+        leaveEndDate = leaveApplicationLine.ActualEndDate;
+        hcmWorker = HcmWorker::find(leaveApplicationTable.Worker);
+
+        this.setEmployment();
+        this.setCalendar();
+        this.setDate();
+        this.setAbsenceConfig();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEmployment</Name>
+				<Source><![CDATA[
+    private void setEmployment()
+    {
+        FromDateTime            fromDateTime = DateTimeUtil::newDateTime(leaveStartDate,00-00);
+        ToDateTime              toDateTime = DateTimeUtil::newDateTime(leaveEndDate,00-00);
+        FromDateTime            minDateTime = DateTimeUtil::newDateTime(dateNull(),00-00);
+        ToDateTime              maxDateTime = DateTimeUtil::newDateTime(dateMax(),00-00);
+        LegalEntityRecId        legalEntity = CompanyInfo::current();
+
+        if(fromDateTime > toDateTime)
+            toDateTime = fromDateTime;
+        hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId,legalEntity,fromDateTime,
+                                                                                       toDateTime);
+        if(!hcmEmployment)
+             hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId,
+                                                                    legalEntity,
+                                                                    minDateTime,
+                                                                    maxDateTime);
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,fromDateTime,
+                                                                                       toDateTime);
+        if(!hcmEmploymentDetail)
+            hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,minDateTime,
+                                                                            maxDateTime);
+        plannedWorkingHourSource = hcmEmploymentDetail.SPYPlannedWorkingHourSource;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setCalendar</Name>
+				<Source><![CDATA[
+    private void setCalendar()
+    {
+        WorkCalendarEmployment      workCalendarEmployment;
+        JmgStampJournalTable        jmgStampJournalTable;
+
+        if(plannedWorkingHourSource == SPYPlannedWorkingHourSource::Calendar)
+        {
+            workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+            calendarId = workCalendarEmployment.CalendarId;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setDate</Name>
+				<Source><![CDATA[
+    private void setDate()
+    {
+        leaveStartDate  = leaveApplicationLine.ActualStartDate;
+        leaveEndDate    = leaveApplicationLine.ActualEndDate;
+        /*
+        if(leaveApplicationTable.WorkflowStatus != SPYWorkflowStatus::Approved)
+        {
+            leaveStartDate  = leaveApplicationLine.ValidFrom;
+            leaveEndDate    = leaveApplicationLine.ValidTo;
+        }
+        else
+        {
+            leaveStartDate  = leaveApplicationLine.ActualStartDate;
+            leaveEndDate    = leaveApplicationLine.ActualEndDate;
+        }
+        */
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setAbsenceConfig</Name>
+				<Source><![CDATA[
+    private void setAbsenceConfig()
+    {
+        select firstonly validtimestate(leaveStartDate, leaveEndDate) workerPositionAbsenceConfigLine
+            where workerPositionAbsenceConfigLine.Worker == hcmWorker.RecId &&
+            workerPositionAbsenceConfigLine.LegalEntity == CompanyInfo::current() &&
+            workerPositionAbsenceConfigLine.HRMAbsenceCodeId == leaveApplicationLine.HRMAbsenceCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ledgerTransDateCalcFromLeave</Name>
+				<Source><![CDATA[
+    public SPYAbsenceLedgerTransDateCalcFromLeave  ledgerTransDateCalcFromLeave()
+    {
+        return workerPositionAbsenceConfigLine.LedgerTransDateCalcFromLeave;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>appliedLeaveDays</Name>
+				<Source><![CDATA[
+    public SPYAmount appliedLeaveDays()
+    {
+        Hours                   workingHours;
+        SPYAmount               absentDays;
+        HRMAbsenceCode          hrmAbsenceCode = HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode);
+        date                    leaveDate;
+        SPYAbsenceWorkerService     absenceWorkerService = new SPYAbsenceWorkerService(hcmWorker.RecId);
+        leaveDate = leaveStartDate;
+        if(hrmAbsenceCode.SPYLeaveAccrualBasis == SPYLeaveAccrualBasis::WorkingDays)
+        {
+            while(leaveDate <= leaveEndDate)
+            {
+                workingHours = absenceWorkerService.workingHours(leaveDate);
+                if(workingHours)
+                    absentDays++;
+                leaveDate++;
+            }
+            if(leaveStartDate == leaveEndDate && workingHours)
+                absentDays = leaveApplicationLine.Hours / workingHours;
+        }
+        else if(hrmAbsenceCode.SPYLeaveAccrualBasis == SPYLeaveAccrualBasis::CalendarDays)
+        {
+            while(leaveDate <= leaveEndDate)
+            {
+                absentDays++;
+                leaveDate++;
+            }
+            if(leaveStartDate == leaveEndDate)
+            {
+                workingHours = absenceWorkerService.workingHours(leaveStartDate);
+                if(!workingHours)
+                    throw error(strFmt("@SPY966",hcmWorker.name()));
+                absentDays = leaveApplicationLine.Hours / workingHours;
+            }
+        }
+        return absentDays;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

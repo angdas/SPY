@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntLeaveApplicationLineContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntLeaveApplicationLineContract
+{
+    HrmAbsenceCodeId    absenceCode;
+    TSPeriodFrom        validFrom;
+    TSPeriodTo          validTo;
+    SPYAmount           hours;
+    NotesLine           remarks;
+    SPYAmount           leaveDays;
+    SPYAmount           balanceDays;
+    Description         absenceCodeDescription;
+    boolean             isDeleted;
+    boolean             error;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAbsenceCode</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("AbsenceCode")]
+    public HrmAbsenceCodeId parmAbsenceCode(HrmAbsenceCodeId _absenceCode = absenceCode)
+    {
+        absenceCode = _absenceCode;
+
+        return absenceCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmHours</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("hours")]
+    public SPYAmount parmHours(SPYAmount _hours = hours)
+    {
+        hours = _hours;
+
+        return hours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmValidFrom</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ValidFrom")]
+    public TransDate parmValidFrom(TransDate _validFrom = validFrom)
+    {
+        validFrom = _validFrom;
+
+        return validFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmValidTo</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ValidTo")]
+    public TransDate parmValidTo(TransDate _validTo = validTo)
+    {
+        validTo = _validTo;
+
+        return validTo;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmRemarks</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Remarks")]
+    public NotesLine parmRemarks(NotesLine _remarks = remarks)
+    {
+        remarks = _remarks;
+
+        return remarks;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLeaveDays</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("LeaveDays")]
+    public SPYAmount parmLeaveDays(SPYAmount _leaveDays = leaveDays)
+    {
+        leaveDays = _leaveDays;
+
+        return leaveDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBalanceDays</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("BalanceDays")]
+    public SPYAmount parmBalanceDays(SPYAmount _balanceDays = balanceDays)
+    {
+        balanceDays = _balanceDays;
+
+        return balanceDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAbsenceCodeDescription</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("AbsenceCodeDescription")]
+    public Description parmAbsenceCodeDescription(Description _absenceCodeDescription = absenceCodeDescription)
+    {
+        absenceCodeDescription = _absenceCodeDescription;
+
+        return absenceCodeDescription;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmIsDeleted</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("IsDeleted")]
+    public boolean parmIsDeleted(boolean _isDeleted = isDeleted)
+    {
+        isDeleted = _isDeleted;
+
+        return isDeleted;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmError</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Error")]
+    public boolean parmError(boolean _error = error)
+    {
+        error = _error;
+
+        return error;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

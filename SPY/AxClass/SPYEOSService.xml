@@ -1,0 +1,1344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYEOSService extends SPYPayService
+{
+    SPYEOSContract              contract;
+    TransDate                   payrollProcessDate;
+    TransDate                   absenceValidFrom;
+
+    Map                         accumulatedBenefitRunMap;
+    TransDate                   leavingDate;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>applicablePayrollPeriodForWorker</Name>
+				<Source><![CDATA[
+    private Set applicablePayrollPeriodForWorker()
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYPayrollPeriod            payrollPeriodTable;
+        Set                         payrollPeriodSet = new Set(Types::Int64);
+        Set                         payrollPeriodSet1 = new Set(Types::Int64);
+        Set                         payrollPeriodSet2 = new Set(Types::Int64);
+        StartDate                   startDate = dateNull();
+        EndDate                     endDate = dateMax();
+    
+        while select validTimeState(startDate,endDate) RecId from payrollPeriodTable exists join workerPositionPayroll
+            where payrollPeriodTable.RecId == workerPositionPayroll.PayrollPeriod &&
+                  workerPositionPayroll.Worker == worker.RecId &&
+                  workerPositionPayroll.LegalEntity == legalEntity
+        {
+            payrollPeriodSet1.add(payrollPeriodTable.RecId);
+        }
+    
+        while select validTimeState(startDate,endDate) RecId from payrollPeriodTable exists join workerPositionBenefit
+            where payrollPeriodTable.RecId == workerPositionBenefit.PayrollPeriod &&
+                  workerPositionBenefit.Worker == worker.RecId &&
+                  workerPositionBenefit.LegalEntity == legalEntity
+        {
+            payrollPeriodSet2.add(payrollPeriodTable.RecId);
+        }
+    
+        payrollPeriodSet = Set::union(payrollPeriodSet1,payrollPeriodSet2);
+    
+        return payrollPeriodSet;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>benefitsForEncashment</Name>
+				<Source><![CDATA[
+    private Map benefitsForEncashment()
+    {
+        SPYBenefitLedger            benefitLedger;
+        SPYPayrollPeriodLine        payrollPeriodLineTable;
+        SPYEOSRunBenefit            eosRunBenefit;
+        Map                         benefitMap = new Map(Types::Int64,Types::String);
+    
+        while select benefitLedger group by benefit join RecId from payrollPeriodLineTable
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLineTable.RecId &&
+                  payrollPeriodLineTable.PayrollPeriod == payrollPeriod
+        {
+            benefitMap.insert(benefitLedger.Benefit,SPYBenefitTable::find(benefitLedger.Benefit).PayElementCode);
+        }
+    
+        while select eosRunBenefit group by benefit join RecId from payrollPeriodLineTable
+            where eosRunBenefit.Worker == worker.RecId &&
+                  eosRunBenefit.PayrollPeriodLine == payrollPeriodLineTable.RecId &&
+                  payrollPeriodLineTable.PayrollPeriod == payrollPeriod
+        {
+            if(!benefitMap.exists(eosRunBenefit.Benefit))
+                benefitMap.insert(eosRunBenefit.Benefit,SPYBenefitTable::find(benefitLedger.Benefit).PayElementCode);
+        }
+    
+        return benefitMap;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>finalizeEncashmentProcess</Name>
+				<Source><![CDATA[
+    public void finalizeEncashmentProcess()
+    {
+        EOSRunUpdate.updateEOSRun();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>finalizeProcess</Name>
+				<Source><![CDATA[
+    public void finalizeProcess()
+    {
+        super();
+        EOSRunUpdate.updateEOSRun();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getBalanceAccCurAmtNQty</Name>
+				<Source><![CDATA[
+    private container getBalanceAccCurAmtNQty(SPYBenefitRecId _benefit)
+    {
+        SPYBenefitLedger            benefitLedger;
+        SPYPayrollPeriodLine        payrollPeriodLineTable;
+        SPYAmount                   eosBenefitAmt,eosBenefitQty;
+    
+        select sum(AccountingCurrencyAmount),sum(AccountingCurPnLAmount),sum(Quantity) from benefitLedger group by benefit join payrollPeriodLineTable
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.Benefit == _benefit &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLineTable.RecId &&
+                  payrollPeriodLineTable.PayrollPeriod == payrollPeriod;
+    
+        if(accumulatedBenefitRunMap.exists(_benefit))
+            [eosBenefitAmt,eosBenefitQty] = accumulatedBenefitRunMap.lookup(_benefit);
+    
+        return [benefitLedger.AccountingCurrencyAmount + benefitLedger.AccountingCurPnLAmount + eosBenefitAmt,benefitLedger.Quantity + eosBenefitQty];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initialize</Name>
+				<Source><![CDATA[
+    public void initialize()
+    {
+        super();
+        expressionContext.endOfSettlement(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeEOS</Name>
+				<Source><![CDATA[
+    private void initializeEOS()
+    {
+        StartDateTime           startDateTime = DateTimeUtil::minValue();
+        EndDateTime             endDateTime = DateTimeUtil::maxValue();
+    
+        EOSRunUpdate = new SPYEOSRunUpdate();
+        accumulatedBenefitRunMap = new Map(Types::Int64,Types::Container);
+        if(!hcmEmployment)
+            hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,startDateTime,endDateTime);
+        LeavingDate = DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidTo,DateTimeUtil::getCompanyTimeZone()));
+        transDate = LeavingDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeEOSRunFromBenefit</Name>
+				<Source><![CDATA[
+    protected SPYEOSRunBenefit initializeEOSRunFromBenefit(SPYPayElementRecId   _benefit,
+                                                           SPYAmount            _transCurAmt,
+                                                           SPYAmount            _AccCurAmt,
+                                                           SPYAmount            _qty,
+                                                           CurrencyCode         _currency,
+                                                           SPYAmount            _exchRate,
+                                                           boolean              _eos = false)
+    {
+        SPYEOSRunBenefit        ret;
+        SPYAmount               acctCurAmt,qty;
+    
+        ret = super(_benefit, _transCurAmt, _AccCurAmt, _qty, _currency, _exchRate);
+    
+        if(accumulatedBenefitRunMap.exists(_benefit))
+            {
+                [acctCurAmt,qty] = accumulatedBenefitRunMap.lookup(_benefit);
+                accumulatedBenefitRunMap.remove(_benefit);
+                accumulatedBenefitRunMap.insert(_benefit,[_AccCurAmt + acctCurAmt,_qty + qty]);
+            }
+            else
+                accumulatedBenefitRunMap.insert(_benefit,[_AccCurAmt,_qty]);
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeWorkerBenefitMap</Name>
+				<Source><![CDATA[
+    protected Map initializeWorkerBenefitMap()
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefitGroup;
+        SPYWorkerPositionPayroll    workerPositionPayrollGroup;
+        SPYPayElementDetails        payElementDetails,childPayElementDetails;
+        SPYPayElementTable          payElementTable,childPayElementTable;
+        Map                         workerPayElementMap;
+
+        workerPayElementMap = super();
+
+        //Regular payroll process for attachecd benefit
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) workerPositionBenefitGroup group by Benefit
+        where workerPositionBenefitGroup.Worker == worker.RecId &&
+              workerPositionBenefitGroup.LegalEntity == legalEntity &&
+              workerPositionBenefitGroup.PayrollPeriod == payrollPeriod
+        join payElementTable
+        where payElementTable.RecId == workerPositionBenefitGroup.Benefit &&
+              !payElementTable.ParentPayElement
+        join RecId from payElementDetails group by CalculationOrder
+        where payElementDetails.PayElement == workerPositionBenefitGroup.Benefit &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementDetails.EOSPayElement == false
+        {
+            if(payElementMap.exists(workerPositionBenefitGroup.Benefit) && !appForAllBenefitMap.exists(workerPositionBenefitGroup.Benefit) &&
+           !workerPayElementMap.exists(workerPositionBenefitGroup.Benefit))
+            {
+                workerPayElementMap.insert(workerPositionBenefitGroup.Benefit,[0,payElementDetails.CalculationOrder]);
+                //calculate child benefit
+                while select RecId from childPayElementTable
+                where childPayElementTable.ParentPayElement == workerPositionBenefitGroup.Benefit &&
+                      childPayElementTable.PayElementType == SPYPayElementType::Benefit
+                outer join CalculationOrder from childPayElementDetails
+                where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                      childPayElementDetails.LegalEntity == legalEntity
+                {
+                    if(!appForAllBenefitMap.exists(childPayElementTable.RecId) &&
+                   !workerPayElementMap.exists(childPayElementTable.RecId))
+                    {
+                        workerPayElementMap.insert(childPayElementTable.RecId,[workerPositionBenefitGroup.Benefit,childPayElementDetails.CalculationOrder]);
+                    }
+                }
+            }
+        }
+        //Regular payroll process for child benfit of parent: attachecd payroll
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from childPayElementTable
+        join RecId from payElementTable join payElementDetails
+        where payElementDetails.PayElement == payElementTable.RecId &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementTable.PayElementType == SPYPayElementType::Payroll &&
+              payElementDetails.EOSPayElement == false &&
+              !payElementTable.ParentPayElement &&
+              childPayElementTable.ParentPayElement == payElementTable.RecId &&
+              childPayElementTable.PayElementType == SPYPayElementType::Benefit
+        join Payroll from workerPositionPayrollGroup
+        where workerPositionPayrollGroup.Payroll == payElementTable.RecId &&
+              workerPositionPayrollGroup.Worker == worker.RecId &&
+              workerPositionPayrollGroup.LegalEntity == legalEntity &&
+              workerPositionPayrollGroup.PayrollPeriod == payrollPeriod
+        outer join CalculationOrder from childPayElementDetails
+        where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+              childPayElementDetails.LegalEntity == legalEntity
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllBenefitMap.exists(childPayElementTable.RecId) &&
+            !workerPayElementMap.exists(childPayElementTable.RecId))
+            {
+                workerPayElementMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+            }
+        }
+
+        return workerPayElementMap;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeWorkerPayrollMap</Name>
+				<Source><![CDATA[
+    protected Map initializeWorkerPayrollMap()
+    {
+        SPYWorkerPositionPayroll    workerPositionPayrollGroup;
+        SPYWorkerPositionBenefit    workerPositionBenefitGroup;
+        SPYPayElementDetails        payElementDetails,childPayElementDetails;
+        SPYPayElementTable          payElementTable,childPayElementTable;
+        Map                         workerPayElementMap;
+
+        workerPayElementMap = super();
+
+        //Regular payroll process for attachecd payroll
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) workerPositionPayrollGroup group by Payroll
+        where workerPositionPayrollGroup.Worker == worker.RecId &&
+                workerPositionPayrollGroup.LegalEntity == legalEntity &&
+                workerPositionPayrollGroup.PayrollPeriod == payrollPeriod
+        join RecId from payElementTable
+        where payElementTable.RecId == workerPositionPayrollGroup.Payroll &&
+                !payElementTable.ParentPayElement
+        join RecId from payElementDetails group by CalculationOrder
+        where payElementDetails.PayElement == workerPositionPayrollGroup.Payroll &&
+                payElementDetails.LegalEntity == legalEntity &&
+                payElementDetails.EOSPayElement == false
+        {
+            if(payElementMap.exists(workerPositionPayrollGroup.Payroll) && !appForAllPayrollMap.exists(workerPositionPayrollGroup.Payroll) &&
+            !workerPayElementMap.exists(workerPositionPayrollGroup.Payroll))
+            {
+                workerPayElementMap.insert(workerPositionPayrollGroup.Payroll,[0,payElementDetails.CalculationOrder]);
+                //calculate child payroll
+                while select RecId from childPayElementTable
+                where childPayElementTable.ParentPayElement == workerPositionPayrollGroup.Payroll &&
+                        childPayElementTable.PayElementType == SPYPayElementType::Payroll
+                outer join CalculationOrder from childPayElementDetails
+                where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                        childPayElementDetails.LegalEntity == legalEntity
+                {
+                    if(!appForAllPayrollMap.exists(childPayElementTable.RecId) &&
+                    !workerPayElementMap.exists(childPayElementTable.RecId))
+                    {
+                        workerPayElementMap.insert(childPayElementTable.RecId,[workerPositionPayrollGroup.Payroll,childPayElementDetails.CalculationOrder]);
+                    }
+                }
+            }
+        }
+        //Regular payroll process for child payroll of parent: attachecd benefit
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from childPayElementTable
+        join RecId from payElementTable join payElementDetails
+        where payElementDetails.PayElement == payElementTable.RecId &&
+                payElementDetails.LegalEntity == legalEntity &&
+                payElementTable.PayElementType == SPYPayElementType::Benefit &&
+                payElementDetails.EOSPayElement == false &&
+                !payElementTable.ParentPayElement &&
+                childPayElementTable.ParentPayElement == payElementTable.RecId &&
+                childPayElementTable.PayElementType == SPYPayElementType::Payroll
+        join Benefit from workerPositionBenefitGroup
+        where workerPositionBenefitGroup.Benefit == payElementTable.RecId &&
+                workerPositionBenefitGroup.Worker == worker.RecId &&
+                workerPositionBenefitGroup.LegalEntity == legalEntity &&
+                workerPositionBenefitGroup.PayrollPeriod == payrollPeriod
+        outer join CalculationOrder from childPayElementDetails
+        where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                childPayElementDetails.LegalEntity == legalEntity
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllPayrollMap.exists(childPayElementTable.RecId) &&
+            !workerPayElementMap.exists(childPayElementTable.RecId))
+            {
+                workerPayElementMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+            }
+        }
+
+        return workerPayElementMap;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payrollPeriodLineTable</Name>
+				<Source><![CDATA[
+    public void payrollPeriodLineTable(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+        timesheetStart = periodStart;
+        timesheetEnd = periodEnd;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postToBenefitLedger</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckInsertMethodInLoop","Rec Id is immediately required inside while loop to update other record ")]
+    private void postToBenefitLedger()
+    {
+        SPYbenefitLedger        benefitLedger;
+        SPYEOSRunbenefit        EOSRunbenefit;
+    
+        while select EOSRunbenefit group by payrollPeriodLine
+            where EOSRunbenefit.EOSRun == EOSRun
+        {
+            payLedgerUpdate.deleteAllBenefitLedger(worker.RecId,EOSRunbenefit.PayrollPeriodLine,false);
+        }
+    
+        while select forUpdate EOSRunbenefit order by payrollPeriodLine,benefit
+            where EOSRunbenefit.EOSRun == EOSRun &&
+                  !EOSRunbenefit.UpdateFromBenefitLedger
+        {
+            benefitLedger.initValue();
+            benefitLedger.Worker                            = EOSRunbenefit.Worker;
+            benefitLedger.payrollPeriodLine                 = payrollPeriodLine;
+            benefitLedger.ArrearPeriodLine                  = EOSRunbenefit.payrollPeriodLine;
+            benefitLedger.benefit                           = EOSRunbenefit.benefit;
+            benefitLedger.JournalType                       = EOSRunbenefit.JournalType;
+            if(EOSRunbenefit.JournalType == SPYBenefitJournalType::Accrual)
+            {
+                benefitLedger.AccountingCurrencyAmount          = EOSRunbenefit.AccountingCurrencyAmount;
+                benefitLedger.TransactionCurrencyAmount         = EOSRunbenefit.TransactionCurrencyAmount;
+                benefitLedger.Quantity                          = EOSRunbenefit.Quantity;
+            }
+            else if(EOSRunbenefit.JournalType == SPYBenefitJournalType::Encashment)
+            {
+                benefitLedger.AccountingCurrencyAmount          = EOSRunbenefit.AccountingCurrencyAmount;
+                benefitLedger.TransactionCurrencyAmount         = EOSRunbenefit.TransactionCurrencyAmount;
+               // benefitLedger.AccountingCurrencyAmount          = EOSRunbenefit.disbursementAmount();
+               // benefitLedger.TransactionCurrencyAmount         = EOSRunbenefit.disbursementTransactionCurAmount();
+                benefitLedger.Quantity                          = EOSRunbenefit.Quantity;
+            }
+            benefitLedger.AccountingCurPnLAmount            = EOSRunbenefit.AccountingCurPnLAmount;
+            benefitLedger.TransactionCurPnLAmount           = EOSRunbenefit.TransactionCurPnLAmount;
+            benefitLedger.Currency                          = EOSRunbenefit.Currency;
+            benefitLedger.ExchRate                          = EOSRunbenefit.ExchRate;
+            benefitLedger.TransDate                         = EOSRunbenefit.TransDate;
+            benefitLedger.Txt                               = EOSRunbenefit.Txt;
+            benefitLedger.LedgerDimensionCredit             = EOSRunbenefit.LedgerDimensionCredit;
+            benefitLedger.LedgerDimensionDebit              = EOSRunbenefit.LedgerDimensionDebit;
+            benefitLedger.LedgerDimensionPnL                = EOSRunbenefit.LedgerDimensionPnL;
+            benefitLedger.AccountingDistributionTemplate    = EOSRunbenefit.AccountingDistributionTemplate;
+            benefitLedger.DefaultDimension                  = EOSRunbenefit.DefaultDimension;
+            benefitLedger.PayLedgerSource                   = EOSRunbenefit.PayLedgerSource;
+            benefitLedger.SourceDocument                    = tableNum(SPYEOSRunTable);
+            benefitLedger.DistributeCost = EOSRunbenefit.DistributeCost;
+            benefitLedger.insert();
+    
+            EOSRunbenefit.BenefitLedger = benefitLedger.RecId;
+            EOSRunbenefit.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postToLedger</Name>
+				<Source><![CDATA[
+    private void postToLedger(SPYEOSContract   _contract)
+    {
+        contract = _contract as SPYEOSContract;
+        this.setEOSRun(contract.parmEOSRun());
+    
+        setPrefix("@SPY480");
+        
+        try
+        {
+            ttsBegin;
+            if(this.validateEOSRun())
+            {
+                this.initialize();
+                this.setPayrollPeriodLine(contract.parmPayrollPeriodLine());
+                this.postToPayrollLedger();
+                this.postToBenefitLedger();
+                this.updateEOSRunPosted();
+            }
+    
+            ttsCommit;
+            info("@SPY379");
+    
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postToPayrollLedger</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckInsertMethodInLoop","Rec Id is immediately required inside while loop to update other record ")]
+    private void postToPayrollLedger()
+    {
+        SPYPayrollLedger        payrollLedger;
+        SPYEOSRunPayroll        EOSRunPayroll;
+    
+        while select EOSRunPayroll group by payrollPeriodLine
+            where EOSRunPayroll.EOSRun == EOSRun
+        {
+            payLedgerUpdate.deleteAllPayrollLedger(worker.RecId,EOSRunPayroll.PayrollPeriodLine,false);
+        }
+    
+        while select forUpdate EOSRunPayroll order by payrollPeriodLine,Payroll
+            where EOSRunPayroll.EOSRun == EOSRun &&
+                  !EOSRunPayroll.UpdateFromPayrollLedger
+        {
+            payrollLedger.initValue();
+            payrollLedger.Worker                            = EOSRunPayroll.Worker;
+            payrollLedger.PayrollPeriodLine                 = payrollPeriodLine;
+            payrollLedger.ArrearPeriodLine                  = EOSRunPayroll.PayrollPeriodLine;
+            payrollLedger.Payroll                           = EOSRunPayroll.Payroll;
+            payrollLedger.AccountingCurrencyAmount          = EOSRunPayroll.AccountingCurrencyAmount;
+            payrollLedger.TransactionCurrencyAmount         = EOSRunPayroll.TransactionCurrencyAmount;
+            payrollLedger.Currency                          = EOSRunPayroll.Currency;
+            payrollLedger.ExchRate                          = EOSRunPayroll.ExchRate;
+            payrollLedger.TransDate                         = EOSRunPayroll.TransDate;
+            payrollLedger.Txt                               = EOSRunPayroll.Txt;
+            payrollLedger.LedgerDimensionCredit             = EOSRunPayroll.LedgerDimensionCredit;
+            payrollLedger.LedgerDimensionDebit              = EOSRunPayroll.LedgerDimensionDebit;
+            payrollLedger.AccountingDistributionTemplate    = EOSRunPayroll.AccountingDistributionTemplate;
+            payrollLedger.DefaultDimension                  = EOSRunPayroll.DefaultDimension;
+            payrollLedger.PayLedgerSource                   = EOSRunPayroll.PayLedgerSource;
+            payrollLedger.SourceDocument                    = tableNum(SPYEOSRunTable);
+            payrollLedger.DistributeCost        = EOSRunPayroll.DistributeCost;
+            payrollLedger.insert();
+    
+            EOSRunPayroll.PayrollLedger = payrollLedger.RecId;
+            EOSRunPayroll.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postToRun</Name>
+				<Source><![CDATA[
+    public void postToRun(SPYEOSContract   _contract)
+    {
+        contract = _contract as SPYEOSContract;
+        this.setLegalEntity(contract.parmLegalEntity());
+        this.initialize();
+        changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+        {
+            this.postToRunProcess();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postToRunBenefit</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    public void postToRunBenefit(SPYEOSContract   _contract)
+    {
+        SPYEOSRunTable          eosRunTable;
+        SPYPayrollPeriodLine    payrollPeriodLineLoop;
+        SetEnumerator           payrollPeriodEnumerator;
+    
+        contract = _contract as SPYEOSContract;
+        this.setEOSRun(contract.parmEOSRun());
+        eosRunTable = SPYEOSRunTable::find(EOSRun);
+        this.setLegalEntity(CompanyInfo::findDataArea(eosRunTable.dataAreaId).RecId);
+        setPrefix("@SPY480");
+        
+        try
+        {
+            ttsBegin;
+            changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+            {
+                this.setWorker(HcmWorker::find(eosRunTable.Worker));
+                this.initialize();
+                this.initializePayElementMap(false,conNull());
+                this.initializeEOS();
+                this.setEOSRun(eosRunTable.RecId);
+                this.preWorkerPayrollProcess();
+                payrollPeriodEnumerator = this.applicablePayrollPeriodForWorker().getEnumerator();
+                while(payrollPeriodEnumerator.moveNext())
+                {
+                    this.deleteEOSRunBenefit();
+                    this.setPayrollPeriod(payrollPeriodEnumerator.current());
+                    while select PeriodStartDate,RecId,PayrollDate from payrollPeriodLineLoop
+                        where payrollPeriodLineLoop.PayrollPeriod == payrollPeriod &&
+                                payrollPeriodLineLoop.PeriodEndDate >= this.startPayrollPeriodLine() &&
+                                payrollPeriodLineLoop.PeriodStartDate <= leavingDate
+                    {
+                        this.setTransDate(payrollPeriodLineLoop.PayrollDate);
+                        this.setPayrollPeriodLine(payrollPeriodLineLoop.RecId);
+                        this.initializeAppForAllBenefitMap();
+                        //--<Pay calculation>--
+                        this.workerBenefit();
+                        //--</Pay calculation>--
+                    }
+                    this.workerBenefitEncashment();
+                    this.finalizeProcess();
+                }
+                this.postWorkerPayrollProcess();
+                ttsCommit;
+                info("@SPY379");
+            }
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+        if(contract.parmCheckTrace())
+        {
+            this.checkTrace(strFmt('%1\\Trace_%2_%3_%4.html',WinAPIServer::getTempPath(),curUserId(),
+            date2str(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()), 123,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2),
+            DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone())));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postToRunPayroll</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    public void postToRunPayroll(SPYEOSContract   _contract)
+    {
+        SPYEOSRunTable          eosRunTable;
+        SPYPayrollPeriodLine    payrollPeriodLineLoop;
+        SetEnumerator           payrollPeriodEnumerator;
+    
+        contract = _contract as SPYEOSContract;
+        this.setEOSRun(contract.parmEOSRun());
+        eosRunTable = SPYEOSRunTable::find(EOSRun);
+        this.setLegalEntity(CompanyInfo::findDataArea(eosRunTable.dataAreaId).RecId);
+        setPrefix("@SPY480");
+        
+        try
+        {
+            ttsBegin;
+            changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+            {
+                this.setWorker(HcmWorker::find(eosRunTable.Worker));
+                this.initialize();
+                this.initializePayElementMap(false,conNull());
+                this.initializeEOS();
+                this.setEOSRun(eosRunTable.RecId);
+                this.preWorkerPayrollProcess();
+                payrollPeriodEnumerator = this.applicablePayrollPeriodForWorker().getEnumerator();
+                while(payrollPeriodEnumerator.moveNext())
+                {
+                    this.deleteEOSRunPayroll();
+                    this.setPayrollPeriod(payrollPeriodEnumerator.current());
+                    while select PeriodStartDate,RecId,PayrollDate from payrollPeriodLineLoop
+                        where payrollPeriodLineLoop.PayrollPeriod == payrollPeriod &&
+                                payrollPeriodLineLoop.PeriodEndDate >= this.startPayrollPeriodLine() &&
+                                payrollPeriodLineLoop.PeriodStartDate <= leavingDate
+                    {
+                        this.setTransDate(payrollPeriodLineLoop.PayrollDate);
+                        this.setPayrollPeriodLine(payrollPeriodLineLoop.RecId);
+                        this.initializeAppForAllPayrollMap();
+                        //--<Pay calculation>--
+                        this.workerPayroll();
+                        //--</Pay calculation>--
+                    }
+                    this.finalizeProcess();
+                }
+                this.postWorkerPayrollProcess();
+                ttsCommit;
+                info("@SPY379");
+            }
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+        if(contract.parmCheckTrace())
+        {
+            this.checkTrace(strFmt('%1\\Trace_%2_%3_%4.html',WinAPIServer::getTempPath(),curUserId(),
+            date2str(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()), 123,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2),
+            DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone())));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postToRunProcess</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    private void postToRunProcess()
+    {
+        boolean                 payrollParameterState;
+        ListEnumerator          workerListEnumerator;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+        SPYPayrollPeriodLine    payrollPeriodLineLoop;
+        SetEnumerator           payrollPeriodEnumerator;
+    
+        this.initialize();
+        this.initializePayElementMap(false,conNull());
+        this.addObserver(tracer,1);
+        if(contract.parmPayrollParameterState().parmCalledFromMasterProcess())
+        {
+            payrollParameterState = true;
+            this.initializeWorkerList(true,contract.parmPayrollParameterState().parmWorkerContainer());
+            this.initializePayElementMap(true,contract.parmPayrollParameterState().parmPayElementContainer());
+        }
+        else
+        {
+            this.initializeWorkerList(false,contract.parmWorkerQuery());
+            this.initializePayElementMap(false,contract.parmPayElementQuery());
+        }
+        workerListEnumerator = workerList.getEnumerator();
+    
+        progress.setCaption("@SPY881");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(workerList.elements());
+        progressCount = 1;
+        setPrefix("@SPY480");
+        info(strFmt("@SPY253",DateTimeUtil::utcNow()));
+        
+        try
+        {
+            ttsBegin;
+            this.preLegalEntityPayrollProcess();
+            while(workerListEnumerator.moveNext())
+            {
+                this.setWorker(HcmWorker::find(workerListEnumerator.current()));
+                this.initializeEOS();
+                progress.setText(strfmt("@SPY1105", worker.name(),worker.PersonnelNumber));
+                progress.setCount(progressCount, 1);
+                this.notifyObserver("@SYS80745",worker.name(),3);
+                if(this.validate())
+                {
+                    if(this.updateEOSRun())
+                    {
+                        this.deleteEOSRun();
+                        payrollPeriodEnumerator = this.applicablePayrollPeriodForWorker().getEnumerator();
+                        while(payrollPeriodEnumerator.moveNext())
+                        {
+                            EOSRunUpdate.deleteEOSPayroll(EOSRun);
+                            this.setPayrollPeriod(payrollPeriodEnumerator.current());
+                            TransDate   payrollFinalizeDate = this.startPayrollPeriodLine();
+                            TransDate   eosStartDate = payrollFinalizeDate;
+                            TransDate   eosEndDate = leavingDate;
+                            if(payrollFinalizeDate > leavingDate)
+                            {
+                                eosStartDate = leavingDate;
+                                eosEndDate = leavingDate;
+                            }
+                            while select PeriodStartDate,RecId,PayrollDate from payrollPeriodLineLoop
+                                where payrollPeriodLineLoop.PayrollPeriod == payrollPeriod &&
+                                        payrollPeriodLineLoop.PeriodEndDate >= eosStartDate &&
+                                        payrollPeriodLineLoop.PeriodStartDate <= eosEndDate
+                            {
+                                this.setTransDate(payrollPeriodLineLoop.PayrollDate);
+                                this.setPayrollPeriodLine(payrollPeriodLineLoop.RecId);
+                                this.initializeAllPayElementMap();
+                                //--<Pay calculation>--
+                                this.preWorkerPayrollProcess();
+                                this.workerPayroll();
+                                this.workerBenefit();
+                                //--</Pay calculation>--
+                            }
+                            this.finalizeProcess();
+                            this.workerBenefitEncashment();
+                            this.finalizeEncashmentProcess();
+                        }
+                        this.postWorkerPayrollProcess();
+                    }
+                }
+            }
+            this.postLegalEntityPayrollProcess();
+            ttsCommit;
+            info("@SPY379");
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+    
+        info(strFmt("@SPY254",DateTimeUtil::utcNow()));
+        if(contract.parmCheckTrace())
+        {
+            this.checkTrace(strFmt('%1\\Trace_%2_%3_%4.html',WinAPIServer::getTempPath(),curUserId(),
+            date2str(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()), 123,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2),
+            DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone())));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayElementPeriod</Name>
+				<Source><![CDATA[
+    public void setPayElementPeriod()
+    {
+        payElementPeriodStart = leavingDate;
+        payElementPeriodEnd = leavingDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollCalcDate</Name>
+				<Source><![CDATA[
+    public void setPayrollCalcDate(TransDate _validFrom, TransDate _validTo)
+    {
+        calcStart   = max(periodStart,_validFrom);
+        calcEnd     = min(periodEnd,_validTo);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    public void setPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine)
+    {
+        super(_payrollPeriodLine);
+        /*
+        if(finalDate >= payrollPeriodLineTab.PeriodStartDate && finalDate <= payrollPeriodLineTab.PeriodEndDate)
+            periodEnd = finalDate;*/
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollTimesheetDate</Name>
+				<Source><![CDATA[
+    public void setPayrollTimesheetDate(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+        SPYPayrollPeriodLine        payrollPeriodLineTable;
+        TransDate                   periodProcessDate = _payrollPeriodLineTab.PayrollDate;
+        TransDate                   prevPeriodProcessDate;
+    
+        select firstOnly PayrollDate from payrollPeriodLineTable order by PeriodEndDate desc
+            where payrollPeriodLineTable.PayrollPeriod == _payrollPeriodLineTab.PayrollPeriod &&
+                  payrollPeriodLineTable.PeriodEndDate < _payrollPeriodLineTab.PeriodStartDate;
+        prevPeriodProcessDate = payrollPeriodLineTable.PayrollDate;
+    
+        timesheetStart = prevPeriodProcessDate + 1;
+        timesheetEnd = periodProcessDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>startPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    private TransDate startPayrollPeriodLine()
+    {
+        SPYWorkerPayrollPeriodFinalize      workerPayrollPeriodFinalize;
+        SPYPayrollPeriodLine                payrollPeriodLineTable;
+        TransDateTime                       transDateTime = DateTimeUtil::newDateTime(transDate,00-00);
+        TransDate                           eosStartDate;
+    
+        if(!hcmEmployment)
+            hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,transDateTime);
+        select payrollPeriodLineTable order by PeriodStartDate desc join RecId from workerPayrollPeriodFinalize
+            where workerPayrollPeriodFinalize.Worker == worker.RecId &&
+                  workerPayrollPeriodFinalize.LegalEntity == legalEntity &&
+                  payrollPeriodLineTable.RecId == workerPayrollPeriodFinalize.PayrollPeriodLine &&
+                  payrollPeriodLineTable.PayrollPeriod == payrollPeriod;
+        if(workerPayrollPeriodFinalize)
+        {
+            //If employee termination date and payroll finalized date are in same period
+            if(DateTimeUtil::date(hcmEmployment.ValidTo) >= payrollPeriodLineTable.PeriodStartDate &&
+                DateTimeUtil::date(hcmEmployment.ValidTo) <= payrollPeriodLineTable.PeriodEndDate)
+                eosStartDate = payrollPeriodLineTable.PeriodStartDate;
+            else
+            {
+                if(!payrollPeriodLineTable.nextPeriodLine())
+                    throw error(strFmt("@SPY1229",SPYPayrollPeriod::find(payrollPeriod).PayrollPeriodCode,
+                    payrollPeriodLineTable.PeriodEndDate));
+                eosStartDate = max( payrollPeriodLineTable.nextPeriodLine().PeriodStartDate,DateTimeUtil::date(hcmEmployment.ValidFrom));
+            }
+        }
+        else
+            eosStartDate = DateTimeUtil::date(hcmEmployment.ValidFrom);
+    
+        return eosStartDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateEOSRun</Name>
+				<Source><![CDATA[
+    private boolean updateEOSRun()
+    {
+        SPYEOSRunTable          EOSRunTable;
+        boolean                 ret;
+    
+        ret = LeavingDate == dateNull() ? false : true;
+        EOSRunTable.initValue();
+        EOSRunTable.Worker = worker.RecId;
+        EOSRunTable.EOSDate = LeavingDate;
+        EOSRunTable.insert();
+    
+        this.setEOSRun(EOSRunTable.RecId);
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateEOSRunEncashment</Name>
+				<Source><![CDATA[
+    private SPYEOSRunBenefit updateEOSRunEncashment(SPYPayElementRecId _benefit,SPYAmount _accCurrencyAmt,SPYAmount _qty,SPYAmount _accCurrencyPnLAmt = 0)
+    {
+        SPYEOSRunBenefit        EOSRunBenefit;
+        CurrencyExchangeHelper  currencyExchangeHelper;
+        CurrencyCode            transactionCurrency = this.benefitCurrency(_benefit);
+        SPYPayrollPeriodLine    payrollPeriodLineTable;
+        SPYAmount               transCurrencyAmt,transCurrencyPnLAmt;
+        SPYAmount               exchRate;
+    
+        currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), transDate);
+        transCurrencyAmt = currencyExchangeHelper.calculateAccountingToTransaction(transactionCurrency, _accCurrencyAmt,false);
+        transCurrencyPnLAmt = currencyExchangeHelper.calculateAccountingToTransaction(transactionCurrency, _accCurrencyPnLAmt,false);
+        if(transCurrencyAmt)
+            exchRate = _accCurrencyAmt / transCurrencyAmt;
+    
+        //this.workerBenefitProcessForEncashment(_benefit,transCurrencyAmt,_accCurrencyAmt,_qty); //Enable trace and event handler {Not reqd}
+        select RecId,PeriodStartDate from payrollPeriodLineTable
+            where payrollPeriodLineTable.PayrollPeriod == payrollPeriod &&
+                    payrollPeriodLineTable.PeriodEndDate >= leavingDate &&
+                    payrollPeriodLineTable.PeriodStartDate <= leavingDate;
+    
+        EOSRunBenefit.initValue();
+        EOSRunBenefit.Worker                    = worker.RecId;
+        EOSRunBenefit.EOSRun                    = EOSRun;
+        EOSRunBenefit.JournalType               = SPYBenefitJournalType::Encashment;
+        EOSRunBenefit.benefit                   = _benefit;
+        EOSRunBenefit.PayrollPeriodLine         = payrollPeriodLineTable.RecId;
+        EOSRunBenefit.Currency                  = transactionCurrency;
+        EOSRunBenefit.AccountingCurrencyAmount  = -_accCurrencyAmt;
+        EOSRunBenefit.ExchRate                  = exchRate;
+        if(EOSRunBenefit.ExchRate)
+            EOSRunBenefit.TransactionCurrencyAmount = -transCurrencyAmt;
+        EOSRunBenefit.AccountingCurPnLAmount    = _accCurrencyPnLAmt;
+        if(EOSRunBenefit.ExchRate)
+            EOSRunBenefit.TransactionCurPnLAmount = transCurrencyPnLAmt;
+        EOSRunBenefit.Quantity                  = -_qty;
+        EOSRunBenefit.TransDate                 = transDate;
+        EOSRunBenefit.AccountingCurOutstandingAmount    = EOSRunBenefit.AccountingCurrencyAmount + EOSRunBenefit.AccountingCurPnLAmount;
+        EOSRunBenefit.TransactionCurOutstandingAmount   = EOSRunBenefit.TransactionCurrencyAmount + EOSRunBenefit.TransactionCurPnLAmount;
+        EOSRunBenefit.Txt                       = strFmt("@SPY1109",SPYPayElementTable::find(_benefit).PayElementCode,
+                                                  worker.name(),periodStart,periodEnd);
+        EOSRunBenefit.setAccount(payrollPeriodLineTable.PeriodStartDate,legalEntity,payrollPeriodLineTable.RecId,true);
+    
+        return EOSRunBenefit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateEOSRunEncashmentPayout</Name>
+				<Source><![CDATA[
+    private SPYEOSRunPayroll updateEOSRunEncashmentPayout(SPYBenefitRecId _benefit,SPYAmount _accCurrencyAmt,SPYAmount _qty)
+    {
+        SPYEOSRunPayroll        EOSRunPayroll;
+        CurrencyExchangeHelper  currencyExchangeHelper;
+        CurrencyCode            transactionCurrency;
+        SPYPayrollPeriodLine    payrollPeriodLineTable;
+        SPYPayrollRecId         payroll;
+        SPYAmount               transCurrencyAmt;
+        SPYAmount               exchRate;
+    
+        payroll = SPYBenefitDetails::findByBenefit(_benefit,CompanyInfo::current()).EncashmentPayroll;
+        if(payroll && _accCurrencyAmt)
+        {
+            transactionCurrency = this.payrollCurrency(payroll);
+            currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), transDate);
+            transCurrencyAmt = currencyExchangeHelper.calculateAccountingToTransaction(transactionCurrency, _accCurrencyAmt,false);
+            if(transCurrencyAmt)
+                exchRate = _accCurrencyAmt / transCurrencyAmt;
+    
+            this.workerPayrollProcessForEncashment(payroll,transCurrencyAmt,_accCurrencyAmt);//Enable trace and event handler
+            select RecId,PeriodStartDate from payrollPeriodLineTable
+                where payrollPeriodLineTable.PayrollPeriod == payrollPeriod &&
+                        payrollPeriodLineTable.PeriodEndDate >= leavingDate &&
+                        payrollPeriodLineTable.PeriodStartDate <= leavingDate;
+    
+            EOSRunPayroll.clear();
+            EOSRunPayroll.initValue();
+            EOSRunPayroll.Worker                    = worker.RecId;
+            EOSRunPayroll.EOSRun                    = EOSRun;
+            EOSRunPayroll.Payroll                   = payroll;
+            EOSRunPayroll.PayrollPeriodLine         = payrollPeriodLineTable.RecId;
+            EOSRunPayroll.Currency                  = transactionCurrency;
+            EOSRunPayroll.AccountingCurrencyAmount  = _accCurrencyAmt;
+            EOSRunPayroll.ExchRate                  = exchRate;
+            EOSRunPayroll.TransactionCurrencyAmount = transCurrencyAmt;
+            EOSRunPayroll.TransDate                 = transDate;
+            EOSRunPayroll.Txt                       = strFmt("@SPY1109",SPYPayElementTable::find(_benefit).PayElementCode,
+                                                      worker.name(),periodStart,periodEnd);
+            EOSRunPayroll.setAccount(payrollPeriodLineTable.PeriodStartDate,legalEntity,payrollPeriodLineTable.RecId);
+            EOSRunPayroll.UpdateFromBenefit         = true;
+        }
+        return EOSRunPayroll;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateEOSRunPosted</Name>
+				<Source><![CDATA[
+    private void updateEOSRunPosted()
+    {
+        SPYEOSRunTable      EOSRunTable = SPYEOSRunTable::find(EOSRun,true);
+    
+        if(EOSRunTable)
+        {
+            EOSRunTable.PostedToLedger = true;
+            EOSRunTable.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    private boolean validate()
+    {
+        SPYEOSRunTable      eosRunTable;
+        boolean             ret = true;
+    
+        select firstOnly eosRunTable
+            where eosRunTable.Worker == worker.RecId &&
+                  eosRunTable.WorkflowStatus != SPYWorkflowStatus::Rejected;
+        if(eosRunTable)
+            ret = checkFailed(strFmt("@SPY1149",worker.PersonnelNumber));
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateEOSRun</Name>
+				<Source><![CDATA[
+    private boolean validateEOSRun()
+    {
+        boolean     ret = true;
+    
+        if(SPYEOSRunTable::find(EOSRun).PostedToLedger)
+            ret = checkFailed("@SPY679");
+        if(SPYEOSRunTable::find(EOSRun).WorkflowStatus != SPYWorkflowStatus::Approved)
+            ret = checkFailed("@SPY685");
+    
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerBenefit</Name>
+				<Source><![CDATA[
+    public void workerBenefit()
+    {
+        SPYBenefitLedger    benefitLedgerTab;
+        SPYEOSRunBenefit    EOSRunBenefitTab;
+
+        //EOSRunUpdate.deleteEOSBenefit(EOSRun);
+        super();
+    
+        //Bring unposted ledgers (coming from arrear or adjustment) for EOS reports
+        while select benefitLedgerTab
+            where benefitLedgerTab.Worker == worker.RecId &&
+                  benefitLedgerTab.PayrollPeriodLine == payrollPeriodLine &&
+                  !benefitLedgerTab.PayrollJournalLine
+        {
+            EOSRunBenefitTab = this.initializeEOSRunFromBenefit(benefitLedgerTab.Benefit,
+                                                                benefitLedgerTab.TransactionCurrencyAmount,
+                                                                benefitLedgerTab.AccountingCurrencyAmount,
+                                                                benefitLedgerTab.Quantity,
+                                                                benefitLedgerTab.Currency,
+                                                                benefitLedgerTab.ExchRate);
+            EOSRunBenefitTab.UpdateFromBenefitLedger = true;
+            EOSRunUpdate.updateBenefit(EOSRunBenefitTab);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerBenefitEncashment</Name>
+				<Source><![CDATA[
+    private void workerBenefitEncashment()
+    {
+        SPYIBenefitCalculation      benefitCalculation;
+        MapEnumerator               benefitMapEnumerator;
+        SPYBenefitLedgerTmp         benefitLedgerTmp;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYAmount                   totalTransCurAmount,totalAccCurAmount,totalAccruedAccCurAmt,totalQty;
+        SPYBenefitRecId             benefit;
+        SPYPayElementCode           benefitCode;
+        CurrencyCode                transCur;
+    
+        this.refreshContext();
+        benefitMapEnumerator = this.benefitsForEncashment().getEnumerator();
+        while(benefitMapEnumerator.moveNext())
+        {
+            benefit = benefitMapEnumerator.currentKey();
+            benefitCode = benefitMapEnumerator.currentValue();
+            this.notifyObserver("@SPY1648",strFmt("%1",benefitCode),4,1);
+            delete_from benefitLedgerTmp;
+            this.setPayElement(benefit);
+            expressionContext.payElement(benefit);
+            transCur = this.benefitCurrency(benefit);
+            benefitCalculation = new SPYBenefitCalculation(legalEntity,
+                                                           worker.RecId,
+                                                           payrollPeriodLine,
+                                                           benefit,
+                                                           transDate,
+                                                           periodStart,
+                                                           periodEnd,
+                                                           workerPositionBenefit, //null instance
+                                                           transCur,
+                                                           benefitLedgerTmp);
+            benefitCalculation.parmTracer(tracer);
+            benefitLedgerTmp = benefitCalculation.processBenefitEncashment(expressionEvaluationEngine);
+            [totalTransCurAmount,totalAccCurAmount,totalQty] = this.amtQtyFromBenefitLedgerTmp(benefitLedgerTmp);
+            [totalAccruedAccCurAmt,totalQty] = this.getBalanceAccCurAmtNQty(benefit);
+            this.notifyObserver(strFmt("@SYS90673",benefitCode),strFmt("@SPY778",totalTransCurAmount,
+                                                            totalQty),4,2);
+    
+            EOSRunUpdate.updateBenefit(this.updateEOSRunEncashment(benefit,
+                                                                   totalAccCurAmount,
+                                                                   totalQty,
+                                                                   totalAccruedAccCurAmt - totalAccCurAmount));
+            EOSRunUpdate.updatePayroll(this.updateEOSRunEncashmentPayout(benefit,
+                                                                         totalAccCurAmount,
+                                                                         totalQty));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerBenefitEncashment_old</Name>
+				<Source><![CDATA[
+    private void workerBenefitEncashment_old()
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYPayrollPeriodLine    payrollPeriodLineTable;
+        Map                     accumulatedBenefitMap = new Map(Types::Int64,Types::Container);
+        MapEnumerator           accumulatedBenefitMapEnumerator;
+        MapEnumerator           accumulatedBenefitRunMapEnumerator;
+        SPYPayElementRecId      benefit;
+        SPYAmount               acctCurAmt,qty;
+        SPYAmount               acctCurAmtRun,qtyRun;
+    
+        while select sum(AccountingCurrencyAmount),sum(AccountingCurPnLAmount),sum(Quantity) from benefitLedger group by benefit join payrollPeriodLineTable
+            where benefitLedger.Worker == worker.RecId &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLineTable.RecId &&
+                  payrollPeriodLineTable.PayrollPeriod == payrollPeriod
+        {
+            accumulatedBenefitMap.insert(benefitLedger.Benefit,
+            [benefitLedger.AccountingCurrencyAmount + benefitLedger.AccountingCurPnLAmount,benefitLedger.Quantity]);
+        }
+    
+        accumulatedBenefitRunMapEnumerator = accumulatedBenefitRunMap.getEnumerator();
+        while(accumulatedBenefitRunMapEnumerator.moveNext())
+        {
+            benefit = accumulatedBenefitRunMapEnumerator.currentKey();
+            [acctCurAmtRun,qtyRun] = accumulatedBenefitRunMapEnumerator.currentValue();
+            if(accumulatedBenefitMap.exists(benefit))
+            {
+                [acctCurAmt,qty] = accumulatedBenefitMap.lookup(benefit);
+                accumulatedBenefitMap.remove(benefit);
+                //Encashments are reversed in sign
+                accumulatedBenefitMap.insert(benefit,[acctCurAmtRun + acctCurAmt,qtyRun + qty]);
+            }
+            else
+                accumulatedBenefitMap.insert(benefit,[acctCurAmtRun,qtyRun]);
+        }
+    
+        accumulatedBenefitMapEnumerator = accumulatedBenefitMap.getEnumerator();
+        while(accumulatedBenefitMapEnumerator.moveNext())
+        {
+            EOSRunUpdate.updateBenefit(this.updateEOSRunEncashment(accumulatedBenefitMapEnumerator.currentKey(),
+                                                                   conPeek(accumulatedBenefitMapEnumerator.currentValue(),1),
+                                                                   conPeek(accumulatedBenefitMapEnumerator.currentValue(),2)));
+            EOSRunUpdate.updatePayroll(this.updateEOSRunEncashmentPayout(accumulatedBenefitMapEnumerator.currentKey(),
+                                                                         conPeek(accumulatedBenefitMapEnumerator.currentValue(),1),
+                                                                         conPeek(accumulatedBenefitMapEnumerator.currentValue(),2)));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workerPayroll</Name>
+				<Source><![CDATA[
+    public void workerPayroll()
+    {
+        SPYPayrollLedger    payrollLedgerTab;
+        SPYEOSRunPayroll    EOSRunPayrollTab;
+    
+        //EOSRunUpdate.deleteEOSPayroll(EOSRun);
+        super();
+    
+        //Bring unposted ledgers (coming from arrear or adjustment) for EOS reports
+        while select payrollLedgerTab
+            where payrollLedgerTab.Worker == worker.RecId &&
+                  payrollLedgerTab.PayrollPeriodLine == payrollPeriodLine &&
+                  !payrollLedgerTab.PayrollJournalLine
+        {
+            EOSRunPayrollTab = this.initializeEOSRunFromPayroll(payrollLedgerTab.Payroll,
+                                                                payrollLedgerTab.TransactionCurrencyAmount,
+                                                                payrollLedgerTab.AccountingCurrencyAmount,
+                                                                payrollLedgerTab.Currency,
+                                                                payrollLedgerTab.ExchRate);
+            EOSRunPayrollTab.UpdateFromPayrollLedger = true;
+            EOSRunUpdate.updatePayroll(EOSRunPayrollTab);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeAppForAllBenefitMap</Name>
+				<Source><![CDATA[
+    protected void initializeAppForAllBenefitMap()
+    {
+        SPYPayElementDetails        payElementDetails,childPayElementDetails;
+        SPYPayElementTable          payElementTable,childPayElementTable;
+
+        //Regular benefit process for 'Applicable For All' benefit
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from payElementTable join payElementDetails
+        where payElementDetails.PayElement == payElementTable.RecId &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementTable.PayElementType == SPYPayElementType::Benefit &&
+              payElementDetails.ApplicableForAll &&
+              payElementDetails.EOSPayElement == false &&
+              !payElementTable.ParentPayElement
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllBenefitMap.exists(payElementTable.RecId))
+            {
+                appForAllBenefitMap.insert(payElementTable.RecId,[0,payElementDetails.CalculationOrder]);
+                //calculate child Benefit
+                while select RecId from childPayElementTable
+                where childPayElementTable.ParentPayElement == payElementTable.RecId &&
+                      childPayElementTable.PayElementType == SPYPayElementType::Benefit
+                outer join CalculationOrder from childPayElementDetails
+                where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                      childPayElementDetails.LegalEntity == legalEntity
+                {
+                    if(!appForAllBenefitMap.exists(childPayElementTable.RecId))
+                    {
+                        appForAllBenefitMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+                    }
+                }
+            }
+        }
+        //Regular payroll process for child benefit of parent: 'Applicable For All' payroll
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from childPayElementTable
+        join RecId from payElementTable join payElementDetails
+        where payElementDetails.PayElement == payElementTable.RecId &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementTable.PayElementType == SPYPayElementType::Payroll &&
+              payElementDetails.ApplicableForAll &&
+              payElementDetails.EOSPayElement == false &&
+              !payElementTable.ParentPayElement &&
+              childPayElementTable.ParentPayElement == payElementTable.RecId &&
+              childPayElementTable.PayElementType == SPYPayElementType::Benefit
+        outer join CalculationOrder from childPayElementDetails
+        where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+              childPayElementDetails.LegalEntity == legalEntity
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllBenefitMap.exists(childPayElementTable.RecId))
+            {
+                payElementMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+            }
+        }
+
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeAppForAllPayrollMap</Name>
+				<Source><![CDATA[
+    protected void initializeAppForAllPayrollMap()
+    {
+        SPYPayElementDetails        payElementDetails,childPayElementDetails;
+        SPYPayElementTable          payElementTable,childPayElementTable;
+
+        //Regular payroll process for 'Applicable For All' payroll
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from payElementTable join payElementDetails
+        where payElementDetails.PayElement == payElementTable.RecId &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementTable.PayElementType == SPYPayElementType::Payroll &&
+              payElementDetails.ApplicableForAll &&
+              payElementDetails.EOSPayElement == false &&
+              !payElementTable.ParentPayElement
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllPayrollMap.exists(payElementTable.RecId))
+            {
+                appForAllPayrollMap.insert(payElementTable.RecId,[0,payElementDetails.CalculationOrder]);
+                //calculate child payroll
+                while select RecId from childPayElementTable
+                where childPayElementTable.ParentPayElement == payElementTable.RecId &&
+                      childPayElementTable.PayElementType == SPYPayElementType::Payroll
+                outer join CalculationOrder from childPayElementDetails
+                where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+                      childPayElementDetails.LegalEntity == legalEntity
+                {
+                    if(!appForAllPayrollMap.exists(childPayElementTable.RecId))
+                    {
+                        appForAllPayrollMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+                    }
+                }
+            }
+        }
+        //Regular payroll process for child payroll of parent: 'Applicable For All' benefit
+        while select validTimeState(payElementPeriodStart,payElementPeriodEnd) RecId from childPayElementTable
+        join RecId from payElementTable join payElementDetails
+        where payElementDetails.PayElement == payElementTable.RecId &&
+              payElementDetails.LegalEntity == legalEntity &&
+              payElementTable.PayElementType == SPYPayElementType::Benefit &&
+              payElementDetails.ApplicableForAll &&
+              payElementDetails.EOSPayElement == false &&
+              !payElementTable.ParentPayElement &&
+              childPayElementTable.ParentPayElement == payElementTable.RecId &&
+              childPayElementTable.PayElementType == SPYPayElementType::Payroll
+        outer join CalculationOrder from childPayElementDetails
+        where childPayElementDetails.PayElement == childPayElementTable.RecId &&
+              childPayElementDetails.LegalEntity == legalEntity
+        {
+            if(payElementMap.exists(payElementTable.RecId) && !appForAllPayrollMap.exists(childPayElementTable.RecId))
+            {
+                appForAllPayrollMap.insert(childPayElementTable.RecId,[payElementTable.RecId,childPayElementDetails.CalculationOrder]);
+            }
+        }
+
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteEOSRun</Name>
+				<Source><![CDATA[
+    public void deleteEOSRun()
+    {
+        EOSRunUpdate.deleteEOSPayroll(EOSRun);
+        EOSRunUpdate.deleteEOSBenefit(EOSRun);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteEOSRunPayroll</Name>
+				<Source><![CDATA[
+    public void deleteEOSRunPayroll()
+    {
+        EOSRunUpdate.deleteEOSPayroll(EOSRun);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteEOSRunBenefit</Name>
+				<Source><![CDATA[
+    public void deleteEOSRunBenefit()
+    {
+        EOSRunUpdate.deleteEOSBenefit(EOSRun);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

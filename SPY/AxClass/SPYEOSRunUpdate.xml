@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSRunUpdate</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYEOSRunUpdate
+{
+    RecordInsertList        payrollInsertList;
+    RecordInsertList        benefitInsertList;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>deleteEOSBenefit</Name>
+				<Source><![CDATA[
+    public void deleteEOSBenefit(SPYEOSRunRecId _eosRun)
+    {
+        SPYEOSRunBenefit            eosRunBenefit;
+        SPYEOSRunPayroll            eosRunPayroll;
+    
+        delete_from eosRunBenefit
+            where eosRunBenefit.EOSRun == _eosRun;
+        delete_from eosRunPayroll
+            where eosRunPayroll.EOSRun == _eosRun &&
+                  eosRunPayroll.UpdateFromBenefit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteEOSPayroll</Name>
+				<Source><![CDATA[
+    public void deleteEOSPayroll(SPYEOSRunRecId _eosRun)
+    {
+        SPYEOSRunPayroll            eosRunPayroll;
+    
+        delete_from eosRunPayroll
+            where eosRunPayroll.EOSRun == _eosRun &&
+                  !eosRunPayroll.UpdateFromBenefit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new()
+    {
+        payrollInsertList = new RecordInsertList(tableNum(SPYEOSRunPayroll));
+        benefitInsertList = new RecordInsertList(tableNum(SPYEOSRunBenefit));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefit</Name>
+				<Source><![CDATA[
+    public void updateBenefit(SPYEOSRunBenefit _EOSRunBenefit)
+    {
+        if(!SPYPayrollParameters::find().NullIncludedLedger && !_EOSRunBenefit.TransactionCurrencyAmount && !_EOSRunBenefit.Quantity)
+            return;
+    
+        //benefitInsertList.add(_EOSRunBenefit);
+        _EOSRunBenefit.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateEOSRun</Name>
+				<Source><![CDATA[
+    public void updateEOSRun()
+    {
+       // payrollInsertList.insertDatabase();
+       // benefitInsertList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updatePayroll</Name>
+				<Source><![CDATA[
+    public void updatePayroll(SPYEOSRunPayroll _EOSRunPayroll)
+    {
+        if(!SPYPayrollParameters::find().NullIncludedLedger && !_EOSRunPayroll.TransactionCurrencyAmount)
+            return;
+      //  payrollInsertList.add(_EOSRunPayroll);
+        _EOSRunPayroll.insert();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

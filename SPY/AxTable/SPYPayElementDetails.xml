@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayElementDetails</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayElementDetails extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>findByPayElementLegalEntity</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Finds a record in the <c>SPYPayElementDetails</c> table by using the specified <c>PayElement</c> and
+    /// <c>LegalEntity</c> values.
+    /// </summary>
+    /// <param name="_payElement">
+    /// The value of the <c>PayElement</c> field to find.
+    /// </param>
+    /// <param name="_legalEntity">
+    /// The value of the <c>LegalEntity</c> field to find.
+    /// </param>
+    /// <param name="_validFrom">
+    /// A <c>ValidFrom</c> field value.
+    /// </param>
+    /// <param name="_validTo">
+    /// A <c>ValidTo</c> field value.
+    /// </param>
+    /// <param name="_forUpdate">
+    /// A Boolean value that indicates whether to read the record for update; optional.
+    /// </param>
+    /// <param name="_concurrencyModel">
+    /// The concurrency model option to use when the record is read; optional.
+    /// </param>
+    /// <returns>
+    /// A record in the <c>SPYPayElementDetails</c> table; otherwise, an empty record.
+    /// </returns>
+    /// <remarks>
+    ///  Values for the
+    ///  <c>
+    ///  _validFrom
+    ///  </c>
+    ///   and
+    ///  <c>
+    ///  _validTo
+    ///  </c>
+    ///   values limit the table selection in the following way:
+    ///  <list type="number">
+    ///   <item>
+    ///   <description>If no values are supplied for the parameters, the current date is used. Therefore, the
+    ///   method searches for only active records and returns either an empty or a valid record.</description>
+    ///   </item>
+    ///   <item>
+    ///   <description>If only the first parameter value is supplied, the second parameter is set to the
+    ///   first parameter. The method searches for active records as of the supplied date and time value and
+    ///   returns either an empty or a valid record.</description>
+    ///   </item>
+    ///   <item>
+    ///    <description>
+    ///    If both parameters are supplied with values, the method searches for records whose <c>validFrom</c>
+    ///    and <c>ValidTo</c> values fall in that interval. The method can return multiple records.
+    ///    </description>
+    ///   </item>
+    ///  </list>
+    /// </remarks>
+    public static SPYPayElementDetails findByPayElementLegalEntity(
+    SPYPayElementRecId      _payElement,
+    CompanyInfoRecId        _legalEntity,
+    TransDate               _validFrom = DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),
+    TransDate               _validTo   = _validFrom,
+    boolean                 _forUpdate = false,
+    ConcurrencyModel        _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayElementDetails payElementDetails;
+    
+        payElementDetails.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            payElementDetails.concurrencyModel(_concurrencyModel);
+        }
+    
+        if (_payElement && _legalEntity)
+        {
+            if (prmisDefault(_validFrom) && prmisDefault(_validTo))
+            {
+                select firstonly payElementDetails
+                    where payElementDetails.PayElement == _payElement
+                    &&    payElementDetails.LegalEntity == _legalEntity;
+            }
+            else if (_validFrom == _validTo)
+            {
+                select firstonly ValidTimeState(_validFrom) payElementDetails
+                    where payElementDetails.PayElement == _payElement
+                    &&    payElementDetails.LegalEntity == _legalEntity;
+            }
+            else
+            {
+                 select ValidTimeState(_validFrom, _validTo) payElementDetails
+                    where payElementDetails.PayElement == _payElement
+                    &&    payElementDetails.LegalEntity == _legalEntity;
+            }
+        }
+    
+        return payElementDetails;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<Label>@SPY77</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>PayElement</TitleField1>
+	<TitleField2>LegalEntity</TitleField2>
+	<ReplacementKey>PayElementDetails_AK1</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<ValidTimeStateFieldType>Date</ValidTimeStateFieldType>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElement</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LegalEntity</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidFrom</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidTo</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>ValidDates</Name>
+			<Label>@SPY101</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ValidFrom</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ValidTo</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Distribution</Name>
+			<Label>@SPY:Distribution</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DistributeCost</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ApplicableForAll</Name>
+			<HelpText>@SPY1059</HelpText>
+			<Label>@SPY1058</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>CalculationOrder</Name>
+			<ExtendedDataType>Integer</ExtendedDataType>
+			<Label>@SPY92</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>EOSPayElement</Name>
+			<HelpText>@SPY1061</HelpText>
+			<Label>@SPY1060</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LegalEntity</Name>
+			<ExtendedDataType>LegalEntityRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayElement</Name>
+			<ExtendedDataType>SPYPayElementRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PayElementGroup</Name>
+			<ExtendedDataType>SPYPayElementGroupCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidFrom</Name>
+			<ExtendedDataType>ValidFromDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>ValidTo</Name>
+			<ExtendedDataType>ValidToDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>DistributeCost</Name>
+			<ExtendedDataType>NoYesId</ExtendedDataType>
+			<Label>@SPY:DistributeCost</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>PayElementDetails_AK1</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<ValidTimeStateKey>Yes</ValidTimeStateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>PayElement</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LegalEntity</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidFrom</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>ValidTo</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>CompanyInfo</Name>
+			<RelatedTable>CompanyInfo</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LegalEntity</Name>
+					<Field>LegalEntity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayElementGroupTable</Name>
+			<RelatedTable>SPYPayElementGroupTable</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayElementGroup</Name>
+					<Field>PayElementGroup</Field>
+					<RelatedField>PayElementGroupCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>PayElementGroup_PK</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayElementTable_FK</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Cascade</OnDelete>
+			<RelatedTable>SPYPayElementTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>SPYPayElementTable</RelatedTableRole>
+			<RelationshipType>Aggregation</RelationshipType>
+			<Role>SPYPayElementTable_SPYPayElementDetails</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayElement</Name>
+					<Field>PayElement</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

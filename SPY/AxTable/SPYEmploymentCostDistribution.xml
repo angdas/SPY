@@ -1,0 +1,760 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEmploymentCostDistribution</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYEmploymentCostDistribution extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>modifiedField</Name>
+				<Source><![CDATA[
+    public void modifiedField(FieldId _fieldId)
+    {
+        DimensionAttribute          dimensionAttribute;
+        DictTable                   dictTable;
+        Common                      dimValue;
+        DimensionAttributeValue     dimAttributeValue;
+
+        super(_fieldId);
+
+        switch(_fieldId)
+        {
+            case fieldNum(SPYEmploymentCostDistribution,DimensionValue1):
+                dimensionAttribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1);
+                dictTable = new DictTable(dimensionAttribute.BackingEntityType);
+                dimValue = dictTable.makeRecord();
+                if (dimensionAttribute.Type == DimensionAttributeType::CustomList)
+                {
+                    select dimValue join dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"FinancialTagCategory")) == dimensionAttribute.financialTagCategory() &&
+                            dimValue.RecId == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue1;
+                    this.DimensionAttributeValue1 = dimAttributeValue.RecId;
+                }
+                else
+                {
+                    select dimValue join RecId from dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Key")) == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue1;
+                    this.DimensionAttributeValue1 = dimAttributeValue.RecId;
+                }
+                break;
+
+            case fieldNum(SPYEmploymentCostDistribution,DimensionValue2):
+                dimensionAttribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension2);
+                dictTable = new DictTable(dimensionAttribute.BackingEntityType);
+                dimValue = dictTable.makeRecord();
+                if (dimensionAttribute.Type == DimensionAttributeType::CustomList)
+                {
+                    select dimValue join dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"FinancialTagCategory")) == dimensionAttribute.financialTagCategory() &&
+                            dimValue.RecId == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue2;
+                    this.DimensionAttributeValue2 = dimAttributeValue.RecId;
+                }
+                else
+                {
+                    select dimValue join RecId from dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Key")) == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue2;
+                    this.DimensionAttributeValue2 = dimAttributeValue.RecId;
+                }
+                break;
+
+            case fieldNum(SPYEmploymentCostDistribution,DimensionValue3):
+                dimensionAttribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension3);
+                dictTable = new DictTable(dimensionAttribute.BackingEntityType);
+                dimValue = dictTable.makeRecord();
+                if (dimensionAttribute.Type == DimensionAttributeType::CustomList)
+                {
+                    select dimValue join dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"FinancialTagCategory")) == dimensionAttribute.financialTagCategory() &&
+                            dimValue.RecId == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue3;
+                    this.DimensionAttributeValue3 = dimAttributeValue.RecId;
+                }
+                else
+                {
+                    select dimValue join RecId from dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Key")) == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue3;
+                    this.DimensionAttributeValue3 = dimAttributeValue.RecId;
+                }
+                break;
+
+            case fieldNum(SPYEmploymentCostDistribution,DimensionValue4):
+                dimensionAttribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension4);
+                dictTable = new DictTable(dimensionAttribute.BackingEntityType);
+                dimValue = dictTable.makeRecord();
+                if (dimensionAttribute.Type == DimensionAttributeType::CustomList)
+                {
+                    select dimValue join dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"FinancialTagCategory")) == dimensionAttribute.financialTagCategory() &&
+                            dimValue.RecId == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue4;
+                    this.DimensionAttributeValue4 = dimAttributeValue.RecId;
+                }
+                else
+                {
+                    select dimValue join RecId from dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Key")) == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue4;
+                    this.DimensionAttributeValue4 = dimAttributeValue.RecId;
+                }
+                break;
+
+            //New code added Start by Lakshya for ProjectArea "Cost Split" on 18/09/2017 for adding functionality for 4 new dimensions whenever the DimensionValue is modified
+            
+            case fieldnum(SPYEmploymentCostDistribution,DimensionValue5):
+                dimensionattribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension5);
+                dictTable = new DictTable(dimensionattribute.BackingEntityType);
+                dimValue  = dictTable.makeRecord();
+                if(dimensionAttribute.Type  == DimensionAttributeType::CustomList)
+                {
+                    select dimValue join dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"FinancialTagCategory")) == dimensionAttribute.financialTagCategory() &&
+                            dimValue.RecId == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue5;
+                    this.DimensionAttributeValue5 = dimAttributeValue.RecId;
+                }
+                else
+                {
+                    select dimValue join RecId from dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Key")) == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue5;
+                    this.DimensionAttributeValue5 = dimAttributeValue.RecId;
+                }
+                break;
+
+            case fieldnum(SPYEmploymentCostDistribution,DimensionValue6):
+                dimensionattribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension6);
+                dictTable = new DictTable(dimensionattribute.BackingEntityType);
+                dimValue  = dictTable.makeRecord();
+                if(dimensionAttribute.Type  == DimensionAttributeType::CustomList)
+                {
+                    select dimValue join dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"FinancialTagCategory")) == dimensionAttribute.financialTagCategory() &&
+                            dimValue.RecId == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue6;
+                    this.DimensionAttributeValue6 = dimAttributeValue.RecId;
+                }
+                else
+                {
+                    select dimValue join RecId from dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Key")) == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue6;
+                    this.DimensionAttributeValue6 = dimAttributeValue.RecId;
+                }
+                break;
+
+            case fieldnum(SPYEmploymentCostDistribution,DimensionValue7):
+                dimensionattribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension7);
+                dictTable = new DictTable(dimensionattribute.BackingEntityType);
+                dimValue  = dictTable.makeRecord();
+                if(dimensionAttribute.Type  == DimensionAttributeType::CustomList)
+                {
+                    select dimValue join dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"FinancialTagCategory")) == dimensionAttribute.financialTagCategory() &&
+                            dimValue.RecId == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue7;
+                    this.DimensionAttributeValue7 = dimAttributeValue.RecId;
+                }
+                else
+                {
+                    select dimValue join RecId from dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Key")) == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue7;
+                    this.DimensionAttributeValue7 = dimAttributeValue.RecId;
+                }
+                break;
+
+            case fieldnum(SPYEmploymentCostDistribution,DimensionValue8):
+                dimensionattribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension8);
+                dictTable = new DictTable(dimensionattribute.BackingEntityType);
+                dimValue  = dictTable.makeRecord();
+                if(dimensionAttribute.Type  == DimensionAttributeType::CustomList)
+                {
+                    select dimValue join dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"FinancialTagCategory")) == dimensionAttribute.financialTagCategory() &&
+                            dimValue.RecId == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue8;
+                    this.DimensionAttributeValue8 = dimAttributeValue.RecId;
+                }
+                else
+                {
+                    select dimValue join RecId from dimAttributeValue
+                    where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Key")) == dimAttributeValue.EntityInstance &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,"Value")) == this.DimensionValue8;
+                    this.DimensionAttributeValue8 = dimAttributeValue.RecId;
+                }
+                break;
+            //New code added Ended by Lakshya for ProjectArea "Cost Split" on 18/09/2017 for adding functionality for 4 new dimensions whenever the DimensionValue is modified
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttribute1Name</Name>
+				<Source><![CDATA[
+    [SysClientCacheDataMethodAttribute(true)]
+    display name dimAttribute1Name()
+    {
+        return DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1).Name;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttribute2Name</Name>
+				<Source><![CDATA[
+    [SysClientCacheDataMethodAttribute(true)]
+    display name dimAttribute2Name()
+    { 
+        return DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension2).Name; 
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttribute3Name</Name>
+				<Source><![CDATA[
+    [SysClientCacheDataMethodAttribute(true)]
+    display name dimAttribute3Name()
+    {
+        return DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension3).Name;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttribute4Name</Name>
+				<Source><![CDATA[
+    [SysClientCacheDataMethodAttribute(true)]
+    display name dimAttribute4Name()
+    {
+        return DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension4).Name;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttribute5Name</Name>
+				<Source><![CDATA[
+    // New code added Start by Lakshya for ProjectName "Cost Split" on 18/09/2017 for displaying DimensionAttribute for the values provided in the costDistribution Matrix
+    [SysClientCacheDataMethodAttribute(true)]
+    display name dimAttribute5Name()
+    {
+        return DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension5).Name;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttribute6Name</Name>
+				<Source><![CDATA[
+    [SysClientCacheDataMethodAttribute(true)]
+    display name dimAttribute6Name()
+    {
+        return DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension6).Name;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttribute7Name</Name>
+				<Source><![CDATA[
+    [SysClientCacheDataMethodAttribute(true)]
+    display name dimAttribute7Name()
+    {
+        return DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension7).Name;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttribute8Name</Name>
+				<Source><![CDATA[
+    [SysClientCacheDataMethodAttribute(true)]
+    display name dimAttribute8Name()
+    {
+        return DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension8).Name;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>existforEmploymentDetail</Name>
+				<Source><![CDATA[
+    // New code added Ended by Lakshya for ProjectName "Cost Split" on 18/09/2017 for displaying DimensionAttribute for the values provided in the costDistribution Matrix
+    
+    public static boolean existforEmploymentDetail(HcmEmploymentDetail  _hcmemploymentDetail)
+    {
+        boolean                         employmentDetailfound;
+        SPYEmploymentCostDistribution   employmentCostDistribution;
+
+        select firstonly employmentCostDistribution where employmentCostDistribution.EmploymentDetail == _hcmemploymentDetail.RecId;
+        if(employmentCostDistribution)
+        {
+            employmentDetailfound = true;
+        }
+        else
+        {
+            employmentDetailfound = false;
+        }
+
+        return employmentDetailfound;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY:CostDistributionPercentOfAWorker</DeveloperDocumentation>
+	<Label>@SPY:CostDistributionOfWorker</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>EmploymentDetail</TitleField1>
+	<TitleField2>DimensionValue1</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>DimValuePct_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>EmploymentDetail</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Percent</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue1</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue2</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue3</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue4</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DimensionAttribute1</Name>
+			<Label>@SPY:DimensionAttribute1</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue1</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>dimAttribute1Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DimensionAttribute2</Name>
+			<Label>@SPY:DimensionAttribute2</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue2</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>dimAttribute2Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DimensionAttribute3</Name>
+			<Label>@SPY:DimensionAttribute3</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue3</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>dimAttribute3Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DimensionAttribute4</Name>
+			<Label>@SPY:DimensionAttribute4</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue4</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>dimAttribute4Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DimensionAttribute5</Name>
+			<Label>@SPY:DimensionAttribute5</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue5</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>dimAttribute5Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DimensionAttribute6</Name>
+			<Label>@SPY:DimensionAttribute6</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue6</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>dimAttribute6Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DimensionAttribute7</Name>
+			<Label>@SPY:DimensionAttribute7</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue7</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>dimAttribute7Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>DimensionAttribute8</Name>
+			<Label>@SPY:DimensionAttribute8</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DimensionValue8</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>dimAttribute8Name</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>EmploymentDetail</Name>
+			<ExtendedDataType>HcmEmploymentDetailRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Percent</Name>
+			<ExtendedDataType>Percent</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DimensionAttributeValue1</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode1</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DimensionAttributeValue2</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode2</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DimensionAttributeValue3</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode3</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DimensionAttributeValue4</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode4</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DimensionValue1</Name>
+			<ExtendedDataType>SPYCostDistributionDimensionValue</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode1</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DimensionValue2</Name>
+			<ExtendedDataType>SPYCostDistributionDimensionValue</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode2</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DimensionValue3</Name>
+			<ExtendedDataType>SPYCostDistributionDimensionValue</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode3</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DimensionValue4</Name>
+			<ExtendedDataType>SPYCostDistributionDimensionValue</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode4</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DimensionAttributeValue5</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode5</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DimensionAttributeValue6</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode6</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DimensionAttributeValue7</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode7</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DimensionAttributeValue8</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode8</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DimensionValue5</Name>
+			<ExtendedDataType>SPYCostDistributionDimensionValue</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode5</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DimensionValue6</Name>
+			<ExtendedDataType>SPYCostDistributionDimensionValue</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode6</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DimensionValue7</Name>
+			<ExtendedDataType>SPYCostDistributionDimensionValue</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode7</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DimensionValue8</Name>
+			<ExtendedDataType>SPYCostDistributionDimensionValue</ExtendedDataType>
+			<HelpText>@SYS340374</HelpText>
+			<Label>@SPY:DimensionCode8</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>DimValuePct_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>EmploymentDetail</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Percent</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>DimensionValue1</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>DimensionValue2</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>DimensionValue3</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>DimensionValue4</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmEmploymentDetail</Name>
+			<RelatedTable>HcmEmploymentDetail</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>EmploymentDetail</Name>
+					<Field>EmploymentDetail</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValue1</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValue</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DimensionAttributeValue1</Name>
+					<Field>DimensionAttributeValue1</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValue2</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValue</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DimensionAttributeValue2</Name>
+					<Field>DimensionAttributeValue2</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValue3</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValue</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DimensionAttributeValue3</Name>
+					<Field>DimensionAttributeValue3</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValue4</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValue</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DimensionAttributeValue4</Name>
+					<Field>DimensionAttributeValue4</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValue5</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValue</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DimensionAttributeValue5</Name>
+					<Field>DimensionAttributeValue5</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValue6</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValue</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DimensionAttributeValue6</Name>
+					<Field>DimensionAttributeValue6</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValue7</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValue</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DimensionAttributeValue7</Name>
+					<Field>DimensionAttributeValue7</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DimensionAttributeValue8</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>DimensionAttributeValue</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DimensionAttributeValue8</Name>
+					<Field>DimensionAttributeValue8</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

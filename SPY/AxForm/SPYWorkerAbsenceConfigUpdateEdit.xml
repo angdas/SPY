@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYWorkerAbsenceConfigUpdateEdit</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYWorkerAbsenceConfigUpdateEdit extends FormRun implements IDialogable
+{
+    SPYWorkerAbsenceConfigUpdateServiceController       workerAbsenceConfigUpdateServiceController;
+    Query                                                                       workerQuery;
+    QueryRun                                                                 workerQueryRun;
+    container                                                                  workerQueryPack;
+    SPYWorkerAbsenceConfigUpdateContract                   workerAbsenceConfigUpdateContract;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>formRun</Name>
+				<Source><![CDATA[
+    public FormRun formRun()
+    {
+        //Required by the SysOperation framework.
+        return this;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>closedOk</Name>
+				<Source><![CDATA[
+    public boolean closedOk()
+    {
+        boolean                     ret;
+    
+        ret = super();
+    
+        if(workerAbsenceConfigUpdateContract)
+        {
+            workerAbsenceConfigUpdateContract.parmLegalEntity(LegalEntity_ReferenceGroup.value());
+            workerAbsenceConfigUpdateContract.parmAbsenceConfig(AbsenceConfig_ReferenceGroup.value());
+            workerAbsenceConfigUpdateContract.parmTransDate(TransDate.dateValue());
+            workerAbsenceConfigUpdateContract.parmWorkerQuery(workerQueryPack);
+            workerAbsenceConfigUpdateContract.parmEffectiveFromJoiningDate(EffectiveFromJoiningDate.value());
+            workerAbsenceConfigUpdateContract.parmEffectiveFromOrigHiringDate(EffectiveFromOrigHiringDate.value());
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        super();
+        if(element.args().caller() && element.args().caller() is SPYWorkerAbsenceConfigUpdateServiceController)
+        {
+            workerAbsenceConfigUpdateServiceController = element.args().caller() as SPYWorkerAbsenceConfigUpdateServiceController;
+            workerQuery = this.initApplQuery();
+            workerQueryRun = new QueryRun(workerQuery);
+        }        
+    
+        if(workerAbsenceConfigUpdateServiceController.getDataContractObject() is SPYWorkerAbsenceConfigUpdateContract)
+            workerAbsenceConfigUpdateContract = workerAbsenceConfigUpdateServiceController.getDataContractObject();
+    
+        element.initializeValue();
+        element.setEnable();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initApplQuery</Name>
+				<Source><![CDATA[
+    Query initApplQuery()
+    {
+        return new Query(queryStr(SPYHcmWorker_All));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEnable</Name>
+				<Source><![CDATA[
+    public void setEnable()
+    {
+        if(EffectiveFromJoiningDate.value())
+        {
+            TransDate.enabled(false);
+            EffectiveFromOrigHiringDate.enabled(false);
+            EffectiveFromOrigHiringDate.value(0);
+        }
+        if(EffectiveFromOrigHiringDate.value())
+        {
+            TransDate.enabled(false);
+            EffectiveFromJoiningDate.enabled(false);
+            EffectiveFromJoiningDate.value(0);
+        }
+        if(!EffectiveFromJoiningDate.value() && !EffectiveFromOrigHiringDate.value())
+        {
+            TransDate.enabled(true);
+            EffectiveFromOrigHiringDate.enabled(true);
+            EffectiveFromJoiningDate.enabled(true);
+        }
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeValue</Name>
+				<Source><![CDATA[
+    public void initializeValue()
+    {
+        LegalEntity_ReferenceGroup.value(workerAbsenceConfigUpdateContract.parmLegalEntity());
+        AbsenceConfig_ReferenceGroup.value(workerAbsenceConfigUpdateContract.parmAbsenceConfig());
+        TransDate.dateValue(systemDateGet());
+        workerQueryPack = workerAbsenceConfigUpdateContract.parmWorkerQuery();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initWorkerQuery</Name>
+				<Source><![CDATA[
+    void  initWorkerQuery()
+    {
+        if(workerQueryRun.prompt())
+        {
+            workerQueryPack = workerQueryRun.pack();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runBase</Name>
+				<Source><![CDATA[
+    SPYWorkerAbsenceConfigUpdateServiceController runBase()
+    {//Method must be named runBase() for the integration to the Batch dialog to work.
+        return workerAbsenceConfigUpdateServiceController;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="">
+			<Control>
+				<Name>ChooseWorker</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void  clicked()
+        {
+            super();
+            element.initWorkerQuery();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>EffectiveFromJoiningDate</Name>
+				<Type>CheckBox</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        /// <summary>
+        ///
+        /// </summary>
+        public void clicked()
+        {
+            super();
+            element.setEnable();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>EffectiveFromOrigHiringDate</Name>
+				<Type>CheckBox</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        /// <summary>
+        ///
+        /// </summary>
+        public void clicked()
+        {
+            super();
+            element.setEnable();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>OK</Name>
+				<Type>CommandButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            boolean     ret = true;
+        
+            if(!LegalEntity_ReferenceGroup.value())
+                ret = checkFailed("@SPY375");
+            if(!AbsenceConfig_ReferenceGroup.value())
+                ret = checkFailed("@SPY:AbsenceConfigFilledIn");
+            if(!EffectiveFromJoiningDate.value() && !EffectiveFromOrigHiringDate.value() && !TransDate.dateValue())
+                ret = checkFailed("@SPY377");
+            if(ret)
+                super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources />
+	<Design>
+		<Caption xmlns="">@SPY:WorkerAbsenceConfigUpdate</Caption>
+		<Pattern xmlns="">Dialog</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<Style xmlns="">Dialog</Style>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>FormActionPaneControl1</Name>
+				<Type>ActionPane</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>GroupParametersButtonGroup</Name>
+						<ElementPosition>1610612734</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonControl">
+								<Name>ChooseWorker</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<HelpText>@SYS85423</HelpText>
+								<Skip>Yes</Skip>
+								<Type>Button</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Text>@SPY1426</Text>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+					</AxFormControl>
+				</Controls>
+				<Style>Strip</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>Group_</Name>
+				<ElementPosition>805306366</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Pattern>FieldsFieldGroups</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>GroupParameter</Name>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<Type>Group</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>LegalEntity_ReferenceGroup</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>858993458</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>ReferenceGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<ExtendedDataType>LegalEntityRecId</ExtendedDataType>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>AbsenceConfig_ReferenceGroup</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1288490187</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>ReferenceGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<BackStyle>Auto</BackStyle>
+								<ExtendedDataType>SPYAbsenceConfigRecId</ExtendedDataType>
+								<Underline>Yes</Underline>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormDateControl">
+								<Name>TransDate</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>Date</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<ExtendedDataType>TransDate</ExtendedDataType>
+								<Label>@SPY:EffectiveDate</Label>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>EffectiveFromJoiningDate</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:EffectiveFromJoiningDate</Label>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>EffectiveFromOrigHiringDate</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:EffectiveFromOrigHiringDate</Label>
+							</AxFormControl>
+						</Controls>
+					</AxFormControl>
+				</Controls>
+				<ColumnsMode>Fill</ColumnsMode>
+				<Style>DialogContent</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormButtonGroupControl">
+				<Name>ButtonGroup</Name>
+				<ElementPosition>1610612733</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<LeftMode>AutoRight</LeftMode>
+				<TopMode>BottomEdge</TopMode>
+				<Type>ButtonGroup</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>OK</Name>
+						<ElementPosition>858993458</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>CommandButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>OK</Command>
+						<DefaultButton>Yes</DefaultButton>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormMenuFunctionButtonControl">
+						<Name>ButtonBatch</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1717986916</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>MenuFunctionButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<MenuItemName>BatchDialog</MenuItemName>
+						<MenuItemType>Action</MenuItemType>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>Cancel</Name>
+						<ElementPosition>1288490187</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>CommandButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>Cancel</Command>
+					</AxFormControl>
+				</Controls>
+				<ArrangeMethod>HorizontalRight</ArrangeMethod>
+				<Style>DialogCommitContainer</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

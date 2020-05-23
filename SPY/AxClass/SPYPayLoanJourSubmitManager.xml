@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanJourSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayLoanJourSubmitManager
+{
+    SPYPayLoanTable                 payLoanTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayLoanTable</Name>
+				<Source><![CDATA[
+    private SPYPayLoanTable parmPayLoanTable(SPYPayLoanTable _payLoanTable = payLoanTable)
+    {
+        payLoanTable = _payLoanTable;
+    
+        return payLoanTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;
+        FormDataSource                  formDataSource;    
+        
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            payLoanTable.submitToWorkflow(workFlowTypeStr(SPYPayLoanJour), workflowSubmitDialog.parmWorkflowComment(), false);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayLoanJourSubmitManager         payLoanJourSubmit = new SPYPayLoanJourSubmitManager();
+        SPYPayLoanTable                     payLoanTable = args.record();
+    
+        payLoanJourSubmit.parmPayLoanTable(payLoanTable);
+    
+        switch (args.menuItemName())
+        {
+            case menuitemActionStr(SPYPayLoanJourSubmitMenuItem) :
+                payLoanJourSubmit.submit(args);
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

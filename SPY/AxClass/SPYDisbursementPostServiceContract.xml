@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDisbursementPostServiceContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYDisbursementPostServiceContract extends SPYPayProcessContract
+{
+    Description                 journalDescription;
+    SPYPayrollPeriodLineRecId  payrollPeriodLineTo;
+    CompanyBankAccountId        bankAccountId;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmJournalDescription</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public Description parmJournalDescription(Description _journalDescription = journalDescription)
+    {
+        journalDescription = _journalDescription;
+        return journalDescription;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCompBankAccountId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public CompanyBankAccountId parmCompBankAccountId(CompanyBankAccountId _bankAccountId = bankAccountId)
+    {
+        bankAccountId = _bankAccountId;
+        return bankAccountId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLineTo</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLineTo(SPYPayrollPeriodLineRecId _payrollPeriodLineTo = payrollPeriodLineTo)
+    {
+        payrollPeriodLineTo = _payrollPeriodLineTo;
+        return payrollPeriodLineTo;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

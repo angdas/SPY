@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLedgerPostServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayLedgerPostServiceController extends SysOperationServiceController
+{
+    FormRun                             payProcessEdit;
+    SPYPayLedgerContract                payLedgerContract;
+    SPYPayrollParameterState            payrollParameterState;
+    SPYLeaveSettlementParameterState    leaveSettlementParameterState;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!payProcessEdit)
+        {
+            payProcessEdit = classfactory.formRunClass(SPYPayLedgerPostServiceController::newClientArgs(formStr(SPYPayLedgerPostEdit), this));
+            payProcessEdit.init();
+        }
+    
+        return payProcessEdit as IDialogable;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+    
+        if (this.canGoBatch())
+           this.batchInfo().dialog(dlg);
+    
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cleanupDialog</Name>
+				<Source><![CDATA[
+    protected void  cleanupDialog()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogRun</Name>
+				<Source><![CDATA[
+    protected SysOperationStartResult dialogRun()
+    {
+        SysOperationStartResult result;
+        CompanyId               companyId = curext();
+
+        result = super();
+
+        if (result == SysOperationStartResult::Canceled)
+        {
+            this.cleanupDialog();
+        }
+
+        if(companyId != curext())
+        {
+            appl.setDefaultCompany(companyId, false);
+        }
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPayProcessContract</Name>
+				<Source><![CDATA[
+    public SPYPayLedgerContract getPayProcessContract()
+    {
+        return payLedgerContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLeaveSettlementParameterState</Name>
+				<Source><![CDATA[
+    public SPYLeaveSettlementParameterState parmLeaveSettlementParameterState(SPYLeaveSettlementParameterState _leaveSettlementParameterState = leaveSettlementParameterState)
+    {
+        leaveSettlementParameterState = _leaveSettlementParameterState;
+    
+        return leaveSettlementParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollParameterState</Name>
+				<Source><![CDATA[
+    public SPYPayrollParameterState parmPayrollParameterState(SPYPayrollParameterState _payrollParameterState = payrollParameterState)
+    {
+        payrollParameterState = _payrollParameterState;
+    
+        return payrollParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYPayLedgerContract parmServiceContract(SPYPayLedgerContract _payLedgerContract = payLedgerContract)
+    {
+        payLedgerContract = _payLedgerContract;
+        return payLedgerContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYPayLedgerPostServiceController construct(IdentifierName _className  = '',
+                                                    IdentifierName _methodName = '',
+                                                    SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYPayLedgerPostServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayLedgerPostServiceController           payLedgerPostServiceController;
+        str                                         className, methodName;
+        SysOperationExecutionMode                   mode;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        payLedgerPostServiceController = SPYPayLedgerPostServiceController::construct(className, methodName, mode);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYPayLedgerPostServiceController))
+        {
+            if(args.caller() && args.caller().payrollParameterState())
+                payLedgerPostServiceController.parmPayrollParameterState(args.caller().payrollParameterState());
+        }
+        else if(args.menuItemName() == menuitemActionStr(SPYPayLedgerPostLeaveSttlSvcController))
+        {
+            if(args.caller() && args.caller().parameterState())
+                payLedgerPostServiceController.parmLeaveSettlementParameterState(args.caller().parameterState());
+        }
+        else if(args.menuItemName() == menuitemActionStr(SPYPayLedgerPostJrnSvcController))
+        {
+            if(args.caller() && args.caller().payrollParameterState())
+                payLedgerPostServiceController.parmPayrollParameterState(args.caller().payrollParameterState());
+        }
+        if(payLedgerPostServiceController.prompt())
+            payLedgerPostServiceController.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYPayLedgerPostServiceController _payLedgerPostServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_payLedgerPostServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

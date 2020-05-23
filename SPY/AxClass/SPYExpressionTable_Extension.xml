@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYExpressionTable_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public static class SPYExpressionTable_Extension
+{   
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>SPYExpressionTable_Post_callSystemFunction</Name>
+				<Source><![CDATA[
+    [PostHandlerFor(tableStr(SPYExpressionTable), tableStaticMethodStr(SPYExpressionTable, callSystemFunction))]
+    public static void SPYExpressionTable_Post_callSystemFunction(XppPrePostArgs args)
+    {
+        anytype ret;
+        MethodName methodName = args.getArgNum(0);
+        SPYExpressionSystemFunctionMethod expressionSystemFunctionMethod = args.getArgNum(1);
+        switch(methodName)
+        {
+            case "EMP_ATTRIBUTE_PKG":
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_PKG();
+                break;
+
+            case "AB_LEAVE_DAYS": 
+                ret = expressionSystemFunctionMethod.AB_LEAVE_DAYS();
+                break;
+
+            case "EMP_CURYEARMNTHS" :
+                ret = expressionSystemFunctionMethod.EMP_CURYEARMNTHS();
+                break;
+
+            case "AB_UNPAID_DAYS" :
+                ret = expressionSystemFunctionMethod.AB_UNPAID_DAYS();
+                break;
+            
+            case "LOAN_CNT" :
+                ret = expressionSystemFunctionMethod.LOAN_CNT();
+                break;
+
+            case "LOAN_CNT_PERIODS":
+                ret = expressionSystemFunctionMethod.LOAN_CNT_PERIODS();
+                break;
+
+            case "BL_GETAMT" :
+                ret = expressionSystemFunctionMethod.BL_GETAMT();
+                break;
+
+            case "PL_GETAMT" :
+                ret = expressionSystemFunctionMethod.PL_GETAMT();
+                break;
+
+            case "PL_YTDAMOUNT" :
+                ret = expressionSystemFunctionMethod.PL_YTDAMOUNT();
+                break;
+
+            case "BL_YTDAMOUNT":
+                ret = expressionSystemFunctionMethod.BL_YTDAMOUNT();
+                break;
+
+            case "EMP_DOJ" :
+                ret = expressionSystemFunctionMethod.EMP_DOJ();
+                break;
+
+            case "REF_GETAMT":
+                ret= expressionSystemFunctionMethod.REF_GETAMT();
+                break;         
+              
+            case "EMP_NATIONALITY":
+                ret= expressionSystemFunctionMethod.EMP_NATIONALITY();
+                break;
+
+            case "JNL_ADJAMTYTD" :
+                ret = expressionSystemFunctionMethod.JNL_ADJAMTYTD();
+                break;    
+                        
+            case "JNL_ADJAMOUNT":
+                ret = expressionSystemFunctionMethod.JNL_ADJAMOUNT();
+                break;
+
+            case "REF_GETYTDAMT":
+                ret = expressionSystemFunctionMethod.REF_GETYTDAMT();
+                break;     
+                      
+            case "MONTHLY_PARENT_AMT":
+                ret = expressionSystemFunctionMethod.MONTHLY_PARENT_AMT();
+                break;
+
+            case "OTHOURS":
+                ret = expressionSystemFunctionMethod.OTHOURS();
+                break;
+
+            case "AB_EMP_AVAILED":
+                ret = expressionSystemFunctionMethod.AB_EMP_AVAILED();
+                break;
+
+            case "AB_LEAVEAPP_CNT":
+                ret = expressionSystemFunctionMethod.AB_LEAVEAPP_CNT();
+                break;
+
+            case "AB_EMP_ENTITLED":
+                ret = expressionSystemFunctionMethod.AB_EMP_ENTITLED();
+                break;
+
+            case "AB_ACCRUE_QTY":
+                ret = expressionSystemFunctionMethod.AB_ACCRUE_QTY();
+                break;
+
+            case "AB_EMP_APPLIED":
+                ret = expressionSystemFunctionMethod.AB_EMP_APPLIED();
+                break;
+
+            case "EMP_SERVICEDAYS":
+                ret = expressionSystemFunctionMethod.EMP_SERVICEDAYS();
+                break;
+
+            case "EMP_ATTRIBUTE_SAL":            
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_SAL();
+                break;
+
+            case "EMP_ATTRIBUTE_YTDSAL":
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_YTDSAL();
+                break;
+
+            case "EMP_ATTRIBUTE_BTDSAL":
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_BTDSAL();
+                break;
+
+            case "MONTHLY_QTY":
+                ret = expressionSystemFunctionMethod.MONTHLY_QTY();
+                break;
+
+            case "MONTHLY_AMT":
+                ret = expressionSystemFunctionMethod.MONTHLY_AMT();
+                break;
+
+            case "EMP_SALARY":
+                ret = expressionSystemFunctionMethod.EMP_SALARY();
+                break;
+
+            case "EOS_REASON":
+                ret = expressionSystemFunctionMethod.EOS_REASON();
+                break;
+
+            case "CONFIG_KEY_DOUBLE":
+                ret = expressionSystemFunctionMethod.CONFIG_KEY_DOUBLE();
+                break;
+
+            case "CALC_DAYS":
+                ret = expressionSystemFunctionMethod.CALC_DAYS();
+                break;
+
+            case "PERIOD_WORKDAYS":
+                ret = expressionSystemFunctionMethod.PERIOD_WORKDAYS();
+                break;
+
+            case "NO_OF_DEPENDENTS":
+                ret = expressionSystemFunctionMethod.NO_OF_DEPENDENTS();
+                break;
+                        
+            case "EMP_MARITAL_STATUS":
+                ret = expressionSystemFunctionMethod.EMP_MARITAL_STATUS();
+                break;
+
+            case "EMP_AGE":
+                ret = expressionSystemFunctionMethod.EMP_AGE();
+                break;
+
+            case "LOAN_DEDUCTION":
+                ret = expressionSystemFunctionMethod.LOAN_DEDUCTION();
+                break;
+
+            case "LOAN_DISBURSEMENT":
+                ret = expressionSystemFunctionMethod.LOAN_DISBURSEMENT();
+                break;
+
+            case "LOAN_CASH_SETTLEMENT" :
+                ret = expressionSystemFunctionMethod.LOAN_CASH_SETTLEMENT();
+                break;
+
+            case "PERIOD_CALDAYS":
+                ret = expressionSystemFunctionMethod.PERIOD_CALDAYS();
+                break;            
+
+            case "EMP_DOT":
+                ret = expressionSystemFunctionMethod.EMP_DOT();
+                break;
+
+            case "CTX_PERIODFROMDATE" :
+                ret = expressionSystemFunctionMethod.CTX_PERIODFROMDATE();
+                break;
+
+            case "CTX_PERIODTODATE" :
+                ret = expressionSystemFunctionMethod.CTX_PERIODTODATE();
+                break;
+
+            case "CTX_TIMESHEETFROMDATE" :
+                ret = expressionSystemFunctionMethod.CTX_TIMESHEETFROMDATE();
+                break;
+
+            case "CTX_TIMESHEETTODATE" :
+                ret = expressionSystemFunctionMethod.CTX_TIMESHEETTODATE();
+                break;
+
+            case "CTX_TRANSDATE":
+                ret = expressionSystemFunctionMethod.CTX_TRANSDATE();
+                break;
+
+            case "CTX_WORKERCALENDARID" :
+                ret = expressionSystemFunctionMethod.CTX_WORKERCALENDARID();
+                break;
+
+            case "CTX_LEAVESETTLEMENT" :
+                ret = expressionSystemFunctionMethod.CTX_LEAVESETTLEMENT();
+                break;
+
+            case "CTX_PAYARREAR" :
+                ret = expressionSystemFunctionMethod.CTX_PAYARREAR();
+                break;
+
+            case "CTX_ENDOFSETTLEMENT" :
+                ret = expressionSystemFunctionMethod.CTX_ENDOFSETTLEMENT();
+                break;
+
+            case "CTX_CALCFROMDATE" :
+                ret = expressionSystemFunctionMethod.CTX_CALCFROMDATE();
+                break;
+
+            case "CTX_CALCTODATE" :
+                ret = expressionSystemFunctionMethod.CTX_CALCTODATE();
+                break;
+
+            case "EMP_JOB" :
+                ret = expressionSystemFunctionMethod.EMP_JOB();
+                break;
+
+            case "EMP_PAYELEMENTSTARTDATE" :
+                ret = expressionSystemFunctionMethod.EMP_PAYELEMENTSTARTDATE();
+                break;
+
+            case "EMP_ATTRIBUTE_SAL_DATERANGE" :
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_SAL_DATERANGE();
+                break;
+
+
+            case "PERIOD_WORKDAYS_WORKPROFILE" :
+                ret = expressionSystemFunctionMethod.PERIOD_WORKDAYS_WORKPROFILE();
+                break;
+
+            case "EMP_ISCALENDAR" :
+                ret = expressionSystemFunctionMethod.EMP_ISCALENDAR();
+                break;
+
+            case "PL_GETAMT_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.PL_GETAMT_TRANSCUR();
+                break;
+
+            case "PL_YTDAMOUNT_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.PL_YTDAMOUNT_TRANSCUR();
+                break;
+
+            case "BL_GETAMT_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.BL_GETAMT_TRANSCUR();
+                break;
+
+            case "BL_YTDAMOUNT_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.BL_YTDAMOUNT_TRANSCUR();
+                break;
+
+            case "REF_GETAMT_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.REF_GETAMT_TRANSCUR();
+                break;
+
+            case "REF_GETYTDAMT_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.REF_GETYTDAMT_TRANSCUR();
+                break;
+
+            case "EMP_ATTRIBUTE_SAL_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_SAL_TRANSCUR();
+                break;
+
+            case "EMP_ATTRIBUTE_YTDSAL_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_YTDSAL_TRANSCUR();
+                break;
+
+            case "EMP_ATTRIBUTE_BTDSAL_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_BTDSAL_TRANSCUR();
+                break;
+
+            case "LOAN_DEDUCTION_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.LOAN_DEDUCTION_TRANSCUR();
+                break;
+
+            case "LOAN_DISBURSEMENT_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.LOAN_DISBURSEMENT_TRANSCUR();
+                break;
+
+            case "LOAN_CASH_SETTLEMENT_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.LOAN_CASH_SETTLEMENT_TRANSCUR();
+                break;
+
+            case "EMP_ATTRIBUTE_SAL_DATERANGE_TRANSCUR" :
+                ret = expressionSystemFunctionMethod.EMP_ATTRIBUTE_SAL_DATERANGE_TRANSCUR();
+                break;
+
+            case "BL_BALAMOUNT_TRANSCUR":
+                ret = expressionSystemFunctionMethod.BL_BALAMOUNT_TRANSCUR();
+                break;
+
+            case "BL_BALAMOUNT":
+                ret = expressionSystemFunctionMethod.BL_BALAMOUNT();
+                break;
+
+            case "BL_BALQTY":
+                ret = expressionSystemFunctionMethod.BL_BALQTY();
+                break;
+
+            case "EMP_AMT":
+                ret = expressionSystemFunctionMethod.EMP_AMT();
+                break;
+
+            case "EMP_QTY":
+                ret = expressionSystemFunctionMethod.EMP_QTY();
+                break;
+
+            default:                
+                throw Error(strFmt("system function %1 missing in class SPYExpressionTable_Post_callSystemFunction",methodName ) );
+                break;
+        }
+
+        args.setReturnValue(ret);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

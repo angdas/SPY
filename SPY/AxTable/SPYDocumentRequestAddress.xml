@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDocumentRequestAddress</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYDocumentRequestAddress extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYDocumentRequestAddress find(
+    SPYDocumentRequestAddressRecId    _recId,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYDocumentRequestAddress    documentRequestAddress;
+    
+        documentRequestAddress.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            documentRequestAddress.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly documentRequestAddress
+             where documentRequestAddress.RecId == _recId;
+    
+        return documentRequestAddress;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByCode</Name>
+				<Source><![CDATA[
+    public static SPYDocumentRequestAddress findByCode(
+    SPYDocumentRequestAddressCode    _code,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYDocumentRequestAddress    documentRequestAddress;
+    
+        documentRequestAddress.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            documentRequestAddress.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly documentRequestAddress
+             where documentRequestAddress.DocumentRequestAddressCode == _code;
+    
+        return documentRequestAddress;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYDocumentRequest</ConfigurationKey>
+	<DeveloperDocumentation>@SPY:HRRequestAddressMaster</DeveloperDocumentation>
+	<Label>@SPY:HRRequestAddress</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>DocumentRequestAddressCode</TitleField1>
+	<TitleField2>DocumentAddress</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>Code_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestAddressCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestAddressCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DocumentRequestAddressCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>DocumentAddress</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+			<HelpText>@SPY611</HelpText>
+			<Label>@SPY610</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>DocumentAddress</Name>
+			<EnumType>SPYDocumentAddress</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>DocumentRequestAddressCode</Name>
+			<ExtendedDataType>SPYDocumentRequestAddressCode</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>Code_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>DocumentRequestAddressCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations />
+	<StateMachines />
+</AxTable>

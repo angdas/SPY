@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYTSSubmitManager
+{
+    container dates;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>submitSubordinates</Name>
+				<Source><![CDATA[
+    public void submitSubordinates(str  _submitDay)
+    {
+        TSAppEmplSub                    tsAppEmplSub;
+        str                             ret;
+        TSTimesheetTable                tsTimesheetTable;
+        WorkflowVersionTable            workflowVersionTable;
+        TransDate                       _date;
+        boolean                         IsSubmitted,IsPending;
+        ResourceWorkerView              resourceWorkerView;    
+    
+        _date = str2Date(_submitDay,123) != dateNull() ? str2Date(_submitDay,123) : DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone());
+    
+        while select tsTimesheetTable            
+            where tsTimesheetTable.PeriodTo <= _date &&
+                  tsTimesheetTable.ApprovalStatus == TSAppStatus::Create
+            join tsAppEmplSub
+            where tsTimesheetTable.Resource == tsAppEmplSub.Resource
+            join resourceWorkerView
+            where resourceWorkerView.RecId == tsAppEmplSub.TimesheetResource &&
+                  resourceWorkerView.Worker == HcmWorkerLookup::currentWorker() &&
+                  ( tsAppEmplSub.DateFrom <= _date && (tsAppEmplSub.DateTo >= _date || 
+                  tsAppEmplSub.DateTo == dateNull()) )
+        {
+           // info(tsTimesheetTable.TimesheetNbr);
+    
+            IsPending = true;
+    
+            if(this.validateSubmissionDate(tsTimesheetTable.PeriodTo,_date))
+            {
+                workflowVersionTable = Workflow::findWorkflowConfigToActivateForType(workFlowTypeStr(TSDocumentTemplate), tsTimesheetTable.RecId, tsTimesheetTable.TableId);
+                if(tsTimesheetTable.validateSubmit())
+                {
+                    tsTimesheetTable.selectForUpdate(true);
+                    this.updateToInReview(tsTimesheetTable, false);
+                    Workflow::activateFromWorkflowConfigurationId(workflowVersionTable.ConfigurationId, tsTimesheetTable.RecId, "", NoYes::No);
+    
+                    IsSubmitted = true;
+                }
+            }
+        }
+    
+        if(IsSubmitted)
+            info("Workflow submitted for all subordinates.");
+        else if(!IsSubmitted && IsPending)
+            warning(strFmt("Time sheet can only be submitted end of week. Please submit pending timesheets for %1", con2Str(dates, ",")));
+        else if(!IsSubmitted && !IsPending)
+            warning(strFmt("Time sheet can only be submitted end of week. No pending timesheets to submit"));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateToInReview</Name>
+				<Source><![CDATA[
+    public void updateToInReview(TSTimesheetTable tsTimesheetTable, boolean isLineItemApprovalConfigured)
+    {
+        TSTimesheetLine tsTimesheetLine;
+        TSTimesheetTrans tsTrans;
+    
+        tsTrans.skipDataMethods(true);
+        if(tsTimesheetTable.ApprovalStatus != TSAppStatus::Pending)
+        {
+            if(!TSStateChangeManager::validateStatusChange(tsTimesheetTable.ApprovalStatus, TSAppStatus::Pending))
+            {
+                throw error(strFmt("@SYS108515",tsTimesheetTable.ApprovalStatus, TSAppStatus::Pending));
+            }
+    
+            tsTimesheetTable.ApprovalStatus = TSAppStatus::Pending;
+            ttsbegin;
+            tsTimesheetTable.doUpdate();
+            ttscommit;
+        }
+    
+        if(!isLineItemApprovalConfigured)
+        {
+            tsTimesheetLine.skipDataMethods(true);
+            update_recordset tsTimesheetLine setting ApprovalStatus = TSAppStatus::Pending where tsTimesheetLine.TimesheetNbr == tsTimesheetTable.TimesheetNbr;
+            tsTrans.skipDataMethods(true);
+            update_recordset tsTrans setting ApprovalStatus = TSAppStatus::Pending where tsTrans.TimesheetNbr == tsTimesheetTable.TimesheetNbr;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateSubmissionDate</Name>
+				<Source><![CDATA[
+    public boolean validateSubmissionDate(Transdate _tsHeaderDate,Transdate _date)
+    {
+        boolean ret;
+        str     tsPeriodTo;
+        ;
+    
+        if(_tsHeaderDate == _date)
+            ret = true;
+        else
+        {
+            ret = false;
+            tsPeriodTo = date2str(_tsHeaderDate,123, DateDay::Digits2, DateSeparator::Hyphen,DateMonth::Digits2, DateSeparator::Hyphen, DateYear::Digits4);
+            if(!conFind(dates,tsPeriodTo))
+                dates = conPoke(dates,conLen(dates) + 1, tsPeriodTo);
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args _args)
+    {
+        str                     submitDay;
+        SPYTSSubmitManager      tsSubmitManager = new SPYTSSubmitManager();
+    
+        submitDay = date2str(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),123, DateDay::Digits2, DateSeparator::Hyphen,DateMonth::Digits2, DateSeparator::Hyphen, DateYear::Digits4);
+        tsSubmitManager.submitSubordinates(submitDay);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

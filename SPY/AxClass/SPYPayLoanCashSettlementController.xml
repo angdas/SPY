@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanCashSettlementController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayLoanCashSettlementController extends SysOperationServiceController
+{
+    FormRun                                 cashSettlementEdit;
+    SPYPayLoanCashSettlementContract        payLoanCashSettlementContract;
+    SPYPayLoanCode                          payLoanCode;
+    SPYPayLoanTransType                     payLoanTransType;
+    SPYPayLoanRecId                         payLoan;
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!cashSettlementEdit)
+        {
+            cashSettlementEdit = classfactory.formRunClass(SPYPayLoanCashSettlementController::newClientArgs(formStr(SPYPayLoanCashSettlementEdit), this));
+            cashSettlementEdit.init();
+        }
+
+        return cashSettlementEdit as IDialogable;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+
+        if (this.canGoBatch())
+       this.batchInfo().dialog(dlg);
+
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayLoan</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayLoanRecId parmPayLoan(SPYPayLoanRecId _payLoan = payLoan)
+    {
+        payLoan = _payLoan;
+        return payLoan;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPayLoanContract</Name>
+				<Source><![CDATA[
+    public SPYPayLoanCashSettlementContract getPayLoanContract()
+    {
+        return payLoanCashSettlementContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayLoanCode</Name>
+				<Source><![CDATA[
+    SPYPayLoanCode parmPayLoanCode(SPYPayLoanCode _payLoanCode = payLoanCode)
+    {
+        payLoanCode = _payLoanCode;
+        return payLoanCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayLoanTransType</Name>
+				<Source><![CDATA[
+    SPYPayLoanTransType parmPayLoanTransType(SPYPayLoanTransType _payLoanTransType = payLoanTransType)
+    {
+        payLoanTransType = _payLoanTransType;
+        return payLoanTransType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYPayLoanCashSettlementContract parmServiceContract(SPYPayLoanCashSettlementContract _payLoanCashSettlementContract = payLoanCashSettlementContract)
+    {
+        payLoanCashSettlementContract = _payLoanCashSettlementContract;
+        return payLoanCashSettlementContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYPayLoanCashSettlementController construct(IdentifierName _className  = '',
+                                                 IdentifierName _methodName = '',
+                                                 SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYPayLoanCashSettlementController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayLoanCashSettlementController      payLoanCashSettlementController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+        SPYPayLoanTable                         payLoanTable;
+
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        payLoanCashSettlementController = SPYPayLoanCashSettlementController::construct(className, methodName, mode);
+
+        if(args.record() is SPYPayLoanTable)
+        payLoanTable = args.record() as SPYPayLoanTable;
+
+        payLoanCashSettlementController.parmPayLoanCode(payLoanTable.PayLoanCode);
+        payLoanCashSettlementController.parmPayLoan(payLoanTable.RecId);
+        if(payLoanCashSettlementController.prompt())
+        payLoanCashSettlementController.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYPayLoanCashSettlementController _payLoanCashSettlementController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_payLoanCashSettlementController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

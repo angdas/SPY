@@ -1,0 +1,799 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYTSRosterCreate</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYTSRosterCreate extends FormRun
+{
+}
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="" />
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYTSTimesheetFavorites</Name>
+			<Table>SPYTSTimesheetFavorites</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>ActivityNumber</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CategoryId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>IsUpdated</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ProjId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ProjName</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransTxt</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal1</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal10</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal11</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal12</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal13</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal14</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal15</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal16</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal17</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal18</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal19</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal2</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal20</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal21</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal22</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal23</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal24</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal25</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal26</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal27</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal28</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal29</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal3</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal30</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal31</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal4</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal5</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal6</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal7</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal8</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TSDailyHoursTotal9</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidFrom</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidTo</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">Roster create</Caption>
+		<DataSource xmlns="">SPYTSTimesheetFavorites</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">SimpleList</Pattern>
+		<PatternVersion xmlns="">1.1</PatternVersion>
+		<Style xmlns="">SimpleList</Style>
+		<TitleDataSource xmlns="">SPYTSTimesheetFavorites</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>ActionPaneTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<DataSource>SPYTSTimesheetFavorites</DataSource>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>CustomFilterGroup</Name>
+				<ElementPosition>1288490187</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Pattern>CustomAndQuickFilters</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl>
+						<Name>QuickFilterControl</Name>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension>
+							<Name>QuickFilterControl</Name>
+							<ExtensionComponents />
+							<ExtensionProperties>
+								<AxFormControlExtensionProperty>
+									<Name>targetControlName</Name>
+									<Type>String</Type>
+									<TypeName>str</TypeName>
+									<Value>Grid</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>defaultColumnName</Name>
+									<Type>String</Type>
+									<TypeName>str</TypeName>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>placeholderText</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+							</ExtensionProperties>
+						</FormControlExtension>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+				<FrameType>None</FrameType>
+				<Style>CustomFilter</Style>
+				<ViewEditMode>Edit</ViewEditMode>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGridControl">
+				<Name>Grid</Name>
+				<ElementPosition>1431655764</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Grid</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>TSTimesheetFavorites_Worker</Name>
+						<ElementPosition>113025454</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ReferenceGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<ReferenceField>Worker</ReferenceField>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormDateControl">
+						<Name>TSTimesheetFavorites_ValidFrom</Name>
+						<Type>Date</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>ValidFrom</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormStringControl">
+						<Name>TSTimesheetFavorites_ProjId</Name>
+						<ElementPosition>226050908</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>String</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>ProjId</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormStringControl">
+						<Name>TSTimesheetFavorites_ProjName</Name>
+						<ElementPosition>282563635</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>String</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>ProjName</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormDateControl">
+						<Name>TSTimesheetFavorites_ValidTo</Name>
+						<Type>Date</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>ValidTo</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal</Name>
+						<ElementPosition>395589089</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal1</Name>
+						<ElementPosition>452101816</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal1</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal2</Name>
+						<ElementPosition>508614543</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal2</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal3</Name>
+						<ElementPosition>565127270</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal3</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal4</Name>
+						<ElementPosition>621639997</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal4</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal5</Name>
+						<ElementPosition>678152724</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal5</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal6</Name>
+						<ElementPosition>734665451</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal6</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal7</Name>
+						<ElementPosition>791178178</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal7</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal8</Name>
+						<ElementPosition>847690905</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal8</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal9</Name>
+						<ElementPosition>904203632</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal9</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal10</Name>
+						<ElementPosition>960716359</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal10</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal11</Name>
+						<ElementPosition>1017229086</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal11</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal12</Name>
+						<ElementPosition>1073741813</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal12</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal13</Name>
+						<ElementPosition>1130254540</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal13</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal14</Name>
+						<ElementPosition>1186767267</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal14</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal15</Name>
+						<ElementPosition>1243279994</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal15</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal16</Name>
+						<ElementPosition>1299792721</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal16</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal17</Name>
+						<ElementPosition>1356305448</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal17</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal18</Name>
+						<ElementPosition>1412818175</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal18</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal19</Name>
+						<ElementPosition>1469330902</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal19</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal20</Name>
+						<ElementPosition>1525843629</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal20</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal21</Name>
+						<ElementPosition>1582356356</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal21</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal22</Name>
+						<ElementPosition>1638869083</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal22</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal23</Name>
+						<ElementPosition>1695381810</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal23</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal24</Name>
+						<ElementPosition>1751894537</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal24</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal25</Name>
+						<ElementPosition>1808407264</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal25</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal26</Name>
+						<ElementPosition>1864919991</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal26</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal27</Name>
+						<ElementPosition>1921432718</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal27</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal28</Name>
+						<ElementPosition>1977945445</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal28</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal29</Name>
+						<ElementPosition>2034458172</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal29</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>TSTimesheetFavorites_TSDailyHoursTotal30</Name>
+						<ElementPosition>2090970899</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>Real</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<DataField>TSDailyHoursTotal30</DataField>
+						<DataSource>SPYTSTimesheetFavorites</DataSource>
+						<NoOfDecimals>-1</NoOfDecimals>
+					</AxFormControl>
+				</Controls>
+				<AlternateRowShading>No</AlternateRowShading>
+				<DataSource>SPYTSTimesheetFavorites</DataSource>
+				<ShowRowLabels>No</ShowRowLabels>
+				<Style>Tabular</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

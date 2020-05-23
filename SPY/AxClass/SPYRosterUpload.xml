@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYRosterUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYRosterUpload extends RunBaseBatch
+{
+    // Packed variables
+    FileName            fileName;
+
+    // Dialog fields
+    DialogField         dlgFileName;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+        fileName
+    #endmacro
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public Object dialog()
+    {
+        DialogRunbase       dialog = super();
+        #resAppl
+    
+        dialog.addInfoImage();
+        dlgFileName = dialog.addFieldValue(extendedTypeStr(FileName),fileName);
+    
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        fileName    = dlgFileName.value();
+    
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public void run()
+    {
+        try
+        {
+            ttsBegin;
+            this.upload();
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("Operation aborted.");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+    
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>upload</Name>
+				<Source><![CDATA[
+    public void upload()
+    {
+        /*
+        SysExcelApplication                 application;
+        SysExcelWorkbooks                   workbooks;
+        SysExcelWorkbook                    workbook;
+        SysExcelWorksheets                  worksheets;
+        SysExcelWorksheet                   worksheet;
+        SysExcelCells                       cells;
+        COMVariantType                      type;
+        int                                 row =1 ;
+        SPYTSTimesheetFavorites             timesheetFavorites;
+        HcmPersonnelNumberId                emplId;
+        boolean                             insert;
+        ProjId                              projectId;
+        int                                 counter;
+        #AviFiles
+        SysOperationProgress                opProgress = new SysOperationProgress();
+        int                                 progressCount,totalRows;
+    
+        startLengthyOperation();
+        application = SysExcelApplication::construct();
+        workbooks = application.workbooks();
+        try
+        {
+            workbooks.open(filename);
+        }
+        catch (Exception::Error)
+        {
+            error("@SYS19358");
+        }
+    
+        workbook = workbooks.item(1);
+        worksheets = workbook.worksheets();
+        worksheet = worksheets.itemFromNum(1);
+        cells = worksheet.cells();
+        //finding total rows
+        do
+        {
+            row++;
+            totalRows++;
+            type = cells.item(row+1, 1).value().variantType();
+        }
+        while (type != COMVariantType::VT_EMPTY);
+        opProgress.setCaption("@SPY1333");
+        opProgress.setAnimation(#AviUpdate);
+        opProgress.setTotal(totalRows);
+        row = 1;
+        do
+        {
+            row++;
+            progressCount++;
+            insert = true;
+            opProgress.setText(strfmt("@SPY1334", progressCount, totalRows));
+            opProgress.setCount(progressCount, 1);
+            timesheetFavorites.clear();
+            emplId = cells.item(row, 1).value().bStr();
+            emplId = strLTrim(strRTrim(emplId));
+            timesheetFavorites.Worker = HcmWorker::findByPersonnelNumber(emplId).RecId;
+            projectId = cells.item(row, 2).value().bStr();
+            timesheetFavorites.ProjId = strLTrim(strRTrim(projectId));
+            if(!timesheetFavorites.Worker)
+            {
+                error(strFmt("@SPY1335",row,emplId));
+                insert = false;
+            }
+            if(!ProjTable::exist(timesheetFavorites.ProjId))
+            {
+                error(strFmt("@SPY1336",row,timesheetFavorites.ProjId));
+                insert = false;
+            }
+            if(insert)
+            {
+                timesheetFavorites.CategoryId = "Normal";
+                timesheetFavorites.ProjName = ProjTable::find(timesheetFavorites.ProjId).Name;
+                timesheetFavorites.StartDate = cells.item(row, 3).value().date();
+                timesheetFavorites.TSDailyHoursTotal = str2num(cells.item(row, 4).value().bStr()) == 0.00 ? cells.item(row, 5).value().double() : str2num(cells.item(row, 5).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal1 = str2num(cells.item(row, 5).value().bStr()) == 0.00 ? cells.item(row, 6).value().double() : str2num(cells.item(row, 6).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal2 = str2num(cells.item(row, 6).value().bStr()) == 0.00 ? cells.item(row, 7).value().double() : str2num(cells.item(row, 7).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal3 = str2num(cells.item(row, 7).value().bStr()) == 0.00 ? cells.item(row, 8).value().double() : str2num(cells.item(row, 8).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal4 = str2num(cells.item(row, 8).value().bStr()) == 0.00 ? cells.item(row, 9).value().double() : str2num(cells.item(row, 9).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal5 = str2num(cells.item(row, 9).value().bStr()) == 0.00 ? cells.item(row, 10).value().double() : str2num(cells.item(row, 10).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal6 = str2num(cells.item(row, 10).value().bStr()) == 0.00 ? cells.item(row, 11).value().double() : str2num(cells.item(row, 11).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal7 = str2num(cells.item(row, 11).value().bStr()) == 0.00 ? cells.item(row, 12).value().double() : str2num(cells.item(row, 12).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal8 = str2num(cells.item(row, 12).value().bStr()) == 0.00 ? cells.item(row, 13).value().double() : str2num(cells.item(row, 13).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal9 = str2num(cells.item(row, 13).value().bStr()) == 0.00 ? cells.item(row, 14).value().double() : str2num(cells.item(row, 14).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal10 = str2num(cells.item(row, 14).value().bStr()) == 0.00 ? cells.item(row, 15).value().double() : str2num(cells.item(row, 15).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal11 = str2num(cells.item(row, 15).value().bStr()) == 0.00 ? cells.item(row, 16).value().double() : str2num(cells.item(row, 16).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal12 = str2num(cells.item(row, 16).value().bStr()) == 0.00 ? cells.item(row, 17).value().double() : str2num(cells.item(row, 17).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal13 = str2num(cells.item(row, 17).value().bStr()) == 0.00 ? cells.item(row, 18).value().double() : str2num(cells.item(row, 18).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal14 = str2num(cells.item(row, 18).value().bStr()) == 0.00 ? cells.item(row, 19).value().double() : str2num(cells.item(row, 19).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal15 = str2num(cells.item(row, 19).value().bStr()) == 0.00 ? cells.item(row, 20).value().double() : str2num(cells.item(row, 20).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal16 = str2num(cells.item(row, 20).value().bStr()) == 0.00 ? cells.item(row, 21).value().double() : str2num(cells.item(row, 21).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal17 = str2num(cells.item(row, 21).value().bStr()) == 0.00 ? cells.item(row, 22).value().double() : str2num(cells.item(row, 22).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal18 = str2num(cells.item(row, 22).value().bStr()) == 0.00 ? cells.item(row, 23).value().double() : str2num(cells.item(row, 23).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal19 = str2num(cells.item(row, 23).value().bStr()) == 0.00 ? cells.item(row, 24).value().double() : str2num(cells.item(row, 24).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal20 = str2num(cells.item(row, 24).value().bStr()) == 0.00 ? cells.item(row, 25).value().double() : str2num(cells.item(row, 25).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal21 = str2num(cells.item(row, 25).value().bStr()) == 0.00 ? cells.item(row, 26).value().double() : str2num(cells.item(row, 26).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal22 = str2num(cells.item(row, 26).value().bStr()) == 0.00 ? cells.item(row, 27).value().double() : str2num(cells.item(row, 27).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal23 = str2num(cells.item(row, 27).value().bStr()) == 0.00 ? cells.item(row, 28).value().double() : str2num(cells.item(row, 28).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal24 = str2num(cells.item(row, 28).value().bStr()) == 0.00 ? cells.item(row, 29).value().double() : str2num(cells.item(row, 29).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal25 = str2num(cells.item(row, 29).value().bStr()) == 0.00 ? cells.item(row, 30).value().double() : str2num(cells.item(row, 30).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal26 = str2num(cells.item(row, 30).value().bStr()) == 0.00 ? cells.item(row, 31).value().double() : str2num(cells.item(row, 31).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal27 = str2num(cells.item(row, 31).value().bStr()) == 0.00 ? cells.item(row, 32).value().double() : str2num(cells.item(row, 32).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal28 = str2num(cells.item(row, 32).value().bStr()) == 0.00 ? cells.item(row, 33).value().double() : str2num(cells.item(row, 33).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal29 = str2num(cells.item(row, 33).value().bStr()) == 0.00 ? cells.item(row, 34).value().double() : str2num(cells.item(row, 34).value().bStr());
+                timesheetFavorites.TSDailyHoursTotal30 = str2num(cells.item(row, 34).value().bStr()) == 0.00 ? cells.item(row, 35).value().double() : str2num(cells.item(row, 35).value().bStr());
+                timesheetFavorites.insert();
+                counter++;
+            }
+            type = cells.item(row+1, 1).value().variantType();
+        }
+        while (type != COMVariantType::VT_EMPTY);
+        application.quit();
+        info(strFmt("@SPY1337",Counter));
+        endLengthyOperation();*/
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYRosterUpload construct()
+    {
+        return new SPYRosterUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    // Here goes a description of the class
+    static ClassDescription description()
+    {
+        return "Upload Roster";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args _args)
+    {
+        SPYRosterUpload    rosterUpload;
+    
+        rosterUpload = SPYRosterUpload::construct();
+    
+        if (rosterUpload.prompt())
+            rosterUpload.runOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    protected boolean canRunInNewSession()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

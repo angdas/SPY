@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitDecoratorCalculation</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYBenefitDecoratorCalculation extends SPYIBenefitDecoratorCalculation implements SPYIObservable
+{
+    SPYIBenefitCalculation      iBenefitCalculation;
+    RecId                       benefitDetailsDecoratorRecId;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>addObserver</Name>
+				<Source><![CDATA[
+    public void addObserver(SPYIObserver    _iObserver,
+                            int             _key)
+    {
+        observers.value(_key, _iObserver);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcAmount</Name>
+				<Source><![CDATA[
+    public SPYAmount calcAmount()
+    {
+        SPYExpressionRecId              expression;
+        SPYExpressionCondition          expressionCondition;
+        SPYAmount                       qtyValue;
+        //SPYExpressionEvaluationEngine   expressionEvaluationEngine = new SPYExpressionEvaluationEngine(SPYProcess::PayProcess);
+        SPYBenefitDetailsDecorator      benefitDetailsDecorator;
+    
+        select firstOnly benefitDetailsDecorator
+            where benefitDetailsDecorator.RecId == benefitDetailsDecoratorRecId;
+        expression = benefitDetailsDecorator.AmountExp;
+        //expressionEvaluationEngine.addObserver(tracer,1);
+        while select expressionCondition
+            where expressionCondition.Expression == expression
+        {
+            if(expressionEvaluationEngine.validateCondition(expressionCondition.RecId,legalEntity,worker))
+            {
+                //expressionEvaluationEngine.parmExpressionContext(expressionContext);
+                qtyValue += expressionEvaluationEngine.evaluateExpression(expressionCondition.RecId);
+            }
+        }
+    
+        return qtyValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcQty</Name>
+				<Source><![CDATA[
+    public SPYAmount calcQty()
+    {
+        SPYExpressionRecId              expression;
+        SPYExpressionCondition          expressionCondition;
+        SPYAmount                       qtyValue;
+        //SPYExpressionEvaluationEngine   expressionEvaluationEngine = new SPYExpressionEvaluationEngine(SPYProcess::PayProcess);
+        SPYBenefitDetailsDecorator      benefitDetailsDecorator;
+    
+        select firstOnly benefitDetailsDecorator
+            where benefitDetailsDecorator.RecId == benefitDetailsDecoratorRecId;
+        expression = benefitDetailsDecorator.QuantityExp;
+        //expressionEvaluationEngine.addObserver(tracer,1);
+        while select expressionCondition
+            where expressionCondition.Expression == expression
+        {
+            if(expressionEvaluationEngine.validateCondition(expressionCondition.RecId,legalEntity,worker))
+            {
+                //expressionEvaluationEngine.parmExpressionContext(expressionContext);
+                qtyValue += expressionEvaluationEngine.evaluateExpression(expressionCondition.RecId);
+            }
+        }
+    
+        return qtyValue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(LegalEntityRecId            _legalEntity,
+                    HCMWorkerRecId              _worker,
+                    SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                    SPYPayElementRecId          _benefit,
+                    TransDate                   _transDate,
+                    StartDate                   _periodStart,
+                    EndDate                     _periodEnd,
+                    SPYWorkerPositionBenefit    _workerPositionBenefit,
+                    SPYBenefitLedgerTmp         _benefitLedgerTmp,
+                    SPYIBenefitCalculation      _iBenefitCalculation,
+                    RecId                       _benefitDetailsDecoratorRecId)
+    {
+        legalEntity                     = _legalEntity;
+        worker                          = _worker;
+        payrollPeriodLine               = _payrollPeriodLine;
+        benefit                         = _benefit;
+        TransDate                       = _transDate;
+        periodStart                     = _periodStart;
+        periodEnd                       = _periodEnd;
+        workerPositionBenefit           = _workerPositionBenefit;
+        benefitLedgerTmp                = _benefitLedgerTmp;
+        iBenefitCalculation             = _iBenefitCalculation;
+        benefitDetailsDecoratorRecId    = _benefitDetailsDecoratorRecId;
+        observers                       = new Array(Types::Class);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>notifyObserver</Name>
+				<Source><![CDATA[
+    public void notifyObserver(str      _propertyName,
+                               str      _propertyValue,
+                               int      _heading = 0,
+                               int      _space = 0)
+    {
+        SPYIObserver    localObserver;
+        int             ctr;
+    
+        for (Ctr = 1; Ctr <= observers.lastIndex(); Ctr++ )
+        {
+            localObserver = observers.value(Ctr);
+            localObserver.changed(this, _propertyName, _propertyValue,_heading,_space);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefit</Name>
+				<Source><![CDATA[
+    public SPYBenefitLedgerTmp processBenefit(SPYExpressionEvaluationEngine   _expressionEvaluationEngine)//SPYExpressionContext _expressionContext)
+    {
+        iBenefitCalculation.parmTracer(tracer);
+        iBenefitCalculation.processBenefit(_expressionEvaluationEngine);//_expressionContext);
+        //expressionContext = _expressionContext;
+        expressionEvaluationEngine = _expressionEvaluationEngine;
+        this.addObserver(tracer,1);
+        try
+        {
+            transactionCurrencyAmount = this.calcAccCurAmt();
+            qty = this.calcQty();
+    
+            return this.initializeLedgerTmpFromBenefit(workerPositionBenefit,transactionCurrencyAmount,qty,true);
+        }
+        catch(Exception::Error)
+        {
+            error(strFmt("@SPY541",SPYPayElementTable::find(workerPositionBenefit.Benefit).PayElementCode,
+                  HcmWorker::find(worker).name()));
+            return null;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefitEncashment</Name>
+				<Source><![CDATA[
+    public SPYBenefitLedgerTmp processBenefitEncashment(SPYExpressionEvaluationEngine   _expressionEvaluationEngine)//SPYExpressionContext _expressionContext)
+    {
+        SPYBenefitLedgerTmp ret;
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>removeObserver</Name>
+				<Source><![CDATA[
+    public void removeObserver(int _key)
+    {
+        observers.value(_key, null);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

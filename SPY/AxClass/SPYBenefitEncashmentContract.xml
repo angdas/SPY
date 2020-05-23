@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitEncashmentContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYBenefitEncashmentContract
+{
+    container                       hcmWorkerQuery;
+    container                       benefitQuery;
+    LegalEntityRecId                legalEntity;
+    SPYPayrollPeriodLineRecId       payrollPeriodLine;
+    SPYPayrollParameterState        payrollParameterState;
+    boolean                         checkTrace;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmCheckTrace</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmCheckTrace(boolean _checkTrace = checkTrace)
+    {
+        checkTrace = _checkTrace;
+        return checkTrace;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBenefitQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmBenefitQuery(container _benefitQuery = benefitQuery)
+    {
+        benefitQuery = _benefitQuery;
+        return benefitQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLegalEntity</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public LegalEntityRecId parmLegalEntity(LegalEntityRecId _legalEntity = legalEntity)
+    {
+        legalEntity = _legalEntity;
+        return legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollParameterState</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollParameterState parmPayrollParameterState(SPYPayrollParameterState _payrollParameterState = payrollParameterState)
+    {
+        payrollParameterState = _payrollParameterState;
+        return payrollParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine = _payrollPeriodLine;
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerQuery(container _hcmWorkerQuery = hcmWorkerQuery)
+    {
+        hcmWorkerQuery = _hcmWorkerQuery;
+        return hcmWorkerQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

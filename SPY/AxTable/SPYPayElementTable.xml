@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayElementTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayElementTable extends common
+{
+   
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>validateDelete</Name>
+				<Source><![CDATA[
+    public boolean validateDelete()
+    {
+        SPYWorkerPositionPayroll workerPositionPayroll;
+        SPYWorkerPositionBenefit workerPositionBenefit;
+        SPYPayrollLedger         payrollLedger;
+        SPYBenefitLedger         benefitLedger;
+    
+        boolean ret;
+    
+        ret = super();
+    
+        if(this.PayElementType == SPYPayElementType::Payroll)
+        {
+            select firstOnly RecId from workerPositionPayroll where workerPositionPayroll.Payroll == this.RecId;
+            select firstOnly RecId from payrollLedger where payrollLedger.Payroll == this.RecId;
+        }
+    
+        if(this.PayElementType == SPYPayElementType::Benefit)
+        {
+            select firstOnly RecId from workerPositionBenefit where workerPositionBenefit.Benefit == this.RecId;
+            select firstOnly RecId from benefitLedger where benefitLedger.Benefit == this.RecId;
+        }
+    
+        if(workerPositionPayroll || workerPositionBenefit || payrollLedger || benefitLedger)
+        {
+            ret = false;
+            error("@SPY1677");
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Finds the specified record in the <c>SPYPayElementTable</c> table.
+    /// </summary>
+    /// /// <param name="_recId">
+    ///    The record ID of the record to find.
+    /// </param>
+    /// <param name="_forUpdate">
+    ///     A Boolean value that indicates whether to read the record for update; optional.
+    /// </param>
+    /// <param name="_concurrencyModel">
+    ///     An enumeration value that indicates the concurrency setting to use on the table; optional.
+    /// </param>
+    /// <returns>
+    ///     A record in the <c>SPYPayElementTable</c> table; otherwise, an empty record.
+    /// </returns>
+    /// <remarks>
+    ///     Finds the specified record in the <c>SPYPayElementTable</c> table.
+    /// </remarks>
+    public static SPYPayElementTable find(
+        SPYPayElementRecId          _recId,
+        boolean                     _forUpdate = false,
+        ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayElementTable payElementTable;
+    
+        payElementTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            payElementTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly payElementTable
+             where payElementTable.RecId == _recId;
+    
+        return payElementTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByCode</Name>
+				<Source><![CDATA[
+    public static SPYPayElementTable findByCode(
+        SPYPayElementCode           _code,
+        boolean                     _forUpdate = false,
+        ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYPayElementTable payElementTable;
+    
+        payElementTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            payElementTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly payElementTable
+             where payElementTable.PayElementCode == _code;
+    
+        return payElementTable;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY116</DeveloperDocumentation>
+	<Label>@SPY79</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>PayElementCode</TitleField1>
+	<TitleField2>Description</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<InstanceRelationType>InstanceRelationType</InstanceRelationType>
+	<ReplacementKey>PayElementCode_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<SupportInheritance>Yes</SupportInheritance>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElementCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayElementType</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElementCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Identification</Name>
+			<Label>@SYS35583</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElementCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Overview</Name>
+			<Label>@SYS9039</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayElementCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayElementType</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ParentPayElement</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ReferencePayElement</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>InstanceRelationType</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>RelationType</ExtendedDataType>
+			<Label>@SYS330576</Label>
+			<Visible>No</Visible>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>ParentPayElement</Name>
+			<ExtendedDataType>SPYPayElementRecId</ExtendedDataType>
+			<HelpText>@SPY1177</HelpText>
+			<Label>@SPY1176</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PayElementCode</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>SPYPayElementCode</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>PayElementType</Name>
+			<AllowEdit>No</AllowEdit>
+			<EnumType>SPYPayElementType</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ReferencePayElement</Name>
+			<AllowEdit>No</AllowEdit>
+			<Label>@SPY:ReferencePayElement</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>PayElementCode_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>PayElementCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation>
+			<Name>ParentPayelement</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPayElementTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>ParentPayelement</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>ParentPayElement</Name>
+					<Field>ParentPayElement</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYPayElementTable</Name>
+			<Cardinality>ExactlyOne</Cardinality>
+			<RelatedTable>SPYPayElementTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>RecId</Name>
+					<Field>RecId</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

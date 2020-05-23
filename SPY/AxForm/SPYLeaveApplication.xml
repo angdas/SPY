@@ -1,0 +1,2327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYLeaveApplication</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYLeaveApplication extends FormRun
+{
+    NumberSeqFormHandler                numberSeqFormHandler;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow()
+    {
+        boolean ret;
+    
+        ret = SPYLeaveApplicationTable.canSubmitToWorkflow();
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>close</Name>
+				<Source><![CDATA[
+    public void close()
+    {
+        if (numberSeqFormHandler)
+        {
+            numberSeqFormHandler.formMethodClose();
+        }
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>numberSeqFormHandler</Name>
+				<Source><![CDATA[
+    NumberSeqFormHandler numberSeqFormHandler()
+    {
+        if (!numberSeqFormHandler)
+        {
+            numberSeqFormHandler = NumberSeqFormHandler::newForm(SPYPayrollParameters::numRefLeaveApplicationCode().NumberSequenceId,
+                                                                 element,
+                                                                 SPYLeaveApplicationTable_ds,
+                                                                 fieldNum(SPYLeaveApplicationTable,LeaveApplicationCode)
+                                                                );
+        }
+        return numberSeqFormHandler;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshDataSource</Name>
+				<Source><![CDATA[
+    void refreshDataSource()
+    {
+        SPYLeaveApplicationTable_ds.research(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEnable</Name>
+				<Source><![CDATA[
+    void setEnable()
+    {
+        WorkflowWorkItemTable       workflowWorkItemTable;
+    
+        select firstonly RecId from workflowWorkItemTable
+            where workflowWorkItemTable.RefTableId == tableNum(SPYLeaveApplicationTable) &&
+                  workflowWorkItemTable.RefRecId == SPYLeaveApplicationTable.RecId &&
+                  workflowWorkItemTable.Status == WorkflowWorkItemStatus::Pending &&
+                  workflowWorkItemTable.UserId == curUserId();
+    
+        boolean isEditable, isEditableActualDate;
+        if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created)
+        {
+            if(SPYLeaveApplicationTable.ResumptionInitiated)
+            {
+                isEditable = false;
+                isEditableActualDate = true;
+            }
+            else
+            {
+                isEditable = true;
+                isEditableActualDate = false;
+            }            
+        }
+        else if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Submitted || SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Started)
+        {
+            if(SPYLeaveApplicationTable.ResumptionInitiated)
+            {
+                if(workflowWorkItemTable)
+                    isEditableActualDate = true;
+                else
+                    isEditableActualDate = false;
+                isEditable = false;
+            }
+            else
+            {
+                if(workflowWorkItemTable)
+                    isEditable = true;
+                else
+                    isEditable = false;
+                isEditableActualDate = false;
+            }
+        }
+        else if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved)
+        {
+            if(!SPYLeaveApplicationTable.ResumptionInitiated)
+                isEditableActualDate = true;
+            else
+                isEditableActualDate = false;
+            isEditable = false;
+        }
+        else
+        {
+            isEditable = false;
+            isEditableActualDate = false;
+        }
+
+        SPYLeaveApplicationTable_ds.allowDelete(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created);
+        SPYLeaveApplicationTable_ds.allowEdit(isEditable);
+        SPYLeaveApplicationLine_ds.allowCreate(isEditable);
+        SPYLeaveApplicationLine_ds.allowDelete(isEditable);
+        SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,HRMAbsenceCode)).allowEdit(isEditable);
+        SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,ValidFrom)).allowEdit(isEditable);
+        SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,ValidTo)).allowEdit(isEditable);
+        SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,ActualStartDate)).allowEdit(isEditableActualDate);
+        SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,ActualEndDate)).allowEdit(isEditableActualDate);
+        SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(isEditable &&
+                                                                                           (SPYLeaveApplicationLine.ValidFrom == SPYLeaveApplicationLine.ValidTo));
+        SPYLeaveApplicationTable_ds.object(fieldNum(SPYLeaveApplicationTable,Worker)).allowEdit(isEditable);
+        SPYLeaveResumptionService.enabled(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved &&
+                                          !SPYLeaveApplicationTable.ServiceResumed);
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTitleText</Name>
+				<Source><![CDATA[
+    public void setTitleText()
+    {
+        HeaderTitle.text(strFmt('%1 : %2', SPYLeaveApplicationTable.LeaveApplicationCode,
+                                HcmWorker::find(SPYLeaveApplicationTable.Worker).name()));
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYLeaveApplicationTable</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+            SPYLeaveApplicationTable_ds.query().dataSourceTable(tableNum(SPYLeaveApplicationTable)).addOrderByField(fieldNum(SPYLeaveApplicationTable, LeaveApplicationCode),SortOrder::Descending);
+            element.setEnable();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>create</Name>
+						<Source><![CDATA[
+        public void create(boolean _append = false)
+        {
+            element.numberSeqFormHandler().formMethodDataSourceCreatePre();
+        
+            super(_append);
+        
+            element.numberSeqFormHandler().formMethodDataSourceCreate(true);
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>delete</Name>
+						<Source><![CDATA[
+        public void delete()
+        {
+            element.numberSeqFormHandler().formMethodDataSourceDelete();
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>write</Name>
+						<Source><![CDATA[
+        public void write()
+        {
+            super();
+            element.numberSeqFormHandler().formMethodDataSourceWrite();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>validateWrite</Name>
+						<Source><![CDATA[
+        public boolean validateWrite()
+        {
+            boolean         ret;
+        
+            ret = super();
+            ret = element.numberSeqFormHandler().formMethodDataSourceValidateWrite(ret) && ret;
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>linkActive</Name>
+						<Source><![CDATA[
+        public void linkActive()
+        {
+            element.numberSeqFormHandler().formMethodDataSourceLinkActive();
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret;
+        
+            ret = super();
+        
+            element.setTitleText();
+            element.setEnable();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields>
+					<Field>
+						<DataField>Worker</DataField>
+						<Methods>
+							<Method>
+								<Name>lookupReference</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            /// <param name = "_formReferenceControl"></param>
+            /// <returns></returns>
+            public Common lookupReference(FormReferenceControl _formReferenceControl)
+            {
+                SysReferenceTableLookup sysTableLookup = SysReferenceTableLookup::newParameters(tableNum(HcmWorker), _formReferenceControl);
+                Query                   lookupQuery;
+                QueryBuildDataSource    qbds, qbdsTeamMember;
+                HcmWorker               worker;
+                SecurityRole            role;
+                SecurityUserRole        userRole;
+                UserInfo                userInfo;
+                SPYPayrollAdminRole     payrollAdmin;
+                
+                #define.Name("Name")
+                sysTableLookup.addLookupfield(fieldNum(HcmWorker, Personnelnumber));
+                sysTableLookup.addLookupMethod(#Name);
+                lookupQuery = new Query();
+                qbds = lookupQuery.addDataSource(tableNum(HcmWorker));
+
+                select firstonly role
+                    exists join userRole
+                        exists join payrollAdmin
+                        where role.RecId == userRole.SecurityRole
+                    && role.RecId == payrollAdmin.SecurityRole
+                    && userRole.User == curUserId();
+
+                if(!role)
+                {
+                    qbdsTeamMember = qbds.addDataSource(tableNum(SPYMyTeamMember));
+                    qbdsTeamMember.addLink(fieldNum(HcmWorker,RecId),fieldNum(SPYMyTeamMember,TeamMember));
+                }
+                qbds.addSortField(fieldNum(HcmWorker,Personnelnumber));
+                sysTableLookup.parmQuery(lookupQuery);
+                worker = sysTableLookup.performFormLookup();
+
+                return worker;
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+				</Fields>
+			</DataSource>
+			<DataSource>
+				<Name>SPYLeaveApplicationLine</Name>
+				<Methods>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret;
+        
+            ret = super();
+            element.setEnable();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            date    fromDate = dateNull();
+            date    toDate = dateMax();
+        
+            super();
+            select validTimeState(fromDate,toDate) SPYLeaveApplicationLine
+                where SPYLeaveApplicationLine.LeaveApplication == SPYLeaveApplicationTable.RecId;
+        
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields>
+					<Field>
+						<DataField>ActualEndDate</DataField>
+						<Methods>
+							<Method>
+								<Name>modified</Name>
+								<Source><![CDATA[
+            public void modified()
+            {
+                super();
+                if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created)
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(
+                                                                                                   SPYLeaveApplicationLine.ValidFrom == SPYLeaveApplicationLine.ValidTo);
+                else if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved && !SPYLeaveApplicationTable.ServiceResumed)
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(
+                                                                                                   SPYLeaveApplicationLine.ActualStartDate == SPYLeaveApplicationLine.ActualEndDate);
+                else
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(false);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>ActualStartDate</DataField>
+						<Methods>
+							<Method>
+								<Name>modified</Name>
+								<Source><![CDATA[
+            public void modified()
+            {
+                super();
+                if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created)
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(
+                                                                                                   SPYLeaveApplicationLine.ValidFrom == SPYLeaveApplicationLine.ValidTo);
+                else if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved && !SPYLeaveApplicationTable.ServiceResumed)
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(
+                                                                                                   SPYLeaveApplicationLine.ActualStartDate == SPYLeaveApplicationLine.ActualEndDate);
+                else
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(false);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>HRMAbsenceCode</DataField>
+						<Methods>
+							<Method>
+								<Name>lookup</Name>
+								<Source><![CDATA[
+            public void lookup(FormControl _formControl, str _filterStr)
+            {
+                QueryBuildDataSource    configLineDataSource;
+                SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(HRMAbsenceCode), _formControl);
+                Query                   query = new Query(queryStr(SPYWorkerAbsenceCodeLookup));
+            
+                sysTableLookup.addLookupfield(fieldNum(HRMAbsenceCode, hrmAbsenceCodeId));
+                sysTableLookup.addLookupfield(fieldNum(HRMAbsenceCode, description));
+                configLineDataSource = query.dataSourceTable(tableNum(SPYWorkerPositionAbsenceConfigLine));
+                configLineDataSource.addRange(fieldNum(SPYWorkerPositionAbsenceConfigLine, Worker)).value(queryValue(SPYLeaveApplicationTable.Worker));
+                configLineDataSource.addRange(fieldNum(SPYWorkerPositionAbsenceConfigLine, LegalEntity)).value(queryValue(CompanyInfo::current()));
+                sysTableLookup.parmQuery(query);
+                sysTableLookup.performFormLookup();
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>ValidFrom</DataField>
+						<Methods>
+							<Method>
+								<Name>modified</Name>
+								<Source><![CDATA[
+            public void modified()
+            {
+                super();
+                if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created)
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(
+                                                                                                   SPYLeaveApplicationLine.ValidFrom == SPYLeaveApplicationLine.ValidTo);
+                else if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved && !SPYLeaveApplicationTable.ServiceResumed)
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(
+                                                                                                   SPYLeaveApplicationLine.ActualStartDate == SPYLeaveApplicationLine.ActualEndDate);
+                else
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(false);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+					<Field>
+						<DataField>ValidTo</DataField>
+						<Methods>
+							<Method>
+								<Name>modified</Name>
+								<Source><![CDATA[
+            public void modified()
+            {
+                super();
+                if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created)
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(
+                                                                                                   SPYLeaveApplicationLine.ValidFrom == SPYLeaveApplicationLine.ValidTo);
+                else if(SPYLeaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved && !SPYLeaveApplicationTable.ServiceResumed)
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(
+                                                                                                   SPYLeaveApplicationLine.ActualStartDate == SPYLeaveApplicationLine.ActualEndDate);
+                else
+                    SPYLeaveApplicationLine_ds.object(fieldNum(SPYLeaveApplicationLine,Hours)).allowEdit(false);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+				</Fields>
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>SPYLeaveApplicationCancel</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        /// <summary>
+        ///
+        /// </summary>
+        public void clicked()
+        {
+            super();
+            SPYLeaveApplicationTable_ds.reread();
+            SPYLeaveApplicationTable_ds.refresh();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>SPYLeaveResumptionService</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            if(Box::okCancel("@SPY924",DialogButton::Ok) == DialogButton::Ok)
+            {
+                super();
+                element.refreshDataSource();
+            }
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>Tab</Name>
+				<Type>Tab</Type>
+				<Methods>
+					<Method>
+						<Name>tabChanged</Name>
+						<Source><![CDATA[
+        public void tabChanged(int _FromTab, int _ToTab)
+        {
+            super(_FromTab, _ToTab);
+        
+        
+            // Buttons to show in Grid View
+            //EditDetailsButton.visible(TabPageGrid.isActivePage());
+            /* TODO: (Code Upgrade) [Action Pane Rule] Please consider moving all references to the form task override method and remove the control: ListGroup */
+            ListGroup.visible(TabPageGrid.isActivePage());
+        
+            // Buttons to show in Details View
+            /* TODO: (Code Upgrade) [Action Pane Rule] Please consider moving all references to the form task override method and remove the control: EditRecordButton */
+            //EditRecordButton.visible(!TabPageGrid.isActivePage());
+            //ShowGroup.visible(!TabPageGrid.isActivePage());
+        
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>SPYExpressionTrace</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        /// <summary>
+        ///
+        /// </summary>
+        public void clicked()
+        {
+            Args args = new Args(formstr(SPYExpressionTrace));
+            FormRun formRun;
+            args.caller(this);
+            args.record(SPYExpressionTraceTable::find(SPYLeaveApplicationLine.ExpressionTrace));
+
+            formRun = classFactory.formRunClass(args);
+            formRun.init();
+            formRun.run();
+            formRun.wait();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYLeaveApplicationTable</Name>
+			<Table>SPYLeaveApplicationTable</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>AirTicketNeeded</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ApplicationSettled</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ApprovalStatus</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LeaveApplicationCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LeaveSettlementRequired</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>PortalNumber</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Remarks</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>ResumptionInitiated</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ResumptionStatus</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>ServiceResumed</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>UploadText</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WorkflowStatus</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>SPYLeaveApplicationLine</Name>
+			<Table>SPYLeaveApplicationLine</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>ActualEndDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ActualStartDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>EligibleLeaveBalance</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ExpressionTrace</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Hours</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>HRMAbsenceCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LeaveApplication</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>LeaveApplied</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>LeaveBalance</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Remarks</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidFrom</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidTo</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>SPYLeaveApplicationTable</JoinSource>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<ValidTimeStateAutoQuery>DateRange</ValidTimeStateAutoQuery>
+			<ValidTimeStateUpdate>Correction</ValidTimeStateUpdate>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY496</Caption>
+		<DataSource xmlns="">SPYLeaveApplicationTable</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">DetailsTransaction</Pattern>
+		<PatternVersion xmlns="">1.4</PatternVersion>
+		<Style xmlns="">DetailsFormTransaction</Style>
+		<TitleDataSource xmlns="">SPYLeaveApplicationTable</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<WorkflowDataSource xmlns="">SPYLeaveApplicationTable</WorkflowDataSource>
+		<WorkflowEnabled xmlns="">Yes</WorkflowEnabled>
+		<WorkflowType xmlns="">SPYLeaveApplication</WorkflowType>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPaneHeader</Name>
+				<ElementPosition>715827882</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>History</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>ButtonGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYLeaveApplicationWorkflowHistory</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYLeaveApplicationWorkflowHistory</MenuItemName>
+								<MultiSelect>No</MultiSelect>
+								<NeedsRecord>Yes</NeedsRecord>
+								<OpenMode>View</OpenMode>
+							</AxFormControl>
+						</Controls>
+						<DataSource>SPYLeaveApplicationTable</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderHomeTab</Name>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>MaintainGroup</Name>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYLeaveApplicationCancel</Name>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<Visible>No</Visible>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<MenuItemName>SPYLeaveApplicationCancel</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+										<MultiSelect>No</MultiSelect>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SYS316703</Caption>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>ListGroup</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1342177275</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SYS118440</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SPY496</Caption>
+						<DataSource>SPYLeaveApplicationTable</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderHomeTabResumption</Name>
+						<ElementPosition>1610612733</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SPY704</Caption>
+						<DataSource>SPYLeaveApplicationTable</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>LedgerGroup</Name>
+						<ElementPosition>1879048185</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYAbsenceLedger</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>MenuFunctionButton</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Big>Yes</Big>
+								<DataSource>SPYLeaveApplicationTable</DataSource>
+								<MenuItemName>SPYAbsenceLedger</MenuItemName>
+								<NeedsRecord>Yes</NeedsRecord>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS13356</Caption>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>MaintainGroupUpdate</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYLeaveResumptionService</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>MenuFunctionButton</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Big>Yes</Big>
+								<MenuItemName>SPYLeaveResumptionService</MenuItemName>
+								<MenuItemType>Action</MenuItemType>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS23285</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>NavigationList</Name>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<Visible>No</Visible>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl>
+						<Name>NavigationListFilter</Name>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension>
+							<Name>QuickFilterControl</Name>
+							<ExtensionComponents />
+							<ExtensionProperties>
+								<AxFormControlExtensionProperty>
+									<Name>targetControlName</Name>
+									<Type>String</Type>
+									<Value>NavigationListGrid</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>defaultColumnName</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>placeholderText</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+							</ExtensionProperties>
+						</FormControlExtension>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGridControl">
+						<Name>NavigationListGrid</Name>
+						<AllowEdit>No</AllowEdit>
+						<Type>Grid</Type>
+						<WidthMode>SizeToContent</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormStringControl">
+								<Name>SPYLeaveApplicationTable_LeaveApplicationCode1</Name>
+								<Type>String</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>LeaveApplicationCode</DataField>
+								<DataSource>SPYLeaveApplicationTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYLeaveApplicationTable_Worker1</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYLeaveApplicationTable</DataSource>
+								<ReferenceField>Worker</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormComboBoxControl">
+								<Name>SPYLeaveApplicationTable_WorkflowStatus2</Name>
+								<Type>ComboBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>WorkflowStatus</DataField>
+								<DataSource>SPYLeaveApplicationTable</DataSource>
+								<Items />
+							</AxFormControl>
+						</Controls>
+						<MultiSelect>No</MultiSelect>
+						<ShowRowLabels>No</ShowRowLabels>
+						<Style>List</Style>
+					</AxFormControl>
+				</Controls>
+				<FrameType>None</FrameType>
+				<Style>SidePanel</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1431655764</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageDetails</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>HeaderInfo</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>HeaderTitle</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Skip>Yes</Skip>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<ShowLabel>No</ShowLabel>
+										<Style>TitleField</Style>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormGroupControl">
+										<Name>StatusGroup</Name>
+										<AllowEdit>No</AllowEdit>
+										<ExtendedStyle>entityStatus</ExtendedStyle>
+										<Type>Group</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormComboBoxControl">
+												<Name>SPYLeaveApplicationTable_WorkflowStatus</Name>
+												<ElementPosition>1610612733</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<LeftMode>RightEdge</LeftMode>
+												<Skip>Yes</Skip>
+												<Type>ComboBox</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>WorkflowStatus</DataField>
+												<DataSource>SPYLeaveApplicationTable</DataSource>
+												<ShowLabel>No</ShowLabel>
+												<ViewEditMode>View</ViewEditMode>
+												<Items />
+											</AxFormControl>
+										</Controls>
+										<ArrangeMethod>HorizontalRight</ArrangeMethod>
+										<Breakable>No</Breakable>
+										<FrameType>None</FrameType>
+										<ViewEditMode>View</ViewEditMode>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+								<FrameType>None</FrameType>
+								<Style>DetailTitleContainer</Style>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormTabControl">
+								<Name>DetailsTab</Name>
+								<AlignControl>No</AlignControl>
+								<ElementPosition>1610612733</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Tab</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>LineView</Name>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>LineViewTab</Name>
+												<AlignControl>No</AlignControl>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Type>Tab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewHeader</Name>
+														<ElementPosition>858993458</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupDetails</Name>
+																<ElementPosition>613566756</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>Group_LeaveApplicationCode</Name>
+																		<ElementPosition>1073741822</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>LeaveApplicationCode</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>Group_Worker</Name>
+																		<ElementPosition>1610612733</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																		<ReferenceField>Worker</ReferenceField>
+																		<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>GroupDetails_ApprovalStatus</Name>
+																		<Type>ComboBox</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ApprovalStatus</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Details</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupRemarks</Name>
+																<ElementPosition>920350134</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>Group_Remarks</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Remarks</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Remarks</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupAirTicket</Name>
+																<ElementPosition>1227133512</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>Group_AirTicketNeeded</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>AirTicketNeeded</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>AirTicket</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorkflow</Name>
+																<ElementPosition>1533916890</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>Group_WorkflowStatus</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>WorkflowStatus</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Workflow</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupResumption1</Name>
+																<ElementPosition>1840700268</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>GroupResumption1_ResumptionInitiated</Name>
+																		<Type>CheckBox</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ResumptionInitiated</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>Group_ServiceResumed1</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ServiceResumed</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>GroupResumption1_ResumptionStatus</Name>
+																		<Type>ComboBox</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ResumptionStatus</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Resumption</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupSystemUpload</Name>
+																<Type>Group</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>SPYLeaveApplicationTable_UploadText</Name>
+																		<Type>String</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>UploadText</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<Caption>@SPY:SystemUpload</Caption>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupLeaveSettlement</Name>
+																<Type>Group</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>SPYLeaveApplicationTable_LeaveSettlementRequired</Name>
+																		<Type>CheckBox</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>LeaveSettlementRequired</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<Caption>@SPY:LeaveSettlement</Caption>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWebPortal</Name>
+																<Type>Group</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormInt64Control">
+																		<Name>GroupLeaveSettlementCopy1_PortalNumber</Name>
+																		<Type>Int64</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>PortalNumber</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<Caption>@SPY:LeaveSettlement</Caption>
+																<DataGroup>WebPortal</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<Caption>@SPY500</Caption>
+														<FastTabExpanded>Always</FastTabExpanded>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewLines</Name>
+														<ElementPosition>1288490187</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>SizeToAvailable</HeightMode>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormActionPaneControl">
+																<Name>LinesActionPaneStrip</Name>
+																<ElementPosition>1073741822</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>ActionPane</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormActionPaneTabControl">
+																		<Name>LinesActionPaneTab</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ActionPaneTab</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormButtonGroupControl">
+																				<Name>LinesRecordActions</Name>
+																				<ElementPosition>1431655764</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<HeightMode>Auto</HeightMode>
+																				<Type>ButtonGroup</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<WidthMode>Auto</WidthMode>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCommandButtonControl">
+																						<Name>AddLine</Name>
+																						<ElementPosition>1073741822</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Type>CommandButton</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																						<Command>New</Command>
+																						<MultiSelect>Yes</MultiSelect>
+																						<NormalImage>Add</NormalImage>
+																						<Text>@SYS319116</Text>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCommandButtonControl">
+																						<Name>RemoveLine</Name>
+																						<ElementPosition>1610612733</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Type>CommandButton</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																						<Command>DeleteRecord</Command>
+																						<MultiSelect>Yes</MultiSelect>
+																						<NormalImage>Delete</NormalImage>
+																						<SaveRecord>No</SaveRecord>
+																						<Text>@SYS135131</Text>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormMenuFunctionButtonControl">
+																						<Name>SPYExpressionTrace</Name>
+																						<Type>MenuFunctionButton</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<MenuItemName>SPYExpressionTrace</MenuItemName>
+																					</AxFormControl>
+																				</Controls>
+																				<ArrangeMethod>Vertical</ArrangeMethod>
+																			</AxFormControl>
+																		</Controls>
+																		<AlignChild>No</AlignChild>
+																		<AlignChildren>No</AlignChildren>
+																		<ArrangeMethod>Vertical</ArrangeMethod>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<AlignChild>No</AlignChild>
+																<AlignChildren>No</AlignChildren>
+																<ArrangeMethod>Vertical</ArrangeMethod>
+																<Style>Strip</Style>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGridControl">
+																<Name>LinesGrid</Name>
+																<ElementPosition>1610612734</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Grid</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>SPYLeaveApplicationLine_HRMAbsenceCode</Name>
+																		<ElementPosition>429496728</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>HRMAbsenceCode</DataField>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>SPYLeaveApplicationLine_ValidFrom</Name>
+																		<ElementPosition>644245092</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ValidFrom</DataField>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>SPYLeaveApplicationLine_ValidTo</Name>
+																		<ElementPosition>858993456</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ValidTo</DataField>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>SPYLeaveApplicationLine_ActualStartDate</Name>
+																		<ElementPosition>1073741820</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ActualStartDate</DataField>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>SPYLeaveApplicationLine_ActualEndDate</Name>
+																		<ElementPosition>1288490184</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ActualEndDate</DataField>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>SPYLeaveApplicationLine_Hours</Name>
+																		<ElementPosition>1503238548</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Hours</DataField>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																		<NoOfDecimals>-1</NoOfDecimals>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>SPYLeaveApplicationLine_LeaveApplied</Name>
+																		<ElementPosition>1717986912</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>LeaveApplied</DataField>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																		<NoOfDecimals>-1</NoOfDecimals>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>SPYLeaveApplicationLine_LeaveBalance</Name>
+																		<ElementPosition>1932735276</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>LeaveBalance</DataField>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																		<NoOfDecimals>-1</NoOfDecimals>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>leaveBalance</Name>
+																		<ElementPosition>2040109461</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<Visible>No</Visible>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<CacheDataMethod>Yes</CacheDataMethod>
+																		<DataMethod>leaveBalance</DataMethod>
+																		<DataSource>SPYLeaveApplicationLine</DataSource>
+																		<Label>@SPY847</Label>
+																		<NoOfDecimals>-1</NoOfDecimals>
+																	</AxFormControl>
+																</Controls>
+																<DataSource>SPYLeaveApplicationLine</DataSource>
+																<Style>Tabular</Style>
+																<VisibleRows>5</VisibleRows>
+																<VisibleRowsMode>Fixed</VisibleRowsMode>
+															</AxFormControl>
+														</Controls>
+														<Caption>@SPY501</Caption>
+														<FastTabExpanded>Always</FastTabExpanded>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewLineDetails</Name>
+														<ElementPosition>1717986916</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormTabControl">
+																<Name>LineDetailsTabs</Name>
+																<AlignControl>No</AlignControl>
+																<ElementPosition>1431655764</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Tab</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormTabPageControl">
+																		<Name>LineGeneral</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Pattern>FieldsFieldGroups</Pattern>
+																		<PatternVersion>1.1</PatternVersion>
+																		<Type>TabPage</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupAbsenceCode</Name>
+																				<ElementPosition>613566756</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>GroupAbsenceCode_HRMAbsenceCode</Name>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>String</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>HRMAbsenceCode</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>AbsenceCode</DataGroup>
+																				<DataSource>SPYLeaveApplicationLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupDates</Name>
+																				<ElementPosition>920350134</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateControl">
+																						<Name>Group_ValidFrom</Name>
+																						<ElementPosition>715827882</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Date</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>ValidFrom</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateControl">
+																						<Name>Group_ValidTo</Name>
+																						<ElementPosition>1073741823</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Date</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>ValidTo</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateControl">
+																						<Name>Group_ActualStartDate</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Date</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>ActualStartDate</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateControl">
+																						<Name>Group_ActualEndDate</Name>
+																						<ElementPosition>1789569705</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Date</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>ActualEndDate</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Dates</DataGroup>
+																				<DataSource>SPYLeaveApplicationLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupLeaveDetails</Name>
+																				<ElementPosition>1227133512</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>GroupLeaveDetails_LeaveApplied</Name>
+																						<Type>Real</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>LeaveApplied</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>GroupLeaveDetails_LeaveBalance</Name>
+																						<Type>Real</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>LeaveBalance</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>GroupLeaveDetails_EligibleLeaveBalance</Name>
+																						<Type>Real</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>EligibleLeaveBalance</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<Caption>@SYS342058</Caption>
+																				<DataGroup>LeaveDetails</DataGroup>
+																				<DataSource>SPYLeaveApplicationLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupHours</Name>
+																				<ElementPosition>1533916890</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>Group_Hours</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Real</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>Hours</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																						<NoOfDecimals>-1</NoOfDecimals>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Hours</DataGroup>
+																				<DataSource>SPYLeaveApplicationLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupRemarks2</Name>
+																				<ElementPosition>1840700268</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>Group_Remarks2</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>String</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>Remarks</DataField>
+																						<DataSource>SPYLeaveApplicationLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Remarks</DataGroup>
+																				<DataSource>SPYLeaveApplicationLine</DataSource>
+																			</AxFormControl>
+																		</Controls>
+																		<ColumnsMode>Fill</ColumnsMode>
+																		<Caption>@SYS2952</Caption>
+																		<Scrollbars>Auto</Scrollbars>
+																	</AxFormControl>
+																</Controls>
+																<AlignChild>No</AlignChild>
+																<ArrangeMethod>Vertical</ArrangeMethod>
+															</AxFormControl>
+														</Controls>
+														<BottomMargin>0</BottomMargin>
+														<BottomMarginMode>Fixed</BottomMarginMode>
+														<LeftMargin>0</LeftMargin>
+														<LeftMarginMode>Fixed</LeftMarginMode>
+														<RightMargin>0</RightMargin>
+														<RightMarginMode>Fixed</RightMarginMode>
+														<TopMargin>0</TopMargin>
+														<TopMarginMode>Fixed</TopMarginMode>
+														<Caption>@SYS23823</Caption>
+														<FastTabExpanded>No</FastTabExpanded>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>FastTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<LeftMargin>0</LeftMargin>
+										<LeftMarginMode>Fixed</LeftMarginMode>
+										<RightMargin>0</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<PanelStyle>DetailsLine</PanelStyle>
+										<Scrollbars>Auto</Scrollbars>
+										<Style>DetailsFormDetails</Style>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>HeaderView</Name>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>HeaderDetailsTab</Name>
+												<AlignControl>No</AlignControl>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Type>Tab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>HeaderGeneral</Name>
+														<ElementPosition>1431655764</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupDetails1</Name>
+																<ElementPosition>613566756</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>Group_LeaveApplicationCode1</Name>
+																		<ElementPosition>1073741822</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>LeaveApplicationCode</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>Group_Worker1</Name>
+																		<ElementPosition>1610612733</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																		<ReferenceField>Worker</ReferenceField>
+																		<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>GroupDetails1_ApprovalStatus</Name>
+																		<Type>ComboBox</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ApprovalStatus</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Details</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupRemarks1</Name>
+																<ElementPosition>920350134</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>Group_Remarks1</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Remarks</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Remarks</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupAirTicket1</Name>
+																<ElementPosition>1227133512</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>Group_AirTicketNeeded1</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>AirTicketNeeded</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>AirTicket</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorkflow1</Name>
+																<ElementPosition>1533916890</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>Group_WorkflowStatus1</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>WorkflowStatus</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Workflow</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupResumption</Name>
+																<ElementPosition>1840700268</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>GroupResumption_ResumptionInitiated</Name>
+																		<Type>CheckBox</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ResumptionInitiated</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>Group_ServiceResumed</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ServiceResumed</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>GroupResumption_ResumptionStatus</Name>
+																		<Type>ComboBox</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ResumptionStatus</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Resumption</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWebPortal1</Name>
+																<ElementPosition>1840700268</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormInt64Control">
+																		<Name>GroupResumptionCopy1_PortalNumber</Name>
+																		<Type>Int64</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>PortalNumber</DataField>
+																		<DataSource>SPYLeaveApplicationTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>WebPortal</DataGroup>
+																<DataSource>SPYLeaveApplicationTable</DataSource>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<Caption>@SYS2952</Caption>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>FastTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<LeftMargin>0</LeftMargin>
+										<LeftMarginMode>Fixed</LeftMarginMode>
+										<RightMargin>0</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<PanelStyle>DetailsHeader</PanelStyle>
+										<Scrollbars>Auto</Scrollbars>
+										<Style>DetailsFormDetails</Style>
+									</AxFormControl>
+								</Controls>
+								<AlignChild>No</AlignChild>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<ShowTabs>No</ShowTabs>
+							</AxFormControl>
+						</Controls>
+						<PanelStyle>Details</PanelStyle>
+						<Scrollbars>Auto</Scrollbars>
+						<Style>DetailsFormDetails</Style>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageGrid</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1610612733</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GridGroupCopy1</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Pattern>CustomAndQuickFilters</Pattern>
+								<PatternVersion>1.1</PatternVersion>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl>
+										<Name>GridFilter</Name>
+										<FormControlExtension>
+											<Name>QuickFilterControl</Name>
+											<ExtensionComponents />
+											<ExtensionProperties>
+												<AxFormControlExtensionProperty>
+													<Name>targetControlName</Name>
+													<Type>String</Type>
+													<Value>Grid</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>defaultColumnName</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>placeholderText</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+											</ExtensionProperties>
+										</FormControlExtension>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+								<FrameType>None</FrameType>
+								<Style>CustomFilter</Style>
+								<ViewEditMode>Edit</ViewEditMode>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>HeaderGrid</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYLeaveApplicationTable_LeaveApplicationCode</Name>
+										<ElementPosition>715827882</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>LeaveApplicationCode</DataField>
+										<DataSource>SPYLeaveApplicationTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYLeaveApplicationTable_Worker</Name>
+										<ElementPosition>1073741823</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYLeaveApplicationTable</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+										<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>SPYLeaveApplicationTable_WorkflowStatus1</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ComboBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>WorkflowStatus</DataField>
+										<DataSource>SPYLeaveApplicationTable</DataSource>
+										<Items />
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>SPYLeaveApplicationTable_ResumptionInitiated</Name>
+										<Type>CheckBox</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>ResumptionInitiated</DataField>
+										<DataSource>SPYLeaveApplicationTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>SPYLeaveApplicationTable_ServiceResumed</Name>
+										<ElementPosition>1789569705</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>ServiceResumed</DataField>
+										<DataSource>SPYLeaveApplicationTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>SPYLeaveApplicationTable_ApprovalStatus</Name>
+										<Type>ComboBox</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>ApprovalStatus</DataField>
+										<DataSource>SPYLeaveApplicationTable</DataSource>
+										<Items />
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>SPYLeaveApplicationTable_ResumptionStatus</Name>
+										<Type>ComboBox</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>ResumptionStatus</DataField>
+										<DataSource>SPYLeaveApplicationTable</DataSource>
+										<Items />
+									</AxFormControl>
+								</Controls>
+								<DataSource>SPYLeaveApplicationTable</DataSource>
+								<DefaultAction>MainGridDefaultAction</DefaultAction>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCommandButtonControl">
+								<Name>MainGridDefaultAction</Name>
+								<Type>CommandButton</Type>
+								<Visible>No</Visible>
+								<FormControlExtension
+									i:nil="true" />
+								<Command>DetailsView</Command>
+							</AxFormControl>
+						</Controls>
+						<PanelStyle>Grid</PanelStyle>
+						<Scrollbars>Auto</Scrollbars>
+						<Style>DetailsFormGrid</Style>
+						<ViewEditMode>Edit</ViewEditMode>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<ShowTabs>No</ShowTabs>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

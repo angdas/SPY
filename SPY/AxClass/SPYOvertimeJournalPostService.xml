@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYOvertimeJournalPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYOvertimeJournalPostService extends SysOperationServiceBase
+{
+    SPYOvertimeJournalPostContract      contract;
+    RecordInsertList                    overtimeLedgerList;
+    boolean                             callFromPost;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>commitLedger</Name>
+				<Source><![CDATA[
+    private void commitLedger()
+    {
+        overtimeLedgerList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2Ledger</Name>
+				<Source><![CDATA[
+    private void insert2Ledger(SPYOvertimeJournalTable _overtimeJournalTable)
+    {
+        SPYOvertimeJournalTrans     overtimeJournalTrans;
+        SPYOvertimeLedger           overtimeLedger;
+    
+        while select overtimeJournalTrans
+            where overtimeJournalTrans.overtimeJournal == _overtimeJournalTable.RecId
+        {
+            overtimeLedger.overtimeJournalTrans         = overtimeJournalTrans.RecId;
+            overtimeLedger.Worker                       = overtimeJournalTrans.Worker;
+            overtimeLedger.OvertimeDate                 = overtimeJournalTrans.OvertimeDate;
+            overtimeLedger.OvertimeDays                 = overtimeJournalTrans.OvertimeDays;
+            overtimeLedger.OvertimeHours                = overtimeJournalTrans.OvertimeHours;
+            overtimeLedger.OvertimeType                 = overtimeJournalTrans.OvertimeType;
+            overtimeLedger.Txt                          = overtimeJournalTrans.Txt;
+            overtimeLedgerList.add(overtimeLedger);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYOvertimeJournalPostContract _contract)
+    {
+        QueryRun                    overtimeJournalQueryRun;
+        SPYOvertimeJournalTable     overtimeJournalTable;
+    
+        overtimeJournalQueryRun = new QueryRun(_contract.parmOvertimeJournalQuery());
+        overtimeLedgerList = new RecordInsertList(tableNum(SPYOvertimeLedger));
+    
+        try
+        {
+            setPrefix("@SPY863");
+            ttsBegin;
+            callFromPost = true;
+            if(this.validate(_contract))
+            {
+                while(overtimeJournalQueryRun.next())
+                {
+                    overtimeJournalTable = overtimeJournalQueryRun.get(tableNum(SPYOvertimeJournalTable));
+                    if(!overtimeJournalTable.Posted)
+                    {
+                        this.insert2Ledger(overtimeJournalTable);
+                        this.updateOvertimeJournalHeader(overtimeJournalTable);
+                        info(strFmt("@SPY873",overtimeJournalTable.OvertimeJournalCode));
+                    }
+                }
+                this.commitLedger();
+            }
+            else
+                error("@SPY293");
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateOvertimeJournalHeader</Name>
+				<Source><![CDATA[
+    private void updateOvertimeJournalHeader(SPYOvertimeJournalTable _overtimeJournalTable)
+    {
+        SPYOvertimeJournalTable   overtimeJournalTableUpdate = SPYOvertimeJournalTable::find(_overtimeJournalTable.RecId,true);
+    
+        if(overtimeJournalTableUpdate)
+        {
+            overtimeJournalTableUpdate.Posted = true;
+            overtimeJournalTableUpdate.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(SPYOvertimeJournalPostContract _contract)
+    {
+        boolean                     ret = true;
+        QueryRun                    overtimeJournalQueryRun;
+        SPYOvertimeJournalTable     overtimeJournalTable;
+    
+        overtimeJournalQueryRun = new QueryRun(_contract.parmOvertimeJournalQuery());
+        if(!callFromPost)
+            setPrefix("@SPY856");
+        while(overtimeJournalQueryRun.next())
+        {
+            overtimeJournalTable = overtimeJournalQueryRun.get(tableNum(SPYOvertimeJournalTable));
+            if(!overtimeJournalTable.Posted)
+            {
+                if(!this.validateOvertimeJournal(overtimeJournalTable))
+                    ret = checkFailed(strFmt("@SPY859",overtimeJournalTable.OvertimeJournalCode));
+                else
+                {
+                    if(!callFromPost)
+                        info(strFmt("@SPY860",overtimeJournalTable.OvertimeJournalCode));
+                }
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateOvertimeJournal</Name>
+				<Source><![CDATA[
+    private boolean validateOvertimeJournal(SPYOvertimeJournalTable _overtimeJournalTable)
+    {
+        boolean                     ret = true;
+        SPYOvertimeJournalTrans     overtimeJournalTrans;
+        SPYPayrollPeriodLine        payrollPeriodLine;
+    
+        if(_overtimeJournalTable.WorkflowStatus != SPYWorkFlowStatus::Approved)
+            ret = checkFailed(strFmt("@SPY857",_overtimeJournalTable.OvertimeJournalCode));
+        while select overtimeJournalTrans
+            where overtimeJournalTrans.OvertimeJournal == _overtimeJournalTable.RecId
+        {
+            if(!overtimeJournalTrans.Worker)
+                ret = checkFailed(strFmt("@SPY286",overtimeJournalTrans.LineNum));
+            if(!overtimeJournalTrans.OvertimeDate)
+                ret = checkFailed(strFmt("@SPY858",overtimeJournalTrans.LineNum));
+            if(!overtimeJournalTrans.TransDate)
+                ret = checkFailed(strFmt("@SPY288",overtimeJournalTrans.LineNum));
+            select firstOnly payrollPeriodLine
+                where payrollPeriodLine.PeriodStartDate <= overtimeJournalTrans.TransDate &&
+                      payrollPeriodLine.PeriodEndDate >= overtimeJournalTrans.TransDate &&
+                      payrollPeriodLine.PeriodStatus != SPYPayrollPeriodStatus::Open;
+            if(payrollPeriodLine)
+                ret = checkFailed(strFmt("@SPY1154",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,overtimeJournalTrans.TransDate,overtimeJournalTrans.LineNum));
+            select firstOnly payrollPeriodLine
+                where payrollPeriodLine.PeriodStartDate <= overtimeJournalTrans.OvertimeDate &&
+                        payrollPeriodLine.PeriodEndDate >= overtimeJournalTrans.OvertimeDate &&
+                        payrollPeriodLine.PeriodStatus != SPYPayrollPeriodStatus::Open;
+            if(payrollPeriodLine)
+                ret = checkFailed(strFmt("@SPY1155",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,overtimeJournalTrans.OvertimeDate,overtimeJournalTrans.LineNum));
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

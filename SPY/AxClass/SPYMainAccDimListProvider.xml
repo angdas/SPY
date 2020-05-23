@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYMainAccDimListProvider</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SourceDocumentEnumExtensionAttribute(enumStr(MainAccountDimensionListProviderType),MainAccountDimensionListProviderType::Payroll)
+]
+class SPYMainAccDimListProvider extends MainAccountDimensionListProvider
+{
+    LedgerDimensionAccount          account;
+
+    #define.KeySeperator('~')
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>addAccount</Name>
+				<Source><![CDATA[
+    private void addAccount()
+    {
+        MainAccountDimension mainAccountDimension;
+
+        mainAccountDimension = MainAccountDimension::newFromParameters(account,this.parmAccountingRule().parmSide());
+        mainAccountDimensionList.addEnd(mainAccountDimension);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initValues</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Populates the main account dimension list.
+    /// </summary>
+    protected void initValues()
+    {
+        Object                                  sourceDocumentLineItem = accountingRule.parmSourceDocumentLineItem();
+        SPYPayrollSourceDocLineItem             payrollSourceDocLineItem;
+
+        if (sourceDocumentLineItem is SPYPayrollSourceDocLineItem)
+        {
+            payrollSourceDocLineItem = sourceDocumentLineItem as SPYPayrollSourceDocLineItem;
+            account = payrollSourceDocLineItem.parmOffsetAccount();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>populateMainAccountDimensionList</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Populates the main account dimension list.
+    /// </summary>
+    protected void populateMainAccountDimensionList()
+    {
+        //container                           cacheResult;
+        LedgerCacheScope                    ledgerCacheScope;
+        //LedgerPostingType                   journalizingDefLedgerPostingType;
+        LedgerDimensionDefaultAccount       ledgerDimensionDefaultAccount;
+
+        ledgerCacheScope = LedgerCacheScope::JournalizingMainAccDimensionListProvPay;
+
+        //cacheResult = LedgerCache::getValue(ledgerCacheScope, [curext()]);
+
+        //if (cacheResult == conNull())
+        {
+            ledgerDimensionDefaultAccount = account;
+            //LedgerCache::insertValue(ledgerCacheScope, [curext()], [ledgerDimensionDefaultAccount]);
+        }
+        /*
+    else
+    {
+        [ledgerDimensionDefaultAccount] = cacheResult;
+    }*/
+
+        this.addToMainAccDimensionList(ledgerDimensionDefaultAccount);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>clearCache</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Clears main account dimension list cache for payroll.
+    /// </summary>
+    public static void clearCache()
+    {
+        LedgerCache::clearScope(LedgerCacheScope::JournalizingMainAccDimensionListProvPay);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

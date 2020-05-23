@@ -1,0 +1,358 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.HRMAbsenceCode_ID(1)
+    
+    // Data source buffers
+    HRMAbsenceCode m_HRMAbsenceCode;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HRMAbsenceCode'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [HRMAbsenceCode]
+            if(!this.preSaveDataSource(_entityCtx, 'HRMAbsenceCode'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('HRMAbsenceCode');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // inserts/updates data source [HRMAbsenceCode].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [HRMAbsenceCode]
+            if(!this.preSaveDataSource(_entityCtx, 'HRMAbsenceCode'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('HRMAbsenceCode');
+            // deletes data source [HRMAbsenceCode].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HRMAbsenceCode _hRMAbsenceCode, SPYAbsenceCodeEntity _sPYAbsenceCodeEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, backgroundColor), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, backgroundColor), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, description), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, description), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, foreColor), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, foreColor), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, hrmAbsenceCodeGroupId), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, hrmAbsenceCodeGroupId), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, hrmAbsenceCodeId), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, hrmAbsenceCodeId), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriod), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriod), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodActive), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodActive), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodCode), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodCode), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodQty), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodQty), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerie), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerie), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerieActive), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerieActive), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSeriePeriodCode), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSeriePeriodCode), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSeriePeriodQty), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSeriePeriodQty), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerieWorkingdays), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerieWorkingdays), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriod), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriod), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodActive), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodActive), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodCode), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodCode), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodQty), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodQty), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodWorkingdays), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodWorkingdays), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _hRMAbsenceCode, _sPYAbsenceCodeEntity);
+        _hRMAbsenceCode.trackFieldExternallySet(false);
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HRMAbsenceCode_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, HRMAbsenceCode _hRMAbsenceCode, SPYAbsenceCodeEntity _sPYAbsenceCodeEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, backgroundColor), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, backgroundColor), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, description), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, description), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, foreColor), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, foreColor), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, hrmAbsenceCodeGroupId), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, hrmAbsenceCodeGroupId), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, hrmAbsenceCodeId), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, hrmAbsenceCodeId), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriod), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriod), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodActive), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodActive), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodCode), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodCode), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodQty), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodQty), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerie), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerie), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerieActive), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerieActive), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSeriePeriodCode), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSeriePeriodCode), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSeriePeriodQty), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSeriePeriodQty), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerieWorkingdays), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerieWorkingdays), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriod), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriod), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodActive), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodActive), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodCode), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodCode), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodQty), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodQty), false);
+        this.mapDataSourceFieldToEntityField(_hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodWorkingdays), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodWorkingdays), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hRMAbsenceCode, _sPYAbsenceCodeEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYAbsenceCodeEntity.fromViewDataSource(_dataSourceCtx.id(), _hRMAbsenceCode);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HRMAbsenceCode_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #HRMAbsenceCode_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(SPYAbsenceCodeEntity _sPYAbsenceCodeEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, backgroundColor)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, description)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, foreColor)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, hrmAbsenceCodeGroupId)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, hrmAbsenceCodeId)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxDaysPeriod)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodActive)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodCode)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodQty)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxInSerie)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxInSerieActive)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxInSeriePeriodCode)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxInSeriePeriodQty)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxInSerieWorkingdays)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriod)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodActive)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodCode)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodQty)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceCodeEntity.isFieldSet(fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodWorkingdays)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYAbsenceCodeEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #HRMAbsenceCode_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, SPYAbsenceCodeEntity _sPYAbsenceCodeEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, HRMAbsenceCode _hRMAbsenceCode)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, backgroundColor), 'SPYAbsenceCodeEntity.backgroundColor', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, backgroundColor), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, description), 'SPYAbsenceCodeEntity.description', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, description), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, foreColor), 'SPYAbsenceCodeEntity.foreColor', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, foreColor), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, hrmAbsenceCodeGroupId), 'SPYAbsenceCodeEntity.hrmAbsenceCodeGroupId', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, hrmAbsenceCodeGroupId), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, hrmAbsenceCodeId), 'SPYAbsenceCodeEntity.hrmAbsenceCodeId', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, hrmAbsenceCodeId), false/*disallowEditOnCreate*/, true/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriod), 'SPYAbsenceCodeEntity.maxDaysPeriod', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriod), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodActive), 'SPYAbsenceCodeEntity.maxDaysPeriodActive', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodActive), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodCode), 'SPYAbsenceCodeEntity.maxDaysPeriodCode', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodCode), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxDaysPeriodQty), 'SPYAbsenceCodeEntity.maxDaysPeriodQty', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodQty), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerie), 'SPYAbsenceCodeEntity.maxInSerie', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerie), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerieActive), 'SPYAbsenceCodeEntity.maxInSerieActive', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerieActive), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSeriePeriodCode), 'SPYAbsenceCodeEntity.maxInSeriePeriodCode', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSeriePeriodCode), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSeriePeriodQty), 'SPYAbsenceCodeEntity.maxInSeriePeriodQty', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSeriePeriodQty), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxInSerieWorkingdays), 'SPYAbsenceCodeEntity.maxInSerieWorkingdays', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerieWorkingdays), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriod), 'SPYAbsenceCodeEntity.maxSeriesPeriod', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriod), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodActive), 'SPYAbsenceCodeEntity.maxSeriesPeriodActive', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodActive), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodCode), 'SPYAbsenceCodeEntity.maxSeriesPeriodCode', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodCode), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodQty), 'SPYAbsenceCodeEntity.maxSeriesPeriodQty', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodQty), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceCodeEntity, fieldnum(SPYAbsenceCodeEntity, maxSeriesPeriodWorkingdays), 'SPYAbsenceCodeEntity.maxSeriesPeriodWorkingdays', _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodWorkingdays), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYAbsenceCodeEntity, _dataSourceCtx, _hRMAbsenceCode) ? rtrn : false;
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #HRMAbsenceCode_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, HRMAbsenceCode _hRMAbsenceCode, HRMAbsenceCode _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, backgroundColor), _matchingRecord, fieldnum(HRMAbsenceCode, backgroundColor), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, description), _matchingRecord, fieldnum(HRMAbsenceCode, description), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, foreColor), _matchingRecord, fieldnum(HRMAbsenceCode, foreColor), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, hrmAbsenceCodeGroupId), _matchingRecord, fieldnum(HRMAbsenceCode, hrmAbsenceCodeGroupId), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, hrmAbsenceCodeId), _matchingRecord, fieldnum(HRMAbsenceCode, hrmAbsenceCodeId), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriod), _matchingRecord, fieldnum(HRMAbsenceCode, maxDaysPeriod), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodActive), _matchingRecord, fieldnum(HRMAbsenceCode, maxDaysPeriodActive), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodCode), _matchingRecord, fieldnum(HRMAbsenceCode, maxDaysPeriodCode), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxDaysPeriodQty), _matchingRecord, fieldnum(HRMAbsenceCode, maxDaysPeriodQty), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerie), _matchingRecord, fieldnum(HRMAbsenceCode, maxInSerie), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerieActive), _matchingRecord, fieldnum(HRMAbsenceCode, maxInSerieActive), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSeriePeriodCode), _matchingRecord, fieldnum(HRMAbsenceCode, maxInSeriePeriodCode), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSeriePeriodQty), _matchingRecord, fieldnum(HRMAbsenceCode, maxInSeriePeriodQty), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxInSerieWorkingdays), _matchingRecord, fieldnum(HRMAbsenceCode, maxInSerieWorkingdays), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriod), _matchingRecord, fieldnum(HRMAbsenceCode, maxSeriesPeriod), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodActive), _matchingRecord, fieldnum(HRMAbsenceCode, maxSeriesPeriodActive), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodCode), _matchingRecord, fieldnum(HRMAbsenceCode, maxSeriesPeriodCode), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodQty), _matchingRecord, fieldnum(HRMAbsenceCode, maxSeriesPeriodQty), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hRMAbsenceCode, fieldnum(HRMAbsenceCode, maxSeriesPeriodWorkingdays), _matchingRecord, fieldnum(HRMAbsenceCode, maxSeriesPeriodWorkingdays), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYAbsenceCodeEntity), _hRMAbsenceCode, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HRMAbsenceCode_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'HRMAbsenceCode', m_HRMAbsenceCode, this.getDataSourceId('HRMAbsenceCode'), this.getDataSourceId('HRMAbsenceCode'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private HRMAbsenceCode LookForUniqueKeyMatch_DS1(SPYAbsenceCodeEntity _sPYAbsenceCodeEntity, HRMAbsenceCode _hRMAbsenceCode)
+    {
+        HRMAbsenceCode hRMAbsenceCode_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                hRMAbsenceCode_
+        where
+            hRMAbsenceCode_.hrmAbsenceCodeId == _hRMAbsenceCode.hrmAbsenceCodeId
+        ;
+        
+        if (hRMAbsenceCode_)
+        {
+            return hRMAbsenceCode_;
+        }
+        
+        return hRMAbsenceCode_;
+    }
+
+}
+

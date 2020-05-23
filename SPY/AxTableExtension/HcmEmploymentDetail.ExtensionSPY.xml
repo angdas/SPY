@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTableExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>HcmEmploymentDetail.ExtensionSPY</Name>
+	<FieldGroupExtensions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>SPYAbsence</Name>
+			<Label>@SYS3414</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYAbsenceConfig</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SPYAirTicket</Name>
+			<Label>@SPY749</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYAirTicketFromCity</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYAirTicketToCity</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYAirClass</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SPYCostDistribution</Name>
+			<Label>@SPY1271</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYCostDistributionBasis</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SPYDetails</Name>
+			<Label>@SPY246</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYWorkerGroupCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SPYPayroll</Name>
+			<Label>@SPY2</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYPayrollDisbursementMode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYDefaultPayrollCurrency</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYDefaultPayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SPYSocialSecurity</Name>
+			<Label>@SPY787</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYSocialSecurity</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SPYWorkerSponsor</Name>
+			<Label>@SPY1284</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYWorkerSponsor</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SPYWorkingHour</Name>
+			<Label>@SPY886</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYPlannedWorkingHourSource</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYTimesheetProcessSource</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SPYBenefit</Name>
+			<Label>@SPY46</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYBenefitPolicy</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<FieldModifications />
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYAbsenceConfig</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYAbsenceConfigRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYAirClass</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYAirClassRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>SPYAirTicketCount</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<Label>@SPY781</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYAirTicketFromCity</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYLogisticsAddressCityRecId</ExtendedDataType>
+			<Label>@SPY747</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYAirTicketToCity</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYLogisticsAddressCityRecId</ExtendedDataType>
+			<Label>@SPY748</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>SPYCostDistributionBasis</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<EnumType>SPYCostDistributionBasis</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>SPYDefaultPayrollCurrency</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>CurrencyCode</ExtendedDataType>
+			<HelpText>@SPY1662</HelpText>
+			<Label>@SPY1663</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYDefaultPayrollPeriod</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYPayrollPeriodRecId</ExtendedDataType>
+			<HelpText>@SPY1661</HelpText>
+			<Label>@SPY1660</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>SPYOvertimeEnabled</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<HelpText>@SPY1087</HelpText>
+			<Label>@SPY1086</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>SPYPayrollDisbursementMode</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<EnumType>SPYPayrollDisbursementMode</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYSocialSecurity</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYSocialSecurityRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>SPYWorkerGroupCode</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYWorkerGroupCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYWorkerSponsor</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYWorkerSponsorRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>SPYPlannedWorkingHourSource</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<EnumType>SPYPlannedWorkingHourSource</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>SPYTimesheetProcessSource</Name>
+			<EnumType>SPYTimesheetProcessSource</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYBenefitPolicy</Name>
+			<ExtendedDataType>SPYBenefitPolicyRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<Indexes />
+	<Mappings />
+	<PropertyModifications />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYAbsenceConfigTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYAbsenceConfigTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYAbsenceConfig</Name>
+					<Field>SPYAbsenceConfig</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYAirClass</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYAirClass</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYAirClass</Name>
+					<Field>SPYAirClass</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYLogisticsAddresssCityFrom</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>LogisticsAddressCity</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>FromCity</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYAirTicketFromCity</Name>
+					<Field>SPYAirTicketFromCity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYLogisticsAddresssCityTo</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>LogisticsAddressCity</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>ToCity</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYAirTicketToCity</Name>
+					<Field>SPYAirTicketToCity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollPeriod</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollPeriod</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYDefaultPayrollPeriod</Name>
+					<Field>SPYDefaultPayrollPeriod</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYSocialSecurityTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYSocialSecurityTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYSocialSecurity</Name>
+					<Field>SPYSocialSecurity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYWorkerSponsorTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYWorkerSponsorTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Composition</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYWorkerSponsor</Name>
+					<Field>SPYWorkerSponsor</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYWorkerGroupTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYWorkerGroupTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYWorkerGroupCode</Name>
+					<Field>SPYWorkerGroupCode</Field>
+					<RelatedField>WorkerGroupCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYDefaultPayrollCurrency</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>Currency</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYDefaultPayrollCurrency</Name>
+					<Field>SPYDefaultPayrollCurrency</Field>
+					<RelatedField>CurrencyCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYBenefitPolicyTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYBenefitPolicyTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYBenefitPolicy</Name>
+					<Field>SPYBenefitPolicy</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+</AxTableExtension>

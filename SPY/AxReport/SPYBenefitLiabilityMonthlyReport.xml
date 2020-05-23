@@ -1,0 +1,1445 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxReport xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYBenefitLiabilityMonthlyReport</Name>
+	<Title>Benefit liability monthly report</Title>
+	<DataMethods />
+	<DataSets>
+		<AxReportDataSet xmlns="">
+			<Name>SPYBenefitLiabilityMonthlyDS</Name>
+			<DataSourceType>ReportDataProvider</DataSourceType>
+			<Query>SELECT * FROM SPYBenefitLiabilityMonthlyDP.SPYBenefitLiabilityMonthlyTmp</Query>
+			<FieldGroups />
+			<Fields>
+				<AxReportDataSetField>
+					<Name>Adjustment</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.Adjustment</Alias>
+					<Caption>Leave adjustment</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>ClosingBalance</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.ClosingBalance</Alias>
+					<Caption>Closing balance</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>DaysTaken</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.DaysTaken</Alias>
+					<Caption>Days taken</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Description</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.Description</Alias>
+					<Caption>Benefit description</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>EmployeeName</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.EmployeeName</Alias>
+					<Caption>Employee name</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Entitlement</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.Entitlement</Alias>
+					<Caption>Monthly entitlement</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Liabiility</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.Liabiility</Alias>
+					<Caption>Leave liability</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>OpeningBalance</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.OpeningBalance</Alias>
+					<Caption>Opening balance</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PayrollPeriod</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.PayrollPeriod</Alias>
+					<Caption>Payroll period description</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Worker</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.Worker</Alias>
+					<Caption>@SYS305602</Caption>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>createdTransactionId</Name>
+					<Alias>SPYBenefitLiabilityMonthlyTmp.1.createdTransactionId</Alias>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+			</Fields>
+			<Parameters>
+				<AxReportDataSetParameter>
+					<Name>AX_PartitionKey</Name>
+					<Alias>AX_PartitionKey</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_PartitionKey</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_CompanyName</Name>
+					<Alias>AX_CompanyName</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_CompanyName</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_UserContext</Name>
+					<Alias>AX_UserContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_UserContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RenderingCulture</Name>
+					<Alias>AX_RenderingCulture</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RenderingCulture</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_ReportContext</Name>
+					<Alias>AX_ReportContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_ReportContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RdpPreProcessedId</Name>
+					<Alias>AX_RdpPreProcessedId</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RdpPreProcessedId</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>BenefitCode</Name>
+					<Alias>BenefitCode</Alias>
+					<DataType>System.String</DataType>
+					<MultiValue>true</MultiValue>
+					<Parameter>BenefitCode</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>PayrollPeriodLineFrom</Name>
+					<Alias>PayrollPeriodLineFrom</Alias>
+					<DataType>System.Int64</DataType>
+					<Parameter>PayrollPeriodLineFrom</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>SPYBenefitLiabilityMo_DynamicParameter</Name>
+					<Alias>SPYBenefitLiabilityMo_DynamicParameter</Alias>
+					<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+					<Parameter>SPYBenefitLiabilityMo_DynamicParameter</Parameter>
+				</AxReportDataSetParameter>
+			</Parameters>
+		</AxReportDataSet>
+	</DataSets>
+	<DefaultParameterGroup>
+		<Name xmlns="">Parameters</Name>
+		<ReportParameterBases xmlns="">
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_PartitionKey</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_CompanyName</Name>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_UserContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RenderingCulture</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_ReportContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RdpPreProcessedId</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>PayrollPeriodLineFrom</Name>
+				<DataType>System.Int64</DataType>
+				<PromptString>@SPY635</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>BenefitCode</Name>
+				<MultiValue>true</MultiValue>
+				<PromptString>@SPY637</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>SPYBenefitLiabilityMo_DynamicParameter</Name>
+				<AOTQuery>SPYHcmWorkerLookup</AOTQuery>
+				<AllowBlank>true</AllowBlank>
+				<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+		</ReportParameterBases>
+	</DefaultParameterGroup>
+	<Designs>
+		<AxReportDesign xmlns=""
+			i:type="AxReportPrecisionDesign">
+			<Name>Report</Name>
+			<Text>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2008/01/reportdefinition"&gt;
+  &lt;DataSources&gt;
+    &lt;DataSource Name="AutoGen__ReportDataProvider"&gt;
+      &lt;ConnectionProperties&gt;
+        &lt;DataProvider&gt;AXREPORTDATAPROVIDER&lt;/DataProvider&gt;
+        &lt;ConnectString /&gt;
+        &lt;IntegratedSecurity&gt;true&lt;/IntegratedSecurity&gt;
+      &lt;/ConnectionProperties&gt;
+      &lt;rd:DataSourceID&gt;2f0a1635-77c8-4763-96cd-8894add90a55&lt;/rd:DataSourceID&gt;
+    &lt;/DataSource&gt;
+  &lt;/DataSources&gt;
+  &lt;DataSets&gt;
+    &lt;DataSet Name="SPYBenefitLiabilityMonthlyDS"&gt;
+      &lt;Fields&gt;
+        &lt;Field Name="Adjustment"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.Adjustment&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Double&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="ClosingBalance"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.ClosingBalance&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Double&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="DaysTaken"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.DaysTaken&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Double&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="Description"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.Description&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.String&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="EmployeeName"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.EmployeeName&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.String&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="Entitlement"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.Entitlement&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Double&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="Liabiility"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.Liabiility&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Double&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="OpeningBalance"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.OpeningBalance&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Double&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="PayrollPeriod"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.PayrollPeriod&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.String&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="Worker"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.Worker&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Int64&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="createdTransactionId"&gt;
+          &lt;DataField&gt;SPYBenefitLiabilityMonthlyTmp.1.createdTransactionId&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Int64&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+      &lt;/Fields&gt;
+      &lt;Query&gt;
+        &lt;DataSourceName&gt;AutoGen__ReportDataProvider&lt;/DataSourceName&gt;
+        &lt;CommandText&gt;SELECT * FROM SPYBenefitLiabilityMonthlyDP.SPYBenefitLiabilityMonthlyTmp&lt;/CommandText&gt;
+        &lt;QueryParameters&gt;
+          &lt;QueryParameter Name="AX_PartitionKey"&gt;
+            &lt;Value&gt;=Parameters!AX_PartitionKey.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_CompanyName"&gt;
+            &lt;Value&gt;=Parameters!AX_CompanyName.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_UserContext"&gt;
+            &lt;Value&gt;=Parameters!AX_UserContext.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_RenderingCulture"&gt;
+            &lt;Value&gt;=Parameters!AX_RenderingCulture.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_ReportContext"&gt;
+            &lt;Value&gt;=Parameters!AX_ReportContext.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_RdpPreProcessedId"&gt;
+            &lt;Value&gt;=Parameters!AX_RdpPreProcessedId.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="BenefitCode"&gt;
+            &lt;Value&gt;=Parameters!BenefitCode.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="PayrollPeriodLineFrom"&gt;
+            &lt;Value&gt;=Parameters!PayrollPeriodLineFrom.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="SPYBenefitLiabilityMo_DynamicParameter"&gt;
+            &lt;Value&gt;=Parameters!SPYBenefitLiabilityMo_DynamicParameter.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+        &lt;/QueryParameters&gt;
+        &lt;rd:UseGenericDesigner&gt;true&lt;/rd:UseGenericDesigner&gt;
+      &lt;/Query&gt;
+      &lt;rd:DataSetInfo&gt;
+        &lt;rd:DataSetName&gt;SPYBenefitLiabilityMonthlyDS&lt;/rd:DataSetName&gt;
+        &lt;rd:TableName&gt;Fields&lt;/rd:TableName&gt;
+        &lt;rd:TableAdapterFillMethod&gt;Fill&lt;/rd:TableAdapterFillMethod&gt;
+        &lt;rd:TableAdapterGetDataMethod&gt;GetData&lt;/rd:TableAdapterGetDataMethod&gt;
+        &lt;rd:TableAdapterName&gt;FieldsTableAdapter&lt;/rd:TableAdapterName&gt;
+      &lt;/rd:DataSetInfo&gt;
+    &lt;/DataSet&gt;
+  &lt;/DataSets&gt;
+  &lt;Body&gt;
+    &lt;ReportItems&gt;
+      &lt;Tablix Name="Tablix1"&gt;
+        &lt;TablixBody&gt;
+          &lt;TablixColumns&gt;
+            &lt;TablixColumn&gt;
+              &lt;Width&gt;3.77569in&lt;/Width&gt;
+            &lt;/TablixColumn&gt;
+            &lt;TablixColumn&gt;
+              &lt;Width&gt;1.75902in&lt;/Width&gt;
+            &lt;/TablixColumn&gt;
+            &lt;TablixColumn&gt;
+              &lt;Width&gt;1.14931in&lt;/Width&gt;
+            &lt;/TablixColumn&gt;
+            &lt;TablixColumn&gt;
+              &lt;Width&gt;0.78472in&lt;/Width&gt;
+            &lt;/TablixColumn&gt;
+            &lt;TablixColumn&gt;
+              &lt;Width&gt;0.77431in&lt;/Width&gt;
+            &lt;/TablixColumn&gt;
+            &lt;TablixColumn&gt;
+              &lt;Width&gt;1.04514in&lt;/Width&gt;
+            &lt;/TablixColumn&gt;
+            &lt;TablixColumn&gt;
+              &lt;Width&gt;1.71181in&lt;/Width&gt;
+            &lt;/TablixColumn&gt;
+          &lt;/TablixColumns&gt;
+          &lt;TablixRows&gt;
+            &lt;TablixRow&gt;
+              &lt;Height&gt;0.25in&lt;/Height&gt;
+              &lt;TablixCells&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Textbox1"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;Employee Name&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                                &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style /&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Textbox1&lt;/rd:DefaultName&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Textbox2"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;Benefit Description&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                                &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style /&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Textbox2&lt;/rd:DefaultName&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Textbox3"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;Opening Balance&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                                &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Textbox3&lt;/rd:DefaultName&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Textbox5"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;Entitlement&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                                &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Textbox5&lt;/rd:DefaultName&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Textbox7"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;Days Taken&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                                &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Textbox7&lt;/rd:DefaultName&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Textbox9"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;Closing Balance&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                                &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Textbox9&lt;/rd:DefaultName&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Textbox11"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;Liabiility&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                                &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Textbox11&lt;/rd:DefaultName&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+              &lt;/TablixCells&gt;
+            &lt;/TablixRow&gt;
+            &lt;TablixRow&gt;
+              &lt;Height&gt;0.25in&lt;/Height&gt;
+              &lt;TablixCells&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="EmployeeName"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;=Fields!EmployeeName.Value&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style /&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;EmployeeName&lt;/rd:DefaultName&gt;
+                      &lt;CustomProperties&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXDataType&lt;/Name&gt;
+                          &lt;Value&gt;String&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.EmployeeName&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.EmployeeName&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.EmployeeName&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                      &lt;/CustomProperties&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Description"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;=Fields!Description.Value&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style /&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Description&lt;/rd:DefaultName&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="OpeningBalance"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;=Fields!OpeningBalance.Value&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;OpeningBalance&lt;/rd:DefaultName&gt;
+                      &lt;CustomProperties&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXDataType&lt;/Name&gt;
+                          &lt;Value&gt;Float&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.OpeningBalance&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.OpeningBalance&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.OpeningBalance&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                      &lt;/CustomProperties&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Entitlement"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;=Fields!Entitlement.Value&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Entitlement&lt;/rd:DefaultName&gt;
+                      &lt;CustomProperties&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXDataType&lt;/Name&gt;
+                          &lt;Value&gt;Float&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.Entitlement&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.Entitlement&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.Entitlement&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                      &lt;/CustomProperties&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="DaysTaken"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;=Fields!DaysTaken.Value&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;DaysTaken&lt;/rd:DefaultName&gt;
+                      &lt;CustomProperties&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXDataType&lt;/Name&gt;
+                          &lt;Value&gt;Float&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.DaysTaken&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.DaysTaken&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.DaysTaken&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                      &lt;/CustomProperties&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="ClosingBalance"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;=Fields!ClosingBalance.Value&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;ClosingBalance&lt;/rd:DefaultName&gt;
+                      &lt;CustomProperties&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXDataType&lt;/Name&gt;
+                          &lt;Value&gt;Float&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.ClosingBalance&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.ClosingBalance&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.ClosingBalance&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                      &lt;/CustomProperties&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="Liabiility"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;=Fields!Liabiility.Value&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;Liabiility&lt;/rd:DefaultName&gt;
+                      &lt;CustomProperties&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXDataType&lt;/Name&gt;
+                          &lt;Value&gt;Float&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.Liabiility&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.Liabiility&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                          &lt;Value&gt;SPYBenefitLiabilityMonthlyTmp.Liabiility&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                      &lt;/CustomProperties&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Color&gt;LightGrey&lt;/Color&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+              &lt;/TablixCells&gt;
+            &lt;/TablixRow&gt;
+          &lt;/TablixRows&gt;
+        &lt;/TablixBody&gt;
+        &lt;TablixColumnHierarchy&gt;
+          &lt;TablixMembers&gt;
+            &lt;TablixMember /&gt;
+            &lt;TablixMember /&gt;
+            &lt;TablixMember /&gt;
+            &lt;TablixMember /&gt;
+            &lt;TablixMember /&gt;
+            &lt;TablixMember /&gt;
+            &lt;TablixMember /&gt;
+          &lt;/TablixMembers&gt;
+        &lt;/TablixColumnHierarchy&gt;
+        &lt;TablixRowHierarchy&gt;
+          &lt;TablixMembers&gt;
+            &lt;TablixMember&gt;
+              &lt;KeepWithGroup&gt;After&lt;/KeepWithGroup&gt;
+            &lt;/TablixMember&gt;
+            &lt;TablixMember&gt;
+              &lt;Group Name="Details" /&gt;
+            &lt;/TablixMember&gt;
+          &lt;/TablixMembers&gt;
+        &lt;/TablixRowHierarchy&gt;
+        &lt;DataSetName&gt;SPYBenefitLiabilityMonthlyDS&lt;/DataSetName&gt;
+        &lt;SortExpressions&gt;
+          &lt;SortExpression&gt;
+            &lt;Value&gt;=Fields!EmployeeName.Value&lt;/Value&gt;
+          &lt;/SortExpression&gt;
+        &lt;/SortExpressions&gt;
+        &lt;Top&gt;0.33334in&lt;/Top&gt;
+        &lt;Height&gt;0.5in&lt;/Height&gt;
+        &lt;Width&gt;11in&lt;/Width&gt;
+        &lt;Style&gt;
+          &lt;Border&gt;
+            &lt;Style&gt;None&lt;/Style&gt;
+          &lt;/Border&gt;
+          &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+          &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+        &lt;/Style&gt;
+      &lt;/Tablix&gt;
+      &lt;Textbox Name="PayrollPeriod"&gt;
+        &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+        &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+        &lt;Paragraphs&gt;
+          &lt;Paragraph&gt;
+            &lt;TextRuns&gt;
+              &lt;TextRun&gt;
+                &lt;Value /&gt;
+                &lt;Style&gt;
+                  &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                  &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                &lt;/Style&gt;
+              &lt;/TextRun&gt;
+            &lt;/TextRuns&gt;
+            &lt;Style /&gt;
+          &lt;/Paragraph&gt;
+        &lt;/Paragraphs&gt;
+        &lt;rd:DefaultName&gt;PayrollPeriod&lt;/rd:DefaultName&gt;
+        &lt;Top&gt;0.05556in&lt;/Top&gt;
+        &lt;Left&gt;1.16667in&lt;/Left&gt;
+        &lt;Height&gt;0.25in&lt;/Height&gt;
+        &lt;Width&gt;2.57292in&lt;/Width&gt;
+        &lt;ZIndex&gt;1&lt;/ZIndex&gt;
+        &lt;Style&gt;
+          &lt;Border&gt;
+            &lt;Style&gt;None&lt;/Style&gt;
+          &lt;/Border&gt;
+          &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+          &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+          &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+          &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+        &lt;/Style&gt;
+      &lt;/Textbox&gt;
+      &lt;Textbox Name="Textbox4"&gt;
+        &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+        &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+        &lt;Paragraphs&gt;
+          &lt;Paragraph&gt;
+            &lt;TextRuns&gt;
+              &lt;TextRun&gt;
+                &lt;Value&gt;Payroll Period Line :&lt;/Value&gt;
+                &lt;Style&gt;
+                  &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                  &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                  &lt;FontWeight&gt;ExtraBold&lt;/FontWeight&gt;
+                &lt;/Style&gt;
+              &lt;/TextRun&gt;
+            &lt;/TextRuns&gt;
+            &lt;Style /&gt;
+          &lt;/Paragraph&gt;
+        &lt;/Paragraphs&gt;
+        &lt;rd:DefaultName&gt;Textbox4&lt;/rd:DefaultName&gt;
+        &lt;Top&gt;0.05555in&lt;/Top&gt;
+        &lt;Height&gt;0.25in&lt;/Height&gt;
+        &lt;Width&gt;1.16667in&lt;/Width&gt;
+        &lt;ZIndex&gt;2&lt;/ZIndex&gt;
+        &lt;Style&gt;
+          &lt;Border&gt;
+            &lt;Style&gt;None&lt;/Style&gt;
+          &lt;/Border&gt;
+          &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+          &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+          &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+          &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+        &lt;/Style&gt;
+      &lt;/Textbox&gt;
+    &lt;/ReportItems&gt;
+    &lt;Height&gt;0.88in&lt;/Height&gt;
+    &lt;Style&gt;
+      &lt;TopBorder&gt;
+        &lt;Color&gt;Black&lt;/Color&gt;
+        &lt;Style&gt;None&lt;/Style&gt;
+        &lt;Width&gt;1pt&lt;/Width&gt;
+      &lt;/TopBorder&gt;
+      &lt;BottomBorder&gt;
+        &lt;Color&gt;Black&lt;/Color&gt;
+        &lt;Style&gt;None&lt;/Style&gt;
+        &lt;Width&gt;1pt&lt;/Width&gt;
+      &lt;/BottomBorder&gt;
+      &lt;LeftBorder&gt;
+        &lt;Color&gt;Black&lt;/Color&gt;
+        &lt;Style&gt;None&lt;/Style&gt;
+        &lt;Width&gt;1pt&lt;/Width&gt;
+      &lt;/LeftBorder&gt;
+      &lt;RightBorder&gt;
+        &lt;Color&gt;Black&lt;/Color&gt;
+        &lt;Style&gt;None&lt;/Style&gt;
+        &lt;Width&gt;1pt&lt;/Width&gt;
+      &lt;/RightBorder&gt;
+    &lt;/Style&gt;
+  &lt;/Body&gt;
+  &lt;ReportParameters&gt;
+    &lt;ReportParameter Name="AX_PartitionKey"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_PartitionKey&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_UserContext"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_UserContext&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_CompanyName"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;DefaultValue&gt;
+        &lt;Values&gt;
+          &lt;Value&gt;=Microsoft.Dynamics.Framework.Reports.BuiltInMethods.GetUserCompany(Parameters!AX_UserContext.Value)&lt;/Value&gt;
+        &lt;/Values&gt;
+      &lt;/DefaultValue&gt;
+      &lt;Prompt&gt;AX_CompanyName&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_RenderingCulture"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_RenderingCulture&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_ReportContext"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_ReportContext&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+      &lt;UsedInQuery&gt;True&lt;/UsedInQuery&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_RdpPreProcessedId"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_RdpPreProcessedId&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="PayrollPeriodLineFrom"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Prompt&gt;@SPY635&lt;/Prompt&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="BenefitCode"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Prompt&gt;@SPY637&lt;/Prompt&gt;
+      &lt;MultiValue&gt;true&lt;/MultiValue&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="SPYBenefitLiabilityMo_DynamicParameter"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;SPYBenefitLiabilityMo_DynamicParameter&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+  &lt;/ReportParameters&gt;
+  &lt;Width&gt;11.01876in&lt;/Width&gt;
+  &lt;Page&gt;
+    &lt;PageHeader&gt;
+      &lt;Height&gt;0.48503in&lt;/Height&gt;
+      &lt;PrintOnFirstPage&gt;true&lt;/PrintOnFirstPage&gt;
+      &lt;PrintOnLastPage&gt;true&lt;/PrintOnLastPage&gt;
+      &lt;ReportItems&gt;
+        &lt;Textbox Name="Textbox_24"&gt;
+          &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+          &lt;CanShrink&gt;true&lt;/CanShrink&gt;
+          &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+          &lt;Paragraphs&gt;
+            &lt;Paragraph&gt;
+              &lt;TextRuns&gt;
+                &lt;TextRun&gt;
+                  &lt;Value&gt;=System.String.Format(Labels!@SYS182566, "" &amp;amp; Globals!PageNumber &amp;amp; "", "" &amp;amp; Globals!TotalPages &amp;amp; "")&lt;/Value&gt;
+                  &lt;Style&gt;
+                    &lt;FontStyle&gt;Normal&lt;/FontStyle&gt;
+                    &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                    &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                    &lt;FontWeight&gt;Normal&lt;/FontWeight&gt;
+                    &lt;TextDecoration&gt;None&lt;/TextDecoration&gt;
+                  &lt;/Style&gt;
+                &lt;/TextRun&gt;
+              &lt;/TextRuns&gt;
+              &lt;Style&gt;
+                &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+              &lt;/Style&gt;
+            &lt;/Paragraph&gt;
+          &lt;/Paragraphs&gt;
+          &lt;Left&gt;6in&lt;/Left&gt;
+          &lt;Height&gt;0.16168in&lt;/Height&gt;
+          &lt;Width&gt;5in&lt;/Width&gt;
+          &lt;Style&gt;
+            &lt;TopBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/TopBorder&gt;
+            &lt;BottomBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/BottomBorder&gt;
+            &lt;LeftBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/LeftBorder&gt;
+            &lt;RightBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/RightBorder&gt;
+          &lt;/Style&gt;
+        &lt;/Textbox&gt;
+        &lt;Textbox Name="Textbox_23"&gt;
+          &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+          &lt;CanShrink&gt;true&lt;/CanShrink&gt;
+          &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+          &lt;Paragraphs&gt;
+            &lt;Paragraph&gt;
+              &lt;TextRuns&gt;
+                &lt;TextRun&gt;
+                  &lt;Value&gt;=Microsoft.Dynamics.Framework.Reports.DataMethodUtility.PostDataMethodEvaluation(Microsoft.Dynamics.Framework.Reports.DataMethodUtility.UpdateAxContextPartition(Parameters!AX_CompanyName.Value, Parameters!AX_UserContext.Value, Parameters!AX_RenderingCulture.Value, Parameters!AX_PartitionKey.Value),Microsoft.Dynamics.Framework.Reports.DataMethodUtility.ConvertUtcToAxUserTimeZoneForUser(Parameters!AX_CompanyName.Value, Parameters!AX_UserContext.Value, System.DateTime.UtcNow, "d", Parameters!AX_RenderingCulture.Value)) &amp;amp; vbCrLf &amp;amp; Microsoft.Dynamics.Framework.Reports.DataMethodUtility.PostDataMethodEvaluation(Microsoft.Dynamics.Framework.Reports.DataMethodUtility.UpdateAxContextPartition(Parameters!AX_CompanyName.Value, Parameters!AX_UserContext.Value, Parameters!AX_RenderingCulture.Value, Parameters!AX_PartitionKey.Value),Microsoft.Dynamics.Framework.Reports.DataMethodUtility.ConvertUtcToAxUserTimeZoneForUser(Parameters!AX_CompanyName.Value, Parameters!AX_UserContext.Value, System.DateTime.UtcNow, "t", Parameters!AX_RenderingCulture.Value))&lt;/Value&gt;
+                  &lt;Style&gt;
+                    &lt;FontStyle&gt;Normal&lt;/FontStyle&gt;
+                    &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                    &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                    &lt;FontWeight&gt;Normal&lt;/FontWeight&gt;
+                    &lt;TextDecoration&gt;None&lt;/TextDecoration&gt;
+                  &lt;/Style&gt;
+                &lt;/TextRun&gt;
+              &lt;/TextRuns&gt;
+              &lt;Style&gt;
+                &lt;TextAlign&gt;Right&lt;/TextAlign&gt;
+              &lt;/Style&gt;
+            &lt;/Paragraph&gt;
+          &lt;/Paragraphs&gt;
+          &lt;Top&gt;0.16168in&lt;/Top&gt;
+          &lt;Left&gt;6in&lt;/Left&gt;
+          &lt;Height&gt;0.32335in&lt;/Height&gt;
+          &lt;Width&gt;5in&lt;/Width&gt;
+          &lt;ZIndex&gt;1&lt;/ZIndex&gt;
+          &lt;Style&gt;
+            &lt;TopBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/TopBorder&gt;
+            &lt;BottomBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/BottomBorder&gt;
+            &lt;LeftBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/LeftBorder&gt;
+            &lt;RightBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/RightBorder&gt;
+          &lt;/Style&gt;
+        &lt;/Textbox&gt;
+        &lt;Textbox Name="Textbox_22"&gt;
+          &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+          &lt;CanShrink&gt;true&lt;/CanShrink&gt;
+          &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+          &lt;Paragraphs&gt;
+            &lt;Paragraph&gt;
+              &lt;TextRuns&gt;
+                &lt;TextRun&gt;
+                  &lt;Value&gt;Benefit Liability Monthly Report&lt;/Value&gt;
+                  &lt;Style&gt;
+                    &lt;FontStyle&gt;Normal&lt;/FontStyle&gt;
+                    &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                    &lt;FontSize&gt;14pt&lt;/FontSize&gt;
+                    &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                    &lt;TextDecoration&gt;None&lt;/TextDecoration&gt;
+                  &lt;/Style&gt;
+                &lt;/TextRun&gt;
+              &lt;/TextRuns&gt;
+              &lt;Style&gt;
+                &lt;TextAlign&gt;Left&lt;/TextAlign&gt;
+              &lt;/Style&gt;
+            &lt;/Paragraph&gt;
+          &lt;/Paragraphs&gt;
+          &lt;Height&gt;0.28293in&lt;/Height&gt;
+          &lt;Width&gt;5.925in&lt;/Width&gt;
+          &lt;ZIndex&gt;2&lt;/ZIndex&gt;
+          &lt;Style&gt;
+            &lt;TopBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/TopBorder&gt;
+            &lt;BottomBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/BottomBorder&gt;
+            &lt;LeftBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/LeftBorder&gt;
+            &lt;RightBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/RightBorder&gt;
+          &lt;/Style&gt;
+        &lt;/Textbox&gt;
+        &lt;Textbox Name="Textbox_21"&gt;
+          &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+          &lt;CanShrink&gt;true&lt;/CanShrink&gt;
+          &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+          &lt;Paragraphs&gt;
+            &lt;Paragraph&gt;
+              &lt;TextRuns&gt;
+                &lt;TextRun&gt;
+                  &lt;Value&gt;=Microsoft.Dynamics.Framework.Reports.DataMethodUtility.PostDataMethodEvaluation(Microsoft.Dynamics.Framework.Reports.DataMethodUtility.UpdateAxContextPartition(Parameters!AX_CompanyName.Value, Parameters!AX_UserContext.Value, Parameters!AX_RenderingCulture.Value, Parameters!AX_PartitionKey.Value),Microsoft.Dynamics.Framework.Reports.DataMethodUtility.GetFullCompanyNameForUser(Parameters!AX_CompanyName.Value, Parameters!AX_UserContext.Value))&lt;/Value&gt;
+                  &lt;Style&gt;
+                    &lt;FontStyle&gt;Normal&lt;/FontStyle&gt;
+                    &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                    &lt;FontSize&gt;8pt&lt;/FontSize&gt;
+                    &lt;FontWeight&gt;Normal&lt;/FontWeight&gt;
+                    &lt;TextDecoration&gt;None&lt;/TextDecoration&gt;
+                  &lt;/Style&gt;
+                &lt;/TextRun&gt;
+              &lt;/TextRuns&gt;
+              &lt;Style&gt;
+                &lt;TextAlign&gt;Left&lt;/TextAlign&gt;
+              &lt;/Style&gt;
+            &lt;/Paragraph&gt;
+          &lt;/Paragraphs&gt;
+          &lt;Top&gt;0.28293in&lt;/Top&gt;
+          &lt;Height&gt;0.16168in&lt;/Height&gt;
+          &lt;Width&gt;5.925in&lt;/Width&gt;
+          &lt;ZIndex&gt;3&lt;/ZIndex&gt;
+          &lt;Style&gt;
+            &lt;TopBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/TopBorder&gt;
+            &lt;BottomBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/BottomBorder&gt;
+            &lt;LeftBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/LeftBorder&gt;
+            &lt;RightBorder&gt;
+              &lt;Color&gt;Black&lt;/Color&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+              &lt;Width&gt;1pt&lt;/Width&gt;
+            &lt;/RightBorder&gt;
+          &lt;/Style&gt;
+        &lt;/Textbox&gt;
+      &lt;/ReportItems&gt;
+      &lt;Style&gt;
+        &lt;TopBorder&gt;
+          &lt;Color&gt;Black&lt;/Color&gt;
+          &lt;Style&gt;None&lt;/Style&gt;
+          &lt;Width&gt;1pt&lt;/Width&gt;
+        &lt;/TopBorder&gt;
+        &lt;BottomBorder&gt;
+          &lt;Color&gt;Black&lt;/Color&gt;
+          &lt;Style&gt;None&lt;/Style&gt;
+          &lt;Width&gt;1pt&lt;/Width&gt;
+        &lt;/BottomBorder&gt;
+        &lt;LeftBorder&gt;
+          &lt;Color&gt;Black&lt;/Color&gt;
+          &lt;Style&gt;None&lt;/Style&gt;
+          &lt;Width&gt;1pt&lt;/Width&gt;
+        &lt;/LeftBorder&gt;
+        &lt;RightBorder&gt;
+          &lt;Color&gt;Black&lt;/Color&gt;
+          &lt;Style&gt;None&lt;/Style&gt;
+          &lt;Width&gt;1pt&lt;/Width&gt;
+        &lt;/RightBorder&gt;
+      &lt;/Style&gt;
+    &lt;/PageHeader&gt;
+    &lt;LeftMargin&gt;0.5in&lt;/LeftMargin&gt;
+    &lt;RightMargin&gt;0.5in&lt;/RightMargin&gt;
+    &lt;TopMargin&gt;0.5in&lt;/TopMargin&gt;
+    &lt;BottomMargin&gt;0.5in&lt;/BottomMargin&gt;
+    &lt;Style&gt;
+      &lt;TopBorder&gt;
+        &lt;Color&gt;Black&lt;/Color&gt;
+        &lt;Style&gt;None&lt;/Style&gt;
+        &lt;Width&gt;1pt&lt;/Width&gt;
+      &lt;/TopBorder&gt;
+      &lt;BottomBorder&gt;
+        &lt;Color&gt;Black&lt;/Color&gt;
+        &lt;Style&gt;None&lt;/Style&gt;
+        &lt;Width&gt;1pt&lt;/Width&gt;
+      &lt;/BottomBorder&gt;
+      &lt;LeftBorder&gt;
+        &lt;Color&gt;Black&lt;/Color&gt;
+        &lt;Style&gt;None&lt;/Style&gt;
+        &lt;Width&gt;1pt&lt;/Width&gt;
+      &lt;/LeftBorder&gt;
+      &lt;RightBorder&gt;
+        &lt;Color&gt;Black&lt;/Color&gt;
+        &lt;Style&gt;None&lt;/Style&gt;
+        &lt;Width&gt;1pt&lt;/Width&gt;
+      &lt;/RightBorder&gt;
+    &lt;/Style&gt;
+  &lt;/Page&gt;
+  &lt;rd:ReportID&gt;8869d926-9c89-487f-b053-b27d25282c5a&lt;/rd:ReportID&gt;
+  &lt;rd:ReportUnitType&gt;Inch&lt;/rd:ReportUnitType&gt;
+  &lt;rd:ExpressionDialog&gt;Microsoft.Dynamics.Framework.Design.Reports.ExpressionEditor.ExpressionEditorDialog, Microsoft.Dynamics.Framework.Design.Reports&lt;/rd:ExpressionDialog&gt;
+&lt;/Report&gt;</Text>
+			<DisableIndividualTransformation>
+				<Name>DisableIndividualTransformation</Name>
+			</DisableIndividualTransformation>
+		</AxReportDesign>
+	</Designs>
+	<EmbeddedImages />
+</AxReport>

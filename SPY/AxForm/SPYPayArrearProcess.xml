@@ -1,0 +1,686 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYPayArrearProcess</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYPayArrearProcess extends FormRun
+{
+    Query                               workerQuery;
+    QueryRun                            workerQueryRun;
+    container                           workerQueryPack;
+
+    SPYPayrollParameterState            payrollParameterState;
+    SPYPayrollPeriodLineRecId           payrollPeriodLine;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        super();
+        workerQuery             = this.initApplQuery();
+        workerQueryRun          = new QueryRun(workerQuery);
+        payrollParameterState   = new SPYPayrollParameterState();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initApplQuery</Name>
+				<Source><![CDATA[
+    Query initApplQuery()
+    {
+        return new Query(queryStr(SPYPayArrearQuery));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initWorkerQuery</Name>
+				<Source><![CDATA[
+    void  initWorkerQuery()
+    {
+        if(workerQueryRun.prompt())
+        {
+            workerQueryPack = workerQueryRun.pack();
+            element.refreshPayArrearTmp(workerQueryPack);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine = _payrollPeriodLine;
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payrollParameterState</Name>
+				<Source><![CDATA[
+    public SPYPayrollParameterState payrollParameterState()
+    {
+        container        workerContainer;
+    
+        while select SPYPayArrearTmp
+        {
+            workerContainer = conPoke(workerContainer,conLen(workerContainer)+1,SPYPayArrearTmp.Worker);
+        }
+        payrollParameterState.parmWorkerContainer(workerContainer);
+        payrollParameterState.parmCalledFromArrearProcess(true);
+    
+        return payrollParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>prevMthEndDateTime</Name>
+				<Source><![CDATA[
+    public TransDateTime prevMthEndDateTime()
+    {
+        utcdatetime     prevMthEndDateTime;
+        date            currentMthStartDate = mkDate(1,mthOfYr(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone())),year(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone())));
+        date            prevMthStartDate = mkDate(1,mthOfYr(currentMthStartDate-1),year(currentMthStartDate-1));
+    
+        prevMthEndDateTime = DateTimeUtil::newDateTime(endmth(prevMthStartDate), 00-00);
+    
+        return prevMthEndDateTime;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>prevMthStartDateTime</Name>
+				<Source><![CDATA[
+    public TransDateTime prevMthStartDateTime()
+    {
+        utcdatetime     prevMthStartDateTime;
+        date            currentMthStartDate = mkDate(1,mthOfYr(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone())),year(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone())));
+        date            prevMthStartDate = mkDate(1,mthOfYr(currentMthStartDate-1),year(currentMthStartDate-1));
+    
+        prevMthStartDateTime = DateTimeUtil::newDateTime(prevMthStartDate, 00-00);
+    
+        return prevMthStartDateTime;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshPayArrearTmp</Name>
+				<Source><![CDATA[
+    public void refreshPayArrearTmp(container _con)
+    {
+        HcmWorker        worker;
+        QueryRun         queryRun = new QueryRun(_con);
+    
+        delete_from SPYPayArrearTmp;
+        while(queryRun.next())
+        {
+            worker = queryRun.get(tableNum(HcmWorker));
+            SPYPayArrearTmp.Worker            = worker.RecId;
+            SPYPayArrearTmp.insert();
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="">
+			<Control>
+				<Name>ChooseWorker</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void  clicked()
+        {
+            super();
+            element.initWorkerQuery();
+            SPYPayArrearTmp_ds.executeQuery();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>ChooseWorkerJoinedPrevMth</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void  clicked()
+        {
+            HcmWorker       hcmWorker;
+            HcmEmployment   hcmEmployment;
+        
+            super();
+        
+            delete_from SPYPayArrearTmp;
+            while select hcmWorker
+                join hcmEmployment
+                where hcmWorker.RecId == hcmEmployment.Worker &&
+                      hcmEmployment.ValidFrom >= element.prevMthStartDateTime() &&
+                      hcmEmployment.ValidFrom <= element.prevMthEndDateTime()
+            {
+                SPYPayArrearTmp.Worker      = hcmWorker.RecId;
+                SPYPayArrearTmp.insert();
+            }
+            SPYPayArrearTmp_ds.executeQuery();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>SPYPayLedgerPostServiceController</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            super();
+            SPYPayArrearTmp_ds.executeQuery();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>SPYPayrollLedger</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            Args        args = new Args(element);
+            FormRun     formRun;
+            container   argsCon= [SPYPayArrearTmp.Worker,payrollPeriodLine];
+        
+            args.name(formStr(SPYPayrollLedger));
+            args.parm(con2Str(argsCon));
+            formRun = classFactory.formRunClass(args);
+        
+            formRun.init();
+            formRun.run();
+            formRun.wait();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>SPYBenefitLedger</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            Args        args = new Args(element);
+            FormRun     formRun;
+            container   argsCon = [SPYPayArrearTmp.Worker,payrollPeriodLine];
+        
+            args.name(formStr(SPYBenefitLedger));
+            args.parm(con2Str(argsCon));
+            formRun = classFactory.formRunClass(args);
+        
+            formRun.init();
+            formRun.run();
+            formRun.wait();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>SPYReferencePayElementLedger</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        /// <summary>
+        ///
+        /// </summary>
+        public void clicked()
+        {
+            Args        args = new Args(element);
+            FormRun     formRun;
+            container   argsCon = [SPYPayArrearTmp.Worker,payrollPeriodLine];
+        
+            args.name(formStr(SPYReferencePayElementLedger));
+            args.parm(con2Str(argsCon));
+            formRun = classFactory.formRunClass(args);
+        
+            formRun.init();
+            formRun.run();
+            formRun.wait();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYPayArrearTmp</Name>
+			<Table>SPYPayArrearTmp</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY1622</Caption>
+		<DataSource xmlns="">SPYPayArrearTmp</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">Task</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<TitleDataSource xmlns="">SPYPayArrearTmp</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPaneHeader</Name>
+				<ElementPosition>715827882</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderSelectTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>ButtonGroup</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormButtonControl">
+										<Name>ChooseWorker</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<HelpText>@SYS85423</HelpText>
+										<Type>Button</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<Text>@SYS80745</Text>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormButtonControl">
+										<Name>ChooseWorkerJoinedPrevMth</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1789569705</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<HelpText>@SYS85423</HelpText>
+										<Type>Button</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<Text>@SPY1664</Text>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Columns>2</Columns>
+								<Caption>@SYS7444</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS11584</Caption>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderProcessTab</Name>
+						<Type>ActionPaneTab</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>MaintainGroup</Name>
+								<ElementPosition>1610612734</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYPayArrearServiceController</Name>
+										<ElementPosition>1145324610</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<MenuItemName>SPYPayArrearServiceController</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYPayLedgerPostServiceController</Name>
+										<ElementPosition>1717986916</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<MenuItemName>SPYPayLedgerPostServiceController</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<ColumnsMode>Fill</ColumnsMode>
+								<Caption>@SYS122441</Caption>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SYS122441</Caption>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>LedgerTab</Name>
+						<ElementPosition>1789569705</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>LedgerGroup</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYPayrollLedger</Name>
+										<ElementPosition>1163220306</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<MenuItemName>SPYPayrollLedger</MenuItemName>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYBenefitLedger</Name>
+										<ElementPosition>1521134247</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<MenuItemName>SPYBenefitLedger</MenuItemName>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYReferencePayElementLedger</Name>
+										<Type>MenuFunctionButton</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<MenuItemName>SPYReferencePayElementLedger</MenuItemName>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYPayrollJournalTable</Name>
+										<ElementPosition>1879048189</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<MenuItemName>SPYPayrollJournalTable</MenuItemName>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Columns>2</Columns>
+								<Caption>@SYS3850</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS13356</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<Type>Tab</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>WorkerTabPage</Name>
+						<Pattern>ToolbarList</Pattern>
+						<PatternVersion>1.2</PatternVersion>
+						<Type>TabPage</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormActionPaneControl">
+								<Name>WorkerLinesActionPaneStrip</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>ActionPane</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormActionPaneTabControl">
+										<Name>WorkerLinesActionPaneTab</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ActionPaneTab</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormButtonGroupControl">
+												<Name>WorkerLinesRecordActions</Name>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<Type>ButtonGroup</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormCommandButtonControl">
+														<Name>WorkerAddLine</Name>
+														<ElementPosition>1073741822</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Type>CommandButton</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+														<Command>New</Command>
+														<MultiSelect>Yes</MultiSelect>
+														<NormalImage>Add</NormalImage>
+														<Text>@SYS319116</Text>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormCommandButtonControl">
+														<Name>WorkerRemoveLine</Name>
+														<ElementPosition>1610612733</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Type>CommandButton</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+														<Command>DeleteRecord</Command>
+														<MultiSelect>Yes</MultiSelect>
+														<NormalImage>Delete</NormalImage>
+														<SaveRecord>No</SaveRecord>
+														<Text>@SYS135131</Text>
+													</AxFormControl>
+												</Controls>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+											</AxFormControl>
+										</Controls>
+										<AlignChild>No</AlignChild>
+										<AlignChildren>No</AlignChildren>
+										<ArrangeMethod>Vertical</ArrangeMethod>
+									</AxFormControl>
+								</Controls>
+								<AlignChild>No</AlignChild>
+								<AlignChildren>No</AlignChildren>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Style>Strip</Style>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>WorkerGrid</Name>
+								<ElementPosition>1610612734</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYPayArrearTmp_Worker</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayArrearTmp</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+										<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+									</AxFormControl>
+								</Controls>
+								<DataSource>SPYPayArrearTmp</DataSource>
+							</AxFormControl>
+						</Controls>
+					</AxFormControl>
+				</Controls>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

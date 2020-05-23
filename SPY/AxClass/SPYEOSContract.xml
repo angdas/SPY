@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYEOSContract extends SPYPayProcessContract
+{
+    TransDate                   finalDate;
+    SPYEOSRunRecId              EOSRun;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmEOSRun</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYEOSRunRecId parmEOSRun(SPYEOSRunRecId _EOSRun = EOSRun)
+    {
+        EOSRun = _EOSRun;
+        return EOSRun;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmFinalDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public TransDate parmFinalDate(TransDate _finalDate = finalDate)
+    {
+        finalDate = _finalDate;
+        return finalDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,670 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYOvertimeJournalTable</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYOvertimeJournalTable extends FormRun
+{
+    NumberSeqFormHandler                numberSeqFormHandler;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow()
+    {
+        boolean ret;
+    
+        ret = SPYOvertimeJournalTable.canSubmitToWorkflow();
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>close</Name>
+				<Source><![CDATA[
+    void close()
+    {
+        if (numberSeqFormHandler)
+        {
+            numberSeqFormHandler.formMethodClose();
+        }
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        super();
+    
+        element.setEnable();
+        AllOpenPostedField.selection(AllOpenPosted::Open);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>numberSeqFormHandler</Name>
+				<Source><![CDATA[
+    NumberSeqFormHandler numberSeqFormHandler()
+    {
+        if (!numberSeqFormHandler)
+        {
+            numberSeqFormHandler = NumberSeqFormHandler::newForm(SPYPayrollParameters::numRefOvertimeJournalCode().NumberSequenceId,
+                                                                 element,
+                                                                 SPYOvertimeJournalTable_ds,
+                                                                 fieldNum(SPYOvertimeJournalTable,OvertimeJournalCode)
+                                                                );
+        }
+        return numberSeqFormHandler;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshDataSource</Name>
+				<Source><![CDATA[
+    void refreshDataSource()
+    {
+        SPYOvertimeJournalTable_ds.research(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEnable</Name>
+				<Source><![CDATA[
+    void setEnable()
+    {
+        boolean     checkEditable = (SPYOvertimeJournalTable.WorkflowStatus == SPYWorkflowStatus::Created ||
+                                    SPYOvertimeJournalTable.WorkflowStatus == SPYWorkflowStatus::Submitted ||
+                                    SPYOvertimeJournalTable.WorkflowStatus == SPYWorkflowStatus::Started ||
+                                    SPYOvertimeJournalTable.WorkflowStatus == SPYWorkflowStatus::RequestChange) &&
+                                    !SPYOvertimeJournalTable.Posted ?
+                                    true : false;
+        SPYOvertimeJournalTable_ds.allowEdit(checkEditable);
+        SPYOvertimeJournalTable_ds.allowDelete(SPYOvertimeJournalTable.WorkflowStatus == SPYWorkflowStatus::Created && !SPYOvertimeJournalTable.Posted);
+        SPYOvertimeJournal.enabled(SPYOvertimeJournalTable.RecId);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYOvertimeJournalTable</Name>
+				<Methods>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret;
+        
+            ret = super();
+        
+            element.setEnable();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>linkActive</Name>
+						<Source><![CDATA[
+        public void linkActive()
+        {
+            element.numberSeqFormHandler().formMethodDataSourceLinkActive();
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>validateWrite</Name>
+						<Source><![CDATA[
+        public boolean validateWrite()
+        {
+            boolean         ret;
+        
+            ret = super();
+            ret = element.numberSeqFormHandler().formMethodDataSourceValidateWrite(ret) && ret;
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>write</Name>
+						<Source><![CDATA[
+        public void write()
+        {
+            super();
+            element.numberSeqFormHandler().formMethodDataSourceWrite();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>delete</Name>
+						<Source><![CDATA[
+        public void delete()
+        {
+            element.numberSeqFormHandler().formMethodDataSourceDelete();
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>create</Name>
+						<Source><![CDATA[
+        public void create(boolean _append = false)
+        {
+            AllOpenPostedField.selection(1);
+            SPYOvertimeJournalTable_ds.executeQuery();
+
+            element.numberSeqFormHandler().formMethodDataSourceCreatePre();
+        
+            super(_append);
+        
+            element.numberSeqFormHandler().formMethodDataSourceCreate(true);
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>filterRecords</Name>
+						<Source><![CDATA[
+        private void filterRecords()
+        {
+            this.query().dataSourceTable(tableNum(SPYOvertimeJournalTable)).clearRanges();
+            switch(AllOpenPostedField.valueStr())
+            {
+                case enum2Value(AllOpenPosted::All) :
+                    this.query().dataSourceTable(tableNum(SPYOvertimeJournalTable)).
+                    addRange(fieldnum(SPYOvertimeJournalTable,Posted)).value('0,1');
+                    break;
+        
+                case enum2Value(AllOpenPosted::Open) :
+                    this.query().dataSourceTable(tableNum(SPYOvertimeJournalTable)).
+                    addRange(fieldnum(SPYOvertimeJournalTable,Posted)).value('0');
+                    break;
+        
+                case enum2Value(AllOpenPosted::Posted) :
+                    this.query().dataSourceTable(tableNum(SPYOvertimeJournalTable)).
+                    addRange(fieldnum(SPYOvertimeJournalTable,Posted)).value('1');
+                    break;
+            }
+            this.query().dataSourceTable(tableNum(SPYOvertimeJournalTable)).addOrderByField(fieldNum(SPYOvertimeJournalTable,createdDateTime),SortOrder::Descending);
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            this.filterRecords();
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>AllOpenPostedField</Name>
+				<Type>ComboBox</Type>
+				<Methods>
+					<Method>
+						<Name>modified</Name>
+						<Source><![CDATA[
+        public boolean modified()
+        {
+            boolean ret;
+        
+            ret = super();
+        
+            SPYOvertimeJournalTable_ds.executeQuery();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYOvertimeJournalTable</Name>
+			<Table>SPYOvertimeJournalTable</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>OvertimeJournalCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>Posted</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WorkflowStatus</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY849</Caption>
+		<DataSource xmlns="">SPYOvertimeJournalTable</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">Task</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<TitleDataSource xmlns="">SPYOvertimeJournalTable</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<WorkflowDataSource xmlns="">SPYOvertimeJournalTable</WorkflowDataSource>
+		<WorkflowEnabled xmlns="">Yes</WorkflowEnabled>
+		<WorkflowType xmlns="">SPYOvertimeJournal</WorkflowType>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>History</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>ButtonGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYOvertimeJournalWorkflowHistory</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYOvertimeJournalWorkflowHistory</MenuItemName>
+								<MultiSelect>No</MultiSelect>
+								<NeedsRecord>Yes</NeedsRecord>
+								<OpenMode>View</OpenMode>
+							</AxFormControl>
+						</Controls>
+						<DataSource>SPYOvertimeJournalTable</DataSource>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>RecordBasics</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYOvertimeJournal</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1879048189</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>MenuFunctionButton</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+								<MenuItemName>SPYOvertimeJournal</MenuItemName>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<DataSource>SPYOvertimeJournalTable</DataSource>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>CustomFilterGroup</Name>
+				<ElementPosition>1288490187</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Pattern>CustomFilters</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormComboBoxControl">
+						<Name>AllOpenPostedField</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HelpText>@SYS27095</HelpText>
+						<Type>ComboBox</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<FormControlExtension
+							i:nil="true" />
+						<EnumType>AllOpenPosted</EnumType>
+						<Selection>255</Selection>
+						<Items />
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+				<FrameType>None</FrameType>
+				<Style>CustomFilter</Style>
+				<ViewEditMode>Edit</ViewEditMode>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1431655764</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>OverviewTab</Name>
+						<ElementPosition>858993458</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Pattern>ToolbarList</Pattern>
+						<PatternVersion>1.2</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>Grid</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYOvertimeJournalTable_OvertimeJournalCode</Name>
+										<ElementPosition>715827882</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeJournalCode</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYOvertimeJournalTable_Description</Name>
+										<ElementPosition>1073741823</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Description</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>SPYOvertimeJournalTable_WorkflowStatus</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ComboBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>WorkflowStatus</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+										<Items />
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>SPYOvertimeJournalTable_Posted</Name>
+										<ElementPosition>1789569705</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Posted</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+								</Controls>
+								<AlternateRowShading>No</AlternateRowShading>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+								<MultiSelect>No</MultiSelect>
+								<ShowRowLabels>No</ShowRowLabels>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SYS50012</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>DetailsTab</Name>
+						<ElementPosition>1288490187</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Pattern>FieldsFieldGroups</Pattern>
+						<PatternVersion>1.1</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupDetails</Name>
+								<ElementPosition>715827882</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupDetails_OvertimeJournalCode</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeJournalCode</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupDetails_Description</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Description</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Details</DataGroup>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupWorkflowStatus</Name>
+								<ElementPosition>1073741823</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>GroupWorkflowStatus_WorkflowStatus</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ComboBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>WorkflowStatus</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+										<Items />
+									</AxFormControl>
+								</Controls>
+								<DataGroup>WorkflowStatus</DataGroup>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupPosted</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>GroupPosted_Posted</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Posted</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Posted</DataGroup>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupLog</Name>
+								<ElementPosition>1789569705</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupLog_createdBy</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>createdBy</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+										<Label>@SPY:CreatedBy</Label>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateTimeControl">
+										<Name>GroupLog_createdDateTime</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>DateTime</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>createdDateTime</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Log</DataGroup>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+							</AxFormControl>
+						</Controls>
+						<ColumnsMode>Fill</ColumnsMode>
+						<Caption>@SYS318405</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSUnpostContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYEOSUnpostContract
+{
+    SPYEOSRunRecId  eosRunRecId;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmSPYEOSRunRecId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYEOSRunRecId parmSPYEOSRunRecId(SPYEOSRunRecId _eosRunRecId = eosRunRecId)
+    {
+        eosRunRecId = _eosRunRecId;
+        return eosRunRecId;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

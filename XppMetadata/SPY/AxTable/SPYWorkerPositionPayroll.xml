@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<z:anyType xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxPropertyCollection" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/">
+	<Methods>
+		<Method>
+			<Name>updateRate</Name>
+			<Visibility>Public</Visibility>
+			<Parameters>
+				<AxMethodParameter>
+					<Type>ExtendedDataType</Type>
+					<TypeName>LegalEntityRecId</TypeName>
+					<Name>_legalEntity</Name>
+				</AxMethodParameter>
+			</Parameters>
+			<ReturnType>
+				<TypeName></TypeName>
+			</ReturnType>
+		</Method>
+		<Method>
+			<Name>find</Name>
+			<IsStatic>true</IsStatic>
+			<Visibility>Public</Visibility>
+			<Parameters>
+				<AxMethodParameter>
+					<Type>ExtendedDataType</Type>
+					<TypeName>SPYWorkerPayrollRecId</TypeName>
+					<Name>_recId</Name>
+				</AxMethodParameter>
+				<AxMethodParameter>
+					<Type>Enum</Type>
+					<TypeName>boolean</TypeName>
+					<DefaultValue>false</DefaultValue>
+					<Name>_forUpdate</Name>
+				</AxMethodParameter>
+				<AxMethodParameter>
+					<Type>Enum</Type>
+					<TypeName>ConcurrencyModel</TypeName>
+					<DefaultValue>ConcurrencyModel::Auto</DefaultValue>
+					<Name>_concurrencyModel</Name>
+				</AxMethodParameter>
+			</Parameters>
+			<ReturnType>
+				<Type>Record</Type>
+				<TypeName>SPYWorkerPositionPayroll</TypeName>
+			</ReturnType>
+		</Method>
+		<Method>
+			<Name>getTotalSalary</Name>
+			<IsDisplay>true</IsDisplay>
+			<Visibility>Public</Visibility>
+			<ReturnType>
+				<Type>ExtendedDataType</Type>
+				<TypeName>SPYAmount</TypeName>
+			</ReturnType>
+		</Method>
+	</Methods>
+</z:anyType>

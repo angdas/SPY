@@ -1,0 +1,613 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDisbursementJournalLine</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYDisbursementJournalLine extends common
+{
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>nextLineNum</Name>
+				<Source><![CDATA[
+    LineNum nextLineNum(SPYDisbursementJournalRecId _payrollJournal)
+    {
+        SPYDisbursementJournalLine  disbursementJournalLine;
+        LineNum                     ret;
+    
+        select maxOf(LineNum) from disbursementJournalLine
+            where disbursementJournalLine.DisbursementJournal == _payrollJournal;
+    
+        ret = disbursementJournalLine.LineNum + 1;
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmExchangeRateDate</Name>
+				<Source><![CDATA[
+    public AccountingDate parmExchangeRateDate()
+    {
+        return this.TransDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>disbursementJournalTable</Name>
+				<Source><![CDATA[
+    public SPYDisbursementJournalTable disbursementJournalTable()
+    {
+        return SPYDisbursementJournalTable::find(this.DisbursementJournal);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateField</Name>
+				<Source><![CDATA[
+    public boolean validateField(FieldId _fieldIdToCheck)
+    {
+        boolean ret;
+    
+        ret = super(_fieldIdToCheck);
+    
+        if (ret)
+        {
+            switch (_fieldIdToCheck)
+            {
+                case fieldNum(SPYDisbursementJournalLine, LedgerDimension):
+                    ret = MainAccount::checkTransactionAccount(this.LedgerDimension);
+                    ret = ret && MainAccount::checkAllowPosting(LedgerDimensionFacade::getMainAccountFromLedgerDimension(this.LedgerDimension).MainAccountId,
+                                                                LedgerPostingType::LedgerJournal);
+                    break;
+                case fieldNum(SPYDisbursementJournalLine,AmountCurDebit ):
+                    Amount origAmt = this.orig().AmountCurDebit;
+                    Amount newAmt = this.AmountCurDebit;
+                    Amount diffAmt = origAmt - newAmt;
+                    Amount paymAmount = diffAmt * this.ExchRate;
+
+                    SPYDisbursementDetails  disbursementDetails = SPYDisbursementDetails::findRecId(this.DisbursementDetailsRecId,true);
+                    //CurrencyExchangeHelper currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), this.TransDate);
+                    //Amount paymAmount = currencyExchangeHelper.calculateTransactionToAccounting(this.Currency,abs(diffAmt),false);
+                    
+                    //paymAmount = abs(diffAmt) > 0 ? paymAmount * diffAmt/abs(diffAmt) : 0;
+
+                    SPYDibursementWorkerRequest disbursementRequest = SPYDibursementWorkerRequest::findRecId(this.DisbursementRequestRecId, true);
+                    
+                    if (decRound(disbursementRequest.AmountRemainMST,2) < -1 * decRound(paymAmount,2))
+                    {
+                        ret = checkFailed(strFmt("total outstanding amount- %1 and remain for this bank- %2",disbursementDetails.AmountOutstanding, disbursementRequest.AmountRemainMST));
+                    }
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYDisbursementJournalLine find(
+    SPYDisbursementJournalRecId  _recId,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYDisbursementJournalLine   disbursementJournalLine;
+    
+        disbursementJournalLine.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            disbursementJournalLine.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly disbursementJournalLine
+             where disbursementJournalLine.RecId == _recId;
+    
+        return disbursementJournalLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByIdLineNum</Name>
+				<Source><![CDATA[
+    public static SPYDisbursementJournalLine findByIdLineNum(
+    SPYDisbursementJournalId         _id,
+    LineNum                     _lineNum,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYDisbursementJournalLine   disbursementJournalLine;
+    
+        disbursementJournalLine.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            disbursementJournalLine.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly disbursementJournalLine
+             where disbursementJournalLine.DisbursementJournal == SPYDisbursementJournalTable::findByJournalId(_id).RecId &&
+                   disbursementJournalLine.LineNum == _lineNum;
+    
+        return disbursementJournalLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>modifiedField</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name = "_fieldId"></param>
+    public void modifiedField(FieldId _fieldId)
+    {
+        switch (_fieldId)
+        {
+            case fieldNum(SPYDisbursementJournalLine, AmountCurDebit):
+                Amount origAmt = this.orig().AmountCurDebit;
+                Amount newAmt = this.AmountCurDebit;
+                Amount diffAmt = origAmt - newAmt;
+                
+                //pay amount is in MST
+                Amount paymAmount = diffAmt * this.ExchRate;
+
+                ttsbegin;
+                //CurrencyExchangeHelper currencyExchangeHelper = CurrencyExchangeHelper::newExchangeDate(Ledger::current(), this.TransDate);
+                //Amount paymAmount = currencyExchangeHelper.calculateTransactionToAccounting(this.Currency,abs(diffAmt),false);
+                
+                //paymAmount = abs(diffAmt) > 0 ? paymAmount * diffAmt/abs(diffAmt) : 0;
+
+                SPYDisbursementDetails  disbursementDetails = SPYDisbursementDetails::findRecId(this.DisbursementDetailsRecId,true);
+                disbursementDetails.AmountOutstanding = disbursementDetails.AmountOutstanding + paymAmount;
+
+                disbursementDetails.update();
+
+                SPYDibursementWorkerRequest disbursementRequest = SPYDibursementWorkerRequest::findRecId(this.DisbursementRequestRecId, true);
+                disbursementRequest.AmountRemainMST = disbursementRequest.AmountRemainMST + paymAmount;
+                
+                disbursementRequest.update();
+
+                ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>delete</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    public void delete()
+    {
+        RefRecId    disbursementDetailsRecId = this.DisbursementDetailsRecId;
+        RefRecId    disbursementReqRecid = this.DisbursementRequestRecId;
+        Amount paymAmount = this.AmountCurDebit;
+
+        super();
+                
+        //pay amount is in MST
+        paymAmount = paymAmount * this.ExchRate;
+
+        ttsbegin;
+
+        SPYDisbursementDetails  disbursementDetails = SPYDisbursementDetails::findRecId(disbursementDetailsRecId,true);
+        disbursementDetails.AmountOutstanding = disbursementDetails.AmountOutstanding + paymAmount;
+
+        disbursementDetails.update();
+
+        SPYDibursementWorkerRequest disbursementRequest = SPYDibursementWorkerRequest::findRecId(disbursementReqRecid, true);
+        disbursementRequest.AmountRemainMST = disbursementRequest.AmountRemainMST + paymAmount;
+                
+        disbursementRequest.update();
+
+        ttscommit;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY:PostedDisbursementLedgerDD</DeveloperDocumentation>
+	<Label>@SPY:DisbursementJournalLine</Label>
+	<SingularLabel>Disbursement journal line</SingularLabel>
+	<TableGroup>WorksheetLine</TableGroup>
+	<TitleField1>DisbursementJournal</TitleField1>
+	<TitleField2>LineNum</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<ModifiedBy>Yes</ModifiedBy>
+	<ModifiedDateTime>Yes</ModifiedDateTime>
+	<ReplacementKey>JournalLine_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DisbursementJournal</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DisbursementJournal</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Account</Name>
+			<Label>@SYS8343</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LedgerDimension</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>OffsetLedgerDimension</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AccountingDistribution</Name>
+			<Label>@SYS300391</Label>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Amount</Name>
+			<Label>@RET2692</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>AmountCurDebit</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Currency</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DisbursementJournal</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Dimension</Name>
+			<Label>@SYS342338</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DefaultDimension</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>PayrollJournal</Name>
+			<Label>@SYS10018</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DisbursementJournal</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LineNum</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>SourceDocument</Name>
+			<Label>@SYS127863</Label>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Transaction</Name>
+			<Label>@SYS15191</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Txt</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>TransDate</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>AmountCurDebit</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Currency</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>CurrencyCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DefaultDimension</Name>
+			<ExtendedDataType>DimensionDefault</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>ExchRate</Name>
+			<ExtendedDataType>ExchRate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LedgerDimension</Name>
+			<ExtendedDataType>LedgerDimensionDefaultAccount</ExtendedDataType>
+			<Label>@SYS24500</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>LineNum</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>LineNum</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>OffsetLedgerDimension</Name>
+			<ExtendedDataType>LedgerDimensionAccount</ExtendedDataType>
+			<Label>@SYS11162</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DisbursementJournal</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>SPYDisbursementJournalRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollPeriodLine</Name>
+			<ExtendedDataType>SPYPayrollPeriodLineRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>TransDate</Name>
+			<ExtendedDataType>TransDate</ExtendedDataType>
+			<HelpText>@SPY1242</HelpText>
+			<Label>@SYS128676</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Txt</Name>
+			<ExtendedDataType>SPYTransTxt</ExtendedDataType>
+			<Label>@SYS179379</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>OffsetBankAccount</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>CompanyBankAccountId</ExtendedDataType>
+			<Label>@SPY:PayrollDisbursementBank</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>WorkerBankAccount</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<AssetClassification>Customer Content </AssetClassification>
+			<ExtendedDataType>HcmWorkerBankAccountRecId</ExtendedDataType>
+			<Label>@SPY:WorkerAccount</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DisbursementDetailsRecId</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DisbursementRequestRecId</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>JournalLine_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>DisbursementJournal</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>LineNum</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation>
+			<Name>Account</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelatedTableRole>Account</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>LedgerDimension</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LedgerDimension</Name>
+					<Field>LedgerDimension</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>Currency</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>Currency</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Currency</Name>
+					<SourceEDT>CurrencyCode</SourceEDT>
+					<Field>Currency</Field>
+					<RelatedField>CurrencyCode</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>DefaultDimension</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>DimensionAttributeValueSet</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DefaultDimension</Name>
+					<Field>DefaultDimension</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>OffsetAccount</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>DimensionAttributeValueCombination</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelatedTableRole>OffsetAccount</RelatedTableRole>
+			<RelationshipType>Composition</RelationshipType>
+			<Role>LedgerDimension</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>OffsetLedgerDimension</Name>
+					<Field>OffsetLedgerDimension</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYDisbursementJournalTable</Name>
+			<Cardinality>OneMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYDisbursementJournalTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DisbursementJournal</Name>
+					<Field>DisbursementJournal</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollPeriodLine</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollPeriodLine</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollPeriodLine</Name>
+					<Field>PayrollPeriodLine</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorkerBankAccount</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorkerBankAccount</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>WorkerBankAccount</Name>
+					<Field>WorkerBankAccount</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

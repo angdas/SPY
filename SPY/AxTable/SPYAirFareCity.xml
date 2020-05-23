@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAirFareCity</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYAirFareCity extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYAirFareCity find(
+        LogisticsAddressCityRecId   _originCity,
+        LogisticsAddressCityRecId   _destinationCity,
+        boolean                     _forUpdate = false,
+        ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYAirFareCity      airFareCity;
+    
+        airFareCity.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            airFareCity.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly airFareCity
+             where airFareCity.OriginCity == _originCity &&
+                   airFareCity.DestinationCity == _destinationCity;
+    
+        return airFareCity;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY762</DeveloperDocumentation>
+	<Label>@SPY758</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>OriginCity</TitleField1>
+	<TitleField2>DestinationCity</TitleField2>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>City_AK</ReplacementKey>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DestinationCity</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>OriginCity</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DestinationCity</Name>
+			<ExtendedDataType>LogisticsAddressCityRecId</ExtendedDataType>
+			<HelpText>@SPY761</HelpText>
+			<Label>@SPY748</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>OriginCity</Name>
+			<ExtendedDataType>LogisticsAddressCityRecId</ExtendedDataType>
+			<HelpText>@SPY760</HelpText>
+			<Label>@SPY747</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>City_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>DestinationCity</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>OriginCity</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>LogisticsAddressCityDestination</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>LogisticsAddressCity</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Destination</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DestinationCity</Name>
+					<Field>DestinationCity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>LogisticsAddressCityOrigin</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>LogisticsAddressCity</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Origin</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>OriginCity</Name>
+					<Field>OriginCity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

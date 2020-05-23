@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollJourSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayrollJourSubmitManager
+{
+    SPYPayrollJournalTable          payrollJournalTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayrollJournalTable</Name>
+				<Source><![CDATA[
+    private SPYPayrollJournalTable parmPayrollJournalTable(SPYPayrollJournalTable _payrollJournalTable = payrollJournalTable)
+    {
+        payrollJournalTable = _payrollJournalTable;
+    
+        return payrollJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;    
+        
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            payrollJournalTable.submitToWorkflow(workFlowTypeStr(SPYPayrollJour), workflowSubmitDialog.parmWorkflowComment(), false);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayrollJourSubmitManager         payrollJourSubmit = new SPYPayrollJourSubmitManager();
+        SPYPayrollJournalTable              payrollJournalTable = args.record();
+    
+        payrollJourSubmit.parmPayrollJournalTable(payrollJournalTable);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYPayrollJourSubmitMenuItem))
+            payrollJourSubmit.submit(args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntAbsenceContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntAbsenceContract
+{
+    HrmAbsenceCodeId        absenceCode;
+    Description             absenceDesc;
+    SPYAmount               balance;
+    HcmWorkerName           workerName;
+    OMDepartmentName        departmentName;
+    Transdate               joiningDate;
+    Email                   reportingManager;
+    Description             designation;
+    HcmPersonnelNumberId    employeeId;
+
+
+   
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmEmpName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Name")]
+    public HcmWorkerName parmEmpName(HcmWorkerName _workerName = workerName)
+    {
+        workerName = _workerName;
+
+        return workerName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDepartmentName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("DepartmentName")]
+    public OMDepartmentName parmDepartmentName(OMDepartmentName _departmentName = departmentName)
+    {
+        departmentName = _departmentName;
+
+        return departmentName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDesignation</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Designation")]
+    public Description parmDesignation(Description _designation = designation)
+    {
+        designation = _designation;
+
+        return designation;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmJoiningDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("JoiningDate")]
+    public Transdate parmJoiningDate(Transdate _joiningDate = joiningDate)
+    {
+        joiningDate = _joiningDate;
+
+        return joiningDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmReportingManager</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ReportingManager")]
+    public Email parmReportingManager(Email _reportingManager = reportingManager)
+    {
+        reportingManager = _reportingManager;
+
+        return reportingManager;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAbsenceCode</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Code")]
+    public HrmAbsenceCodeId parmAbsenceCode(HrmAbsenceCodeId _absenceCode = absenceCode)
+    {
+        absenceCode = _absenceCode;
+
+        return absenceCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAbsenceDesc</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Description")]
+    public Description parmAbsenceDesc(Description _absenceDesc = absenceDesc)
+    {
+        absenceDesc = _absenceDesc;
+
+        return absenceDesc;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBalance</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Balance")]
+    public SPYAmount parmBalance(SPYAmount _balance = balance)
+    {
+        balance = _balance;
+
+        return balance;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYReportConfigDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYReportConfigContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerNoPosition))
+]
+class SPYReportConfigDP extends SRSReportDataProviderBase
+{
+    SPYReportConfigTmp              reportConfigTmp;
+    SPYPayslipHeaderFooterTmp       payslipHeaderFooterTmp;
+    SPYReportConfigStagingTmp       spyRReportsTmp;
+
+    HcmWorker                       hcmWorker;
+    NoYesId                         groupByWorker ;
+    SPYWorkerPositionPayroll        workerPositionPayroll;
+    SPYPayrollLedger                payrollLedger;
+    SPYBenefitLedger                benefitLedger;
+    SPYReferencePayElementLedger    referenceLedger;
+    SPYPayrollPeriodLine            payrollPeriodLine;
+    SPYPayrollPeriodLineRecId       payrollPeriodLineRecId;
+    TransDate                       periodFromDate, periodToDate;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    public void processReport()
+    {
+        SPYReportConfigContract     contract = this.parmDataContract() as SPYReportConfigContract;
+        SPYReportConfigTable        reportConfigTable;
+        
+        Map     totalValues, filteredValues;
+        Map     payElementValues = new Map(Types::String, Types::AnyType);
+        NoYesId useTransactionCurrency;
+
+        SPYPayrollPeriodLineRecId payrollPeriodLineRecIdFrom = contract.parmPayrollPeriodlineFrom();
+        SPYPayrollPeriodLineRecId payrollPeriodLineRecIdTo = contract.parmPayrollPeriodlineTo();
+
+        periodFromDate  = SPYPayrollPeriodLine::find(payrollPeriodLineRecIdFrom).PeriodStartDate;
+        periodToDate    = SPYPayrollPeriodLine::find(payrollPeriodLineRecIdTo).PeriodEndDate;
+    
+        //**************************************************************************************************Payroll Ledger values
+        select firstonly reportConfigTable where reportConfigTable.RecId == contract.parmReportConfigRecId();
+        useTransactionCurrency = reportConfigTable.UseTransactionCurr;
+        groupByWorker   = reportConfigTable.GroupByWorker;
+
+        Query q = this.parmQuery();
+        totalValues = this.createPayElementMap(q, null, payrollPeriodLineRecIdFrom, payrollPeriodLineRecIdTo, useTransactionCurrency);
+        payElementValues.insert("totalValues", totalValues);
+
+        //depending on the R Report that is selected the expressions have to be built        
+        SPYReportConfigFields   reportConfigFields;
+        SPYReportConfigFilterTable  reportConfigFieldFilter;
+        Query       filterQuery;
+        QueryRun    queryRun;
+        container   packedQuery;
+        Common      common;
+        int         fieldIdentifier;
+        
+       // this.insertValuesIntoHeader();
+        //creating the totalsMap for all the filtered fields
+        while select *
+            from reportConfigTable
+            where reportConfigTable.RecId == contract.parmReportConfigRecId()
+            join reportConfigFields
+            where reportConfigFields.ReportConfig == reportConfigTable.RecId
+            join ReportFilterCode  from reportConfigFieldFilter
+            group by ReportFilterCode
+            where reportConfigFieldFilter.RecId == reportConfigFields.ReportConfigFilter
+            && reportConfigFieldFilter.Active == NoYes::Yes
+        {
+            packedQuery = SPYReportConfigFilterTable::findByCode( reportConfigFieldFilter.ReportFilterCode).Query;
+            queryRun = new QueryRun(packedQuery);
+            filterQuery = queryRun.query();
+
+            //q is the baseQuery as provided on the report dialog
+            //if the query has to be grouped by emplooyee then we lool for each emp
+
+            totalValues = this.createPayElementMap(q, filterQuery, payrollPeriodLineRecIdFrom, payrollPeriodLineRecIdTo,useTransactionCurrency);
+            payElementValues.insert(reportConfigFieldFilter.ReportFilterCode, totalValues);
+        }
+
+        //evaluating the expressions
+        spyRReportsTmp.initValue();
+        common = spyRReportsTmp;
+        while select *
+            from reportConfigTable
+            where reportConfigTable.RecId == contract.parmReportConfigRecId()
+            join reportConfigFields
+            order by reportConfigFields.FieldCode asc
+            where reportConfigFields.ReportConfig == reportConfigTable.RecId
+            outer join reportConfigFieldFilter
+            where reportConfigFieldFilter.RecId == reportConfigFields.ReportConfigFilter
+            && reportConfigFieldFilter.Active == NoYes::Yes
+        {
+            if (reportConfigFieldFilter.Active == NoYes::Yes)
+            {
+                totalValues = payElementValues.lookup (  reportConfigFieldFilter.ReportFilterCode);
+            }
+            else
+            {
+                totalValues = payElementValues.lookup ("totalValues");
+            }
+
+            fieldIdentifier =  fieldName2Id( common.TableId, reportConfigFields.FieldCode);
+            if ( fieldIdentifier)
+            {
+                common.( fieldIdentifier ) = this.evaluteFieldValue( reportConfigFields.RecId, totalValues, spyRReportsTmp);
+            }
+        }
+
+        ttsbegin;
+        spyRReportsTmp.insert();
+        ttscommit;
+
+        select firstonly reportConfigTable where reportConfigTable.RecId == contract.parmReportConfigRecId();
+
+        reportConfigTmp.clear();
+       // reportConfigTmp.ReportDesign = reportConfigTable.ReportDesign;
+        reportConfigTmp.BodyImage = CompanyImage::findByRecord(reportConfigTable).Image;
+
+        Map    mappings = new Map(Types::String,Types::String);
+        DictTable dt = new DictTable(spyRReportsTmp.TableId);
+        int numOfFlds = dt.fieldCnt();
+        for (int i = 1 ; i < numOfFlds; i++)
+        {
+            DictField df  = new DictField(spyRReportsTmp.TableId, dt.fieldCnt2Id(i));
+            if (!df.isSystem())
+            {
+                mappings.insert(df.name(), num2Str(spyRReportsTmp.(df.id()),1,2,1,1));
+            }
+        }
+        SysEmailContents reportBody = SysEmailMessage::stringExpand(reportConfigTable.ReportDesign, SysEmailTable::htmlEncodeParameters(mappings));
+        reportBody = strReplace(reportBody, '\n', '<br>');
+        delete_from spyRReportsTmp;
+
+        reportConfigTmp.ReportDesign = reportBody;
+        reportConfigTmp.insert();
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>evaluteFieldValue</Name>
+				<Source><![CDATA[
+    public SPYAmount evaluteFieldValue(SPYReportConfigFieldRecId ReportConfigField, Map  payElementValues, SPYReportConfigStagingTmp _spyRReportsTmp)
+    {
+        SPYReportConfigFieldPayElements reportConfigFieldPayElements;
+        SPYPayElementTable  payElementTable;
+        SPYAmount retValue, currentAmount, fieldAmount;
+        SPYExpression   expression;
+        int fieldIdentifier;
+
+        while select reportConfigFieldPayElements
+            order by reportConfigFieldPayElements.LineNum
+            where reportConfigFieldPayElements.ReportConfigField == ReportConfigField
+            outer join payElementTable
+            where payElementTable.RecId == reportConfigFieldPayElements.PayElement
+        {
+            if ( payElementValues.exists( payElementTable.PayElementCode) )
+            {
+                currentAmount = payElementValues.lookup(payElementTable.PayElementCode);
+                expression += any2Str(currentAmount);
+            }
+            else
+            {
+                currentAmount = 0.00;
+                expression +=  '0.00 ' ;
+            }
+
+            fieldAmount = 0;
+            if ( reportConfigFieldPayElements.FieldCode != "" )
+            {
+                fieldIdentifier =  fieldName2Id( _spyRReportsTmp.TableId, reportConfigFieldPayElements.FieldCode );
+                if ( fieldIdentifier)
+                {
+                    fieldAmount = _spyRReportsTmp.( fieldIdentifier );
+                }
+            }
+
+
+            switch ( reportConfigFieldPayElements.Operator)
+            {
+                case SPYReportConfigFieldOperator::Plus :
+                    expression += " + ";
+                    retValue += ( currentAmount + fieldAmount );
+                    break;
+                case SPYReportConfigFieldOperator::Minus :
+                    expression += " - ";
+                    retValue -= ( currentAmount + fieldAmount );
+                    break;
+                case SPYReportConfigFieldOperator::Multiply :
+                    expression += " * ";
+                    retValue = retValue * ( currentAmount + fieldAmount );
+                    break;
+                case SPYReportConfigFieldOperator::Divide:
+                    expression += " / ";
+                    retValue = retValue / ( currentAmount + fieldAmount );
+                    break;
+                default:
+                    retValue = ( currentAmount + fieldAmount );
+            }
+        }
+
+        //Info( expression);
+        return (retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createPayElementMap</Name>
+				<Source><![CDATA[
+    public  Map createPayElementMap(Query baseWorkerQuery, Query filterQuery, recID periodFrom, RecId periodTo, NoYesID showInTranCurr)
+    {
+        QueryBuildDataSource            qdbPayrollLedger, qdbHcmWorker, qdbCommon, qdbSourceParent, qdbCommonParent, qdbCurrentSource;
+        QueryBuildDataSource            qbdPayrollJournalLine, qbdPayrollJournal, qdbBenefitLedger, qdbReferenceLedger, qbdLastDataSource;
+        QueryBuildLink                  payElementLink;
+        QueryBuildDataSource            qbdPayElement1, qbdPayElement2, qbdPayElement3;
+        QueryBuildRange                 rangePeriod;
+        QueryRun                        qr;
+        Query                           finalQuery;
+        SPYPayElementTable              payElementTable;
+        SPYBenefitLedger                benefitLedgerTable;
+        SPYReferencePayElementLedger    referenceLedgerTable;
+        QueryBuildLink                  link;
+        TableId                         parentTable;
+        Map                             payElementValues = new Map(Types::String, Types::Real);
+        Map                             payElementValuesTranCurr = new Map(Types::String, Types::Real);
+
+        finalQuery = new Query(baseWorkerQuery);
+
+        
+        if ( filterQuery != null )
+        {
+            //start by looping for all the datasources in the source query and find the common datasource in target query
+            //if a common datasource is found, then merge the ranges. If not found try to find the parent if a common parent
+            //is found then add the datasource below the right parent and merge the ranges
+
+            for (int ctr = 1; ctr <= filterQuery.dataSourceCount(); ctr ++)
+            {
+                //check if a common datasource/table exists between the two queries
+                qdbCurrentSource = filterQuery.dataSourceNo(ctr);
+                qdbCommon = finalQuery.dataSourceTable(qdbCurrentSource.table());
+
+                if (!qdbCommon) //if a common table is not found then look for a parent
+                {
+                    parentTable = qdbCurrentSource.parentDataSource().file();
+
+                    if (parentTable)
+                    {
+                        qdbCommonParent = finalQuery.dataSourceTable(parentTable);
+                        if (qdbCommonParent) //if the parent is found then add the current datasource to the common parent
+                        {
+                            qdbCommon = qdbCommonParent.addDataSource(qdbCurrentSource.table());
+                            qdbCommon.fetchMode(QueryFetchMode::One2One); //IMPORTANT without this the query can get seperated
+                            
+                            for( int intLinkCtr=1; intLinkCtr<= filterQuery.dataSourceNo(ctr).linkCount(); intLinkCtr ++)
+                            {
+                                link = filterQuery.dataSourceNo(ctr).link(intLinkCtr) ;
+                                if ( link.relatedField() == 0)
+                                {
+                                    qdbCommon.relations(true); //this only works between the parent and current datasource
+                                }
+                                else
+                                {
+                                    qdbCommon.joinMode( filterQuery.dataSourceNo(ctr).joinMode() );
+                                    qdbCommon.addLink( link.field(), link.relatedField() );
+                                }
+                            }
+                            //link counter
+
+                            SysQuery::mergeRanges(finalQuery, filterQuery, ctr, false, true);
+                            SysQuery::mergeFilters( filterQuery, finalQuery,ctr,true,false);
+                        }
+                        //common parent
+                    }
+            
+                    if (!qdbCommon)
+                    {
+                        qdbCommon = finalQuery.addDataSource(filterQuery.dataSourceNo(ctr).table());
+                        qdbCommon.relations(true);
+                    }
+            
+                }
+                else
+                {
+                    SysQuery::mergeRanges(finalQuery, filterQuery, ctr, false, true);
+                    SysQuery::mergeFilters( filterQuery, finalQuery,ctr,true,false);
+                }
+            }
+
+            SysQuery::copyDynalinks(finalQuery,filterQuery);
+        }
+        //filterQuery is null
+    
+
+        //**************************************************************************************************Payroll Ledger values
+        qdbHcmWorker = finalQuery.dataSourceTable(tableNum(HcmWorker));
+        qdbPayrollLedger = qdbHcmWorker.addDataSource(tableNum(SPYPayrollLedger),"SPYPayrollLedger");
+        qdbPayrollLedger.joinMode(JoinMode::InnerJoin);
+        qdbPayrollLedger.Relations(true);
+        qdbPayrollLedger.fetchMode(QueryFetchMode::One2One);
+        qdbPayrollLedger.addSelectionField(fieldNum(SPYPayrollLedger, AccountingCurrencyAmount), SelectionField::Sum);
+        qdbPayrollLedger.addSelectionField(fieldNum(SPYPayrollLedger, TransactionCurrencyAmount), SelectionField::Sum);
+        qdbPayrollLedger.addGroupByField( fieldNum(SPYPayrollLedger, Payroll));
+        qdbPayrollLedger.orderMode(OrderMode::GroupBy);
+        rangePeriod = qdbPayrollLedger.addRange(fieldNum(SPYPayrollLedger, PayrollPeriodLine));
+        rangePeriod.value(strFmt("%1..%2",queryValue(periodFrom),queryValue(periodTo) ) );
+        
+        qr = new QueryRun(finalQuery);
+        while(qr.next())
+        {
+            payrollLedger       = qr.get(tableNum(SPYPayrollLedger));
+            payElementTable   = SPYPayElementTable::find( payrollLedger.Payroll);
+            payElementValues.insert( payElementTable.PayElementCode, payrollLedger.AccountingCurrencyAmount);
+            payElementValuesTranCurr.insert( payElementTable.PayElementCode, payrollLedger.TransactionCurrencyAmount);
+        }
+        
+        baseWorkerQuery.clearGroupBy(); //group on payelement is added to HCMWorker clear it before the next filter
+        qdbPayrollLedger.enabled(false);     //once payroll ledger is disabled the datasource below this are also disabled.
+        //**************************************************************************************************Payroll Ledger values
+
+        //**************************************************************************************************Benefit Ledger values
+        qdbHcmWorker = finalQuery.dataSourceTable(tableNum(HcmWorker));
+        qdbBenefitLedger = qdbHcmWorker.addDataSource(tableNum(SPYBenefitLedger),"SPYBenefitLedger");
+        qdbBenefitLedger.joinMode(JoinMode::InnerJoin);
+        qdbBenefitLedger.Relations(true);
+        qdbBenefitLedger.fetchMode(QueryFetchMode::One2One);
+        qdbBenefitLedger.addSelectionField(fieldNum(SPYBenefitLedger, AccountingCurrencyAmount), SelectionField::Sum);
+        qdbBenefitLedger.addSelectionField(fieldNum(SPYBenefitLedger, TransactionCurrencyAmount), SelectionField::Sum);
+        qdbBenefitLedger.addSelectionField(fieldNum(SPYBenefitLedger, AccountingCurPnLAmount), SelectionField::Sum);
+        qdbBenefitLedger.addSelectionField(fieldNum(SPYBenefitLedger, TransactionCurPnLAmount), SelectionField::Sum);
+        qdbBenefitLedger.orderMode(OrderMode::GroupBy);
+        qdbBenefitLedger.addGroupByField(fieldNum(SPYBenefitLedger, Benefit));
+        rangePeriod = qdbBenefitLedger.addRange(fieldNum(SPYBenefitLedger, PayrollPeriodLine));
+        rangePeriod.value(strFmt("%1..%2",queryValue(periodFrom),queryValue(periodTo) ) );
+
+        qr = new QueryRun(finalQuery);
+        while(qr.next())
+        {
+            benefitLedgerTable   = qr.get(tableNum(SPYBenefitLedger));
+            payElementTable = SPYPayElementTable::find(benefitLedgerTable.Benefit);
+            payElementValues.insert( payElementTable.PayElementCode, benefitLedgerTable.AccountingCurrencyAmount + benefitLedgerTable.AccountingCurPnLAmount);
+            payElementValuesTranCurr.insert( payElementTable.PayElementCode, benefitLedgerTable.TransactionCurrencyAmount + benefitLedgerTable.TransactionCurPnLAmount);
+        }
+
+        baseWorkerQuery.clearGroupBy(); //group on payelement is added to HCMWorker clear it before the next filter
+        qdbBenefitLedger.enabled(false);
+        //**************************************************************************************************Benefit Ledger values
+
+
+        //**************************************************************************************************Reference Ledger values
+        qdbHcmWorker = finalQuery.dataSourceTable(tableNum(HcmWorker));
+        qdbReferenceLedger = qdbHcmWorker.addDataSource(tableNum(SPYReferencePayElementLedger),"SPYReferencePayElementLedger");
+        qdbReferenceLedger.joinMode(JoinMode::InnerJoin);
+        qdbReferenceLedger.Relations(true);
+        qdbReferenceLedger.addSelectionField(fieldNum(SPYReferencePayElementLedger, AccountingCurrencyAmount), SelectionField::Sum);
+        qdbReferenceLedger.addSelectionField(fieldNum(SPYReferencePayElementLedger, TransactionCurrencyAmount), SelectionField::Sum);
+        qdbReferenceLedger.addGroupByField( fieldNum(SPYReferencePayElementLedger, PayElement));
+        qdbReferenceLedger.fetchMode(QueryFetchMode::One2One);
+        qdbReferenceLedger.orderMode(OrderMode::GroupBy);
+        rangePeriod = qdbReferenceLedger.addRange(fieldNum(SPYReferencePayElementLedger, PayrollPeriodLine));
+        rangePeriod.value(strFmt("%1..%2",queryValue(periodFrom),queryValue(PeriodTo) ) );
+        
+        qr = new QueryRun(finalQuery);
+        while(qr.next())
+        {
+            referenceLedgerTable   = qr.get(tableNum(SPYReferencePayElementLedger));
+            payElementTable = SPYPayElementTable::find( referenceLedgerTable.PayElement);
+            payElementValues.insert( payElementTable.PayElementCode, referenceLedgerTable.AccountingCurrencyAmount);
+            payElementValuesTranCurr.insert( payElementTable.PayElementCode, referenceLedgerTable.TransactionCurrencyAmount );
+        }
+
+        baseWorkerQuery.clearGroupBy(); //group on payelement is added to HCMWorker clear it before the next filter
+        qdbReferenceLedger.enabled(false);
+        baseWorkerQuery.clearQueryFilters();
+        //**************************************************************************************************Reference Ledger values
+
+
+        if ( showInTranCurr == NoYes::Yes ) 
+            return( payElementValuesTranCurr );
+        else
+            return( payElementValues );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYReportConfigTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYReportConfigTmp))]
+    public SPYReportConfigTmp getSPYReportConfigTmp()
+    {
+        select reportConfigTmp;
+        return reportConfigTmp;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

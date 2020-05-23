@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYSQLQueries</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYSQLQueries
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>Calendar</Name>
+				<Source><![CDATA[
+    public static str Calendar(TransDate  dateFrom , TransDate dateTo)
+    {
+        str     query;
+        str     strDateFrom, strDateTo;
+    
+        strDateFrom = date2str( dateFrom, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+        strDateTo =  date2str( dateTo, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+    
+        query = "";
+        query = query + " WorkCalendarEmployment WCE";
+        query = query + "     on WCE.EMPLOYMENT = E.RECID        ";
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HRQuery</Name>
+				<Source><![CDATA[
+    public static str HRQuery(TransDate DateFrom, TransDate DateTo)
+    {
+        str     query;
+    
+        //query = " select W.PERSONNELNUMBER, PT.NAME, DEPT.NAME, JD.DESCRIPTION JobTitle, CL.CompensationLevelID Grade";
+        query += " from " + SPYSQLQueries::Worker();
+        query += " inner join " + SPYSQLQueries::WorkerEmployment(DateFrom, DateTo);
+        query += " left  join " + SPYSQLQueries::WorkerPosition(DateFrom, DateTo);
+        query += " left  join " + SPYSQLQueries::WorkerPositionDepartment();
+        query += " left  join " + SPYSQLQueries::WorkerPositionJob(DateFrom, DateTo);
+        query += " left  join " + SPYSQLQueries::WorkerPositionJobCompensationLevel();
+    
+        query += " left  join " + SPYSQLQueries::Nationality(DateFrom, DateTo);
+        query += " left  join " + SPYSQLQueries::Calendar(DateFrom, DateTo);
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HRQueryForBenefitRegister</Name>
+				<Source><![CDATA[
+    public static str HRQueryForBenefitRegister(TransDate DateFrom, TransDate DateTo)
+    {
+        str     query;
+    
+        //query = " select W.PERSONNELNUMBER, PT.NAME, DEPT.NAME, JD.DESCRIPTION JobTitle, CL.CompensationLevelID Grade";
+        query += " from " + SPYSQLQueries::Worker();
+        query += " left join " + SPYSQLQueries::WorkerEmploymentforBenefitRegister(DateFrom, DateTo);
+        query += " left  join " + SPYSQLQueries::WorkerPosition(DateFrom, DateTo);
+        query += " left  join " + SPYSQLQueries::WorkerPositionDepartment();
+        query += " left  join " + SPYSQLQueries::WorkerPositionJob(DateFrom, DateTo);
+        query += " left  join " + SPYSQLQueries::WorkerPositionJobCompensationLevel();
+    
+        query += " left  join " + SPYSQLQueries::Nationality(DateFrom, DateTo);
+        query += " left  join " + SPYSQLQueries::Calendar(DateFrom, DateTo);
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Nationality</Name>
+				<Source><![CDATA[
+    public static str Nationality(TransDate  dateFrom , TransDate dateTo)
+    {
+        str     query;
+        str     strDateFrom, strDateTo;
+    
+        strDateFrom = date2str( dateFrom, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+        strDateTo =  date2str( dateTo, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+    
+        query = "";
+        query = query + " HCMPERSONPRIVATEDETAILS PPD";
+        query = query + "     on PPD.PERSON = W.PERSON";
+        query = query + " left join LOGISTICSADDRESSCOUNTRYREGIONTRANSLATION LACR";
+        query = query + "     on LACR.COUNTRYREGIONID = PPD.CITIZENSHIPCOUNTRYREGION";
+        query = query + "     and LACR.LANGUAGEID = 'EN-GB'";
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SQLDate</Name>
+				<Source><![CDATA[
+    public static str SQLDate(TransDate TranDate)
+    {
+        str     strDate;
+    
+        strDate = date2str( TranDate, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+    
+        return( strDate ) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Supervisor</Name>
+				<Source><![CDATA[
+    public static str Supervisor(TransDate  dateFrom , TransDate dateTo)
+    {
+        str     query;
+        str     strDateFrom, strDateTo;
+    
+        strDateFrom = date2str( dateFrom, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+        strDateTo =  date2str( dateTo, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+    
+    
+        query += "     ( select Worker, min(AppWorker)  AppWorker ";
+        query += "     from TSAppEmplSub ";
+        query += strFmt( "     where '%1' between DATEFROM and isnull( nullif( DATETO , '1900-01-01') , '%1' ) ", strDateFrom);
+        query += "     group by Worker ";
+        query += "      ) DEL         ";
+        query += "      on DEL.WORKER = W.RECID ";
+        query += " inner join HCMWORKER SUP ";
+        query += "     on SUP.RECID = DEL.APPWORKER ";
+        query += " inner join DirPartyTable PTSUP ";
+        query += "     on PTSUP.RECID = SUP.PERSON ";
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Worker</Name>
+				<Source><![CDATA[
+    public static str Worker()
+    {
+        str     query;
+    
+        query = "";
+        query += " HCMWorker W ";
+        query += " left join DirPartyTable PT ";
+        query += "      on PT.RECID = W.PERSON ";
+        query += " left join DIRPERSONNAME PN";
+        query += "    on PN.PERSON = W.PERSON";
+        query += "    and PN.VALIDTO > '2154-01-01'";
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>WorkerEmployment</Name>
+				<Source><![CDATA[
+    public static str WorkerEmployment(TransDate  dateFrom , TransDate dateTo)
+    {
+        str     query;
+        str     strDateFrom, strDateTo;
+    
+        strDateFrom = date2str( dateFrom, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+        strDateTo =  date2str( dateTo, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+    
+        query = "";
+    
+        query += "     HCMEMPLOYMENT E ";
+        query += "         on E.WORKER = W.RECID ";
+        query += strFmt( "         and ( '%1' between E.VALIDFROM and E.VALIDTO ", strDateFrom);
+        query += strFmt( "         or '%1' between E.VALIDFROM and E.VALIDTO )", strDateTo);
+    
+        query += "     inner join DIRPARTYTABLE C ";
+        query += "         on C.RECID = E.LEGALENTITY ";
+        query += strFmt( "     and C.DATAAREA = '%1' ", curext() ) ;
+    
+        query += "     left join HCMEMPLOYMENTDETAIL ED ";
+        query += "         on ED.EMPLOYMENT = E.RECID ";
+        query += strFmt("         and '%1' between ED.VALIDFROM and ED.VALIDTO ", strDateFrom);
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>WorkerEmploymentforBenefitRegister</Name>
+				<Source><![CDATA[
+    public static str WorkerEmploymentforBenefitRegister(TransDate  dateFrom , TransDate dateTo)
+    {
+        str     query;
+        str     strDateFrom, strDateTo;
+    
+        strDateFrom = date2str( dateFrom, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+        strDateTo =  date2str( dateTo, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+    
+        query = "";
+    
+        query += "     HCMEMPLOYMENT E ";
+        query += "         on E.WORKER = W.RECID ";
+        query += strFmt( "         and ( '%1' between E.VALIDFROM and E.VALIDTO ", strDateFrom);
+        query += strFmt( "         or '%1' between E.VALIDFROM and E.VALIDTO )", strDateTo);
+    
+        query += "     left join DIRPARTYTABLE C ";
+        query += "         on C.RECID = E.LEGALENTITY ";
+        query += strFmt( "     and C.DATAAREA = '%1' ", curext() ) ;
+    
+        query += "     left join HCMEMPLOYMENTDETAIL ED ";
+        query += "         on ED.EMPLOYMENT = E.RECID ";
+        query += strFmt("         and '%1' between ED.VALIDFROM and ED.VALIDTO ", strDateFrom);
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>WorkerNationality</Name>
+				<Source><![CDATA[
+    public static str WorkerNationality()
+    {
+        str s;
+    
+        s = s + " HCMPERSONPRIVATEDETAILS PPD";
+        s = s + "     on PPD.PERSON = W.PERSON";
+        s = s + " left join LOGISTICSADDRESSCOUNTRYREGIONTRANSLATION LACR";
+        s = s + "     on LACR.COUNTRYREGIONID = PPD.CITIZENSHIPCOUNTRYREGION";
+        s = s + "     and LACR.LANGUAGEID = 'EN-GB' ";
+    
+        return s;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>WorkerPosition</Name>
+				<Source><![CDATA[
+    public static str WorkerPosition(TransDate  dateFrom , TransDate dateTo)
+    {
+        str     query;
+        str     strDateFrom, strDateTo;
+    
+        strDateFrom = date2str( dateFrom, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+        strDateTo =  date2str( dateTo, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+    
+        query = "";
+        query += " HCMPOSITIONWORKERASSIGNMENT WPA ";
+        query += "     on WPA.WORKER = W.RECID ";
+        query += strFmt("     and '%1' between WPA.VALIDFROM and WPA.VALIDTO ", strDateFrom) ;
+        query += " left join HCMPOSITION P ";
+        query += "     on P.RECID = WPA.POSITION ";
+        query += " left join HCMPOSITIONDETAIL PD ";
+        query += "     on PD.POSITION = P.RECID ";
+        query += strFmt( "     and '%1' between PD.VALIDFROM and PD.VALIDTO ", strDateFrom);
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>WorkerPositionDepartment</Name>
+				<Source><![CDATA[
+    public static str WorkerPositionDepartment()
+    {
+        str     query;
+    
+        query += " DIRPARTYTABLE DEPT ";
+        query += "     on DEPT.RECID = PD.DEPARTMENT ";
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>WorkerPositionJob</Name>
+				<Source><![CDATA[
+    public static str WorkerPositionJob(TransDate  dateFrom , TransDate dateTo)
+    {
+        str     query;
+        str     strDateFrom, strDateTo;
+    
+        strDateFrom = date2str( dateFrom, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+        strDateTo =  date2str( dateTo, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+    
+        query += " HCMJOBDETAIL JD";
+        query += "     on JD.JOB = PD.JOB";
+        query += strFmt( "  and '%1' between JD.VALIDFROM and JD.VALIDTO ", strDateFrom ) ;
+    
+        return query;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>WorkerPositionJobCompensationLevel</Name>
+				<Source><![CDATA[
+    public static str WorkerPositionJobCompensationLevel()
+    {
+        str     s;
+    
+        s = s + " HCMCOMPENSATIONLEVEL CL";
+        s = s + "     on CL.RECID = JD.CompensationLevel";
+    
+        return s;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

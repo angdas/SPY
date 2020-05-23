@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYLeaveApplicationWFQuery</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYLeaveApplicationWFQuery extends QueryRun
+{
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        date    fromDate = dateNull();
+        date    toDate = dateMax();
+    
+        super();
+        this.query().validTimeStateDateRange(fromDate,toDate);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Title>@SPY712</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYLeaveApplicationTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYLeaveApplicationTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYLeaveApplicationLine_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYLeaveApplicationLine</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>HcmWorker</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>HcmWorker</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges />
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

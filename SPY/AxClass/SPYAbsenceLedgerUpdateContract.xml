@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceLedgerUpdateContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYAbsenceLedgerUpdateContract
+{
+    container                       compensationPlanQuery;
+    container                       hcmWorkerQuery;
+    SPYAbsenceLedgerUpdateSource    absenceLedgerUpdateSource;
+    TransDate                       transDate;
+}
+
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAbsenceLedgerUpdateSource</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYAbsenceLedgerUpdateSource parmAbsenceLedgerUpdateSource(SPYAbsenceLedgerUpdateSource _absenceLedgerUpdateSource = absenceLedgerUpdateSource)
+    {
+        absenceLedgerUpdateSource = _absenceLedgerUpdateSource;
+        return absenceLedgerUpdateSource;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCompensationPlanQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmCompensationPlanQuery(container _compensationPlanQuery = compensationPlanQuery)
+    {
+        compensationPlanQuery = _compensationPlanQuery;
+        return compensationPlanQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmHcmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmHcmWorkerQuery(container _hcmWorkerQuery = hcmWorkerQuery)
+    {
+        hcmWorkerQuery = _hcmWorkerQuery;
+        return hcmWorkerQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTransDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public TransDate parmTransDate(TransDate _transDate = transDate)
+    {
+        transDate = _transDate;
+        return transDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

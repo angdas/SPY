@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYLeaveDetails</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYLeaveDetails extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Description>Leave accrual and encashment details</Description>
+	<Title>Leave accrual and encashment details</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYBenefitLedger</Name>
+			<Table>SPYBenefitLedger</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYPayElementTable_1</Name>
+					<Table>SPYPayElementTable</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields>
+						<AxQuerySimpleDataSourceField>
+							<Name>PayElementCode</Name>
+							<DerivedTable>SPYPayElementTable</DerivedTable>
+							<Field>PayElementCode</Field>
+						</AxQuerySimpleDataSourceField>
+						<AxQuerySimpleDataSourceField>
+							<Name>PayElementType</Name>
+							<DerivedTable>SPYPayElementTable</DerivedTable>
+							<Field>PayElementType</Field>
+						</AxQuerySimpleDataSourceField>
+					</Fields>
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYPayrollPeriodLine_1</Name>
+					<Table>SPYPayrollPeriodLine</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields>
+						<AxQuerySimpleDataSourceField>
+							<Name>PayrollPeriod</Name>
+							<DerivedTable>SPYPayrollPeriodLine</DerivedTable>
+							<Field>PayrollPeriod</Field>
+						</AxQuerySimpleDataSourceField>
+						<AxQuerySimpleDataSourceField>
+							<Name>PeriodStartDate</Name>
+							<DerivedTable>SPYPayrollPeriodLine</DerivedTable>
+							<Field>PeriodStartDate</Field>
+						</AxQuerySimpleDataSourceField>
+						<AxQuerySimpleDataSourceField>
+							<Name>PeriodEndDate</Name>
+							<DerivedTable>SPYPayrollPeriodLine</DerivedTable>
+							<Field>PeriodEndDate</Field>
+						</AxQuerySimpleDataSourceField>
+					</Fields>
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>HcmWorker_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>HcmWorker</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields>
+				<AxQuerySimpleDataSourceField>
+					<Name>JournalType</Name>
+					<DerivedTable>SPYBenefitLedger</DerivedTable>
+					<Field>JournalType</Field>
+				</AxQuerySimpleDataSourceField>
+				<AxQuerySimpleDataSourceField>
+					<Name>TransDate</Name>
+					<DerivedTable>SPYBenefitLedger</DerivedTable>
+					<Field>TransDate</Field>
+				</AxQuerySimpleDataSourceField>
+				<AxQuerySimpleDataSourceField>
+					<Name>Quantity</Name>
+					<DerivedTable>SPYBenefitLedger</DerivedTable>
+					<Field>Quantity</Field>
+				</AxQuerySimpleDataSourceField>
+				<AxQuerySimpleDataSourceField>
+					<Name>AccountingCurrencyAmount</Name>
+					<DerivedTable>SPYBenefitLedger</DerivedTable>
+					<Field>AccountingCurrencyAmount</Field>
+				</AxQuerySimpleDataSourceField>
+				<AxQuerySimpleDataSourceField>
+					<Name>AccountingCurPnLAmount</Name>
+					<DerivedTable>SPYBenefitLedger</DerivedTable>
+					<Field>AccountingCurPnLAmount</Field>
+				</AxQuerySimpleDataSourceField>
+				<AxQuerySimpleDataSourceField>
+					<Name>Benefit</Name>
+					<DerivedTable>SPYBenefitLedger</DerivedTable>
+					<Field>Benefit</Field>
+				</AxQuerySimpleDataSourceField>
+			</Fields>
+			<Ranges />
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

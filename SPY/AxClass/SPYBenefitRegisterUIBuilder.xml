@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitRegisterUIBuilder</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYBenefitRegisterUIBuilder extends SrsReportDataContractUIBuilder
+{
+    DialogField     showFinDim1;
+    DialogField     showFinDim2;
+    DialogField     showFinDim3;
+    Array           DimArray;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>financialDimensions</Name>
+				<Source><![CDATA[
+    public void financialDimensions()
+    {
+        DimensionAttribute              dimAttr;
+        DimensionAttributeSetItem       dimAttrSetItem;
+        DimensionAttributeSetItem       dimAttrSetItemEditable;
+        DimensionEnumeration            dimensionSetId;
+        int                             dimCount;
+    
+        dimensionSetId = DimensionCache::getDimensionAttributeSetForLedger();
+    
+        while select dimAttr
+            order by Name
+                where dimAttr.Type != DimensionAttributeType::MainAccount
+            join RecId from dimAttrSetItem
+                where dimAttrSetItem.DimensionAttribute == dimAttr.RecId &&
+                    dimAttrSetItem.DimensionAttributeSet == dimensionSetId
+        {
+            dimCount++;
+            DimArray.value(dimCount, dimAttr.Name);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(Dialog _dialog, SysOperationController _controller, str _dataContractKey)
+    {
+        super(_dialog, _controller, _dataContractKey);
+    
+        DimArray = new Array(Types::String);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postBuild</Name>
+				<Source><![CDATA[
+    public void postBuild()
+    {
+        super();
+    
+        this.financialDimensions();
+    
+        showFinDim1 = this.bindInfo().getDialogField(
+            this.dataContractObject(),
+            methodstr(SPYSalaryRegisterContract, parmShowFinDim1));
+        if(DimArray.exists(1))
+            showFinDim1.label(DimArray.value(1));
+    
+        showFinDim2 = this.bindInfo().getDialogField(
+            this.dataContractObject(),
+            methodstr(SPYSalaryRegisterContract, parmShowFinDim2));
+
+        if(DimArray.exists(2))
+            showFinDim2.label(DimArray.value(2));
+    
+        showFinDim3 = this.bindInfo().getDialogField(
+            this.dataContractObject(),
+            methodstr(SPYSalaryRegisterContract, parmShowFinDim3));
+
+        if(DimArray.exists(3))
+            showFinDim3.label(DimArray.value(3));
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

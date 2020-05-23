@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLedgerContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayLedgerContract extends SPYPayProcessContract
+{
+    Description                 journalDescription;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmJournalDescription</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public Description parmJournalDescription(Description _journalDescription = journalDescription)
+    {
+        journalDescription = _journalDescription;
+        return journalDescription;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

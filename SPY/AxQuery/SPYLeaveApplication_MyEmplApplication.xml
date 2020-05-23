@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYLeaveApplication_MyEmplApplication</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYLeaveApplication_MyEmplApplication extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Title>@SPY695</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYLeaveApplicationTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYLeaveApplicationTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYMYSubordinate</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYMYSubordinate</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<Relations>
+						<AxQuerySimpleDataSourceRelation>
+							<Name>QueryDataSourceRelation1</Name>
+							<Field>Worker</Field>
+							<JoinDataSource>SPYLeaveApplicationTable_1</JoinDataSource>
+							<RelatedField>Worker</RelatedField>
+						</AxQuerySimpleDataSourceRelation>
+					</Relations>
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<Value>( Worker != HcmWorkerLookup::currentWorker())</Value>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy>
+				<AxQuerySimpleOrderByField>
+					<Name>LeaveApplicationCode</Name>
+					<DataSource>SPYLeaveApplicationTable_1</DataSource>
+					<Direction>Descending</Direction>
+					<Field>LeaveApplicationCode</Field>
+				</AxQuerySimpleOrderByField>
+			</OrderBy>
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxCompositeDataEntityView xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitEntity</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[CompositeDataEntityView]
+public class SPYBenefitEntity
+{
+}
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<FormRef>SPYPayElementTable</FormRef>
+	<Label>@SPY:BenefitEntity</Label>
+	<PublicCollectionName>SPYBenefits</PublicCollectionName>
+	<PublicEntityName>SPYBenefit</PublicEntityName>
+	<RootDataEntities>
+		<AxDataEntityViewReferenceRoot>
+			<Name>SPYBenefitTableEntity</Name>
+			<DataEntity>SPYBenefitTableEntity</DataEntity>
+			<EmbeddedDataEntities>
+				<AxDataEntityViewReferenceEmbedded>
+					<Name>SPYBenefitDetailsEntity</Name>
+					<DataEntity>SPYBenefitDetailsEntity</DataEntity>
+					<EmbeddedDataEntities />
+					<Relation>SPYBenefitTableEntity</Relation>
+				</AxDataEntityViewReferenceEmbedded>
+			</EmbeddedDataEntities>
+		</AxDataEntityViewReferenceRoot>
+	</RootDataEntities>
+</AxCompositeDataEntityView>

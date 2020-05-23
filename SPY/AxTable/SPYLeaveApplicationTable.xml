@@ -1,0 +1,1007 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplicationTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYLeaveApplicationTable extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>absenceLedgerExists</Name>
+				<Source><![CDATA[
+    private  boolean absenceLedgerExists(HRMAbsenceCodeId _absenceCode,Date _absenceDate,SPYLeaveApplicationLineRecId _leaveApplicationLine)
+    {
+        boolean     ret;
+        SPYAbsenceLedger        absenceLedger;
+    
+        select firstOnly absenceLedger
+        where absenceLedger.Worker == this.Worker &&
+              absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+              absenceLedger.AbsenceDate == _absenceDate &&
+              absenceLedger.LeaveApplicationLine == _leaveApplicationLine;
+        if(absenceLedger)
+        ret = true;
+        else
+        ret = false;
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>absenceHours</Name>
+				<Source><![CDATA[
+    public Hours absenceHours(date _absenceDate)
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        date                        fromDate = dateNull();
+        date                        toDate = dateMax();
+    
+        select validTimeState(fromDate,toDate) sum(Hours) from leaveApplicationLine
+                where leaveApplicationLine.LeaveApplication == this.RecId &&
+                      leaveApplicationLine.ActualStartDate <= _absenceDate &&
+                      leaveApplicationLine.ActualEndDate >= _absenceDate;
+    
+        return leaveApplicationLine.Hours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cancelApplication</Name>
+				<Source><![CDATA[
+    public void cancelApplication()
+    {
+        SPYLeaveApplicationTable::updateWorkflowStatus(this.RecId,SPYWorkflowStatus::Cancelled);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow(str _workflowType = '')
+    {
+        boolean                     ret;
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        date                        fromDate = dateNull();
+        date                        toDate = dateMax();
+    
+        ret = super(_workflowType);
+    
+        if(this.WorkflowStatus == SPYWorkflowStatus::Created)
+        {
+            select validTimeState(fromDate,toDate) count(recid) from leaveApplicationLine
+                where leaveApplicationLine.LeaveApplication == this.RecId;
+            if(leaveApplicationLine.RecId > 0)
+                ret = true;
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkAbsenceLedger</Name>
+				<Source><![CDATA[
+    private container checkAbsenceLedger(Date _absenceDate,HRMAbsenceCodeId _absenceCode,Real _absenceDays,Hours _absenceHours)
+    {
+        SPYAbsenceLedger    absenceLedger;
+
+        select sum(AbsenceDays), sum(AbsenceHours) from  absenceLedger
+        where absenceLedger.Worker == this.Worker &&
+              absenceLedger.AbsenceDate == _absenceDate &&
+              absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable);
+
+        return [_absenceDays - absenceLedger.AbsenceDays,_absenceHours - absenceLedger.AbsenceHours];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkExtraDateInAbsenceLedger</Name>
+				<Source><![CDATA[
+    private void checkExtraDateInAbsenceLedger(HRMAbsenceCodeId _absenceCode,Map _DateMap,SPYLeaveApplicationLineRecId _leaveApplicationLine)
+    {
+        SPYAbsenceLedger    absenceLedger,absenceLedgerInsert;
+
+        while select sum(AbsenceDays),sum(AbsenceHours) from absenceLedger group by AbsenceDate
+        where absenceLedger.Worker == this.Worker &&
+              absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable) &&
+              absenceLedger.LeaveApplicationLine == _leaveApplicationLine
+        {
+            if((absenceLedger.AbsenceDays || absenceLedger.AbsenceHours) && !_DateMap.exists(absenceLedger.AbsenceDate))
+            {
+                absenceLedgerInsert.clear();
+                absenceLedgerInsert.initValue();
+                absenceLedgerInsert.Worker                = this.Worker;
+                absenceLedgerInsert.EntryType             = SPYAbsenceLedgerEntryType::Transaction;
+                absenceLedgerInsert.HRMAbsenceCodeId      = _absenceCode;
+                absenceLedgerInsert.AbsenceDate           = absenceLedger.AbsenceDate;
+                absenceLedgerInsert.TransDate               = absenceLedger.AbsenceDate;
+                absenceLedgerInsert.AbsenceDays           = -absenceLedger.AbsenceDays;
+                absenceLedgerInsert.AbsenceHours          = -absenceLedger.AbsenceHours;
+                absenceLedgerInsert.SourceDocument        = tableNum(SPYLeaveApplicationTable);
+                absenceLedgerInsert.LeaveApplicationLine  = _leaveApplicationLine;
+                absenceLedgerInsert.Txt                   = strFmt("(Reverse Entry)",absenceLedger.Txt);
+                absenceLedgerInsert.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteAbsenceLedger</Name>
+				<Source><![CDATA[
+    public void deleteAbsenceLedger()
+    {
+        SPYAbsenceLedger        absenceLedger;
+        SPYLeaveApplicationLine leaveApplicationLine;
+        date                    fromDate = dateNull(),toDate = dateMax();
+        SPYBenefitLedger        benefitLedger;
+        RefRecId                alRecId;
+    
+        while select forUpdate validTimeState(FromDate,toDate) absenceLedger exists join leaveApplicationLine
+            where absenceLedger.LeaveApplicationLine == leaveApplicationLine.RecId &&
+                  absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable) &&
+                  leaveApplicationLine.LeaveApplication == this.RecId
+        {
+            if(absenceLedger.aosValidateDelete())
+            {
+                alRecId = absenceLedger.BenefitLedger;
+                absenceLedger.delete();
+                delete_from benefitLedger
+                    where benefitLedger.RecId == alRecId;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>fromAbsenceDate</Name>
+				<Source><![CDATA[
+    public date fromAbsenceDate()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        date                        fromDate = dateNull();
+        date                        toDate = dateMax();
+    
+        select validTimeState(fromDate,toDate) minof(ActualStartDate) from leaveApplicationLine
+                where leaveApplicationLine.LeaveApplication == this.RecId;
+    
+        return leaveApplicationLine.ActualStartDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initValue</Name>
+				<Source><![CDATA[
+    public void initValue()
+    {
+        super();
+        this.Worker = HcmWorkerLookup::currentWorker();
+        this.ResumptionStatus = SPYWorkflowStatus::None;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitToWorkflow</Name>
+				<Source><![CDATA[
+    /*
+    public void resumptionCall()
+    {
+        SPYLeaveResumptionService   leaveResumptionService;
+    
+        leaveResumptionService = new SPYLeaveResumptionService(this.RecId);
+        leaveResumptionService.processResumption();
+    }*/
+
+    public void  submitToWorkflow(WorkflowTypeName      _workflowTemplateName,
+                                  WorkflowComment       _workflowComment,
+                                  boolean               _activatingFromWeb = false,
+                                  UserId                _userId = curUserId())
+    {
+        Workflow::activateFromWorkflowType(_workflowTemplateName,
+                                           this.RecId,
+                                           _workflowComment,
+                                           _activatingFromWeb,
+                                           _userId);
+       
+        SPYLeaveApplicationTable::updateWorkflowStatus(this.RecId,SPYWorkflowStatus::Submitted);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>toAbsenceDate</Name>
+				<Source><![CDATA[
+    public date toAbsenceDate()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        date                        fromDate = dateNull();
+        date                        toDate = dateMax();
+    
+        select validTimeState(fromDate,toDate) maxof(ActualEndDate) from leaveApplicationLine
+                where leaveApplicationLine.LeaveApplication == this.RecId;
+    
+        return leaveApplicationLine.ActualEndDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAbsenceLedger</Name>
+				<Source><![CDATA[
+    public void updateAbsenceLedger(boolean callFromCancellation = false)
+    {
+        SPYLeaveApplicationLine         leaveApplicationLine;
+        SPYAbsenceLedger                absenceLedger;
+        int                             counter;
+        date                            absenceDate;
+        Hours                           workingHours;
+        date                            fromDate = dateNull();
+        date                            toDate = dateMax();
+        boolean                         abort;
+        HRMAbsenceCode                  hrmAbsenceCode;
+        int                             sign = callFromCancellation == true ? 1 : -1;
+        real                            absenceHours,absenceDays;
+        Map                             absenceDateMap = new Map(Types::Date,Types::Integer);
+        SPYLeaveApplicationValidation   leaveApplicationValidation;
+                
+        try
+        {
+            ttsBegin;
+            while select validTimeState(fromDate,toDate) HRMAbsenceCode,ActualStartDate,ActualEndDate,Hours,LeaveApplied,RecId from leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == this.RecId
+            {
+                leaveApplicationValidation = new SPYLeaveApplicationValidation(this, leaveApplicationLine);
+                SPYAbsenceWorkerService     absenceWorkerService = new SPYAbsenceWorkerService(this.Worker);
+                counter = 0;
+                absenceDateMap = new Map(Types::Date,Types::Integer);                
+                hrmAbsenceCode = HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode);
+                while(leaveApplicationLine.ActualStartDate + counter <= leaveApplicationLine.ActualEndDate)
+                {
+                    abort = false;
+                    absenceDate = leaveApplicationLine.ActualStartDate + counter;
+                    workingHours = absenceWorkerService.workingHours(absenceDate);
+                    if(workingHours)
+                    {
+                        if(leaveApplicationLine.ActualStartDate != leaveApplicationLine.ActualEndDate)
+                        {
+                            absenceDays       = 1 * sign;
+                            absenceHours      = workingHours * sign;
+                        }
+                        else
+                        {
+                            if(leaveApplicationLine.LeaveApplied == 1)
+                            {
+                                absenceDays       = 1 * sign;
+                                absenceHours      = workingHours * sign;
+                            }
+                            else
+                            {
+                                absenceDays       = leaveApplicationLine.Hours / workingHours * sign;
+                                absenceHours      = leaveApplicationLine.Hours * sign;
+                                if(!absenceDays)
+                                {
+                                    absenceDays       = leaveApplicationLine.LeaveApplied * sign;
+                                    absenceHours      = leaveApplicationLine.LeaveApplied * workingHours * sign;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(hrmAbsenceCode.SPYLeaveAccrualBasis == SPYLeaveAccrualBasis::WorkingDays)
+                        {
+                            absenceDays       = 0;
+                            absenceHours      = 0;
+                        }
+                        else
+                        {
+                            absenceDays       = 1 * sign;
+                            absenceHours      = absenceWorkerService.workingHours() * sign;
+                        }
+                    }
+                    if(!callFromCancellation)
+                    {
+                        [absenceDays,absenceHours] = this.checkAbsenceLedger(absenceDate,leaveApplicationLine.HRMAbsenceCode,absenceDays,absenceHours);
+                        if(absenceDays || absenceHours)
+                        {
+                            absenceLedger.clear();
+                            absenceLedger.initValue();
+                            absenceLedger.Worker                = this.Worker;
+                            absenceLedger.EntryType             = SPYAbsenceLedgerEntryType::Transaction;
+                            absenceLedger.HRMAbsenceCodeId      = leaveApplicationLine.HRMAbsenceCode;
+                            absenceLedger.AbsenceDate           = absenceDate;
+                            if(leaveApplicationValidation.ledgerTransDateCalcFromLeave() == SPYAbsenceLedgerTransDateCalcFromLeave::AbsenceDate)
+                                absenceLedger.TransDate           = absenceDate;
+                            else
+                                absenceLedger.TransDate           = leaveApplicationLine.ActualStartDate;
+                            absenceLedger.AbsenceDays           = absenceDays;
+                            absenceLedger.AbsenceHours          = absenceHours;
+                            absenceLedger.SourceDocument        = tableNum(SPYLeaveApplicationTable);
+                            absenceLedger.LeaveApplicationLine  = leaveApplicationLine.RecId;
+                            if(!callFromCancellation)
+                            absenceLedger.Txt               = strFmt("@SPY1732",this.LeaveApplicationCode);
+                            else
+                            absenceLedger.Txt               = strFmt("@SPY1619",this.LeaveApplicationCode);
+                            absenceLedger.insert();
+                        }
+                        select sum(AbsenceDays), sum(AbsenceHours) from  absenceLedger
+                        where absenceLedger.Worker == this.Worker &&
+                              absenceLedger.AbsenceDate == absenceDate &&
+                              absenceLedger.HRMAbsenceCodeId == leaveApplicationLine.HRMAbsenceCode &&
+                              absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable);
+                        if(absenceLedger.AbsenceDays || absenceLedger.AbsenceHours)
+                            absenceDateMap.insert(absenceDate,1);
+                    }
+                    counter++;
+                }
+                this.checkExtraDateInAbsenceLedger(leaveApplicationLine.HRMAbsenceCode,absenceDateMap,leaveApplicationLine.RecId);
+            }
+            /*
+            absenceDate = this.fromAbsenceDate();
+            while(absenceDate <= this.toAbsenceDate())
+            {
+
+                hcmEmployment = HcmEmployment::findByWorkerLegalEntity(this.Worker,
+                                                                       CompanyInfo::current(),
+                                                                       DateTimeUtil::newDateTime(absenceDate,00-00));
+                workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+                calendarId = workCalendarEmployment.CalendarId;
+                workingHours = WorkCalendarDate::calcDefinedHours(calendarId,absenceDate);
+                this.updateLedgerTS(absenceDate,workingHours,this.absenceHours(absenceDate));
+                absenceDate++;
+            }
+            */
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            error("@SPY707");
+            ttsAbort;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefitAccrualAvailQty</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    public void updateBenefitAccrualAvailQty()
+    {
+        SPYBenefitAccrualDistribution       benefitAccrualDistribution;
+        SPYLeaveApplicationLine             leaveApplicationLine;
+        SPYLeaveApplBenefitAccrualMapping   leaveApplBenefitAccrualMapping;
+        SPYAmount                           appliedQty,availedQty;
+        date                                validFrom = dateNull();
+        date                                validTo = dateMax();
+    
+        ttsBegin;
+        while select ValidTimeState(validFrom, validTo) LeaveApplied,RecId,HRMAbsenceCode from leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == this.RecId &&
+                  leaveApplicationLine.LeaveApplied
+        {
+            appliedQty = leaveApplicationLine.LeaveApplied;
+            delete_from leaveApplBenefitAccrualMapping
+                where leaveApplBenefitAccrualMapping.LeaveApplicationLine == leaveApplicationLine.RecId;
+            while select forUpdate benefitAccrualDistribution order by TransDate asc
+                where benefitAccrualDistribution.Worker == this.Worker &&
+                      benefitAccrualDistribution.Benefit == HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode).SPYBenefit &&
+                      benefitAccrualDistribution.RemainingQty > 0
+            {
+                if(appliedQty > 0)
+                {
+                    if(appliedQty <= benefitAccrualDistribution.RemainingQty)
+                    {
+                        availedQty = appliedQty;
+                        benefitAccrualDistribution.RemainingQty = benefitAccrualDistribution.RemainingQty - appliedQty;
+                        benefitAccrualDistribution.update();
+                        appliedQty = 0;
+                    }
+                    else
+                    {
+                        availedQty = benefitAccrualDistribution.RemainingQty;
+                        appliedQty = appliedQty - benefitAccrualDistribution.RemainingQty;
+                        benefitAccrualDistribution.RemainingQty = 0;
+                        benefitAccrualDistribution.update();
+                    }
+                    leaveApplBenefitAccrualMapping.BenefitAccrualDistribution   = benefitAccrualDistribution.RecId;
+                    leaveApplBenefitAccrualMapping.LeaveApplicationLine         = leaveApplicationLine.RecId;
+                    leaveApplBenefitAccrualMapping.AllocationFactor             = availedQty / leaveApplicationLine.LeaveApplied;
+                    leaveApplBenefitAccrualMapping.insert();
+                }
+            }
+            if(appliedQty > 0)
+            {
+                leaveApplBenefitAccrualMapping.BenefitAccrualDistribution   = 0;
+                leaveApplBenefitAccrualMapping.LeaveApplicationLine         = leaveApplicationLine.RecId;
+                leaveApplBenefitAccrualMapping.AllocationFactor             = appliedQty / leaveApplicationLine.LeaveApplied;
+                leaveApplBenefitAccrualMapping.insert();
+            }
+        }
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefitLedger</Name>
+				<Source><![CDATA[
+    public void updateBenefitLedger()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        SPYBenefitLedger            benefitLedger;
+        SPYPayElementRecId          benefit;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYPayrollPeriodLine        payrollPeriodLine;
+        HcmEmployment               hcmEmployment;
+        WorkCalendarEmployment      workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+        date                        fromDate = dateNull();
+        date                        todate = dateMax();
+        SPYAmount                   absentDays;
+        SPYAmount                   absentAmount;
+    
+        ttsBegin;
+        while select validTimeState(fromDate,todate) HRMAbsenceCode,ActualStartDate,ActualEndDate,Hours,LeaveApplied from leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == this.RecId
+        {
+            benefit = HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode).SPYBenefit;
+            if(benefit)
+            {
+                select firstOnly validTimeState(fromdate,todate) PayrollPeriod from workerPositionBenefit
+                    where workerPositionBenefit.Worker == this.Worker &&
+                          workerPositionBenefit.LegalEntity == CompanyInfo::current() &&
+                          workerPositionBenefit.Benefit == benefit;
+                select firstOnly RecId,PeriodStartDate,PeriodEndDate from payrollPeriodLine
+                    where payrollPeriodLine.PayrollPeriod == workerPositionBenefit.PayrollPeriod &&
+                          payrollPeriodLine.PeriodStartDate <= DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()) &&
+                          payrollPeriodLine.PeriodEndDate >= DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone());
+                absentDays = leaveApplicationLine.LeaveApplied;
+                absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(this.Worker) * absentDays;
+                benefitLedger.initValue();
+                benefitLedger.JournalType               = SPYBenefitJournalType::Encashment;
+                benefitLedger.SourceDocument            = tableNum(SPYLeaveApplicationLine);
+                benefitLedger.Worker                    = this.Worker;
+                benefitLedger.Benefit                   = benefit;
+                benefitLedger.PayrollPeriodLine         = payrollPeriodLine.RecId;
+                benefitLedger.Currency                  = Ledger::accountingCurrency();
+                benefitLedger.TransactionCurrencyAmount = -absentAmount;
+                benefitLedger.ExchRate                  = 100;
+                benefitLedger.AccountingCurrencyAmount  = -absentAmount;
+                benefitLedger.Quantity                  = -absentDays;
+                benefitLedger.TransDate                 = DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone());
+                benefitLedger.Txt                       = strFmt("@SPY374",SPYPayElementTable::find(benefit).PayElementCode,
+                                                                 HcmWorker::find(this.Worker).name(),payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate);
+                benefitLedger.setAccount(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),CompanyInfo::current(),payrollPeriodLine.RecId);
+                benefitLedger.insert();
+            }
+        }
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLedgerTS</Name>
+				<Source><![CDATA[
+    private void updateLedgerTS(Date _timesheetDate,Hours _workingHours,Hours _leaveApplHours)
+    {
+        SPYAbsenceLedger        absenceLedger;
+        SPYOvertimeLedger       overtimeLedger;
+        Hours                   absenceHours;
+        Hours                   overtimeHours;
+        TSTimesheetTable        timesheetTable;
+        Hours                   timesheetDateHours;
+        boolean                 timesheetPresent;
+        boolean                 overtimePresent;
+        ResourceWorkerView      resourceWorkerView;    
+    
+        select firstonly  absenceLedger
+            where absenceLedger.Worker == this.Worker &&
+                  absenceLedger.SourceDocument == tableNum(TSTimesheetTable) &&
+                  absenceLedger.AbsenceDate == _timesheetDate;
+        timesheetPresent = absenceLedger.RecId ? true : false;
+        if(timesheetPresent)
+        {
+            delete_from absenceLedger
+                where absenceLedger.Worker == this.Worker &&
+                      absenceLedger.SourceDocument == tableNum(TSTimesheetTable) &&
+                      absenceLedger.AbsenceDate == _timesheetDate;
+    
+            select firstonly TimesheetNbr from timesheetTable
+                join resourceWorkerView
+                where timesheetTable.Resource == resourceWorkerView.RecId &&
+                      resourceWorkerView.Worker == this.Worker &&
+                      (timesheetTable.ApprovalStatus == TSAppStatus::Approved ||
+                      timesheetTable.ApprovalStatus == TSAppStatus::Ledger) &&
+                      timesheetTable.PeriodTo >= _timesheetDate &&
+                      timesheetTable.PeriodFrom <= _timesheetDate;
+
+            timesheetDateHours = TSTimesheetLineWeek::totalHoursDay(timesheetTable.TimesheetNbr,_timesheetDate);
+            absenceHours = _workingHours - (timesheetDateHours + _leaveApplHours);
+            if(absenceHours > 0)
+            {
+                absenceLedger.initValue();
+                absenceLedger.Worker            = this.Worker;
+                absenceLedger.EntryType             = SPYAbsenceLedgerEntryType::Transaction;
+                absenceLedger.HRMAbsenceCodeId  = SPYPayrollParameters::find().TimesheetAbsenceCode;
+                absenceLedger.AbsenceDate       = _timesheetDate;
+                absenceLedger.TransDate = _timesheetDate;
+                absenceLedger.AbsenceDays       = absenceHours / _workingHours;
+                absenceLedger.AbsenceHours      = absenceHours;
+                absenceLedger.SourceDocument    = tableNum(TSTimesheetTable);
+                absenceLedger.insert();
+            }
+        }
+    
+        select firstonly overtimeLedger
+            where overtimeLedger.Worker == this.Worker &&
+                  overtimeLedger.OvertimeDate == _timesheetDate;
+        overtimePresent = overtimeLedger.RecId ? true : false;
+        if(overtimePresent)
+        {
+            delete_from overtimeLedger
+                where overtimeLedger.Worker == this.Worker &&
+                      overtimeLedger.OvertimeDate == _timesheetDate;
+            overtimeHours = timesheetDateHours - (_workingHours + _leaveApplHours);
+            if(overtimeHours > 0)
+            {
+                overtimeLedger.initValue();
+                overtimeLedger.Worker           = this.Worker;
+                overtimeLedger.OvertimeDate     = _timesheetDate;
+                if(_workingHours)
+                    overtimeLedger.OvertimeDays = overtimeHours / _workingHours;
+                else
+                    overtimeLedger.OvertimeDays = 1;
+                overtimeLedger.OvertimeHours    = overtimeHours;
+                overtimeLedger.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateDelete</Name>
+				<Source><![CDATA[
+    public boolean validateDelete()
+    {
+        boolean ret;
+    
+        ret = super();
+        if(this.WorkflowStatus != SPYWorkflowStatus::Created)
+            ret = checkFailed(strFmt("@SPY1085"));
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYLeaveApplicationTable find(
+    SPYLeaveApplicationRecId    _recId,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYLeaveApplicationTable    leaveApplicationTable;
+    
+        leaveApplicationTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            leaveApplicationTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly leaveApplicationTable
+             where leaveApplicationTable.RecId == _recId;
+    
+        return leaveApplicationTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByCode</Name>
+				<Source><![CDATA[
+    public static SPYLeaveApplicationTable findByCode(
+    SPYLeaveApplicationCode    _code,
+    boolean                     _forUpdate = false,
+    ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYLeaveApplicationTable    leaveApplicationTable;
+    
+        leaveApplicationTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            leaveApplicationTable.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly leaveApplicationTable
+             where leaveApplicationTable.LeaveApplicationCode == _code;
+    
+        return leaveApplicationTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWorkflowStatus</Name>
+				<Source><![CDATA[
+    static void updateWorkflowStatus(SPYLeaveApplicationRecId _leaveApplication,SPYWorkflowStatus _status)
+    {
+        SPYLeaveApplicationTable   leaveApplicationTableUpdate;
+        SPYLeaveApplicationLine     leaveApplicationLineUpdate;
+        date    validFrom = dateNull(), validTo = dateMax();
+    
+        ttsBegin;
+        leaveApplicationTableUpdate = SPYLeaveApplicationTable::find(_leaveApplication, true);
+        if(leaveApplicationTableUpdate)
+        {
+            leaveApplicationTableUpdate.WorkflowStatus = _status;
+            if(leaveApplicationTableUpdate.WorkflowStatus == SPYWorkflowStatus::Approved && leaveApplicationTableUpdate.ResumptionInitiated)
+                leaveApplicationTableUpdate.ServiceResumed = true;
+            if(leaveApplicationTableUpdate.ResumptionInitiated == false)
+            {
+                leaveApplicationTableUpdate.ApprovalStatus = _status;
+            }
+            else
+            {
+                leaveApplicationTableUpdate.ResumptionStatus = _status;
+            }
+            leaveApplicationTableUpdate.update();
+            if(_status == SPYWorkflowStatus::Cancelled)
+                leaveApplicationTableUpdate.updateAbsenceLedger(true);
+            if(_status == SPYWorkflowStatus::Submitted)
+            {
+                while select forupdate validtimestate(validFrom, validTo) leaveApplicationLineUpdate
+                    where leaveApplicationLineUpdate.LeaveApplication == _leaveApplication
+                {
+                    leaveApplicationLineUpdate.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                    leaveApplicationLineUpdate.update();
+                }
+            }
+
+            
+        }
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>leaveToDate</Name>
+				<Source><![CDATA[
+    display ValidToDate leaveToDate()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        date                        fromDate = dateNull();
+        date                        toDate = dateMax();
+
+        select validTimeState(fromDate,toDate) ValidTo from leaveApplicationLine join leaveApplicationTable
+            where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId &&
+                  leaveApplicationTable.LeaveApplicationCode == this.LeaveApplicationCode;
+
+        return leaveApplicationLine.ValidTo;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>leaveFromDate</Name>
+				<Source><![CDATA[
+    display ValidFromDate leaveFromDate()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        date                        fromDate = dateNull();
+        date                        toDate = dateMax();
+
+        select validTimeState(fromDate,toDate) ValidFrom from leaveApplicationLine join leaveApplicationTable
+            where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId &&
+                  leaveApplicationTable.LeaveApplicationCode == this.LeaveApplicationCode;
+
+        return leaveApplicationLine.ValidFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>leaveCode</Name>
+				<Source><![CDATA[
+    display HRMAbsenceCodeId leaveCode()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        date                        fromDate = dateNull();
+        date                        toDate = dateMax();
+
+        select validTimeState(fromDate,toDate) HRMAbsenceCode from leaveApplicationLine join leaveApplicationTable
+            where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId &&
+                  leaveApplicationTable.LeaveApplicationCode == this.LeaveApplicationCode;
+
+        return leaveApplicationLine.HRMAbsenceCode;
+
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY500</DeveloperDocumentation>
+	<FormRef>SPYLeaveApplication</FormRef>
+	<Label>@SPY499</Label>
+	<TableGroup>WorksheetHeader</TableGroup>
+	<TitleField1>LeaveApplicationCode</TitleField1>
+	<TitleField2>Worker</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<ModifiedBy>Yes</ModifiedBy>
+	<ModifiedDateTime>Yes</ModifiedDateTime>
+	<ReplacementKey>Application_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LeaveApplicationCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LeaveApplicationCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AirTicket</Name>
+			<Label>@SPY1161</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>AirTicketNeeded</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LeaveApplicationCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ApprovalStatus</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Remarks</Name>
+			<Label>@SYS86005</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Remarks</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Resumption</Name>
+			<Label>@SPY704</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ResumptionInitiated</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ServiceResumed</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ResumptionStatus</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Workflow</Name>
+			<Label>@SYS103643</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>WorkflowStatus</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>LeaveSettlement</Name>
+			<Label>@SPY109</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ApplicationSettled</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>WebPortal</Name>
+			<Label>@SPY:WebPortal</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PortalNumber</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AirTicketNeeded</Name>
+			<HelpText>@SPY932</HelpText>
+			<Label>@SPY1160</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>LeaveApplicationCode</Name>
+			<ExtendedDataType>SPYLeaveApplicationCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Remarks</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<Label>@SYS86005</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ServiceResumed</Name>
+			<HelpText>@SPY703</HelpText>
+			<Label>@SPY702</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>SPYLeaveApplicationWorker</ExtendedDataType>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>WorkflowStatus</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<EnumType>SPYWorkflowStatus</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ApplicationSettled</Name>
+			<HelpText>@SPY:ApplicationSettled</HelpText>
+			<Label>@SPY:Settled</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>LeaveSettlementRequired</Name>
+			<ExtendedDataType>NoYesId</ExtendedDataType>
+			<Label>@SPY:LeaveSettlementRequired</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>UploadText</Name>
+			<AllowEdit>No</AllowEdit>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<Label>@SPY:UploadText</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ResumptionInitiated</Name>
+			<Label>@SPY:ResumptionInitiated</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PortalNumber</Name>
+			<ExtendedDataType>SPYPortalNumber</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ApprovalStatus</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<Label>@SPY:ApprovalStatus</Label>
+			<EnumType>SPYWorkflowStatus</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ResumptionStatus</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<Label>@SPY:ResumptionStatus</Label>
+			<EnumType>SPYWorkflowStatus</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>Application_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>LeaveApplicationCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>HcmWorker_1</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>HcmWorker_1_LeaveAppl</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYLeaveApplicationTable</Name>
+			<Cardinality>ExactlyOne</Cardinality>
+			<RelatedTable>SPYLeaveApplicationTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>RecId</Name>
+					<Field>RecId</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

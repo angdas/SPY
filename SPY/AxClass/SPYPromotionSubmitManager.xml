@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPromotionSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// The SPYPromotionSubmitManager menu item action event handler.
+/// </summary>
+public class SPYPromotionSubmitManager 
+{
+    SPYPromotionTable               promotionTable;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPromotionSubmitManager       promotionSubmit = new SPYPromotionSubmitManager();
+        SPYPromotionTable               promotionTable = args.record();
+
+        promotionSubmit.parmPromotionTable(promotionTable);
+
+        if(args.menuItemName() == menuitemActionStr(SPYPromotionSubmitMenuItem))
+        {
+            promotionSubmit.submit(args);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;
+        FormDataSource                  formDataSource;
+
+        if(!this.checkWFNotSubmitted(_args))
+        {
+            return;
+        }
+
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            promotionTable.submitToWorkflow(workFlowTypeStr(SPYPromotion), workflowSubmitDialog.parmWorkflowComment());
+        }
+
+        formRun = _args.caller();
+        formRun.refreshDataSource();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPromotionTable</Name>
+				<Source><![CDATA[
+    private SPYPromotionTable parmPromotionTable(SPYPromotionTable _promotionTable = promotionTable)
+    {
+        promotionTable = _promotionTable;
+
+        return promotionTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkWFNotSubmitted</Name>
+				<Source><![CDATA[
+    private boolean checkWFNotSubmitted(Args  _args)
+    {
+        WorkflowTrackingStatusTable     workflowTrackingStatusTable;
+        boolean                         ret;
+
+        select firstOnly workflowTrackingStatusTable
+        where workflowTrackingStatusTable.ContextTableId == _args.record().TableId &&
+              workflowTrackingStatusTable.ContextRecId == _args.record().RecId;
+        if(workflowTrackingStatusTable)
+        ret = checkFailed("@SPY1248");
+        else
+        ret = true;
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

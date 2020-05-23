@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplicationEventHandler</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLeaveApplicationEventHandler implements    WorkflowCanceledEventHandler,  WorkflowCompletedEventHandler,
+                                                    WorkflowStartedEventHandler
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canceled</Name>
+				<Source><![CDATA[
+    public void canceled(WorkflowEventArgs _workflowEventArgs)
+    {
+        SPYLeaveApplicationTable        leaveApplicationTable = SPYLeaveApplicationTable::find(_workflowEventArgs.parmWorkflowContext().parmRecId());
+        if(leaveApplicationTable.ResumptionInitiated == true)
+            SPYLeaveApplicationTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Created);
+        else
+            SPYLeaveApplicationTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Cancelled);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>completed</Name>
+				<Source><![CDATA[
+    public void completed(WorkflowEventArgs _workflowEventArgs)
+    {
+        SPYLeaveApplicationTable        leaveApplicationTable = SPYLeaveApplicationTable::find(_workflowEventArgs.parmWorkflowContext().parmRecId());
+        SPYLeaveApplicationTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Approved);
+        //leaveApplicationTable.deleteAbsenceLedger();
+        leaveApplicationTable.updateAbsenceLedger();
+        //leaveApplicationTable.updateBenefitAccrualAvailQty(); update on resumption
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>started</Name>
+				<Source><![CDATA[
+    public void started(WorkflowEventArgs _workflowEventArgs)
+    {
+        SPYLeaveApplicationTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Started);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

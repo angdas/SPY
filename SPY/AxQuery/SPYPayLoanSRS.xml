@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYPayLoanSRS</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYPayLoanSRS extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYPayLoanTable</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYPayLoanTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYPayLoanLine</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYPayLoanLine</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>HcmWorker</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>HcmWorker</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>DirPerson</Name>
+							<DynamicFields>Yes</DynamicFields>
+							<Table>DirPerson</Table>
+							<DataSources />
+							<DerivedDataSources />
+							<Fields />
+							<Ranges />
+							<UseRelations>Yes</UseRelations>
+							<Relations />
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges />
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

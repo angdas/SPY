@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayProcessBatch</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayProcessBatch
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>addTask</Name>
+				<Source><![CDATA[
+    static void addTask( SPYPayProcessContract _payProcessContract)
+    {
+        BatchHeader batchHeader;
+        SysOperationServiceController controller;
+        SPYPayProcessContract payProcessContract;
+
+        SPYPayrollParameterState        payrollParameterState = new SPYPayrollParameterState();
+        HcmWorker   hcmWorker;
+        SPYPayElementTable      payElementTable;
+        container        workerContainer,payElementContainer;
+        List        workerList = new List(Types::Int64);
+        ListEnumerator  workerListEnumerator;
+        int     workerCounter, workerBatch, workerTotal = 1, batchSeq;
+        boolean     addBatch;
+
+        workerBatch = SPYPayrollParameters::find().PayProcessBatchTaskSize;
+        if(!workerBatch)
+            throw Error("@SPY:BatchTaskSizeNotSetupInParameter");
+        workerList = con2List(_payProcessContract.parmPayrollParameterState().parmWorkerContainer());
+        workerListEnumerator = workerList.getEnumerator();
+        if(workerList.elements() < workerBatch)
+            workerBatch = workerList.elements();
+        if(!workerBatch)
+            return;
+        SPYObjectCache::flushAllUserCache();
+        int batchNumber = workerList.elements() / workerBatch;
+        batchHeader = BatchHeader::construct();
+        batchHeader.parmCaption("Payroll Multiple Batch Task");
+        while select payElementTable
+        {
+            payElementContainer = conPoke(payElementContainer,conLen(payElementContainer)+1,payElementTable.RecId);
+        }
+        while(workerListEnumerator.moveNext())
+        {
+            if(workerCounter <= workerBatch && workerCounter > 0)
+            {
+                workerContainer = conPoke(workerContainer, conLen(workerContainer)+1, workerListEnumerator.current());                
+                if(workerCounter == workerBatch || (workerTotal > batchNumber * workerBatch && workerCounter == (workerList.elements() mod workerBatch)))
+                    addBatch = true;
+            }
+            else
+            {
+                workerCounter = 1;
+                addBatch = false;
+                workerContainer = conNull();
+                workerContainer = conPoke(workerContainer, conLen(workerContainer)+1,workerListEnumerator.current());
+                controller = new SysOperationServiceController(
+                classStr(SPYPayProcessService),
+                methodStr(SPYPayProcessService, process),
+                SysOperationExecutionMode::Synchronous);
+                controller.parmLoadFromSysLastValue(false); 
+                payProcessContract = controller.getDataContractObject();
+                payProcessContract.parmLegalEntity(_payProcessContract.parmLegalEntity());
+                payProcessContract.parmPayrollPeriodLine(_payProcessContract.parmPayrollPeriodLine());
+                payrollParameterState = new SPYPayrollParameterState();
+                if(workerTotal > batchNumber * workerBatch && workerCounter == (workerList.elements() mod workerBatch) ||
+                    (batchNumber == 1 && workerTotal == workerList.elements()))
+                    addBatch = true;
+            }
+            if(addBatch)
+            {
+                batchSeq++;
+                payrollParameterState.parmWorkerContainer(workerContainer);
+                payrollParameterState.parmPayElementContainer(_payProcessContract.parmPayrollParameterState().parmPayElementContainer());
+                payrollParameterState.parmCalledFromMasterProcess(_payProcessContract.parmPayrollParameterState().parmCalledFromMasterProcess());
+                payProcessContract.parmPayrollParameterState(payrollParameterState);
+                payProcessContract.parmTransDate(_payProcessContract.parmTransDate());
+                payProcessContract.parmCallFromBatchTask(true);
+                controller.batchInfo().parmCaption(strFmt("Payroll Batck Task - %1", batchSeq));
+                batchHeader.addTask(controller);
+            }
+            workerCounter++;
+            workerTotal++;
+        }
+        if(addBatch)
+        {
+            batchHeader.save();
+            info("@SPY:PayrollBatchAddedBatchQueue");
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

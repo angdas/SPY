@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxView xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYHcmWkrPosDtlView</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYHcmWkrPosDtlView extends common
+{
+}
+
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<ConfigurationKey>HRMAdministration</ConfigurationKey>
+	<DeveloperDocumentation>@Workforce:ThisViewIsUsedToGetTheFieldsForWorkersPositionDetailsInforma</DeveloperDocumentation>
+	<Label>@Workforce:PositionDetail</Label>
+	<TitleField1>PositionDescription</TitleField1>
+	<TitleField2>Department</TitleField2>
+	<Query>HcmWorkerPosDtlInfo</Query>
+	<ValidTimeStateEnabled>Yes</ValidTimeStateEnabled>
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PositionDescription</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PositionDescription</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Department</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>PositionDescription</Name>
+			<Label>@SYS30084</Label>
+			<DataField>Description</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>Department</Name>
+			<Label>@SYS90025</Label>
+			<DataField>Department</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>Title</Name>
+			<DataField>Title</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>PositionType</Name>
+			<DataField>PositionType</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>FullTimeEquivalency</Name>
+			<DataField>FullTimeEquivalency</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>CompLocation</Name>
+			<DataField>CompLocation</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>ValidFrom</Name>
+			<DataField>ValidFrom</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>ValidTo</Name>
+			<DataField>ValidTo</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>Position</Name>
+			<DataField>Position</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>Job</Name>
+			<DataField>Job</DataField>
+			<DataSource>PD</DataSource>
+		</AxViewField>
+		<AxViewField xmlns=""
+			i:type="AxViewFieldBound">
+			<Name>WorkerRecId</Name>
+			<DataField>RecId</DataField>
+			<DataSource>Wrkr</DataSource>
+		</AxViewField>
+	</Fields>
+	<Indexes />
+	<Mappings />
+	<Relations />
+	<StateMachines />
+	<ViewMetadata>
+		<Name>Metadata</Name>
+		<SourceCode>
+			<Methods />
+		</SourceCode>
+		<DataSources />
+	</ViewMetadata>
+</AxView>

@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollEarnJourPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayrollEarnJourPostService extends SysOperationServiceBase
+{
+    SPYPayrollEarnJourPostContract      contract;
+    RecordInsertList                    payrollLedgerList;
+    boolean                             callFromPost;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>commitLedger</Name>
+				<Source><![CDATA[
+    private void commitLedger()
+    {
+        payrollLedgerList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2Ledger</Name>
+				<Source><![CDATA[
+    private void insert2Ledger(SPYPayrollEarningsJournalTable _payrollEarningsJournalTable)
+    {
+        SPYPayrollEarningsJournalTrans      payrollEarningsJournalTrans;
+        SPYPayrollLedger                    payrollLedger;
+        ExchangeRateHelper                  exchangeRateHelper;
+    
+        while select payrollEarningsJournalTrans
+            where payrollEarningsJournalTrans.PayrollEarningsJournal == _payrollEarningsJournalTable.RecId
+        {
+            exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::current(),payrollEarningsJournalTrans.Currency);
+            exchangeRateHelper.parmExchangeDate(payrollEarningsJournalTrans.TransDate);
+            payrollLedger.clear();
+            payrollLedger.initValue();
+            payrollLedger.PayrollEarningsJournalTrans = payrollEarningsJournalTrans.RecId;
+            payrollLedger.Worker                      = payrollEarningsJournalTrans.Worker;
+            payrollLedger.Payroll                     = payrollEarningsJournalTrans.Payroll;
+            payrollLedger.PayrollPeriodLine           = payrollEarningsJournalTrans.PayrollPeriodlLine;
+            payrollLedger.TransDate                   = payrollEarningsJournalTrans.TransDate;
+            payrollLedger.Txt                         = payrollEarningsJournalTrans.Txt ? payrollEarningsJournalTrans.Txt :
+                                                        strFmt("@SPY1213",
+                                                        SPYPayElementTable::find(payrollEarningsJournalTrans.Payroll).PayElementCode,
+                                                        HcmWorker::find(payrollEarningsJournalTrans.Worker).name(),
+                                                        SPYPayrollPeriodLine::find(payrollEarningsJournalTrans.PayrollPeriodlLine).PeriodStartDate,
+                                                        SPYPayrollPeriodLine::find(payrollEarningsJournalTrans.PayrollPeriodlLine).PeriodEndDate,
+                                                        _payrollEarningsJournalTable.JournalCode);
+            payrollLedger.DefaultDimension            = payrollEarningsJournalTrans.DefaultDimension;
+            payrollLedger.TransactionCurrencyAmount   = payrollEarningsJournalTrans.Amount;
+            payrollLedger.Currency                    = payrollEarningsJournalTrans.Currency;
+            payrollLedger.ExchRate                    = exchangeRateHelper.getExchangeRate1();
+            payrollLedger.AccountingCurrencyAmount    = payrollEarningsJournalTrans.Amount * payrollLedger.ExchRate / 100;
+            payrollLedger.ImmediateDisbursement       = _payrollEarningsJournalTable.ImmediateDisbursement;
+            payrollLedger.setAccount(payrollLedger.TransDate,CompanyInfo::current(),payrollEarningsJournalTrans.PayrollPeriodlLine);
+            payrollLedger.SourceDocument              = tableNum(SPYPayrollEarningsJournalTable);
+            payrollLedger.DistributeCost                = payrollEarningsJournalTrans.DistributeCost;
+            payrollLedger.IsFinalised = _payrollEarningsJournalTable.ImmediateDisbursement;
+            payrollLedgerList.add(payrollLedger);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYPayrollEarnJourPostContract _contract)
+    {
+        QueryRun                        payrollEarningsJournalQueryRun;
+        SPYPayrollEarningsJournalTable  payrollEarningsJournalTable;
+    
+        payrollEarningsJournalQueryRun = new QueryRun(_contract.parmPayrollEarningsJourTableQuery());
+        payrollLedgerList = new RecordInsertList(tableNum(SPYPayrollLedger));
+    
+        try
+        {
+            setPrefix("@SPY294");
+            ttsBegin;
+            callFromPost = true;
+            if(this.validate(_contract))
+            {
+                while(payrollEarningsJournalQueryRun.next())
+                {
+                    payrollEarningsJournalTable = payrollEarningsJournalQueryRun.get(tableNum(SPYPayrollEarningsJournalTable));
+                    if(!payrollEarningsJournalTable.Posted)
+                    {
+                        if(payrollEarningsJournalTable.PostToLedger)
+                            this.insert2Ledger(payrollEarningsJournalTable);
+                        this.updatePayrollEarnJourHeader(payrollEarningsJournalTable);
+                        info(strFmt("@SPY1315",payrollEarningsJournalTable.JournalCode));
+                    }
+                }
+                this.commitLedger();
+            }
+            else
+                error("@SPY293");
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updatePayrollEarnJourHeader</Name>
+				<Source><![CDATA[
+    private void updatePayrollEarnJourHeader(SPYPayrollEarningsJournalTable _payrollEarningsJournalTable)
+    {
+        SPYPayrollEarningsJournalTable   payrollEarningsJournalTableUpdate = SPYPayrollEarningsJournalTable::find(_payrollEarningsJournalTable.RecId,true);
+    
+        if(payrollEarningsJournalTableUpdate)
+        {
+            payrollEarningsJournalTableUpdate.Posted = true;
+            payrollEarningsJournalTableUpdate.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(SPYPayrollEarnJourPostContract _contract)
+    {
+        boolean                         ret = true;
+        QueryRun                        payrollEarningsJournalQueryRun;
+        SPYPayrollEarningsJournalTable  payrollEarningsJournalTable;
+    
+        payrollEarningsJournalQueryRun = new QueryRun(_contract.parmPayrollEarningsJourTableQuery());
+        if(!callFromPost)
+            setPrefix("@SPY1214");
+        while(payrollEarningsJournalQueryRun.next())
+        {
+            payrollEarningsJournalTable = payrollEarningsJournalQueryRun.get(tableNum(SPYPayrollEarningsJournalTable));
+            if(!payrollEarningsJournalTable.Posted)
+            {
+                if(!this.validateAdjustment(payrollEarningsJournalTable))
+                    ret = checkFailed(strFmt("@SPY1316",payrollEarningsJournalTable.JournalCode));
+                else
+                {
+                    if(!callFromPost)
+                        info(strFmt("@SPY1317",payrollEarningsJournalTable.JournalCode));
+                }
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateAdjustment</Name>
+				<Source><![CDATA[
+    private boolean validateAdjustment(SPYPayrollEarningsJournalTable _payrollEarningsJournalTable)
+    {
+        boolean                             ret = true;
+        SPYPayrollEarningsJournalTrans      payrollEarningsJournalTrans;
+        SPYPayrollPeriodLine                payrollPeriodLine;
+        SPYWorkerPositionPayroll            workerPayroll;
+        date                                validDate;
+        SPYPayrollPeriodRecId               payrollPeriod;
+        HcmEmployment                       employment;
+        HcmEmploymentDetail                 employmentDetail;
+        StartDateTime                       startDateTime;
+        EndDateTime                         endDateTime;
+    
+        if(_payrollEarningsJournalTable.WorkflowStatus != SPYWorkFlowStatus::Approved)
+            ret = checkFailed(strFmt("@SPY1215",_payrollEarningsJournalTable.JournalCode));
+        while select Worker,PayrollPeriodlLine,TransDate,Amount,Currency,LineNum,Payroll from payrollEarningsJournalTrans
+            where payrollEarningsJournalTrans.PayrollEarningsJournal == _payrollEarningsJournalTable.RecId
+        {
+            if(!payrollEarningsJournalTrans.Worker)
+                ret = checkFailed(strFmt("@SPY286",payrollEarningsJournalTrans.LineNum));
+            if(!payrollEarningsJournalTrans.PayrollPeriodlLine)
+                ret = checkFailed(strFmt("@SPY287",payrollEarningsJournalTrans.LineNum));
+            if(!payrollEarningsJournalTrans.TransDate)
+                ret = checkFailed(strFmt("@SPY288",payrollEarningsJournalTrans.LineNum));
+            if(!payrollEarningsJournalTrans.Amount)
+                ret = checkFailed(strFmt("@SPY289",payrollEarningsJournalTrans.LineNum));
+            if(!payrollEarningsJournalTrans.Currency)
+                ret = checkFailed(strFmt("@SPY291",payrollEarningsJournalTrans.LineNum));
+            payrollPeriodLine = SPYPayrollPeriodLine::find(payrollEarningsJournalTrans.PayrollPeriodlLine);
+            if(payrollPeriodLine.PeriodStatus == SPYPayrollPeriodStatus::Closed)
+                ret = checkFailed(strFmt("@SPY1147",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,payrollEarningsJournalTrans.LineNum));
+            if(payrollPeriodLine.PeriodStatus == SPYPayrollPeriodStatus::Stopped)
+                ret = checkFailed(strFmt("@SPY1148",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,payrollEarningsJournalTrans.LineNum));
+            validDate = payrollEarningsJournalTrans.TransDate;
+            select firstonly validTimeState(validDate) workerPayroll
+                where workerPayroll.Worker == payrollEarningsJournalTrans.Worker &&
+                      workerPayroll.LegalEntity == CompanyInfo::current() &&
+                      workerPayroll.Payroll == payrollEarningsJournalTrans.Payroll;
+            if(workerPayroll)
+                payrollPeriod = workerPayroll.PayrollPeriod;
+            else
+            {
+                employment = HcmEmployment::findByWorkerLegalEntity(payrollEarningsJournalTrans.Worker,CompanyInfo::current());
+                //Checking in case of Inactive Employment
+                if(!employment)
+                {
+                    startDateTime = DateTimeUtil::minValue();
+                    endDateTime = DateTimeUtil::maxValue();
+                    employment   = HcmEmployment::findByWorkerLegalEntity(payrollEarningsJournalTrans.Worker,CompanyInfo::current(),startDateTime,endDateTime);
+                }
+    
+                employmentDetail = HcmEmploymentDetail::findByEmployment(employment.RecId);
+                payrollPeriod = employmentDetail.SPYDefaultPayrollPeriod;
+            }
+            if(payrollPeriod != payrollPeriodLine.PayrollPeriod)
+                ret = checkFailed(strFmt("@SPY1625",
+                SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode,payrollEarningsJournalTrans.LineNum));
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

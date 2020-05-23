@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebDocumentLog</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYWebDocumentLog extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>updateLog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    public static void updateLog(RefTableId _refTableId, RefRecId _refRecId, boolean _isDeleted = false)
+    {
+        /*
+        if(_refTableId == tableNum(HcmWorker))
+        {
+            HcmWorker   worker = HcmWorker::find(_refRecId);
+            if(!worker.email())
+                return;
+        }
+        */
+        if(_refRecId && !_isDeleted && !SPYWebDocumentLog::exist(_refTableId, _refRecId))
+        {
+            SPYWebDocumentLog       webDocumentLog;
+
+            webDocumentLog.RefTableId = _refTableId;
+            webDocumentLog.RefRecId = _refRecId;
+            webDocumentLog.IsDeleted = _isDeleted;
+            webDocumentLog.insert();
+        }
+        else if(_refRecId && _isDeleted )
+        {
+            SPYWebDocumentLog       webDocumentLog = SPYWebDocumentLog::find(_refTableId, _refRecId, true);
+            if(webDocumentLog)
+            {
+                webDocumentLog.IsDeleted = _isDeleted;
+                webDocumentLog.update();
+            }
+            else
+            {
+                webDocumentLog.RefTableId = _refTableId;
+                webDocumentLog.RefRecId = _refRecId;
+                webDocumentLog.IsDeleted = _isDeleted;
+                webDocumentLog.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>exist</Name>
+				<Source><![CDATA[
+    public static boolean exist(RefTableId _refTableId, RefRecId _refRecId)
+    {
+        return _refTableId && _refRecId && (select firstonly RecId from SPYWebDocumentLog
+                where SPYWebDocumentLog.RefTableId == _refTableId && SPYWebDocumentLog.RefRecId == _refRecId).RecId!= 0;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    public static SPYWebDocumentLog find(
+        RefTableId          _refTableId,
+        RefRecId               _refRecId,
+        boolean                              _forUpdate = false,
+        ConcurrencyModel                     _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYWebDocumentLog  webDocumentLog;
+    
+        webDocumentLog.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            webDocumentLog.concurrencyModel(_concurrencyModel);
+        }
+    
+        select firstonly webDocumentLog
+            where webDocumentLog.RefTableId == _refTableId &&
+            webDocumentLog.RefRecId == _refRecId;
+    
+        return webDocumentLog;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<Label>@SPY:WebDocumentLog</Label>
+	<SubscriberAccessLevel>
+		<Read>Allow</Read>
+	</SubscriberAccessLevel>
+	<TableGroup>Transaction</TableGroup>
+	<TitleField1>RefTableId</TitleField1>
+	<TitleField2>RefRecId</TitleField2>
+	<CacheLookup>FoundAndEmpty</CacheLookup>
+	<ReplacementKey>RefTableRec_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>RefTableId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>RefRecId</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>RefTableId</Name>
+			<ExtendedDataType>RefTableId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>RefRecId</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>IsDeleted</Name>
+			<ExtendedDataType>NoYesId</ExtendedDataType>
+			<Label>@SPY:IsDeleted</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>RefTableRec_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>RefTableId</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>RefRecId</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations />
+	<StateMachines />
+</AxTable>

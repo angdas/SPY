@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerTransition</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWorkerTransition
+{ 
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>HcmWorkerTransition_updatingHcmEmployment</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="_employment"></param>
+    /// <param name="_validFrom"></param>
+    /// <param name="_validTo"></param>
+    [SubscribesTo(classStr(HcmWorkerTransition), delegateStr(HcmWorkerTransition, updatingHcmEmployment))]
+    public static void HcmWorkerTransition_updatingHcmEmployment(HcmEmployment _employment, ValidFromDateTime _validFrom, ValidToDateTime _validTo)
+    {
+        SPYWorkerCompensationPlan   workerCompensationPlan;
+
+        workerCompensationPlan = new SPYWorkerCompensationPlan(_employment.Worker,_employment.LegalEntity);
+        workerCompensationPlan.endCompensation(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(_validTo,DateTimeUtil::getCompanyTimeZone())),false);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmWorkerTransition_deletingHcmEmployment</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="_employment"></param>
+    [SubscribesTo(classStr(HcmWorkerTransition), delegateStr(HcmWorkerTransition, deletingHcmEmployment))]
+    public static void HcmWorkerTransition_deletingHcmEmployment(HcmEmployment _employment)
+    {
+        SPYWorkerCompensationPlan   workerCompensationPlan;
+
+        workerCompensationPlan = new SPYWorkerCompensationPlan(_employment.Worker,_employment.LegalEntity);
+        workerCompensationPlan.endCompensation(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(_employment.ValidTo,DateTimeUtil::getCompanyTimeZone())),true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>HcmWorkerTransition_Post_newCreateHcmWorker</Name>
+				<Source><![CDATA[
+    //</NE by RKD 02-Jan-2018 Defaulting Payelements from position>
+    [PostHandlerFor(classStr(HcmWorkerTransition), staticMethodStr(HcmWorkerTransition, newCreateHcmWorker))]
+    public static void HcmWorkerTransition_Post_newCreateHcmWorker(XppPrePostArgs args)
+    {
+        HcmWorkerRecId              worker;
+        LegalEntityRecId            legalEntity = CompanyInfo::find().RecId;
+        HcmPositionRecId            position;
+        TransDateTime               employmentStartDate;
+        TransDateTime               employmentEndDate;
+        SPYWorkerCompensationPlan   workerCompensationPlan;
+        HcmPositionWorkerAssignment workerAssignment;
+        HcmPersonnelNumberId        personnelNumber;
+
+        personnelNumber = args.getArg(identifierStr(_personnelNumber));
+        worker = hcmworker::findByPersonnelNumber(personnelNumber).RecId;
+        hcmemployment hcmEmployment = hcmEmployment::findByWorkerLegalEntity(worker, legalEntity);
+
+        select workerAssignment
+            where workerAssignment.Worker == hcmEmployment.Worker;
+
+        worker = hcmemployment.Worker;
+        position = workerAssignment.Position;
+        employmentStartDate = hcmEmployment.validfrom;
+        employmentEndDate = hcmEmployment.validto;
+
+        if(worker)
+        {
+            try
+            {
+                if(SPYPayrollParameters::find().DefaultingPayWarning == SPYWarningOrNone::Warning)
+                {
+                    if(Box::okCancel("@SPY557",DialogButton::Ok) != DialogButton::Ok)
+                    return;
+                }
+                ttsBegin;
+                workerCompensationPlan = new SPYWorkerCompensationPlan(worker,legalEntity,position);
+                workerCompensationPlan.parmPayStartDateTime(employmentStartDate);
+                workerCompensationPlan.parmPayEndDateTime(employmentEndDate);
+                workerCompensationPlan.parmPayStartDate(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(employmentStartDate,DateTimeUtil::getClientMachineTimeZone())));
+                if(employmentEndDate == DateTimeUtil::maxValue())
+                workerCompensationPlan.parmPayEndDate(dateMax());
+                else
+                workerCompensationPlan.parmPayEndDate(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(employmentEndDate,DateTimeUtil::getClientMachineTimeZone())));
+                workerCompensationPlan.updateCompensation();
+                ttsCommit;
+            }
+            catch(Exception::Error)
+            {
+                ttsAbort;
+                error("@SPY552");
+            }
+        }
+    }
+
+    /*
+    //</NS by RKD 02-Jan-2018 Defaulting Payelements from position>
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="args"></param>
+    [PostHandlerFor(classStr(HcmWorkerTransition), staticMethodStr(HcmWorkerTransition, newCreateHcmWorkerV2))]
+    public static void HcmWorkerTransition_Post_newCreateHcmWorkerV2(XppPrePostArgs args)
+    {
+        HcmWorkerRecId              worker;
+        LegalEntityRecId            legalEntity = CompanyInfo::find().RecId;
+        HcmPositionRecId            position;
+        TransDateTime               employmentStartDate;
+        TransDateTime               employmentEndDate;
+        SPYWorkerCompensationPlan   workerCompensationPlan;
+        HcmPositionWorkerAssignment workerAssignment;
+        HcmPersonnelNumberId        personnelNumber;
+
+        personnelNumber = args.getArg(identifierStr(_personnelNumber));
+        worker = hcmworker::findByPersonnelNumber(personnelNumber).RecId;
+        hcmemployment hcmEmployment = hcmEmployment::findByWorkerLegalEntity(worker, legalEntity);
+
+        select workerAssignment
+            where workerAssignment.Worker == hcmEmployment.Worker;
+
+        worker = hcmemployment.Worker;
+        position = workerAssignment.Position;
+        employmentStartDate = hcmEmployment.validfrom;
+        employmentEndDate = hcmEmployment.validto;
+
+        if(worker)
+        {
+            try
+            {
+                if(SPYPayrollParameters::find().DefaultingPayWarning == SPYWarningOrNone::Warning)
+                {
+                    if(Box::okCancel("@SPY557",DialogButton::Ok) != DialogButton::Ok)
+                    return;
+                }
+                ttsBegin;
+                workerCompensationPlan = new SPYWorkerCompensationPlan(worker,legalEntity,position);
+                workerCompensationPlan.parmPayStartDateTime(employmentStartDate);
+                workerCompensationPlan.parmPayEndDateTime(employmentEndDate);
+                workerCompensationPlan.parmPayStartDate(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(employmentStartDate,DateTimeUtil::getClientMachineTimeZone())));
+                if(employmentEndDate == DateTimeUtil::maxValue())
+                workerCompensationPlan.parmPayEndDate(dateMax());
+                else
+                workerCompensationPlan.parmPayEndDate(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(employmentEndDate,DateTimeUtil::getClientMachineTimeZone())));
+                workerCompensationPlan.updateCompensation();
+                ttsCommit;
+            }
+            catch(Exception::Error)
+            {
+                ttsAbort;
+                error("@SPY552");
+            }
+        }
+    }
+    //</NE by RKD 02-Jan-2018 Defaulting Payelements from position>
+*/
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

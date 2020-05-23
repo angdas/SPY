@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitJournalTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYBenefitJournalTable extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow(str _workflowType = '')
+    {
+        boolean                 ret;
+        SPYBenefitJournalTrans  benefitJournalTrans;
+    
+        ret = super(_workflowType);
+    
+        if(this.WorkflowStatus == SPYWorkflowStatus::Created && !this.Posted)
+        {
+            select count(recid) from benefitJournalTrans
+                where benefitJournalTrans.BenefitJournal == this.RecId;
+            if(benefitJournalTrans.RecId > 0)
+                ret = true;
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitToWorkflow</Name>
+				<Source><![CDATA[
+    public void  submitToWorkflow(WorkflowTypeName      _workflowTemplateName,
+                                  WorkflowComment       _workflowComment,
+                                  boolean               _activatingFromWeb = false)
+    {
+        Workflow::activateFromWorkflowType(_workflowTemplateName,
+                                           this.RecId,
+                                           _workflowComment,
+                                           _activatingFromWeb,
+                                           curUserId());
+    
+        SPYBenefitJournalTable::updateWorkflowStatus(this.RecId,SPYWorkflowStatus::Submitted);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Finds the specified record in the <c>SPYBenefitJournalTable</c> table.
+    /// </summary>
+    /// /// <param name="_recId">
+    ///    The record ID of the record to find.
+    /// </param>
+    /// <param name="_forUpdate">
+    ///     A Boolean value that indicates whether to read the record for update; optional.
+    /// </param>
+    /// <param name="_concurrencyModel">
+    ///     An enumeration value that indicates the concurrency setting to use on the table; optional.
+    /// </param>
+    /// <returns>
+    ///     A record in the <c>SPYBenefitJournalTable</c> table; otherwise, an empty record.
+    /// </returns>
+    /// <remarks>
+    ///     Finds the specified record in the <c>SPYBenefitJournalTable</c> table.
+    /// </remarks>
+    public static SPYBenefitJournalTable find(
+        SPYBenefitJournalRecId               _recId,
+        boolean                              _forUpdate = false,
+        ConcurrencyModel                     _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYBenefitJournalTable   benefitJournalTable;
+    
+        benefitJournalTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            benefitJournalTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly benefitJournalTable
+             where benefitJournalTable.RecId == _recId;
+    
+        return benefitJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWorkflowStatus</Name>
+				<Source><![CDATA[
+    static void updateWorkflowStatus(SPYBenefitJournalRecId _benefitJournal,SPYWorkflowStatus _status)
+    {
+        SPYBenefitJournalTable   benefitJournalTableUpdate;
+    
+        ttsBegin;
+        benefitJournalTableUpdate = SPYBenefitJournalTable::find(_benefitJournal,true);
+        if(benefitJournalTableUpdate)
+        {
+            benefitJournalTableUpdate.WorkflowStatus = _status;
+            benefitJournalTableUpdate.update();
+        }
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY267</DeveloperDocumentation>
+	<Label>@SPY295</Label>
+	<TableGroup>WorksheetHeader</TableGroup>
+	<TitleField1>BenefitJournalCode</TitleField1>
+	<TitleField2>Description</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<ReplacementKey>BenefitJournalCode_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>BenefitJournalCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>BenefitJournalCode</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>BenefitEncashment</Name>
+			<Label>@SPY1706</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>BenefitEncashmentBatch</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>BenefitEncashmentPeriod</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>BenefitJournalCode</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Description</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>JournalType</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Dimension</Name>
+			<Label>@SYS342338</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>DefaultDimension</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Disbursement</Name>
+			<Label>@SYS79716</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>ImmediateDisbursement</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayrollJournal</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Log</Name>
+			<Label>@SYS2515</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>createdBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>createdDateTime</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Posted</Name>
+			<Label>@SYS1711</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Posted</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>WorkflowStatus</Name>
+			<Label>@SPY138</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>WorkflowStatus</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>BenefitEncashmentBatch</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<HelpText>@SPY1703</HelpText>
+			<Label>@SPY1702</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>BenefitEncashmentPeriod</Name>
+			<AllowEdit>No</AllowEdit>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<ExtendedDataType>SPYPayrollPeriodLineRecId</ExtendedDataType>
+			<HelpText>@SPY1705</HelpText>
+			<Label>@SPY1704</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>BenefitJournalCode</Name>
+			<ExtendedDataType>SPYBenefitJournalCode</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>DefaultDimension</Name>
+			<ExtendedDataType>RefRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Description</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>ImmediateDisbursement</Name>
+			<HelpText>@SPY1668</HelpText>
+			<Label>@SPY1667</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>JournalType</Name>
+			<EnumType>SPYBenefitJournalType</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollJournal</Name>
+			<ExtendedDataType>SPYPayrollJournalRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Posted</Name>
+			<AllowEditOnCreate>No</AllowEditOnCreate>
+			<HelpText>@SPY271</HelpText>
+			<Label>@SYS1711</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>WorkflowStatus</Name>
+			<EnumType>SPYWorkflowStatus</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>BenefitJournalCode_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>BenefitJournalCode</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>DefaultDimension</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>DimensionAttributeValueSet</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>DefaultDimension</Name>
+					<Field>DefaultDimension</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollJournalTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollJournalTable</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollJournal</Name>
+					<Field>PayrollJournal</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollPeriodLine</Name>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollPeriodLine</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>BenefitEncashmentPeriod</Name>
+					<Field>BenefitEncashmentPeriod</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

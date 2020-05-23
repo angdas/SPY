@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYLeaveApplication_MyApplication</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYLeaveApplication_MyApplication extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Title>@SPY695</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYLeaveApplicationTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYLeaveApplicationTable</Table>
+			<DataSources />
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<Status>Locked</Status>
+					<Value>((Worker = HcmWorkerLookup::currentWorker()) &amp;&amp; ( Worker != 0))</Value>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy>
+				<AxQuerySimpleOrderByField>
+					<Name>LeaveApplicationCode</Name>
+					<DataSource>SPYLeaveApplicationTable_1</DataSource>
+					<Direction>Descending</Direction>
+					<Field>LeaveApplicationCode</Field>
+				</AxQuerySimpleOrderByField>
+			</OrderBy>
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerCompensationPlan</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWorkerCompensationPlan
+{
+    HcmWorkerRecId              worker;
+    TransDate                   payStartDate;
+    TransDate                   payEndDate;
+    LegalEntityRecId            legalEntity;
+    HcmPositionRecId            position;
+    SPYCompensationPlanRecId    compensationPlan;
+    TransDate                   employmentEndDate;
+    TransDateTime               payStartDateTime;
+    TransDateTime               payEndDateTime;
+    boolean                     deleteCompensation;
+    HcmEthnicOriginRecId    ethnicOriginRecId;
+    HcmPersonGender         gender;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>endBenefit</Name>
+				<Source><![CDATA[
+    private void endBenefit()
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        TransDate                   minimumDate = dateNull();
+        TransDate                   maximumDate = maxDate();
+    
+        if(deleteCompensation)
+        {
+            while select forUpdate validTimeState(minimumDate,maximumDate) workerPositionBenefit
+                where workerPositionBenefit.Worker == worker &&
+                      workerPositionBenefit.LegalEntity == legalEntity &&
+                      workerPositionBenefit.ValidFrom > DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone())
+            {
+                workerPositionBenefit.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                workerPositionBenefit.delete();
+            }
+        }
+        else
+        {
+            while select forUpdate validTimeState(minimumDate,maximumDate) workerPositionBenefit
+                where workerPositionBenefit.Worker == worker &&
+                      workerPositionBenefit.LegalEntity == legalEntity &&
+                      workerPositionBenefit.ValidFrom <= employmentEndDate &&
+                      workerPositionBenefit.ValidTo >= employmentEndDate
+            {
+                workerPositionBenefit.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                workerPositionBenefit.ValidTo = employmentEndDate;
+                workerPositionBenefit.update();
+            }
+    
+            while select forUpdate validTimeState(minimumDate,maximumDate) workerPositionBenefit
+                where workerPositionBenefit.Worker == worker &&
+                      workerPositionBenefit.LegalEntity == legalEntity &&
+                      workerPositionBenefit.ValidFrom > employmentEndDate
+            {
+                workerPositionBenefit.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                workerPositionBenefit.delete();
+            }
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>endCompensation</Name>
+				<Source><![CDATA[
+    public void endCompensation(TransDate _employmentEndDate,boolean _delete = false)
+    {
+        employmentEndDate = _employmentEndDate;
+        deleteCompensation = _delete;
+        
+        try
+        {
+            ttsBegin;
+            this.endPayroll();
+            this.endBenefit();
+            this.endAbsenceConfigLines();
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            throw error("@SPY710");
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>endAbsenceConfigLines</Name>
+				<Source><![CDATA[
+    private void endAbsenceConfigLines()
+    {
+        SPYWorkerPositionAbsenceConfigLine absenceConfigLines;
+        TransDate maximumDate = dateMax();
+        TransDate minimumDate = dateNull();
+
+        if(deleteCompensation)
+        {
+            //delete the future dated lines, these are not required for history records
+            while select forupdate validTimeState( minimumDate, maximumDate) absenceConfigLines
+                where absenceConfigLines.Worker == worker
+                    && absenceConfigLines.LegalEntity == legalEntity
+                    && absenceConfigLines.ValidFrom >= employmentEndDate
+                {
+                    absenceConfigLines.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                    absenceConfigLines.delete();
+                }            
+         }
+        else
+        {
+                //end the lines that are currently valid
+                while select forUpdate validTimeState(minimumDate,maximumDate) absenceConfigLines
+                where absenceConfigLines.Worker == worker &&
+                        absenceConfigLines.LegalEntity == legalEntity &&
+                        absenceConfigLines.ValidFrom <= employmentEndDate &&
+                        absenceConfigLines.ValidTo >= employmentEndDate
+                {
+                    absenceConfigLines.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                    absenceConfigLines.ValidTo = employmentEndDate;
+                    absenceConfigLines.update();
+                }
+
+            //delete the lines that are for future
+            while select forUpdate validTimeState(minimumDate,maximumDate) absenceConfigLines
+                    where absenceConfigLines.Worker == worker &&
+                          absenceConfigLines.LegalEntity == legalEntity &&
+                          absenceConfigLines.ValidFrom > employmentEndDate
+                {
+                    absenceConfigLines.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                    absenceConfigLines.delete();
+                }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>endPayroll</Name>
+				<Source><![CDATA[
+    private void endPayroll()
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        TransDate                   minimumDate = dateNull();
+        TransDate                   maximumDate = maxDate();
+    
+        if(deleteCompensation)
+        {
+            while select forUpdate validTimeState(minimumDate,maximumDate) workerPositionPayroll
+                where workerPositionPayroll.Worker == worker &&
+                      workerPositionPayroll.LegalEntity == legalEntity &&
+                      workerPositionPayroll.ValidFrom > DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone())
+            {
+                workerPositionPayroll.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                workerPositionPayroll.delete();
+            }
+        }
+        else
+        {
+            while select forUpdate validTimeState(minimumDate,maximumDate) workerPositionPayroll
+                where workerPositionPayroll.Worker == worker &&
+                      workerPositionPayroll.LegalEntity == legalEntity &&
+                      workerPositionPayroll.ValidFrom <= employmentEndDate &&
+                      workerPositionPayroll.ValidTo >= employmentEndDate
+            {
+                workerPositionPayroll.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                workerPositionPayroll.ValidTo = employmentEndDate;
+                workerPositionPayroll.update();
+            }
+    
+            while select forUpdate validTimeState(minimumDate,maximumDate) workerPositionPayroll
+                where workerPositionPayroll.Worker == worker &&
+                      workerPositionPayroll.LegalEntity == legalEntity &&
+                      workerPositionPayroll.ValidFrom > employmentEndDate
+            {
+                workerPositionPayroll.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                workerPositionPayroll.delete();
+            }
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findPosition</Name>
+				<Source><![CDATA[
+    private void findPosition(TransDateTime _transDateTime)
+    {
+        HcmPositionWorkerAssignment     positionWorkerAssignment;
+    
+        if(!position)
+        {
+            position = HcmPosition::findByPosition(HcmWorker::find(worker).primaryPositionId()).RecId;
+            if(!position)
+            {
+                select firstOnly validTimeState(_transDateTime) Position from positionWorkerAssignment
+                    where positionWorkerAssignment.Worker == worker;
+                position = positionWorkerAssignment.Position;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(HcmWorkerRecId _worker,
+                    LegalEntityRecId _legalEntity,
+                    HcmPositionRecId _position = 0)
+    {
+        worker      = _worker;
+        legalEntity = _legalEntity;
+        position    = _position;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>paramEthnicOriginRecId</Name>
+				<Source><![CDATA[
+    //added for absence configuration filters
+    public HcmEthnicOriginRecId paramEthnicOriginRecId(HcmEthnicOriginRecId _ethnicOriginRecId)
+    {
+        ethnicOriginRecId = _ethnicOriginRecId;
+
+        return ethnicOriginRecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>paramGender</Name>
+				<Source><![CDATA[
+    //added for absence configuration filters
+    public HcmPersonGender paramGender( HcmPersonGender _gender)
+    {
+        gender = _gender;
+
+        return _gender;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayEndDate</Name>
+				<Source><![CDATA[
+    public TransDate parmPayEndDate(TransDate _payEndDate)
+    {
+        payEndDate = _payEndDate;
+    
+        return _payEndDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayEndDateTime</Name>
+				<Source><![CDATA[
+    public TransDateTime parmPayEndDateTime(TransDateTime _payEndDateTime)
+    {
+        payEndDateTime = _payEndDateTime;
+
+        return _payEndDateTime;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayStartDate</Name>
+				<Source><![CDATA[
+    public TransDate parmPayStartDate(TransDate _payStartDate)
+    {
+        payStartDate = _payStartDate;
+
+        return _payStartDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayStartDateTime</Name>
+				<Source><![CDATA[
+    public TransDateTime parmPayStartDateTime(TransDateTime _payStartDateTime)
+    {
+        payStartDateTime = _payStartDateTime;
+
+        return _payStartDateTime;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefit</Name>
+				<Source><![CDATA[
+    private void updateBenefit()
+    {
+        SPYCompensationPlanBenefit      compensationPlanBenefit;
+        SPYWorkerPositionBenefit        workerPositionBenefit;
+        RecordInsertList                workerPositionBenefitList;
+        LedgerPeriodCode            ledgerPeriodCode;
+        TransDate                          effectiveFromDate = payStartDate;
+
+        workerPositionBenefitList       = new RecordInsertList(tableNum(SPYWorkerPositionBenefit));
+
+        while select compensationPlanBenefit
+            order by Benefit, PayrollPeriod, Sequence
+        where compensationPlanBenefit.CompensationPlan == compensationPlan
+        {
+            ledgerPeriodCode = LedgerPeriodCode::find(compensationPlanBenefit.EffectiveDate); 
+
+            workerPositionBenefit.validTimeStateUpdateMode(ValidTimeStateUpdate::EffectiveBased);
+            workerPositionBenefit.initValue();
+            workerPositionBenefit.Worker                = worker;
+            workerPositionBenefit.LegalEntity           = legalEntity;
+            //workerPositionBenefit.Position              = position;   Updating position not reqd
+            workerPositionBenefit.Benefit               = compensationPlanBenefit.Benefit;
+            workerPositionBenefit.PayrollPeriod         = compensationPlanBenefit.PayrollPeriod;
+            if ( compensationPlanBenefit.EffectiveDate == "" ) 
+            {
+                effectiveFromDate = payStartDate;
+            }
+            else
+            {
+                effectiveFromDate =  ledgerPeriodCode.fromDateAdded( effectiveFromDate );
+            }
+                
+            workerPositionBenefit.ValidFrom             = effectiveFromDate;
+            workerPositionBenefit.ValidTo               = payEndDate;
+            workerPositionBenefit.AmountDaily           = compensationPlanBenefit.AmountDailyMid;
+            workerPositionBenefit.AmountHourly          = compensationPlanBenefit.AmountHourlyMid;
+            workerPositionBenefit.AmountWeekly          = compensationPlanBenefit.AmountWeeklyMid;
+            workerPositionBenefit.AmountBiWeekly        = compensationPlanBenefit.AmountBiWeeklyMid;
+            workerPositionBenefit.AmountMonthly         = compensationPlanBenefit.AmountMonthlyMid;
+            workerPositionBenefit.AmountQuarterly       = compensationPlanBenefit.AmountQuarterlyMid;
+            workerPositionBenefit.AmountSemiAnnual      = compensationPlanBenefit.AmountSemiAnnualMid;
+            workerPositionBenefit.AmountAnnual          = compensationPlanBenefit.AmountAnnualMid;
+            workerPositionBenefit.QtyDaily              = compensationPlanBenefit.QtyDailyMid;
+            workerPositionBenefit.QtyHourly             = compensationPlanBenefit.QtyHourlyMid;
+            workerPositionBenefit.QtyWeekly             = compensationPlanBenefit.QtyWeeklyMid;
+            workerPositionBenefit.QtyBiWeekly           = compensationPlanBenefit.QtyBiWeeklyMid;
+            workerPositionBenefit.QtyMonthly            = compensationPlanBenefit.QtyMonthlyMid;
+            workerPositionBenefit.QtyQuarterly          = compensationPlanBenefit.QtyQuarterlyMid;
+            workerPositionBenefit.QtySemiAnnual         = compensationPlanBenefit.QtySemiAnnualMid;
+            workerPositionBenefit.QtyAnnual             = compensationPlanBenefit.QtyAnnualMid;
+            workerPositionBenefit.Currency              = compensationPlanBenefit.Currency;
+            //workerPositionBenefit.insert();
+            workerPositionBenefitList.add(workerPositionBenefit);
+        }
+        workerPositionBenefitList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateCompensation</Name>
+				<Source><![CDATA[
+    public void updateCompensation()
+    {
+        //this.findPosition(DateTimeUtil::newDateTime(payStartDate,00-00));
+        this.findPosition(payStartDateTime);
+        compensationPlan = SPYCompensationPlanTable::findByWorkerPosition(legalEntity,payStartDateTime,position);
+
+        //before a compensation is udpated the future dated lines should be deleted              
+        this.endCompensation( DateTimeUtil::date(payStartDateTime)-1);
+        this.updatePayroll();
+        this.updateBenefit();
+        this.updateAbsenceConfigLines();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updatePayroll</Name>
+				<Source><![CDATA[
+    private void updatePayroll()
+    {
+        SPYCompensationPlanPayroll      compensationPlanPayroll;
+        SPYWorkerPositionPayroll        workerPositionPayroll;
+        RecordInsertList                workerPositionPayrollList;
+        LedgerPeriodCode            ledgerPeriodCode;  
+        TransDate                          effectiveFromDate = payStartDate;
+
+        workerPositionPayrollList       = new RecordInsertList(tableNum(SPYWorkerPositionPayroll));
+
+        while select compensationPlanPayroll
+            order by payroll, PayrollPeriod, Sequence
+        where compensationPlanPayroll.CompensationPlan == compensationPlan
+        {
+            ledgerPeriodCode = LedgerPeriodCode::find(compensationPlanPayroll.EffectiveDate);
+            //effectiveFromDate = ledgerPeriodCode.fromDateAdded( payStartDate );
+
+            workerPositionPayroll.validTimeStateUpdateMode(ValidTimeStateUpdate::EffectiveBased);
+            workerPositionPayroll.initValue();
+            workerPositionPayroll.Worker        = worker;
+            workerPositionPayroll.LegalEntity   = legalEntity;
+            //workerPositionPayroll.Position      = position;   Updating position not reqd            
+            workerPositionPayroll.payroll       = compensationPlanPayroll.Payroll;
+            workerPositionPayroll.PayrollPeriod = compensationPlanPayroll.PayrollPeriod;
+
+            if ( compensationPlanPayroll.EffectiveDate == "" )
+            {
+                effectiveFromDate = payStartDate;
+            }
+            else
+            {
+                effectiveFromDate =  ledgerPeriodCode.fromDateAdded( effectiveFromDate );
+            }
+            workerPositionPayroll.ValidFrom     = effectiveFromDate;
+            workerPositionPayroll.ValidTo       = payEndDate;
+            workerPositionPayroll.Daily         = compensationPlanPayroll.DailyMid;
+            workerPositionPayroll.Hourly        = compensationPlanPayroll.HourlyMid;
+            workerPositionPayroll.Weekly        = compensationPlanPayroll.WeeklyMid;
+            workerPositionPayroll.BiWeekly      = compensationPlanPayroll.BiWeeklyMid;
+            workerPositionPayroll.Monthly       = compensationPlanPayroll.MonthlyMid;
+            workerPositionPayroll.Quarterly     = compensationPlanPayroll.QuarterlyMid;
+            workerPositionPayroll.SemiAnnual    = compensationPlanPayroll.SemiAnnualMid;
+            workerPositionPayroll.Annual        = compensationPlanPayroll.AnnualMid;
+            workerPositionPayroll.Currency      = compensationPlanPayroll.Currency;
+            //workerPositionPayroll.insert();
+            workerPositionPayrollList.add(workerPositionPayroll);
+        }
+        workerPositionPayrollList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAbsenceConfigLines</Name>
+				<Source><![CDATA[
+    private void updateAbsenceConfigLines()
+    {
+        SPYAbsenceConfigLine      compensationPlanAbsenceConfig;
+        SPYWorkerPositionAbsenceConfigLine        workerPositionAbsenceConfig;
+        SPYCompensationPlanTable    compensationPlanTable;
+        RecordInsertList                workerPositionAbsenceConfigList;
+        LedgerPeriodCode            ledgerPeriodCode;
+        TransDate                          effectiveFromDate = payStartDate;
+
+        workerPositionAbsenceConfigList = new RecordInsertList(tableNum(SPYWorkerPositionAbsenceConfigLine));
+
+        while select compensationPlanAbsenceConfig
+            order by HRMAbsenceCodeId, Sequence
+        join compensationPlanTable
+            where compensationPlanTable.AbsenceConfig == compensationPlanAbsenceConfig.AbsenceConfig
+            && compensationPlanTable.RecId == compensationPlan
+            && ( compensationPlanAbsenceConfig.Gender == gender 
+                    || compensationPlanAbsenceConfig.Gender == HcmPersonGender::NonSpecific 
+                    || compensationPlanAbsenceConfig.Gender == HcmPersonGender::None )            
+            && ( compensationPlanAbsenceConfig.EthnicOrigin == ethnicOriginRecId 
+                    || compensationPlanAbsenceConfig.EthnicOrigin == 0 )
+        {
+            ledgerPeriodCode = LedgerPeriodCode::find(compensationPlanAbsenceConfig.EffectiveDate);            
+            workerPositionAbsenceConfig.validTimeStateUpdateMode(ValidTimeStateUpdate::EffectiveBased);
+            workerPositionAbsenceConfig.initValue();
+            workerPositionAbsenceConfig.Worker        = worker;
+            workerPositionAbsenceConfig.LegalEntity   = legalEntity;
+            //workerPositionPayroll.Position      = position;   Updating position not reqd
+
+            if ( compensationPlanAbsenceConfig.EffectiveDate == "" )
+            {
+                effectiveFromDate = payStartDate;
+            }
+            else
+            {
+                effectiveFromDate =  ledgerPeriodCode.fromDateAdded( effectiveFromDate );
+            }
+            workerPositionAbsenceConfig.ValidFrom     = effectiveFromDate;
+            workerPositionAbsenceConfig.ValidTo       = payEndDate;
+            workerPositionAbsenceConfig.AbsenceConfig = compensationPlanAbsenceConfig.AbsenceConfig;
+            workerPositionAbsenceConfig.AbsenceCycle = compensationPlanAbsenceConfig.AbsenceCycle;
+            workerPositionAbsenceConfig.LedgerTransDateCalcFromLeave = compensationPlanAbsenceConfig.LedgerTransDateCalcFromLeave;
+            workerPositionAbsenceConfig.LedgerTransDateCalcFromPeriodClose = compensationPlanAbsenceConfig.LedgerTransDateCalcFromPeriodClose;
+            workerPositionAbsenceConfig.AccruedDate = compensationPlanAbsenceConfig.AccruedDate;
+            workerPositionAbsenceConfig.AccruedQty = compensationPlanAbsenceConfig.AccruedQty;
+            workerPositionAbsenceConfig.AllowFullBalanceCarryFwdInFirstYr = compensationPlanAbsenceConfig.AllowFullBalanceCarryFwdInFirstYr;
+            workerPositionAbsenceConfig.AllowNegativeInCarryFwd = compensationPlanAbsenceConfig.AllowNegativeInCarryFwd;
+            workerPositionAbsenceConfig.CarryBackward = compensationPlanAbsenceConfig.CarryBackward;
+            workerPositionAbsenceConfig.CarryForward = compensationPlanAbsenceConfig.CarryForward;
+            workerPositionAbsenceConfig.EntitlementPayrollPeriod = compensationPlanAbsenceConfig.EntitlementPayrollPeriod;
+            workerPositionAbsenceConfig.FetchBenefitQty = compensationPlanAbsenceConfig.FetchBenefitQty;
+            workerPositionAbsenceConfig.HRMAbsenceCodeId = compensationPlanAbsenceConfig.HRMAbsenceCodeId;
+            workerPositionAbsenceConfig.PeriodCloseNotApplicable = compensationPlanAbsenceConfig.PeriodCloseNotApplicable;
+            workerPositionAbsenceConfig.Qty = compensationPlanAbsenceConfig.Qty;
+            workerPositionAbsenceConfig.RestrictInNotice = compensationPlanAbsenceConfig.RestrictInNotice;
+            workerPositionAbsenceConfig.RestrictInProbation = compensationPlanAbsenceConfig.RestrictInProbation;
+
+            workerPositionAbsenceConfigList.add(workerPositionAbsenceConfig);
+        }
+        workerPositionAbsenceConfigList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollParameterState</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayrollParameterState
+{
+    container                   workerQuery;
+    container                   workerContainer;
+    container                   payElementQuery;
+    container                   payElementContainer;
+    boolean                     calledFromMasterProcess;
+    boolean                     calledFromArrearProcess;
+    boolean                     calledFromJournal;
+    container                   payrollLedgerCon;
+    container                   benefitLedgerCon;
+    RefRecId                    sourceDocument;
+    RefRecId                    sourceDocumentRef;
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollPeriodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine = _payrollPeriodLine;
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBenefitLedgerCon</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmBenefitLedgerCon(container _benefitLedgerCon = benefitLedgerCon)
+    {
+        benefitLedgerCon = _benefitLedgerCon;
+    
+        return benefitLedgerCon;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCalledFromArrearProcess</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmCalledFromArrearProcess(boolean _calledFromArrearProcess = calledFromArrearProcess)
+    {
+        calledFromArrearProcess = _calledFromArrearProcess;
+    
+        return calledFromArrearProcess;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCalledFromJournal</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmCalledFromJournal(boolean _calledFromJournal = calledFromJournal)
+    {
+        calledFromJournal = _calledFromJournal;
+    
+        return calledFromJournal;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCalledFromMasterProcess</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmCalledFromMasterProcess(boolean _calledFromMasterProcess = calledFromMasterProcess)
+    {
+        calledFromMasterProcess = _calledFromMasterProcess;
+    
+        return calledFromMasterProcess;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayElementContainer</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmPayElementContainer(container _payElementContainer = payElementContainer)
+    {
+        payElementContainer = _payElementContainer;
+    
+        return payElementContainer;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayElementQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmPayElementQuery(container _payElementQuery = payElementQuery)
+    {
+        payElementQuery = _payElementQuery;
+    
+        return payElementQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollLedgerCon</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmPayrollLedgerCon(container _payrollLedgerCon = payrollLedgerCon)
+    {
+        payrollLedgerCon = _payrollLedgerCon;
+    
+        return payrollLedgerCon;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSourceDocument</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public RefRecId parmSourceDocument(RefRecId _sourceDocument = sourceDocument)
+    {
+        sourceDocument = _sourceDocument;
+    
+        return sourceDocument;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSourceDocumentRef</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public RefRecId parmSourceDocumentRef(RefRecId _sourceDocumentRef = sourceDocumentRef)
+    {
+        sourceDocumentRef = _sourceDocumentRef;
+    
+        return sourceDocumentRef;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerContainer</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerContainer(container _workerContainer = workerContainer)
+    {
+        workerContainer = _workerContainer;
+    
+        return workerContainer;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerQuery(container _workerQuery = workerQuery)
+    {
+        workerQuery = _workerQuery;
+    
+        return workerQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

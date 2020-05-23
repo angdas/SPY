@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYOvertimeJournalPostContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYOvertimeJournalPostContract
+{
+    container                   overtimeJournalQuery;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmOvertimeJournalQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmOvertimeJournalQuery(container _overtimeJournalQuery = overtimeJournalQuery)
+    {
+        overtimeJournalQuery = _overtimeJournalQuery;
+        return overtimeJournalQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

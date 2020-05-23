@@ -1,0 +1,550 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.HcmWorker_ID(1)
+    #define.DirPerson_ID(2)
+    #define.HcmPersonCertificateEntity_ID(3)
+    
+    // Data source buffers
+    HcmWorker m_HcmWorker;
+    DirPerson m_DirPerson;
+    HcmPersonCertificateEntity m_HcmPersonCertificateEntity;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmWorker'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('DirPerson'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmPersonCertificateEntity'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private void foreignKeyPropagation_DS3(DataEntityRuntimeContext _entityCtx, HcmPersonCertificateEntity _hcmPersonCertificateEntity)
+    {
+        DirPerson dirPerson_ = _entityCtx.getRuntimeContextByName('DirPerson').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_hcmPersonCertificateEntity.PartyNumber != dirPerson_.PartyNumber)
+        {
+            _hcmPersonCertificateEntity.PartyNumber = dirPerson_.PartyNumber;
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('HcmPersonCertificateEntity').getDatabaseOperation();
+        SPYHcmWorkerCertificateEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('HcmPersonCertificateEntity'), _entityCtx.getRuntimeContextByName('DirPerson'), dataSourceDBOperation, 'HcmPersonCertificateEntity.PartyNumber', _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, PartyNumber), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+        {
+            validationFailed = true;
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private void foreignKeyPropagation_DS1(DataEntityRuntimeContext _entityCtx, HcmWorker _hcmWorker)
+    {
+        DirPerson dirPerson_ = _entityCtx.getRuntimeContextByName('DirPerson').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_hcmWorker.Person != dirPerson_.RecId)
+        {
+            _hcmWorker.Person = dirPerson_.RecId;
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('HcmWorker').getDatabaseOperation();
+        SPYHcmWorkerCertificateEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYHcmWorkerCertificateEntity, Person)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('HcmWorker'), _entityCtx.getRuntimeContextByName('DirPerson'), dataSourceDBOperation, 'HcmWorker.Person', _hcmWorker, fieldnum(HcmWorker, Person), false/*disallowEditOnCreate*/, true/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // save/update data sources referenced by [HcmWorker].
+            {
+                // handle datasources which are part of extensions and need to be saved before [DirPerson]
+                if(!this.preSaveDataSource(_entityCtx, 'DirPerson'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('DirPerson');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                // inserts/updates data source [DirPerson].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+                // insert/update data sources that reference [DirPerson].
+                {
+                    // handle datasources which are part of extensions and need to be saved before [HcmPersonCertificateEntity]
+                    if(!this.preSaveDataSource(_entityCtx, 'HcmPersonCertificateEntity'))
+                    {
+                        return false;
+                    }
+                    _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmPersonCertificateEntity');
+                    // propagates foreign key values from referenced data sources which are part of extensions.
+                    this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                    // propagates foreign key values from referenced data sources.
+                    this.foreignKeyPropagation_DS3(_entityCtx, _dataSourceCtx.getBuffer());
+                    // inserts/updates data source [HcmPersonCertificateEntity].
+                    if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                    {
+                        // returns from here if an inner joined data source fails to be saved.
+                        return false;
+                    }
+                    this.postSaveDataSource();
+                }
+            }
+            // handle datasources which are part of extensions and need to be saved before [HcmWorker]
+            if(!this.preSaveDataSource(_entityCtx, 'HcmWorker'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmWorker');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // propagates foreign key values from referenced data sources.
+            this.foreignKeyPropagation_DS1(_entityCtx, _dataSourceCtx.getBuffer());
+            // inserts/updates data source [HcmWorker].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [HcmWorker]
+            if(!this.preSaveDataSource(_entityCtx, 'HcmWorker'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmWorker');
+            // deletes data source [HcmWorker].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+            // deletes data sources referenced by [HcmWorker].
+            {
+                // deletes data sources that reference [DirPerson].
+                {
+                    // handle datasources which are part of extensions and need to be saved before [HcmPersonCertificateEntity]
+                    if(!this.preSaveDataSource(_entityCtx, 'HcmPersonCertificateEntity'))
+                    {
+                        return false;
+                    }
+                    _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmPersonCertificateEntity');
+                    // deletes data source [HcmPersonCertificateEntity].
+                    if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                    {
+                        // returns from here if an inner joined data source fails to be saved.
+                        return false;
+                    }
+                    this.postSaveDataSource();
+                }
+                // handle datasources which are part of extensions and need to be saved before [DirPerson]
+                if(!this.preSaveDataSource(_entityCtx, 'DirPerson'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('DirPerson');
+                // deletes data source [DirPerson].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmWorker _hcmWorker, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, Person), _hcmWorker, fieldnum(HcmWorker, Person), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, PersonnelNumber), _hcmWorker, fieldnum(HcmWorker, PersonnelNumber), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _hcmWorker, _sPYHcmWorkerCertificateEntity);
+        _hcmWorker.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS2(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, DirPerson _dirPerson, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity)
+    {
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _dirPerson, _sPYHcmWorkerCertificateEntity);
+        _dirPerson.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS3(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPersonCertificateEntity _hcmPersonCertificateEntity, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('HRMAdministration')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, CertificateType), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, CertificateType), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, CertificateTypeId), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, CertificateTypeId), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, EndDate), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, EndDate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, Notes), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, Notes), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, StartDate), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, StartDate), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _hcmPersonCertificateEntity, _sPYHcmWorkerCertificateEntity);
+            _hcmPersonCertificateEntity.trackFieldExternallySet(false);
+        }
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmWorker_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #DirPerson_ID:
+                this.mapToDataSource_DS2(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmPersonCertificateEntity_ID:
+                this.mapToDataSource_DS3(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmWorker _hcmWorker, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmWorker, fieldnum(HcmWorker, Person), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, Person), false);
+        this.mapDataSourceFieldToEntityField(_hcmWorker, fieldnum(HcmWorker, PersonnelNumber), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, PersonnelNumber), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmWorker, _sPYHcmWorkerCertificateEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYHcmWorkerCertificateEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmWorker);
+    }
+    private void mapFromDataSource_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, DirPerson _dirPerson, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity)
+    {
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _dirPerson, _sPYHcmWorkerCertificateEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYHcmWorkerCertificateEntity.fromViewDataSource(_dataSourceCtx.id(), _dirPerson);
+    }
+    private void mapFromDataSource_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPersonCertificateEntity _hcmPersonCertificateEntity, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, CertificateType), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, CertificateType), false);
+        this.mapDataSourceFieldToEntityField(_hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, CertificateTypeId), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, CertificateTypeId), false);
+        this.mapDataSourceFieldToEntityField(_hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, EndDate), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, EndDate), false);
+        this.mapDataSourceFieldToEntityField(_hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, Notes), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, Notes), false);
+        this.mapDataSourceFieldToEntityField(_hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, StartDate), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, StartDate), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmPersonCertificateEntity, _sPYHcmWorkerCertificateEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYHcmWorkerCertificateEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmPersonCertificateEntity);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmWorker_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #DirPerson_ID:
+                this.mapFromDataSource_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmPersonCertificateEntity_ID:
+                this.mapFromDataSource_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmWorker_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #DirPerson_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS2(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #HcmPersonCertificateEntity_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS3(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYHcmWorkerCertificateEntity.isFieldSet(fieldnum(SPYHcmWorkerCertificateEntity, Person)))
+        {
+            return true;
+        }
+        if(_sPYHcmWorkerCertificateEntity.isFieldSet(fieldnum(SPYHcmWorkerCertificateEntity, PersonnelNumber)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYHcmWorkerCertificateEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS2(SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYHcmWorkerCertificateEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS3(SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYHcmWorkerCertificateEntity.isFieldSet(fieldnum(SPYHcmWorkerCertificateEntity, CertificateType)))
+        {
+            return true;
+        }
+        if(_sPYHcmWorkerCertificateEntity.isFieldSet(fieldnum(SPYHcmWorkerCertificateEntity, CertificateTypeId)))
+        {
+            return true;
+        }
+        if(_sPYHcmWorkerCertificateEntity.isFieldSet(fieldnum(SPYHcmWorkerCertificateEntity, EndDate)))
+        {
+            return true;
+        }
+        if(_sPYHcmWorkerCertificateEntity.isFieldSet(fieldnum(SPYHcmWorkerCertificateEntity, Notes)))
+        {
+            return true;
+        }
+        if(_sPYHcmWorkerCertificateEntity.isFieldSet(fieldnum(SPYHcmWorkerCertificateEntity, StartDate)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYHcmWorkerCertificateEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmWorker_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            case #DirPerson_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS2(_entityCtx.getEntityRecord());
+                break;
+            case #HcmPersonCertificateEntity_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS3(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmWorker _hcmWorker)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, PersonnelNumber), 'SPYHcmWorkerCertificateEntity.PersonnelNumber', _hcmWorker, fieldnum(HcmWorker, PersonnelNumber), false/*disallowEditOnCreate*/, true/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYHcmWorkerCertificateEntity, _dataSourceCtx, _hcmWorker) ? rtrn : false;
+        return rtrn;
+    }
+    private boolean validateDataSource_DS2(DataEntityRuntimeContext _entityCtx, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, DirPerson _dirPerson)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYHcmWorkerCertificateEntity, _dataSourceCtx, _dirPerson) ? rtrn : false;
+        return rtrn;
+    }
+    private boolean validateDataSource_DS3(DataEntityRuntimeContext _entityCtx, SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPersonCertificateEntity _hcmPersonCertificateEntity)
+    {
+        boolean rtrn = true;
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('HRMAdministration')))
+        {
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, CertificateType), 'SPYHcmWorkerCertificateEntity.CertificateType', _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, CertificateType), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, CertificateTypeId), 'SPYHcmWorkerCertificateEntity.CertificateTypeId', _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, CertificateTypeId), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, EndDate), 'SPYHcmWorkerCertificateEntity.EndDate', _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, EndDate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, Notes), 'SPYHcmWorkerCertificateEntity.Notes', _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, Notes), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYHcmWorkerCertificateEntity, fieldnum(SPYHcmWorkerCertificateEntity, StartDate), 'SPYHcmWorkerCertificateEntity.StartDate', _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, StartDate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYHcmWorkerCertificateEntity, _dataSourceCtx, _hcmPersonCertificateEntity) ? rtrn : false;
+        }
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmWorker_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            case #DirPerson_ID:
+                rtrn = this.validateDataSource_DS2(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            case #HcmPersonCertificateEntity_ID:
+                rtrn = this.validateDataSource_DS3(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmWorker _hcmWorker, HcmWorker _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmWorker, fieldnum(HcmWorker, Person), _matchingRecord, fieldnum(HcmWorker, Person), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmWorker, fieldnum(HcmWorker, PersonnelNumber), _matchingRecord, fieldnum(HcmWorker, PersonnelNumber), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYHcmWorkerCertificateEntity), _hcmWorker, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, DirPerson _dirPerson, DirPerson _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYHcmWorkerCertificateEntity), _dirPerson, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmPersonCertificateEntity _hcmPersonCertificateEntity, HcmPersonCertificateEntity _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, CertificateType), _matchingRecord, fieldnum(HcmPersonCertificateEntity, CertificateType), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, CertificateTypeId), _matchingRecord, fieldnum(HcmPersonCertificateEntity, CertificateTypeId), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, EndDate), _matchingRecord, fieldnum(HcmPersonCertificateEntity, EndDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, Notes), _matchingRecord, fieldnum(HcmPersonCertificateEntity, Notes), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, StartDate), _matchingRecord, fieldnum(HcmPersonCertificateEntity, StartDate), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYHcmWorkerCertificateEntity), _hcmPersonCertificateEntity, _matchingRecord);
+        // map data changes in unbound FK fields
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmPersonCertificateEntity, fieldnum(HcmPersonCertificateEntity, PartyNumber), _matchingRecord, fieldnum(HcmPersonCertificateEntity, PartyNumber), 1);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #HcmWorker_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #DirPerson_ID:
+                this.mapToMatchingRecord_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #HcmPersonCertificateEntity_ID:
+                this.mapToMatchingRecord_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('HRMAdministration')))
+        {
+            // Inner joined data source configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'HcmPersonCertificateEntity','HRMAdministration'));
+        }
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'HcmWorker', m_HcmWorker, this.getDataSourceId('HcmWorker'), this.getDataSourceId('HcmWorker'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'DirPerson', m_DirPerson, this.getDataSourceId('DirPerson'), this.getDataSourceId('DirPerson'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'HcmPersonCertificateEntity', m_HcmPersonCertificateEntity, this.getDataSourceId('HcmPersonCertificateEntity'), this.getDataSourceId('HcmPersonCertificateEntity'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private HcmWorker LookForUniqueKeyMatch_DS1(SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, HcmWorker _hcmWorker)
+    {
+        HcmWorker hcmWorker_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                hcmWorker_
+        where
+            hcmWorker_.Person == _hcmWorker.Person
+        ;
+        
+        if (hcmWorker_)
+        {
+            return hcmWorker_;
+        }
+        
+        select
+            forUpdate
+            firstOnly
+                hcmWorker_
+        where
+            hcmWorker_.PersonnelNumber == _hcmWorker.PersonnelNumber
+        ;
+        
+        if (hcmWorker_)
+        {
+            return hcmWorker_;
+        }
+        
+        return hcmWorker_;
+    }
+    private DirPerson LookForUniqueKeyMatch_DS2(SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, DirPerson _dirPerson)
+    {
+        DirPerson dirPerson_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                dirPerson_
+        where
+            dirPerson_.PartyNumber == _dirPerson.PartyNumber
+        ;
+        
+        if (dirPerson_)
+        {
+            return dirPerson_;
+        }
+        
+        return dirPerson_;
+    }
+    private HcmPersonCertificateEntity LookForUniqueKeyMatch_DS3(SPYHcmWorkerCertificateEntity _sPYHcmWorkerCertificateEntity, HcmPersonCertificateEntity _hcmPersonCertificateEntity)
+    {
+        HcmPersonCertificateEntity hcmPersonCertificateEntity_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                hcmPersonCertificateEntity_
+        where
+            hcmPersonCertificateEntity_.PartyNumber == _hcmPersonCertificateEntity.PartyNumber && hcmPersonCertificateEntity_.CertificateTypeId == _hcmPersonCertificateEntity.CertificateTypeId && hcmPersonCertificateEntity_.StartDate == _hcmPersonCertificateEntity.StartDate
+        ;
+        
+        if (hcmPersonCertificateEntity_)
+        {
+            return hcmPersonCertificateEntity_;
+        }
+        
+        return hcmPersonCertificateEntity_;
+    }
+
+}
+

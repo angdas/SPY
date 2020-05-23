@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplicationSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYLeaveApplicationSubmitManager
+{
+    SPYLeaveApplicationTable        leaveApplicationTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>checkTimesheetExist</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    private boolean checkTimesheetExist()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        FromDate                    fromDate = dateNull();
+        ToDate                      toDate = dateMax();
+        date                        leaveDate;
+        TSTimesheetLineWeek         timesheetLineWeek;
+        TSTimesheetTable            timesheetTable;
+        Hours                       timesheetDateHours,totalTimesheetDateHours;
+        boolean                     ret;
+        ResourceWorkerView          resourceWorkerView;
+    
+        while select validTimeState(fromDate,toDate) leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId
+        {
+            leaveDate = leaveApplicationLine.ActualStartDate;
+            while(leaveDate <= leaveApplicationLine.ActualEndDate)
+            {
+                totalTimesheetDateHours = 0;
+                while select sum(Hours) from timesheetLineWeek
+                    join timesheetTable group by ProjPeriodId
+                    where timesheetLineWeek.TimesheetNbr == timesheetTable.TimesheetNbr
+                    join resourceWorkerView
+                    where timesheetTable.Resource == resourceWorkerView.RecId &&
+                          resourceWorkerView.Worker == leaveApplicationTable.Worker &&
+                          (timesheetTable.ApprovalStatus == TSAppStatus::Approved ||
+                          timesheetTable.ApprovalStatus == TSAppStatus::Ledger) &&
+                          timesheetTable.PeriodTo >= leaveDate &&
+                          timesheetTable.PeriodFrom <= leaveDate
+                {
+                    timesheetDateHours = timesheetLineWeek.Hours[TSPeriods::getDayOffset(ProjPeriodTable::find(timesheetTable.ProjPeriodId).WeekStart,leaveDate)];
+                    totalTimesheetDateHours += timesheetDateHours;
+                }
+                if(totalTimesheetDateHours)
+                {
+                    warning(strFmt("@SPY1247",leaveDate));
+                    return true;
+                }
+                leaveDate++;
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkWFNotSubmitted</Name>
+				<Source><![CDATA[
+    private boolean checkWFNotSubmitted(Args  _args)
+    {
+        WorkflowTrackingStatusTable     workflowTrackingStatusTable;
+        boolean                         ret;
+    
+        select firstOnly workflowTrackingStatusTable
+            where workflowTrackingStatusTable.ContextTableId == _args.record().TableId &&
+                  workflowTrackingStatusTable.ContextRecId == _args.record().RecId;
+        if(workflowTrackingStatusTable)
+            ret = checkFailed("@SPY1248");
+        else
+            ret = true;
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLeaveApplicationTable</Name>
+				<Source><![CDATA[
+    private SPYLeaveApplicationTable parmLeaveApplicationTable(SPYLeaveApplicationTable _leaveApplicationTable = leaveApplicationTable)
+    {
+        leaveApplicationTable = _leaveApplicationTable;
+    
+        return leaveApplicationTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;
+        FormDataSource                  formDataSource;
+    
+        if(this.checkTimesheetExist())
+            return;
+        /*
+        if(!this.checkWFNotSubmitted(_args))
+            return;  */  
+        
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            leaveApplicationTable.submitToWorkflow(workFlowTypeStr(SPYLeaveApplication), workflowSubmitDialog.parmWorkflowComment(), false);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYLeaveApplicationSubmitManager        leaveApplicationSubmit = new SPYLeaveApplicationSubmitManager();
+        SPYLeaveApplicationTable                leaveApplicationTable = args.record();
+    
+        leaveApplicationSubmit.parmLeaveApplicationTable(leaveApplicationTable);
+    
+        switch (args.menuItemName())
+        {    
+            case menuitemActionStr(SPYLeaveApplicationSubmitMenuItem) :
+                leaveApplicationSubmit.submit(args);
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

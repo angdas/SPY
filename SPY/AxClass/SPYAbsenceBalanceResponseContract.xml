@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceBalanceResponseContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYAbsenceBalanceResponseContract
+{
+    SPYAmount                   balance;
+    hrmAbsenceCodeId            hrmAbsenceCodeId;
+    SPYAbsenceCodeContract      absenceCodeContract;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAbsenceContract</Name>
+				<Source><![CDATA[
+    [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYAbsenceCodeContract)),
+    DataMemberAttribute('Absence')]
+    public SPYAbsenceCodeContract parmAbsenceContract(SPYAbsenceCodeContract _absenceCodeContract = absenceCodeContract)
+    {
+        absenceCodeContract = _absenceCodeContract;
+    
+        return absenceCodeContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBalance</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Balance")]
+    public SPYAmount parmBalance(SPYAmount _balance = balance)
+    {
+        balance = _balance;
+    
+        return balance;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmHrmAbsenceCodeId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("HrmAbsenceCodeId")]
+    public HrmAbsenceCodeId parmHrmAbsenceCodeId(HrmAbsenceCodeId _hrmAbsenceCodeId = hrmAbsenceCodeId)
+    {
+        hrmAbsenceCodeId = _hrmAbsenceCodeId;
+    
+        return hrmAbsenceCodeId;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

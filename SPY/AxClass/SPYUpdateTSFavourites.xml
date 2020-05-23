@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYUpdateTSFavourites</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYUpdateTSFavourites extends RunBaseBatch
+{
+
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>createOrUpdateWorkerFavourite</Name>
+				<Source><![CDATA[
+    // read from Roster and update or insert base favourites Table
+    public void createOrUpdateWorkerFavourite()
+    {
+        SPYTSTimesheetFavorites timesheetRoster;
+        TSTimesheetFavorites    timesheetFavorites;
+        ResourceWorkerView      resourceWorkerView;
+    
+        this.deleteExistingWorkerFavourite();
+        ttsBegin;
+        while select  timesheetRoster  // create current favourites
+           // where timesheetRoster.IsUpdated == NoYes::No && timesheetRoster.StartDate <= systemDateGet()
+        {
+            select timesheetFavorites 
+                join resourceWorkerView
+                where timesheetFavorites.Resource == resourceWorkerView.RecId &&
+                      resourceWorkerView.Worker == timesheetRoster.Worker &&
+                      timesheetFavorites.ProjId == timesheetRoster.ProjId;
+    
+            if(timesheetFavorites)
+                this.updateWorkerFavourite(timesheetFavorites,timesheetRoster);
+            else
+                this.insertWorkerFavourite(timesheetRoster);
+        }
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteExistingWorkerFavourite</Name>
+				<Source><![CDATA[
+    // method to delete existing roster records for a worker - not used
+    public void deleteExistingWorkerFavourite()
+    {
+        TSTimesheetFavorites    timesheetFavorites;
+        SPYTSTimesheetFavorites timesheetRoster;
+        ResourceWorkerView      resourceWorkerView;
+        ttsBegin;
+        while select timesheetRoster group by worker
+          //  where timesheetRoster.IsUpdated == NoYes::No && timesheetRoster.StartDate == systemDateGet()
+        {
+           // if(TSTimesheetFavorites::AFZexistForWorker(timesheetRoster.Worker))
+           // {
+                delete_from timesheetFavorites 
+                    exists join resourceWorkerView
+                    where timesheetFavorites.Resource == resourceWorkerView.RecId &&
+                          resourceWorkerView.Worker == timesheetRoster.Worker; // if favourites exists for worker, delete these so that the current ones can be updated
+           // }
+    
+           // this.Old_updateEnddate(timesheetRoster.Worker); // update end date with (current date - 1) for all previous valid records
+    
+        }
+        ttsCommit;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertWorkerFavourite</Name>
+				<Source><![CDATA[
+    // method to insert the favourite
+    public void insertWorkerFavourite(SPYTSTimesheetFavorites  timesheetRoster)
+    {
+        TSTimesheetFavorites    timesheetFavorites;
+        ResourceWorkerView      resourceWorkerView;
+
+        select firstonly resourceWorkerView
+            where resourceWorkerView.Worker == timesheetRoster.Worker;
+    
+        timesheetFavorites.Resource = resourceWorkerView.RecId;
+        timesheetFavorites.ProjId = timesheetRoster.ProjId;
+        timesheetFavorites.CategoryId = "Normal";
+        timesheetFavorites.ProjectDataAreaId = curext();
+        timesheetFavorites.TSDailyHoursTotal = timesheetRoster.TSDailyHoursTotal;
+        timesheetFavorites.TSDailyHoursTotal1 = timesheetRoster.TSDailyHoursTotal1;
+        timesheetFavorites.TSDailyHoursTotal2 = timesheetRoster.TSDailyHoursTotal2;
+        timesheetFavorites.TSDailyHoursTotal3 = timesheetRoster.TSDailyHoursTotal3;
+        timesheetFavorites.TSDailyHoursTotal4 = timesheetRoster.TSDailyHoursTotal4;
+        timesheetFavorites.TSDailyHoursTotal5 = timesheetRoster.TSDailyHoursTotal5;
+        timesheetFavorites.TSDailyHoursTotal6 = timesheetRoster.TSDailyHoursTotal6;
+        timesheetFavorites.TSDailyHoursTotal7 = timesheetRoster.TSDailyHoursTotal7;
+        timesheetFavorites.TSDailyHoursTotal8 = timesheetRoster.TSDailyHoursTotal8;
+        timesheetFavorites.TSDailyHoursTotal9 = timesheetRoster.TSDailyHoursTotal9;
+        timesheetFavorites.TSDailyHoursTotal10 = timesheetRoster.TSDailyHoursTotal10;
+        timesheetFavorites.TSDailyHoursTotal11 = timesheetRoster.TSDailyHoursTotal11;
+        timesheetFavorites.TSDailyHoursTotal12 = timesheetRoster.TSDailyHoursTotal12;
+        timesheetFavorites.TSDailyHoursTotal13 = timesheetRoster.TSDailyHoursTotal13;
+        timesheetFavorites.TSDailyHoursTotal14 = timesheetRoster.TSDailyHoursTotal14;
+        timesheetFavorites.TSDailyHoursTotal15 = timesheetRoster.TSDailyHoursTotal15;
+        timesheetFavorites.TSDailyHoursTotal16 = timesheetRoster.TSDailyHoursTotal16;
+        timesheetFavorites.TSDailyHoursTotal17 = timesheetRoster.TSDailyHoursTotal17;
+        timesheetFavorites.TSDailyHoursTotal18 = timesheetRoster.TSDailyHoursTotal18;
+        timesheetFavorites.TSDailyHoursTotal19 = timesheetRoster.TSDailyHoursTotal19;
+        timesheetFavorites.TSDailyHoursTotal20 = timesheetRoster.TSDailyHoursTotal20;
+        timesheetFavorites.TSDailyHoursTotal21 = timesheetRoster.TSDailyHoursTotal21;
+        timesheetFavorites.TSDailyHoursTotal22 = timesheetRoster.TSDailyHoursTotal22;
+        timesheetFavorites.TSDailyHoursTotal23 = timesheetRoster.TSDailyHoursTotal23;
+        timesheetFavorites.TSDailyHoursTotal24 = timesheetRoster.TSDailyHoursTotal24;
+        timesheetFavorites.TSDailyHoursTotal25 = timesheetRoster.TSDailyHoursTotal25;
+        timesheetFavorites.TSDailyHoursTotal26 = timesheetRoster.TSDailyHoursTotal26;
+        timesheetFavorites.TSDailyHoursTotal27 = timesheetRoster.TSDailyHoursTotal27;
+        timesheetFavorites.TSDailyHoursTotal28 = timesheetRoster.TSDailyHoursTotal28;
+        timesheetFavorites.TSDailyHoursTotal29 = timesheetRoster.TSDailyHoursTotal29;
+        timesheetFavorites.TSDailyHoursTotal30 = timesheetRoster.TSDailyHoursTotal30;
+    
+        timesheetFavorites.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>lastValueElementName</Name>
+				<Source><![CDATA[
+    public IdentifierName lastValueElementName()
+    {
+        IdentifierName ret;
+    
+        ret = "TSFavourite Update";  //super();
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public void run()
+    {
+        super();
+    
+        try
+        {
+            this.createOrUpdateWorkerFavourite();
+        }
+        catch
+        {
+            error("Error occured executing batch");
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWorkerFavourite</Name>
+				<Source><![CDATA[
+    // method to update the favourite
+    public void updateWorkerFavourite(TSTimesheetFavorites   _timesheetFavorites, SPYTSTimesheetFavorites  _timesheetRoster)
+    {
+        SPYTSTimesheetFavorites timesheetRoster;
+        TSTimesheetFavorites    timesheetFavorites;
+    
+        ttsBegin;
+        timesheetRoster = _timesheetRoster;
+        timesheetFavorites = _timesheetFavorites;
+        timesheetFavorites.selectForUpdate(true);
+        /*
+        timesheetFavorites.Worker = timesheetRoster.Worker;
+        timesheetFavorites.ProjId = timesheetRoster.ProjId;
+        timesheetFavorites.CategoryId = timesheetRoster.CategoryId; */
+        timesheetFavorites.TSDailyHoursTotal = timesheetRoster.TSDailyHoursTotal;
+        timesheetFavorites.TSDailyHoursTotal1 = timesheetRoster.TSDailyHoursTotal1;
+        timesheetFavorites.TSDailyHoursTotal2 = timesheetRoster.TSDailyHoursTotal2;
+        timesheetFavorites.TSDailyHoursTotal3 = timesheetRoster.TSDailyHoursTotal3;
+        timesheetFavorites.TSDailyHoursTotal4 = timesheetRoster.TSDailyHoursTotal4;
+        timesheetFavorites.TSDailyHoursTotal5 = timesheetRoster.TSDailyHoursTotal5;
+        timesheetFavorites.TSDailyHoursTotal6 = timesheetRoster.TSDailyHoursTotal6;
+        timesheetFavorites.TSDailyHoursTotal7 = timesheetRoster.TSDailyHoursTotal7;
+        timesheetFavorites.TSDailyHoursTotal8 = timesheetRoster.TSDailyHoursTotal8;
+        timesheetFavorites.TSDailyHoursTotal9 = timesheetRoster.TSDailyHoursTotal9;
+        timesheetFavorites.TSDailyHoursTotal10 = timesheetRoster.TSDailyHoursTotal10;
+        timesheetFavorites.TSDailyHoursTotal11 = timesheetRoster.TSDailyHoursTotal11;
+        timesheetFavorites.TSDailyHoursTotal12 = timesheetRoster.TSDailyHoursTotal12;
+        timesheetFavorites.TSDailyHoursTotal13 = timesheetRoster.TSDailyHoursTotal13;
+        timesheetFavorites.TSDailyHoursTotal14 = timesheetRoster.TSDailyHoursTotal14;
+        timesheetFavorites.TSDailyHoursTotal15 = timesheetRoster.TSDailyHoursTotal15;
+        timesheetFavorites.TSDailyHoursTotal16 = timesheetRoster.TSDailyHoursTotal16;
+        timesheetFavorites.TSDailyHoursTotal17 = timesheetRoster.TSDailyHoursTotal17;
+        timesheetFavorites.TSDailyHoursTotal18 = timesheetRoster.TSDailyHoursTotal18;
+        timesheetFavorites.TSDailyHoursTotal19 = timesheetRoster.TSDailyHoursTotal19;
+        timesheetFavorites.TSDailyHoursTotal20 = timesheetRoster.TSDailyHoursTotal20;
+        timesheetFavorites.TSDailyHoursTotal21 = timesheetRoster.TSDailyHoursTotal21;
+        timesheetFavorites.TSDailyHoursTotal22 = timesheetRoster.TSDailyHoursTotal22;
+        timesheetFavorites.TSDailyHoursTotal23 = timesheetRoster.TSDailyHoursTotal23;
+        timesheetFavorites.TSDailyHoursTotal24 = timesheetRoster.TSDailyHoursTotal24;
+        timesheetFavorites.TSDailyHoursTotal25 = timesheetRoster.TSDailyHoursTotal25;
+        timesheetFavorites.TSDailyHoursTotal26 = timesheetRoster.TSDailyHoursTotal26;
+        timesheetFavorites.TSDailyHoursTotal27 = timesheetRoster.TSDailyHoursTotal27;
+        timesheetFavorites.TSDailyHoursTotal28 = timesheetRoster.TSDailyHoursTotal28;
+        timesheetFavorites.TSDailyHoursTotal29 = timesheetRoster.TSDailyHoursTotal29;
+        timesheetFavorites.TSDailyHoursTotal30 = timesheetRoster.TSDailyHoursTotal30;
+    
+        timesheetFavorites.update();
+    
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CreateFavouritesFromRoster</Name>
+				<Source><![CDATA[
+    public static void CreateFavouritesFromRoster(HcmWorkerRecId worker, Transdate attendenceDay = DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()))
+    {
+        TSTimesheetFavorites        delTimesheetFavorites;
+        TSTimesheetFavorites        timesheetFavorites;
+        SPYTSTimesheetFavorites     timesheetRoster;
+        ResourceWorkerView          resourceWorkerView;
+        RecordInsertList            recordInsertTimesheetFav;
+
+        select firstonly resourceWorkerView
+            where resourceWorkerView.Worker == worker;
+    
+        delete_from delTimesheetFavorites 
+            where delTimesheetFavorites.Resource == resourceWorkerView.RecId;
+
+        recordInsertTimesheetFav = new RecordInsertList(tableNum(TSTimesheetFavorites));
+        while select timesheetRoster
+            index hint HcmWorkerIdx
+        where timesheetRoster.worker == worker
+        && ((timesheetRoster.ValidFrom <= attendenceDay && timesheetRoster.ValidTo == dateNull())
+        || (timesheetRoster.ValidFrom <= attendenceDay && timesheetRoster.ValidTo >= attendenceDay))
+        {
+            select firstonly resourceWorkerView
+                where resourceWorkerView.Worker == timesheetRoster.Worker;
+            timesheetFavorites.clear();
+            timesheetFavorites.Resource = resourceWorkerView.RecId;
+            timesheetFavorites.ProjId = timesheetRoster.ProjId;
+            timesheetFavorites.CategoryId = "Normal";
+            timesheetFavorites.ProjectDataAreaId = curext();
+            timesheetFavorites.TSDailyHoursTotal = timesheetRoster.TSDailyHoursTotal;
+            timesheetFavorites.TSDailyHoursTotal1 = timesheetRoster.TSDailyHoursTotal1;
+            timesheetFavorites.TSDailyHoursTotal2 = timesheetRoster.TSDailyHoursTotal2;
+            timesheetFavorites.TSDailyHoursTotal3 = timesheetRoster.TSDailyHoursTotal3;
+            timesheetFavorites.TSDailyHoursTotal4 = timesheetRoster.TSDailyHoursTotal4;
+            timesheetFavorites.TSDailyHoursTotal5 = timesheetRoster.TSDailyHoursTotal5;
+            timesheetFavorites.TSDailyHoursTotal6 = timesheetRoster.TSDailyHoursTotal6;
+            timesheetFavorites.TSDailyHoursTotal7 = timesheetRoster.TSDailyHoursTotal7;
+            timesheetFavorites.TSDailyHoursTotal8 = timesheetRoster.TSDailyHoursTotal8;
+            timesheetFavorites.TSDailyHoursTotal9 = timesheetRoster.TSDailyHoursTotal9;
+            timesheetFavorites.TSDailyHoursTotal10 = timesheetRoster.TSDailyHoursTotal10;
+            timesheetFavorites.TSDailyHoursTotal11 = timesheetRoster.TSDailyHoursTotal11;
+            timesheetFavorites.TSDailyHoursTotal12 = timesheetRoster.TSDailyHoursTotal12;
+            timesheetFavorites.TSDailyHoursTotal13 = timesheetRoster.TSDailyHoursTotal13;
+            timesheetFavorites.TSDailyHoursTotal14 = timesheetRoster.TSDailyHoursTotal14;
+            timesheetFavorites.TSDailyHoursTotal15 = timesheetRoster.TSDailyHoursTotal15;
+            timesheetFavorites.TSDailyHoursTotal16 = timesheetRoster.TSDailyHoursTotal16;
+            timesheetFavorites.TSDailyHoursTotal17 = timesheetRoster.TSDailyHoursTotal17;
+            timesheetFavorites.TSDailyHoursTotal18 = timesheetRoster.TSDailyHoursTotal18;
+            timesheetFavorites.TSDailyHoursTotal19 = timesheetRoster.TSDailyHoursTotal19;
+            timesheetFavorites.TSDailyHoursTotal20 = timesheetRoster.TSDailyHoursTotal20;
+            timesheetFavorites.TSDailyHoursTotal21 = timesheetRoster.TSDailyHoursTotal21;
+            timesheetFavorites.TSDailyHoursTotal22 = timesheetRoster.TSDailyHoursTotal22;
+            timesheetFavorites.TSDailyHoursTotal23 = timesheetRoster.TSDailyHoursTotal23;
+            timesheetFavorites.TSDailyHoursTotal24 = timesheetRoster.TSDailyHoursTotal24;
+            timesheetFavorites.TSDailyHoursTotal25 = timesheetRoster.TSDailyHoursTotal25;
+            timesheetFavorites.TSDailyHoursTotal26 = timesheetRoster.TSDailyHoursTotal26;
+            timesheetFavorites.TSDailyHoursTotal27 = timesheetRoster.TSDailyHoursTotal27;
+            timesheetFavorites.TSDailyHoursTotal28 = timesheetRoster.TSDailyHoursTotal28;
+            timesheetFavorites.TSDailyHoursTotal29 = timesheetRoster.TSDailyHoursTotal29;
+            timesheetFavorites.TSDailyHoursTotal30 = timesheetRoster.TSDailyHoursTotal30;
+    
+            recordInsertTimesheetFav.add(timesheetFavorites);
+        }
+        recordInsertTimesheetFav.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args _args)
+    {
+        SPYUpdateTSFavourites updateTSFavourites;
+    
+        updateTSFavourites = new SPYUpdateTSFavourites();
+        if(updateTSFavourites.prompt())
+            updateTSFavourites.runOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    protected boolean canRunInNewSession()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

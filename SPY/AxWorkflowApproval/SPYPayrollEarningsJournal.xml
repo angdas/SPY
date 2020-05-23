@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYPayrollEarningsJournal</Name>
+	<CanceledEventHandler>SPYPayrollEarnJourEventHandler1</CanceledEventHandler>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DelegateMenuItem>SPYPayrollEarningsJournalDelegate</DelegateMenuItem>
+	<Document>SPYPayrollEarnJourDocument</Document>
+	<DocumentMenuItem>SPYPayrollEarningsJournal</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>Details</DocumentPreviewFieldGroup>
+	<HelpText>@SPY1209</HelpText>
+	<Label>@SPY1210</Label>
+	<ResubmitMenuItem>SPYPayrollEarningsJournalResubmit</ResubmitMenuItem>
+	<StartedEventHandler>SPYPayrollEarnJourEventHandler1</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYPayrollEarnJourEventHandler1</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYPayrollEarningsJournalApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYPayrollEarnJourEventHandler1</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<ActionMenuItem xmlns="">SPYPayrollEarningsJournalDeny</ActionMenuItem>
+		<Enabled xmlns="">No</Enabled>
+		<EventHandler xmlns="">SPYPayrollEarnJourEventHandler1</EventHandler>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYPayrollEarningsJournalReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYPayrollEarnJourEventHandler1</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYPayrollEarningsJournalRequestChange</ActionMenuItem>
+		<EventHandler xmlns="">SPYPayrollEarnJourEventHandler1</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

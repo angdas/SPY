@@ -1,0 +1,3377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYExpressionFunctionMethod_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+//the base class is in expression model
+[ExtensionOf(classStr(SPYExpressionFunctionMethod))]
+final class SPYExpressionFunctionMethod_Extension
+{
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>Exp_RETRO_RUN</Name>
+				<Source><![CDATA[
+    //when arrear run is done the last period is non-retro or not
+    public static int Exp_RETRO_RUN(TransDate transDate,FromDate periodFromDate,ToDate periodToDate,NoYesId payArrear)
+    {
+        int retValue=1;
+
+        if ( payArrear == NoYes::Yes )
+        {          
+            if ( transDate  >= periodFromDate && transDate <= periodToDate ) 
+            {
+                retValue = 0;
+            }
+        }
+
+        return ( retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_REF_GETNRAMT</Name>
+				<Source><![CDATA[
+    //does not consider arrear period this is required as for reference elements the records are regerated in the current period during arrear run
+    public static SPYAmount Exp_REF_GETNRAMT(HcmWorkerRecId worker,FromDate periodFromDate,ToDate periodToDate,SPYExpressionFunctionParameter expressionFunctionParameter1)
+    {
+        SPYReferencePayElementLedger spyReferencePayElementLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine   spyPayrollPeriodLine;
+        SPYAmount retValue;
+
+        while select sum(TransactionCurrencyAmount)
+            from spyReferencePayElementLedger
+            where spyReferencePayElementLedger.Worker == worker
+            join spyPayrollPeriodLine
+             where (spyPayrollPeriodLine.RecId == spyReferencePayElementLedger.PayrollPeriodLine && spyReferencePayElementLedger.ArrearPeriodLine == 0)
+                && spyPayrollPeriodLine.PeriodStartDate >= periodFromDate
+                && spyPayrollPeriodLine.PeriodEndDate <= periodToDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyReferencePayElementLedger.PayElement
+                && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyReferencePayElementLedger.TransactionCurrencyAmount ;
+        }
+        ;
+        
+        return( retValue );
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PERIOD_STARTDATE</Name>
+				<Source><![CDATA[
+    public static date Exp_PERIOD_STARTDATE(FromDate periodFromDate)
+    {
+        date datePeriodStart = periodFromDate;
+
+        return ( datePeriodStart );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_ELEMENT_AMOUNT</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_ELEMENT_AMOUNT(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate,SPYExpressionFunctionParameter expressionFunctionParameter1)
+    {
+        SPYWorkerPositionPayroll spyWorkerPositionPayroll;
+        SPYPayElementTable  spyPayElementTable;
+
+        select validtimestate(transDate)  sum( Monthly )
+            from spyWorkerPositionPayroll
+            where spyWorkerPositionPayroll.Worker == worker
+            && spyWorkerPositionPayroll.LegalEntity == legalEntity
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyWorkerPositionPayroll.Payroll
+                && spyPayElementTable.PayElementCode == expressionFunctionParameter1;
+
+        return ( spyWorkerPositionPayroll.Monthly );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_AccruedBenefitAmount</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_AccruedBenefitAmount(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,SPYPayElementRecId payElement)
+    {
+        SPYBenefitTable         benefitTable = SPYBenefitTable::find(payElement);
+        SPYPayrollPeriodLine    payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+        SPYBenefitLedger        benefitLedger, benefitLedgerAccu;
+        SPYPayrollJournalTable  payrollJournalTable;
+        SPYPayrollJournalLine   payrollJournalLine;
+        SPYPayrollPeriodLine    payrollPeriodLineAccu, payrollPeriodLineEos;
+        SPYEOSRunBenefit        eosRunBenefit;
+    
+        select sum(TransactionCurrencyAmount) from benefitLedgerAccu join payrollPeriodLineAccu
+        where benefitLedgerAccu.Worker == worker &&
+                benefitLedgerAccu.Benefit == benefitTable.RecId &&
+                benefitLedgerAccu.JournalType == SPYBenefitJournalType::Accrual &&
+                payrollPeriodLineAccu.RecId == benefitLedgerAccu.PayrollPeriodLine &&
+                payrollPeriodLineAccu.PeriodStartDate <= payrollPeriodLineTab.PeriodEndDate;
+        
+        /* select sum(TransactionCurrencyAmount) from benefitLedger
+            where benefitLedger.Worker == worker &&
+                    benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                    benefitLedger.Benefit == payElement &&
+                    benefitLedger.SOURCEDocument == 0
+                    join payrollJournalLine
+            where benefitLedger.PayrollJournalLine == payrollJournalLine.RecId
+                    join payrollJournalTable
+            where payrollJournalTable.RecId == payrollJournalLine.PayrollJournal &&
+                    payrollJournalTable.Posted; */
+
+        payrollPeriodLineEos = SPYPayrollPeriodLine::findPrevPeriodLine(payrollPeriodLine);
+
+        select sum(TransactionCurrencyAmount) from eosRunBenefit join payrollPeriodLineEos
+            where eosRunBenefit.Worker == worker &&
+                    eosRunBenefit.Benefit == benefitTable.RecId &&
+                    eosRunBenefit.JournalType == SPYBenefitJournalType::Accrual &&
+                    eosRunBenefit.PayrollPeriodLine == payrollPeriodLineEos.RecId &&
+                    payrollPeriodLineEos.PeriodEndDate < payrollPeriodLineTab.PeriodStartDate;
+
+        return (benefitLedgerAccu.TransactionCurrencyAmount + eosRunBenefit.TransactionCurrencyAmount);
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_AccruedBenefitQty</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_AccruedBenefitQty(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,SPYPayElementRecId payElement)
+    {
+        SPYPayrollPeriodLine    payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+        SPYBenefitTable         benefitTable = SPYBenefitTable::find(payElement);
+        SPYAmount               accruedQty ;
+        SPYBenefitLedger        benefitLedger;
+        SPYPayrollJournalTable  payrollJournalTable;
+        SPYPayrollJournalLine   payrollJournalLine;
+        SPYEOSRunBenefit        eosRunBenefit;
+        SPYPayrollPeriodLine    payrollPeriodLineEos;
+        
+        accruedQty = benefitTable.accruedQty(worker,payrollPeriodLineTab.PeriodEndDate);
+        /*  select sum(Quantity) from benefitLedger
+            where benefitLedger.Worker == worker &&
+                    benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                    benefitLedger.Benefit == payElement &&
+                    benefitLedger.SOURCEDocument == 0
+                    join payrollJournalLine
+            where benefitLedger.PayrollJournalLine == payrollJournalLine.RecId
+                    join payrollJournalTable
+            where payrollJournalTable.RecId == payrollJournalLine.PayrollJournal &&
+                    payrollJournalTable.Posted; */
+
+        payrollPeriodLineEos = SPYPayrollPeriodLine::findPrevPeriodLine(payrollPeriodLine);
+
+        select sum(Quantity) from eosRunBenefit
+            where eosRunBenefit.Worker == worker &&
+                    eosRunBenefit.Benefit == payElement &&
+                    eosRunBenefit.JournalType == SPYBenefitJournalType::Accrual &&
+                    eosRunBenefit.PayrollPeriodLine <= payrollPeriodLineEos.RecId;
+         
+        return (accruedQty + eosRunBenefit.Quantity);
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_AnniversaryDateLast</Name>
+				<Source><![CDATA[
+    public static date Exp_AnniversaryDateLast(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate)
+    {
+        //first check for the DOJ of the worker
+        HcmEmployment   hcmEmpoyment;
+        utcDateTime     DOJ, tranDate;
+        TransDate       AnnivDate;
+        int64           noOfSeconds;
+        int             noOfYears;
+        
+        select hcmEmpoyment
+        where hcmEmpoyment.Worker == worker;
+        
+        tranDate = DateTimeUtil::newDateTime( transDate, 0 );
+        
+        if ( hcmEmpoyment )
+        {
+            DOJ = hcmEmpoyment.ValidFrom;
+            noOfSeconds = DateTimeUtil::getDifference( tranDate , DOJ);
+            noOfYears = ( ( noOfSeconds / 3600 ) / 24 ) div 365 ;
+            DOJ = DateTimeUtil::addYears( DOJ, noOfYears);
+            AnnivDate = DateTimeUtil::date( DOJ );
+        }
+        
+        return AnnivDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_AnnualQty</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_AnnualQty(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYWorkerBenefitRecId workerBenefit)
+    {
+        return SPYWorkerPositionBenefit::find(workerBenefit).QtyAnnual;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_Arrear</Name>
+				<Source><![CDATA[
+    public static boolean Exp_Arrear(NoYesId payArrear)
+    {
+        return payArrear;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BasicPayElement</Name>
+				<Source><![CDATA[
+    public static str Exp_BasicPayElement()
+    {
+        return 'Basic';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BenefitAmountAnnual</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BenefitAmountAnnual(SPYWorkerBenefitRecId workerBenefit)
+    {
+        return SPYWorkerPositionBenefit::find(workerBenefit).AmountAnnual;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_MonthlyQty</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_MonthlyQty(SPYWorkerBenefitRecId workerBenefit)
+    {
+        return SPYWorkerPositionBenefit::find(workerBenefit).QtyMonthly;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BenefitAmountMonthly</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BenefitAmountMonthly(SPYWorkerBenefitRecId workerBenefit)
+    {
+        return SPYWorkerPositionBenefit::find(workerBenefit).AmountMonthly;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BenefitQtyAnnual</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BenefitQtyAnnual(SPYWorkerBenefitRecId workerBenefit)
+    {
+        return SPYWorkerPositionBenefit::find(workerBenefit).QtyAnnual;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BenefitQtyMonthly</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BenefitQtyMonthly(SPYWorkerBenefitRecId workerBenefit)
+    {
+        return SPYWorkerPositionBenefit::find(workerBenefit).QtyMonthly;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_ConfirmationDate</Name>
+				<Source><![CDATA[
+    public static date Exp_ConfirmationDate(HcmWorkerRecId worker,LegalEntityRecId legalEntity)
+    {
+        HcmEmployment   hcmEmpoyment;
+        utcDateTime     DOJ, tranDate;
+        TransDate       confirmDate;
+        
+        select hcmEmpoyment
+        where hcmEmpoyment.Worker == worker
+            && hcmEmpoyment.LegalEntity == legalEntity;
+        
+        if ( hcmEmpoyment )
+        {
+            DOJ = hcmEmpoyment.ValidFrom;
+            DOJ = DateTimeUtil::addMonths( DOJ, 6 );
+            confirmDate = DateTimeUtil::date( DOJ );
+        }
+        
+        return confirmDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_CurrentBasicAmount</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_CurrentBasicAmount(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine)
+    {
+        SPYWorkerPositionPayroll    workerPayroll;
+        SPYPayElementTable          payElementTable;
+        SPYPayrollPeriodLine        payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine );
+        TransDate                   periodStart = payrollPeriodLineTab.PeriodStartDate;
+        TransDate                   periodEnd = payrollPeriodLineTab.PeriodEndDate;
+        
+        select firstOnly validTimeState(periodEnd) workerPayroll join payElementTable
+            where workerPayroll.Worker == worker &&
+                    workerPayroll.LegalEntity == legalEntity &&
+                    workerPayroll.PayrollPeriod == payrollPeriodLineTab.PayrollPeriod &&
+                    payElementTable.RecId == workerPayroll.Payroll &&
+                    payElementTable.PayElementCode == "Basic";
+        if(!workerPayroll)
+            select firstOnly validTimeState(periodStart) workerPayroll join payElementTable
+                where workerPayroll.Worker == worker &&
+                        workerPayroll.LegalEntity == legalEntity &&
+                        workerPayroll.PayrollPeriod == payrollPeriodLineTab.PayrollPeriod &&
+                        payElementTable.RecId == workerPayroll.Payroll &&
+                        payElementTable.PayElementCode == "Basic";
+        
+        return workerPayroll.Monthly;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_DaysInAMonth</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_DaysInAMonth()
+    {
+        return 30;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_DaysInAYear</Name>
+				<Source><![CDATA[
+    public static int Exp_DaysInAYear()
+    {
+        return 365;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpAirFareAdult</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpAirFareAdult(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate,FromDate calcFromDate,ToDate calcToDate,SPYWorkerBenefitRecId workerBenefit)
+    {
+        TransDateTime           transDateTime = DateTimeUtil::newDateTime(transDate,00-00);
+        HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity,transDateTime);
+        HcmEmploymentDetail     hcmEmploymentDetails = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,transDateTime);
+        SPYAmount               amount;
+        SPYAirFare              airFare;
+        SPYWorkerPositionBenefit    workerPositionBenefit = SPYWorkerPositionBenefit::find(workerBenefit);
+        
+        select firstonly validTimeState(calcFromDate,calcToDate) airFare
+            where airFare.AirFareCity == SPYAirFareCity::find(hcmEmploymentDetails.SPYAirTicketFromCity,hcmEmploymentDetails.SPYAirTicketToCity).RecId &&
+                    airFare.AirClass == hcmEmploymentDetails.SPYAirClass &&
+                    airFare.AirFareType == SPYAirFareType::Adult;
+        
+        // amount = Currency::curAmount2CurAmount(airFare.Amount,airFare.CurrencyCode,workerPositionBenefit.Currency,transDate,false);
+        amount = airFare.Amount;
+        return amount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpAirFareChild</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpAirFareChild(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate,FromDate calcFromDate,ToDate calcToDate,SPYWorkerBenefitRecId workerBenefit)
+    {
+        TransDateTime           transDateTime = DateTimeUtil::newDateTime(transDate,00-00);
+        HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity,transDateTime);
+        HcmEmploymentDetail     hcmEmploymentDetails = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,transDateTime);
+        SPYAmount               amount;
+        SPYAirFare              airFare;
+        SPYWorkerPositionBenefit    workerPositionBenefit = SPYWorkerPositionBenefit::find(workerBenefit);
+        
+        select firstonly validTimeState(calcFromDate,calcToDate) airFare
+            where airFare.AirFareCity == SPYAirFareCity::find(hcmEmploymentDetails.SPYAirTicketFromCity,hcmEmploymentDetails.SPYAirTicketToCity).RecId &&
+                    airFare.AirClass == hcmEmploymentDetails.SPYAirClass &&
+                    airFare.AirFareType == SPYAirFareType::Child;
+        
+        // amount = Currency::curAmount2CurAmount(airFare.Amount,airFare.CurrencyCode,workerPositionBenefit.Currency,transDate,false);
+        amount = airFare.Amount;
+        return amount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpAirFareInfant</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpAirFareInfant(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate,FromDate calcFromDate,ToDate calcToDate,SPYWorkerBenefitRecId workerBenefit)
+    {
+        TransDateTime           transDateTime = DateTimeUtil::newDateTime(transDate,00-00);
+        HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity,transDateTime);
+        HcmEmploymentDetail     hcmEmploymentDetails = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,transDateTime);
+        SPYAmount               amount;
+        SPYAirFare              airFare;
+        SPYWorkerPositionBenefit    workerPositionBenefit = SPYWorkerPositionBenefit::find(workerBenefit);
+        
+        select firstonly validTimeState(calcFromDate,calcToDate) airFare
+            where airFare.AirFareCity == SPYAirFareCity::find(hcmEmploymentDetails.SPYAirTicketFromCity,hcmEmploymentDetails.SPYAirTicketToCity).RecId &&
+                    airFare.AirClass == hcmEmploymentDetails.SPYAirClass &&
+                    airFare.AirFareType == SPYAirFareType::Infant;
+        
+        //amount = Currency::curAmount2CurAmount(airFare.Amount,airFare.CurrencyCode,workerPositionBenefit.Currency,transDate,false);
+        amount = airFare.Amount;
+        return amount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpCalendarDays</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpCalendarDays(FromDate calcFromDate,ToDate calcToDate)
+    {
+        int  totalCalendarDays = calcToDate - calcFromDate + 1;
+        
+        return totalCalendarDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpConfirmationDate</Name>
+				<Source><![CDATA[
+    public static date Exp_EmpConfirmationDate(HcmWorkerRecId worker,LegalEntityRecId legalEntity)
+    {
+        HcmEmployment   hcmEmployment;
+        utcDateTime     DOJ, tranDate;
+        TransDate       confirmDate;
+        int             noOfProbationMonths;
+        
+        select firstOnly hcmEmployment
+        order by hcmEmployment.ValidFrom desc
+        where hcmEmployment.Worker == worker
+            && hcmEmployment.LegalEntity == legalEntity;
+        
+        if ( hcmEmployment )
+        {
+            DOJ = hcmEmployment.ValidFrom;
+        
+            noOfProbationMonths = SPYExpressionFunctionMethod::Exp_ProbationMonths();
+            DOJ = DateTimeUtil::addMonths( DOJ, noOfProbationMonths );
+            confirmDate = DateTimeUtil::date( DOJ );
+        }
+        
+        return confirmDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpGrossSalary</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpGrossSalary(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,TransDate transDate)
+    {
+        SPYWorkerPositionPayroll            workerPositionPayroll;
+        TransDateTime                       grossSalaryDate = DateTimeUtil::newDateTime( transDate, 00-00);
+        SPYPayrollPeriodLine                payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine );
+        TransDate                           periodStart = payrollPeriodLineTab.PeriodStartDate;
+        SPYAmount                           grossSalary;
+
+        while select validTimeState(periodStart) workerPositionPayroll
+            where workerPositionPayroll.Worker == worker &&
+                    workerPositionPayroll.PayrollPeriod == payrollPeriodLineTab.PayrollPeriod &&
+                    workerPositionPayroll.LegalEntity == legalEntity
+        {
+            grossSalary += workerPositionPayroll.Monthly;
+        }
+        
+     
+        return grossSalary;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpHrsPerDay</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpHrsPerDay(CalendarId workerCalendarId)
+    {
+        WorkCalendarTable WorkCalendarTable = WorkCalendarTable::find(workerCalendarId);
+        
+        return WorkCalendarTable.StandardWorkDayHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpLastAnnivDate</Name>
+				<Source><![CDATA[
+    public static date Exp_EmpLastAnnivDate(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate)
+    {
+        HcmEmployment   hcmEmpoyment;
+        utcDateTime     DOJ, tranDate;
+        TransDate       AnnivDate;
+        int64           noOfSeconds;
+        int             noOfYears;
+        
+        select hcmEmpoyment
+        where hcmEmpoyment.Worker == worker;
+        
+        tranDate = DateTimeUtil::newDateTime( transDate, 0 );
+        
+        if ( hcmEmpoyment )
+        {
+            DOJ = hcmEmpoyment.ValidFrom;
+            noOfSeconds = DateTimeUtil::getDifference( tranDate , DOJ);
+            noOfYears =  int642int( noOfSeconds / 3600 ) ;   //no of hours
+            noOfYears = noOfYears / 24 ; //no of days
+            noOfYears = noOfYears div 365; //no of full year
+        
+            DOJ = DateTimeUtil::addYears( DOJ, noOfYears);
+            AnnivDate = DateTimeUtil::date( DOJ );
+        }
+        
+        return AnnivDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpPensionSalary</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpPensionSalary(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,TransDate transDate)
+    {
+        date            effectiveSalaryDate;
+        utcDateTime     dateMin, dateMax;
+        HcmEmployment   workerEmployment;
+        SPYAmount       grossSalary;        
+        
+        if ( SPYExpressionFunctionMethod::Exp_PensionMonth() == 0 )
+            effectiveSalaryDate = transDate;
+        else
+        {
+            effectiveSalaryDate = mkDate( 1, SPYExpressionFunctionMethod::Exp_PensionMonth(), year( transDate ) );
+            //if DOJ is later then the effective date changes to itworkerEmployment
+            dateMin = DateTimeUtil::minValue();
+            dateMax = DateTimeUtil::maxValue();
+        
+            select firstOnly validTimeState( dateMin, dateMax ) workerEmployment
+            order by ValidFrom desc
+            where Worker == worker;
+        
+            if ( workerEmployment )
+            {
+                if ( DateTimeUtil::date(workerEmployment.ValidFrom) > effectiveSalaryDate )
+                    effectiveSalaryDate = DateTimeUtil::date(workerEmployment.ValidFrom);
+            }
+        }
+        
+        grossSalary = SPYExpressionFunctionMethod::Exp_EmpGrossSalary( worker, legalEntity, payrollPeriodLine, transDate) ;
+        
+        //if the gross salary is more than the max limit do the correction
+        if ( SPYExpressionFunctionMethod::Exp_PensionSalaryLimit() != 0 )
+        {
+            if ( grossSalary > SPYExpressionFunctionMethod::Exp_PensionSalaryLimit() )
+                grossSalary = SPYExpressionFunctionMethod::Exp_PensionSalaryLimit() ;
+        }
+        
+        return grossSalary;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeave15to45</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeave15to45(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;
+        
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal(worker, legalEntity, calcFromDate, calcToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, calcFromDate, calcToDate);
+        
+        leaveCount = 0;
+        
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+        
+            if ( totalSickLeave > 14 )
+            {
+                totalSickLeaveProcessed =  totalSickLeaveProcessed > 14 ? totalSickLeaveProcessed : 14 ;
+                for ( ctr=totalSickLeaveProcessed; ( ctr < totalSickLeave )  && ( ctr < 45 ); ctr++ )
+                {
+                    leaveCount++;
+                }
+            }
+        }
+        
+        return leaveCount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeaveAbove45</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeaveAbove45(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;
+        real    slab1SickLeave;
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal( worker, legalEntity, calcFromDate, calcToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, calcFromDate, calcToDate);
+        slab1SickLeave = SPYExpressionFunctionMethod::Exp_EmpSickLeave15to45(worker, legalEntity, calcFromDate, calcToDate);
+       
+        leaveCount = 0;
+        
+        if ( totalSickLeave > 45 )
+        {
+            leaveCount = totalSickLeave - totalSickLeaveProcessed - slab1SickLeave ;
+        }
+        
+        return leaveCount ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeave15to28</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeave15to28(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;
+        
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal(worker, legalEntity, calcFromDate, calcToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, calcFromDate, calcToDate);
+        
+        leaveCount = 0;
+        
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+        
+            if ( totalSickLeave > 14 )
+            {
+                totalSickLeaveProcessed =  totalSickLeaveProcessed > 14 ? totalSickLeaveProcessed : 14 ;
+                for ( ctr=totalSickLeaveProcessed; ( ctr < totalSickLeave )  && ( ctr < 28 ); ctr++ )
+                {
+                    leaveCount++;
+                }
+            }
+        }
+        
+        return leaveCount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeave29to42</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeave29to42(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;        
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal(worker, legalEntity, calcFromDate, calcToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, calcFromDate, calcToDate);
+        
+        leaveCount = 0;
+        
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+        
+            if ( totalSickLeave > 28 )
+            {
+                totalSickLeaveProcessed =  totalSickLeaveProcessed > 28 ? totalSickLeaveProcessed : 28 ;
+                for ( ctr=totalSickLeaveProcessed; ( ctr < totalSickLeave )  && ( ctr < 43 ); ctr++ )
+                {
+                    leaveCount++;
+                }
+            }
+        }
+        
+        return leaveCount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeave43to70</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeave43to70(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;        
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal(worker, legalEntity, calcFromDate, calcToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, calcFromDate, calcToDate);
+        
+        leaveCount = 0;
+        
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+        
+            if ( totalSickLeave > 42)
+            {
+                totalSickLeaveProcessed =  totalSickLeaveProcessed > 42 ? totalSickLeaveProcessed : 42 ;
+                for ( ctr=totalSickLeaveProcessed; ( ctr < totalSickLeave )  && ( ctr < 71 ); ctr++ )
+                {
+                    leaveCount++;
+                }
+            }
+        }
+        
+        return leaveCount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeaveAbove70</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeaveAbove70(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;
+        real    slab1SickLeave;
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal( worker, legalEntity, calcFromDate, calcToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, calcFromDate, calcToDate);
+        slab1SickLeave = SPYExpressionFunctionMethod::Exp_EmpSickLeave15to28(worker, legalEntity, calcFromDate, calcToDate);
+        slab1SickLeave += SPYExpressionFunctionMethod::Exp_EmpSickLeave29to42(worker, legalEntity, calcFromDate, calcToDate);
+        slab1SickLeave += SPYExpressionFunctionMethod::Exp_EmpSickLeave43to70(worker, legalEntity, calcFromDate, calcToDate);
+        leaveCount = 0;
+        
+        if ( totalSickLeave > 70 )
+        {
+            leaveCount = totalSickLeave - totalSickLeaveProcessed - slab1SickLeave ;
+        }
+        
+        return leaveCount ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_KSAEmpSickLeave31to90</Name>
+				<Source><![CDATA[
+    //For KSA sick leave
+    public static SPYAmount Exp_KSAEmpSickLeave31to90(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;        
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal(worker, legalEntity, calcFromDate, calcToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, calcFromDate, calcToDate);
+        
+        leaveCount = 0;
+        
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+        
+            if ( totalSickLeave > 30 )
+            {
+                totalSickLeaveProcessed =  totalSickLeaveProcessed > 30 ? totalSickLeaveProcessed : 30 ;
+                for ( ctr=totalSickLeaveProcessed; ( ctr < totalSickLeave )  && ( ctr < 91 ); ctr++ )
+                {
+                    leaveCount++;
+                }
+            }
+        }
+        return leaveCount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpWorkingDays</Name>
+				<Source><![CDATA[
+    public static int Exp_EmpWorkingDays(FromDate calcFromDate,ToDate calcToDate,CalendarId workerCalendarId)
+    {
+        WorkCalendarDate            workCalendarDate;
+        
+        select count(RecId) from workcalendarDate
+            where workCalendarDate.CalendarId == workerCalendarId &&
+                    workCalendarDate.TransDate >= calcFromDate &&
+                    workCalendarDate.TransDate <= calcToDate &&
+                    !workCalendarDate.ClosedForPickup;
+        
+        return int642int( workCalendarDate.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>GetConfigurationKey</Name>
+				<Source><![CDATA[
+    //function used to retrieve a configuration key
+    public static str GetConfigurationKey( str KeyName )
+    {
+        SPYExpressionConfigurationTable configurationKeys;
+
+        select firstonly configurationKeys
+            where configurationKeys.ConfigurationKey == KeyName;
+
+        return( ConfigurationKeys.Value );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_MaternityInProbation</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_MaternityInProbation(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        SPYAbsenceLedger    absenceLedger;
+        Date                              dteCalculation;
+        
+        dteCalculation =  SPYExpressionFunctionMethod::Exp_EmpConfirmationDate(worker, legalEntity);
+        
+        select sum ( AbsenceDays )
+        from absenceLedger
+        where absenceLedger.Worker == worker
+            && absenceLedger.AbsenceDate <= dteCalculation
+            && absenceLedger.AbsenceDate >= calcFromDate
+            && absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_MaternityLeaveCode()
+            && absenceLedger.Txt!='Accrued absence generated from absence configuration.';
+        
+        return absenceLedger.AbsenceDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_MaternityLeaveCode</Name>
+				<Source><![CDATA[
+    public static str Exp_MaternityLeaveCode()
+    {
+        return 'Maternity';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_MonthlyAmount</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_MonthlyAmount(SPYWorkerPayrollRecId workerPayroll)
+    {
+        return ( SPYWorkerPositionPayroll::find(workerPayroll).Monthly ) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_NoOfChilds</Name>
+				<Source><![CDATA[
+    public static int Exp_NoOfChilds(HcmWorkerRecId worker,LegalEntityRecId legalEntity)
+    {
+        HcmWorker                       hcmWorker;
+        DirPartyRelationship        dirPartyRelationship;
+        
+        int                                        noOfChild = 0;
+        
+        hcmWorker = HcmWorker::find(worker);
+                
+        while select dirPartyRelationship 
+            where dirPartyRelationship.ParentParty == hcmWorker.Person 
+                && dirPartyRelationship.RelationshipTypeId == 'child'
+        {
+            noOfChild++;
+        }
+        
+        return noOfChild;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTHoursType1</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTHoursType1(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYOvertimeTypeTable        spyOvertimeTypeTable;
+        
+        select sum( OvertimeHours ) from overtimeLedger join spyOvertimeTypeTable
+        where overtimeLedger.Worker == worker &&
+            overtimeLedger.OvertimeDate <= timesheetToDate &&
+            overtimeLedger.OvertimeDate >= timesheetFromDate &&
+            spyOvertimeTypeTable.RecId == overtimeLedger.OvertimeType &&
+            spyOvertimeTypeTable.OvertimeTypeCode == SPYExpressionFunctionMethod::Exp_OTType1();
+        
+        return overtimeLedger.OvertimeHours;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTHoursType2</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTHoursType2(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYOvertimeTypeTable        spyOvertimeTypeTable;
+        
+        select sum( OvertimeHours ) from overtimeLedger join spyOvertimeTypeTable
+        where overtimeLedger.Worker == worker &&
+            overtimeLedger.OvertimeDate <= timesheetToDate &&
+            overtimeLedger.OvertimeDate >= timesheetFromDate &&
+            spyOvertimeTypeTable.RecId == overtimeLedger.OvertimeType &&
+            spyOvertimeTypeTable.OvertimeTypeCode == SPYExpressionFunctionMethod::Exp_OTType2();
+        
+        return overtimeLedger.OvertimeHours;        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTHoursType3</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTHoursType3(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYOvertimeTypeTable        spyOvertimeTypeTable;
+        
+        select sum( OvertimeHours ) from overtimeLedger join spyOvertimeTypeTable
+        where overtimeLedger.Worker == worker &&
+            overtimeLedger.OvertimeDate <= timesheetToDate &&
+            overtimeLedger.OvertimeDate >= timesheetFromDate &&
+            spyOvertimeTypeTable.RecId == overtimeLedger.OvertimeType &&
+            spyOvertimeTypeTable.OvertimeTypeCode == SPYExpressionFunctionMethod::Exp_OTType3();
+        
+        return overtimeLedger.OvertimeHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTHoursType4</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTHoursType4(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYOvertimeTypeTable        spyOvertimeTypeTable;
+        
+        select sum( OvertimeHours ) from overtimeLedger join spyOvertimeTypeTable
+        where overtimeLedger.Worker == worker &&
+            overtimeLedger.OvertimeDate <= timesheetToDate &&
+            overtimeLedger.OvertimeDate >= timesheetFromDate &&
+            spyOvertimeTypeTable.RecId == overtimeLedger.OvertimeType &&
+            spyOvertimeTypeTable.OvertimeTypeCode == SPYExpressionFunctionMethod::Exp_OTType4();
+        
+        return overtimeLedger.OvertimeHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTType1</Name>
+				<Source><![CDATA[
+    public static str Exp_OTType1()
+    {
+        return 'OT125';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTType1Multiplier</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTType1Multiplier()
+    {
+        return 1.25;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTType2</Name>
+				<Source><![CDATA[
+    public static str Exp_OTType2()
+    {
+        return 'OT150';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTType2Multiplier</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTType2Multiplier()
+    {
+        return 1.50;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTType3</Name>
+				<Source><![CDATA[
+    public static str Exp_OTType3()
+    {
+        return 'OT250';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTType3Multiplier</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTType3Multiplier()
+    {
+        return 2.5;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTType4</Name>
+				<Source><![CDATA[
+    public static str Exp_OTType4()
+    {
+        return 'OT200';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTType4Multiplier</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTType4Multiplier()
+    {
+        return 2.0;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PaidSickleave</Name>
+				<Source><![CDATA[
+    public static int Exp_PaidSickleave()
+    {
+        return 15;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_ParentPerDayRate</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_ParentPerDayRate(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,SPYPayElementRecId payElement,SPYWorkerPayrollRecId workerPayroll,CalendarId workerCalendarId)
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        SPYPayElementTable          payElementTable;
+        SPYAmount                   perDayRate;
+        RefRecId                    workerParentPayroll;        
+        
+        payElementTable = SPYPayElementTable::find( payElement);
+        //The amount is entered on the parent pay element
+        payElementTable = SPYPayElementTable::find( payElementTable.ParentPayElement );
+        
+        //Find the position payroll record for the parent element
+        select workerPositionPayroll
+        where workerPositionPayroll.Worker == worker
+            && workerPositionPayroll.Payroll == payElementTable.RecID;
+        
+        workerParentPayroll = workerPositionPayroll.recID;
+        perDayRate = SPYExpressionFunctionMethod::Exp_PerDayRate( worker, legalEntity, payrollPeriodLine, workerParentPayroll, workerCalendarId);
+        
+        return ( perDayRate );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PayrollAmountAnnual</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PayrollAmountAnnual(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate,SPYWorkerPayrollRecId workerPayroll)
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll = SPYWorkerPositionPayroll::find(workerPayroll);
+        SPYAmount                   accountingCurrencyAmount;
+        
+        accountingCurrencyAmount = SPYPayService::convert2AccCurAmt(workerPositionPayroll.LegalEntity,
+                                                                    transDate,
+                                                                    workerPositionPayroll.Annual,
+                                                                    workerPositionPayroll.Currency);
+        
+        return accountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PayrollAmountMonthly</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PayrollAmountMonthly(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate,SPYWorkerPayrollRecId workerPayroll)
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll = SPYWorkerPositionPayroll::find(workerPayroll);
+        SPYAmount                   accountingCurrencyAmount;
+        
+        accountingCurrencyAmount = SPYPayService::convert2AccCurAmt(workerPositionPayroll.LegalEntity,
+                                                                    transDate,
+                                                                    workerPositionPayroll.Monthly,
+                                                                    workerPositionPayroll.Currency);
+        
+        return accountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PensionMonth</Name>
+				<Source><![CDATA[
+    public static int Exp_PensionMonth()
+    {
+        return 1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PensionPerEmployee</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PensionPerEmployee()
+    {
+        return 7;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PensionPerEmployer</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PensionPerEmployer()
+    {
+        return 18.5;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PensionSalaryLimit</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PensionSalaryLimit()
+    {
+        return 40000;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PerDayRate</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PerDayRate(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,SPYWorkerPayrollRecId workerPayroll,CalendarId workerCalendarId)
+    {
+        SPYAmount                           workingDays;
+        SPYWorkerPositionPayroll            workerPositionPayroll;
+        SPYAmount                           perDayRate;
+        SPYPayrollPeriodLine                payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+        TransDateTime                       validFrom = DateTimeUtil::minValue(),validTo = DateTimeUtil::maxValue();
+        TransDate                           fromDate = dateNull(),toDate = dateMax();
+        HcmEmployment                       employment;
+        HcmEmploymentDetail                 employmentDetails;
+        /*
+    select firstOnly validTimeState(validFrom, validTo) SPYLeaveAccrualBasis
+    from employmentdetails order by validTo desc
+    join employment
+    where employment.RecId == employmentdetails.Employment
+    && employment.Worker == worker
+    && employment.LegalEntity == legalEntity;
+        
+    if ( employmentDetails.SPYLeaveAccrualBasis == SPYLeaveAccrualBasis::CalendarDays )
+    workingDays = 365.00 / 12.00 ;
+    // workingDays = SPYExpressionFunctionMethod::Exp_PeriodCalendarDays( payrollPeriodLineTab.PeriodStartDate, payrollPeriodLineTab.PeriodEndDate);
+    else
+    workingDays = SPYExpressionFunctionMethod::Exp_EmpWorkingDays(payrollPeriodLineTab.PeriodStartDate,payrollPeriodLineTab.PeriodEndDate,workerCalendarID);
+    //workingDays = SPYExpressionFunctionMethod::Exp_PeriodWorkingDays(payrollPeriodLineTab.PeriodStartDate, workerCalendarID)/12;
+    if ( workingDays == 0 )
+    return (0);
+    */
+        select firstOnly validTimeState(fromDate,toDate) workerPositionPayroll
+            where workerPositionPayroll.RecId == workerPayroll;
+        perDayRate = workerPositionPayroll.Monthly / workingDays;
+        
+        return perDayRate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PeriodWorkingDays</Name>
+				<Source><![CDATA[
+    public static int Exp_PeriodWorkingDays(CalendarId workerCalendarId,FromDate periodFromDate,ToDate periodToDate)
+    {
+        WorkCalendarDate            workCalendarDate;
+        
+        select count(RecId) from workcalendarDate
+            where workCalendarDate.CalendarId == workerCalendarId &&
+                    workCalendarDate.TransDate >= periodFromDate &&
+                    workCalendarDate.TransDate <= periodToDate &&
+                    !workCalendarDate.ClosedForPickup;
+        
+        return int642int(workCalendarDate.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PostedPeriodAmount</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PostedPeriodAmount(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,SPYPayElementRecId payElement)
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYAmount               amount;
+        
+        select sum(AccountingCurrencyAmount), sum(Quantity) from benefitLedger
+            where benefitLedger.Worker == worker &&
+                    benefitLedger.PayrollPeriodLine ==  payrollPeriodLine &&
+                    benefitLedger.Benefit == payElement &&
+                    benefitLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                    !benefitLedger.BenefitJournalTrans;
+        
+        return benefitLedger.AccountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PostedPeriodQty</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PostedPeriodQty(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,SPYPayElementRecId payElement)
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYAmount               amount;
+        
+        select sum(AccountingCurrencyAmount), sum(Quantity) from benefitLedger
+            where benefitLedger.Worker == worker &&
+                    benefitLedger.PayrollPeriodLine ==  payrollPeriodLine &&
+                    benefitLedger.Benefit == payElement &&
+                    benefitLedger.JournalType ==SPYBenefitJournalType::Accrual &&
+                    !benefitLedger.BenefitJournalTrans;
+        
+        return benefitLedger.Quantity;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PreviousBasicAmount</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_PreviousBasicAmount(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine)
+    {
+        SPYWorkerPositionPayroll    workerPayroll;
+        SPYPayElementTable          payElementTable;
+        SPYPayrollPeriodLine        payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine -1 );
+        TransDate                   periodStart = payrollPeriodLineTab.PeriodStartDate;
+        TransDate                   periodEnd = payrollPeriodLineTab.PeriodEndDate;
+        
+        select firstOnly validTimeState(periodEnd) workerPayroll join payElementTable
+            where workerPayroll.Worker == worker &&
+                    workerPayroll.LegalEntity == legalEntity &&
+                    workerPayroll.PayrollPeriod == payrollPeriodLineTab.PayrollPeriod &&
+                    payElementTable.RecId == workerPayroll.Payroll &&
+                    payElementTable.PayElementCode == "Basic";
+        if(!workerPayroll)
+            select firstOnly validTimeState(periodStart) workerPayroll join payElementTable
+                where workerPayroll.Worker == worker &&
+                        workerPayroll.LegalEntity == legalEntity &&
+                        workerPayroll.PayrollPeriod == payrollPeriodLineTab.PayrollPeriod &&
+                        payElementTable.RecId == workerPayroll.Payroll &&
+                        payElementTable.PayElementCode == "Basic";
+        
+        return workerPayroll.Monthly;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_ProbationMonths</Name>
+				<Source><![CDATA[
+    public static int Exp_ProbationMonths()
+    {
+        return 6;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_SickLeaveCode</Name>
+				<Source><![CDATA[
+    public static str Exp_SickLeaveCode()
+    {
+        return 'Sick';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_SickLeaveProcessed</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_SickLeaveProcessed(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        SPYAbsenceLedger    absenceLedger;
+        Date                              dteCalculation;
+        
+        dteCalculation =  SPYExpressionFunctionMethod::Exp_ConfirmationDate(worker, legalEntity) > SPYExpressionFunctionMethod::Exp_AnniversaryDateLast( worker, legalEntity, calcFromDate) ? SPYExpressionFunctionMethod::Exp_ConfirmationDate( worker, legalEntity) : SPYExpressionFunctionMethod::Exp_AnniversaryDateLast( worker, legalEntity, calcFromDate) ;
+        
+        select sum ( AbsenceDays )
+        from absenceLedger
+        where absenceLedger.Worker == worker
+            && absenceLedger.AbsenceDate >= dteCalculation
+            && absenceLedger.AbsenceDate < calcFromDate
+            && absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_SickLeaveCode()
+            && absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+
+        return absenceLedger.AbsenceDays *-1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_SickLeaveTotal</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_SickLeaveTotal(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        SPYAbsenceLedger    absenceLedger;
+        Date                              dteCalculation;
+        
+        dteCalculation =  SPYExpressionFunctionMethod::Exp_ConfirmationDate( worker, legalEntity) > SPYExpressionFunctionMethod::Exp_AnniversaryDateLast( worker, legalEntity, calcFromDate) ? SPYExpressionFunctionMethod::Exp_ConfirmationDate( worker, legalEntity) : SPYExpressionFunctionMethod::Exp_AnniversaryDateLast( worker, legalEntity, calcFromDate) ;
+        
+        select sum ( AbsenceDays )
+        from absenceLedger
+        where absenceLedger.Worker == worker
+            && absenceLedger.AbsenceDate >= dteCalculation
+            && absenceLedger.AbsenceDate <= calcToDate
+            && absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_SickLeaveCode()
+            && absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+        
+        return absenceLedger.AbsenceDays *-1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_StaffCategory</Name>
+				<Source><![CDATA[
+    public static str Exp_StaffCategory(HcmWorkerRecId worker,LegalEntityRecId legalEntity)
+    {
+        HcmPersonDetails            HcmPersonDetails;
+        HcmWorker                       hcmWorker;
+        
+        select firstOnly HcmPersonDetails join hcmWorker
+        where HcmPersonDetails.Person== hcmWorker.Person
+        && hcmWorker.RecId==worker;
+        
+        //switch ( HcmPersonDetails.StaffCategory)
+        //{
+        //    case 0:
+        //        return "Administration staff";
+
+        //    Case 1:
+        //        return "Shift staff";
+
+        //    Default :
+        //        return " ";
+
+        //}
+         
+        return " ";
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_TerminationReasonCode</Name>
+				<Source><![CDATA[
+    public static str Exp_TerminationReasonCode(HcmWorkerRecId worker,LegalEntityRecId legalEntity)
+    {
+        date                    dateMin = datenull(), dateMax = maxDate();
+        TransDateTime           dateTimeMin = DateTimeUtil::newDateTime(dateMin,00-00);
+        TransDateTime           dateTimeMax = DateTimeUtil::newDateTime(dateMax,00-00);
+        HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity,dateTimeMin,dateTimeMax);
+        HcmEmploymentDetail     hcmEmploymentDetail;
+        HcmReasonCode           hcmReasonCode;
+        
+        select validTimeState( datetimemin ,dateTimeMax) HcmEmploymentDetail order by validto desc
+        where HcmEmploymentDetail.Employment==hcmEmployment.RecId;
+        
+        hcmReasonCode = HcmReasonCode::find(hcmEmploymentDetail.TransitionReasonCode);
+        
+        return hcmReasonCode.ReasonCodeId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_WorkerServiceDays</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_WorkerServiceDays(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine)
+    {
+        HcmEmployment           hcmEmployment;
+        SPYPayrollPeriodLine    payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+        StartDateTime           periodStart = DateTimeUtil::minValue();//DateTimeUtil::newDateTime(payrollPeriodLineTab.PeriodStartDate,00-00-00);
+        EndDateTime             periodEnd = DateTimeUtil::maxValue();//DateTimeUtil::newDateTime(payrollPeriodLineTab.PeriodEndDate,00-00-00);
+        TransDateTime           employmentStartDate;
+        int                     totalServiceDays;
+        
+        select firstonly validTimeState(periodStart, periodEnd) hcmEmployment order by ValidFrom
+            where hcmEmployment.Worker == worker &&
+                    hcmEmployment.LegalEntity == legalEntity;
+        employmentStartDate = hcmEmployment.ValidFrom;
+        select firstonly validTimeState(periodStart, periodEnd) hcmEmployment order by ValidFrom Desc
+            where hcmEmployment.Worker == worker &&
+                    hcmEmployment.LegalEntity == legalEntity;
+        if(hcmEmployment.ValidTo >= DateTimeUtil::newDateTime(payrollPeriodLineTab.PeriodStartDate,00-00-00)
+            && hcmEmployment.ValidTo <= DateTimeUtil::newDateTime(payrollPeriodLineTab.PeriodEndDate,00-00-00))
+            totalServiceDays = DateTimeUtil::date(hcmEmployment.ValidTo) - DateTimeUtil::date(employmentStartDate) + 1;
+        else
+        {
+            employmentStartDate = DateTimeUtil::applyTimeZoneOffset(employmentStartDate,DateTimeUtil::getCompanyTimeZone());
+            totalServiceDays = payrollPeriodLineTab.PeriodEndDate - DateTimeUtil::date(employmentStartDate) + 1;
+        }
+        
+        //modified to reduce the unpaid days from the formula
+        // totalServiceDays -= SPYExpressionFunctionMethod::Exp_WorkerUnpaidDays( worker, legalEntity);
+        return ( totalServiceDays) ;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_YearlyAmount</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_YearlyAmount(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYWorkerPayrollRecId workerPayroll)
+    {
+        return ( SPYWorkerPositionPayroll::find(workerPayroll).Annual) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_MonthlyRate</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_MonthlyRate(TransDate transDate,SPYWorkerPayrollRecId workerPayroll)
+    {
+        SPYWorkerPositionPayroll    workerPositionPayroll = SPYWorkerPositionPayroll::find(workerPayroll);
+        SPYAmount                   accountingCurrencyAmount;
+        /*
+    accountingCurrencyAmount = SPYPayService::convert2AccCurAmt(workerPositionPayroll.LegalEntity,
+    transDate,
+    workerPositionPayroll.Monthly,
+    workerPositionPayroll.Currency);
+    */
+        return workerPositionPayroll.Monthly;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_IsChangeInSalary</Name>
+				<Source><![CDATA[
+    public static boolean Exp_IsChangeInSalary(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,FromDate periodFromDate,ToDate periodToDate)
+ 
+    {
+        SPYWorkerPositionPayroll                workerPositionPayroll;
+        SPYAmount                               lastMonthSalary, currentMonthSalary;
+        FromDate                                previousFromDate = prevMth(periodFromDate);
+        ToDate                                  previousToDate = endmth(previousFromDate);
+        boolean                                 isChanged = false;
+
+        select firstOnly validTimeState(periodFromDate,periodToDate) workerPositionPayroll
+    where workerPositionPayroll.Worker == worker &&
+            workerPositionPayroll.PayrollPeriod == SPYPayrollPeriodLine::find(payrollPeriodLine).PayrollPeriod &&
+            workerPositionPayroll.LegalEntity == legalEntity &&
+            workerPositionPayroll.ValidFrom >= periodFromDate && workerPositionPayroll.ValidFrom <= periodToDate;
+        
+        if(workerPositionPayroll)
+        {
+            isChanged =  true;
+        }
+
+        return isChanged;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BalancedBenefitAmount</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BalancedBenefitAmount(HcmWorkerRecId worker,SPYPayrollPeriodLineRecId payrollPeriodLine,FromDate calcFromDate,SPYPayElementRecId payElement)
+    {
+        SPYBenefitTable     benefitTable = SPYBenefitTable::find(payElement);
+        SPYAmount           accruedAmount = benefitTable.balanceTransactionCurAmount(worker,calcFromDate);
+        SPYPayrollJournalTable  payrollJournalTable;
+        SPYPayrollJournalLine   payrollJournalLine;
+        SPYBenefitLedger        benefitLedger;
+        SPYEOSRunBenefit        eosRunBenefit;
+
+        select sum(TransactionCurrencyAmount),sum(TransactionCurPnLAmount) from eosRunBenefit
+        where eosRunBenefit.Worker == worker &&
+    eosRunBenefit.Benefit == payElement &&
+    eosRunBenefit.JournalType == SPYBenefitJournalType::Accrual;
+
+
+        return (accruedAmount + eosRunBenefit.TransactionCurrencyAmount + eosRunBenefit.TransactionCurPnLAmount);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BalancedBenefitQty</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BalancedBenefitQty(HcmWorkerRecId worker,SPYPayrollPeriodLineRecId payrollPeriodLine,FromDate calcFromDate,SPYPayElementRecId payElement)
+    {
+        SPYBenefitTable     benefitTable = SPYBenefitTable::find(payElement);
+        SPYAmount           accruedQty = benefitTable.balanceQty(worker,calcFromDate);
+        SPYPayrollJournalTable  payrollJournalTable;
+        SPYPayrollJournalLine   payrollJournalLine;
+        SPYBenefitLedger        benefitLedger;
+        SPYEOSRunBenefit        eosRunBenefit;
+
+        select sum(Quantity) from eosRunBenefit
+        where eosRunBenefit.Worker == worker &&
+    eosRunBenefit.Benefit == payElement &&
+    eosRunBenefit.JournalType == SPYBenefitJournalType::Accrual;
+
+        return (accruedQty - eosRunBenefit.Quantity);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_YearDays</Name>
+				<Source><![CDATA[
+    public static int Exp_YearDays()
+    {
+        return 365;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpGOSISalary</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpGOSISalary(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,TransDate transDate)
+    {
+        SPYWorkerPositionPayroll            workerPositionPayroll;
+        SPYPayElementTable                  payElementTable;
+        TransDateTime                       grossSalaryDate = DateTimeUtil::newDateTime( transDate, 00-00);
+        SPYAmount                           grossSalary;
+        List                                _list = new List(Types::String);
+        ListIterator                        PayIterator;
+        str                                 payElementstr;
+
+        payElementstr  = SPYExpressionFunctionMethod::Exp_GOSIComponents();
+
+        _list = Global::strSplit(payElementstr, ",");
+        PayIterator  = new ListIterator(_list);
+    
+        while (PayIterator.more())
+        {
+            select validTimeState(grossSalaryDate,grossSalaryDate) workerPositionPayroll
+            join RecId from payElementTable
+            where workerPositionPayroll.Worker == worker &&
+                    workerPositionPayroll.Payroll == payElementTable.RecId &&
+                    workerPositionPayroll.PayrollPeriod == SPYPayrollPeriodLine::find(payrollPeriodLine).PayrollPeriod &&
+                    workerPositionPayroll.LegalEntity == legalEntity &&
+                    payElementTable.PayElementCode == PayIterator.value();
+        
+            grossSalary += workerPositionPayroll.Monthly;
+            PayIterator.next();
+        }
+        
+        return grossSalary;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_GOSIComponents</Name>
+				<Source><![CDATA[
+    public static str Exp_GOSIComponents()
+    {
+        return 'Basic,Accommodation';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_IsEOSLastDay</Name>
+				<Source><![CDATA[
+    public static boolean Exp_IsEOSLastDay(HcmWorkerRecId worker,SPYPayrollPeriodLineRecId payrollPeriodLine,ToDate calcToDate,NoYesId endOfSettlement,ToDate periodToDate)
+    {
+        if(endOfSettlement && periodToDate == calcToDate)
+        return true;
+        else
+        return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_HcmWorkerRecId</Name>
+				<Source><![CDATA[
+    //For Context
+    public static HcmPersonnelNumberId Exp_HcmWorkerRecId(HcmWorkerRecId worker)
+    {
+
+        return HcmWorker::find(worker).PersonnelNumber;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_LegalEntity</Name>
+				<Source><![CDATA[
+    public static str Exp_LegalEntity(LegalEntityRecId legalEntity)
+    {
+        return CompanyInfo::findRecId(legalEntity).DataArea;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PayrollPeriodLine</Name>
+				<Source><![CDATA[
+    public static str Exp_PayrollPeriodLine(SPYPayrollPeriodLineRecId payrollPeriodLine)
+    {
+        return strfmt("%1 to %2", SPYPayrollPeriodLine::find(payrollPeriodLine).PeriodStartDate,
+                                SPYPayrollPeriodLine::find(payrollPeriodLine).PeriodEndDate);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_transDate</Name>
+				<Source><![CDATA[
+    public static date Exp_transDate(TransDate transDate)
+    {
+        return transDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_calcfromdate</Name>
+				<Source><![CDATA[
+    public static date Exp_calcfromdate(FromDate calcFromDate)
+    {
+        return calcFromDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_calcToDate</Name>
+				<Source><![CDATA[
+    public static date Exp_calcToDate(ToDate calcToDate)
+    {
+        return calcToDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_expressionReturn</Name>
+				<Source><![CDATA[
+    public static str Exp_expressionReturn(SPYExpressionReturnValue expressionReturn)
+    {
+        return any2str(expressionReturn);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_workerBenefit</Name>
+				<Source><![CDATA[
+    public static str Exp_workerBenefit(SPYWorkerBenefitRecId workerBenefit)
+    {
+        return SPYBenefitTable::find(SPYWorkerPositionBenefit::find(workerBenefit).Benefit).PayElementCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_workerPayroll</Name>
+				<Source><![CDATA[
+    public static str Exp_workerPayroll(SPYWorkerPayrollRecId workerPayroll)
+    {
+        return SPYPayrollTable::find(SPYWorkerPositionPayroll::find(workerPayroll).Payroll).PayElementCode;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_timesheetFromDate</Name>
+				<Source><![CDATA[
+    public static date Exp_timesheetFromDate(FromDate timesheetFromDate)
+    {
+        return timesheetFromDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_timesheetToDate</Name>
+				<Source><![CDATA[
+    public static date Exp_timesheetToDate(ToDate timesheetToDate)
+    {
+        return timesheetToDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_expressionReturnObject</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_expressionReturnObject(SPYAmount expressionReturnObject)
+    {
+        return expressionReturnObject;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_endOfSettlement</Name>
+				<Source><![CDATA[
+    public static boolean Exp_endOfSettlement(NoYesId endOfSettlement)
+    {
+        return endOfSettlement;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_workerCalenderId</Name>
+				<Source><![CDATA[
+    public static str Exp_workerCalenderId(CalendarId workerCalendarId)
+    {
+        return workerCalendarId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_periodFromDate</Name>
+				<Source><![CDATA[
+    public static date Exp_periodFromDate(FromDate periodFromDate)
+    {
+        return periodFromDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_periodToDate</Name>
+				<Source><![CDATA[
+    public static date Exp_periodToDate(ToDate periodToDate)
+    {
+        return periodToDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_payArrear</Name>
+				<Source><![CDATA[
+    public static boolean Exp_payArrear(NoYesId payArrear)
+    {
+        return payArrear;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PersonalLoanRecovery</Name>
+				<Source><![CDATA[
+    //</Context>
+    
+    public static SPYAmount Exp_PersonalLoanRecovery(HcmWorkerRecId worker,SPYPayrollPeriodLineRecId payrollPeriodLine,SPYExpressionReturnObject expressionReturnObject)
+    {
+        SPYPayLoanLedger        loanLedger;
+        SPYLoanTypeTable        loanType;
+        SPYAmount               ret;
+        container               loanLedgerRecId;
+
+        while select loanLedger
+    join loanType
+    where loanLedger.Worker == worker &&
+            loanLedger.PayrollPeriodLine == payrollPeriodLine &&
+            loanLedger.LoanType == loanType.RecId &&
+            loanType.LoanTypeCode == "Personal" &&
+            loanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+        {
+            ret += loanLedger.TransactionCurrencyAmount;
+            loanLedgerRecId = conPoke(loanLedgerRecId,conLen(loanLedgerRecId) + 1,loanLedger.RecId);
+        }
+    
+        expressionReturnObject.parmLedgerUpdateSourceReturn(loanLedgerRecId);
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_LoanRecovery</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_LoanRecovery(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine,SPYExpressionReturnObject expressionReturnObject,NoYesId endOfSettlement)
+    {
+        SPYPayLoanLedger        loanLedger;
+        SPYLoanTypeTable        loanType;
+        SPYAmount               ret;
+        container               loanLedgerRecId;
+        // New code added Start by AFZ on 01/27/2018 for calculating recovery amont only once in the last period
+        PeriodDate              periodFromdate = SPYPayrollPeriodLine::find(payrollPeriodLine).PeriodStartDate;
+        PeriodDate              periodTodate = SPYPayrollPeriodLine::find(payrollPeriodLine).PeriodEndDate;
+        FromDate                _validfrom = datenull();
+        Todate                 _validto = DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone());
+        HcmEmployment           hcmEmploymentLocal;
+        // New code added Ended by AFZ on 01/27/2018 for calculating recovery amont only once in the last period
+
+        if(endOfSettlement)
+        {
+            // New code added Start by AFZ on 01/27/2018 for calculating recovery amont only once in the last period
+            select validtimestate(_validfrom,_validto) hcmEmploymentLocal where hcmEmploymentLocal.Worker == worker
+                                                && hcmEmploymentLocal.LegalEntity == legalEntity;
+            
+            if(DatetimeUtil::date(hcmEmploymentLocal.ValidTo) >= periodFromdate && DatetimeUtil::date(hcmEmploymentLocal.ValidTo) <= periodTodate)
+            {
+                // New code added Ended by AFZ on 01/27/2018 for calculating recovery amont only once in the last period
+                while select loanLedger
+                join loanType
+                    where loanLedger.Worker == worker &&
+                            loanLedger.LoanType == loanType.RecId &&
+                            loanType.LoanTypeCode == "Loan" &&
+                            loanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+                {
+                    if(loanLedger.amountRecovered() == false)
+                    {
+                        ret += loanLedger.TransactionCurrencyAmount;
+                        loanLedgerRecId = conPoke(loanLedgerRecId,conLen(loanLedgerRecId) + 1,loanLedger.RecId);
+                    }
+                }
+
+            }
+        }
+
+        else
+        {
+            while select loanLedger
+        join loanType
+        where loanLedger.Worker == worker &&
+                loanLedger.PayrollPeriodLine == payrollPeriodLine &&
+                loanLedger.LoanType == loanType.RecId &&
+                loanType.LoanTypeCode == "Loan" &&
+                loanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+            {
+                if(loanLedger.amountRecovered() == false)
+                {
+                    ret += loanLedger.TransactionCurrencyAmount;
+                    loanLedgerRecId = conPoke(loanLedgerRecId,conLen(loanLedgerRecId) + 1,loanLedger.RecId);
+                }
+            }
+        }
+
+        expressionReturnObject.parmLedgerUpdateSourceReturn([tableNum(SPYPayLoanLedger),loanLedgerRecId]);
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickDays</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickDays(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate, ToDate timesheetToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        SPYAmount                  ret;
+
+        select sum(AbsenceDays) from absenceLedger
+        where absenceLedger.Worker == worker &&
+            absenceLedger.AbsenceDate >= timesheetFromDate &&
+            absenceLedger.AbsenceDate <= timesheetToDate &&
+            absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_LeaveCodeSick();
+
+        ret = - absenceLedger.AbsenceDays;
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_LeaveCodeSick</Name>
+				<Source><![CDATA[
+    public static str Exp_LeaveCodeSick()
+    {
+        return 'Sick';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpMaternityLeaveTotal</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpMaternityLeaveTotal(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        SPYAbsenceLedger    absenceLedger;
+        Date                dteCalculation;
+
+        dteCalculation =  SPYExpressionFunctionMethod::Exp_EmpConfirmationDate( worker, legalEntity) > SPYExpressionFunctionMethod::Exp_EmpLastAnnivDate( worker, legalEntity, calcFromDate) ? SPYExpressionFunctionMethod::Exp_EmpConfirmationDate( worker, legalEntity) : SPYExpressionFunctionMethod::Exp_EmpLastAnnivDate( worker, legalEntity, calcFromDate) ;
+
+        select sum ( AbsenceDays )
+    from absenceLedger
+    where absenceLedger.Worker == worker
+    && absenceLedger.AbsenceDate >= dteCalculation
+    && absenceLedger.AbsenceDate <= calcToDate
+    && absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_LeaveCodeMaternityLeave() ;
+
+        return -absenceLedger.AbsenceDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_LeaveCodeMaternityLeave</Name>
+				<Source><![CDATA[
+    public static str Exp_LeaveCodeMaternityLeave()
+    {
+        return 'Maternity';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpMaternityLeaveProcessed</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpMaternityLeaveProcessed(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        SPYAbsenceLedger    absenceLedger;
+        Date                dteCalculation;
+
+        dteCalculation =  SPYExpressionFunctionMethod::Exp_EmpConfirmationDate( worker, legalEntity) > SPYExpressionFunctionMethod::Exp_EmpLastAnnivDate( worker, legalEntity, calcFromDate) ? SPYExpressionFunctionMethod::Exp_EmpConfirmationDate( worker, legalEntity) : SPYExpressionFunctionMethod::Exp_EmpLastAnnivDate( worker, legalEntity, calcFromDate) ;
+
+        select sum ( AbsenceDays )
+from absenceLedger
+where absenceLedger.Worker == worker
+    && absenceLedger.AbsenceDate >= dteCalculation
+    && absenceLedger.AbsenceDate < calcFromDate
+    && absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_LeaveCodeMaternityLeave() ;
+
+        return -absenceLedger.AbsenceDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpMaternityLeaveAbove45</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpMaternityLeaveAbove45(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate calcFromDate,ToDate calcToDate)
+    {
+        real    ctr, leaveCount, leavecountabove45;
+        real    totalSickLeave, totalSickLeaveProcessed;
+
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_EmpMaternityLeaveTotal( worker, legalEntity, calcFromDate, calcToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_EmpMaternityLeaveProcessed(worker, legalEntity, calcFromDate, calcToDate);
+
+        leaveCount = 0;
+        leavecountabove45  = 0;
+
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+
+            if ( totalSickLeave > 45 )
+            {
+                for ( ctr=totalSickLeaveProcessed; ( ctr <= totalSickLeave) && ( ctr < 45 )  ; ctr++ )
+                {
+                    leaveCount++;
+                }
+                leavecountabove45 = totalSickLeave - totalSickLeaveProcessed - leaveCount ;
+            }
+        }
+
+        return leavecountabove45;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpAllowance</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpAllowance(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate)
+    {
+        SPYWorkerPositionPayroll    workerPayroll;
+        SPYPayElementTable          payElementTable;
+        SPYAmount                   allowanceAmount;
+
+        select firstonly validTimeState(transDate,transDate) Monthly from workerPayroll
+    join RecId from payElementTable
+    where workerPayroll.Worker == worker &&
+            workerPayroll.Payroll == payElementTable.RecId &&
+            workerPayroll.LegalEntity == legalEntity &&
+            payElementTable.PayElementCode == SPYExpressionFunctionMethod::Exp_AllowancePayelement();
+
+        allowanceAmount = workerPayroll.Monthly;
+
+        return allowanceAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_AllowancePayelement</Name>
+				<Source><![CDATA[
+    public static str Exp_AllowancePayelement()
+    {
+        return 'Allowances';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_ServiceDays</Name>
+				<Source><![CDATA[
+    public static int Exp_ServiceDays(HcmWorkerRecId worker,LegalEntityRecId legalEntity,ToDate calcToDate)
+    {
+        HcmEmployment           hcmEmployment;
+        StartDateTime           periodStart = DateTimeUtil::newDateTime(calcToDate,00-00-00);
+        EndDateTime             periodEnd = DateTimeUtil::newDateTime(calcToDate,00-00-00);
+
+        select firstonly validTimeState(periodStart, periodEnd) hcmEmployment
+    where hcmEmployment.Worker == worker &&
+            hcmEmployment.LegalEntity == legalEntity;
+
+        return calcToDate - DateTimeUtil::date(hcmEmployment.ValidFrom);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpAdjStartDate</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpAdjStartDate(HcmWorkerRecId worker,LegalEntityRecId legalEntity,NoYesId endOfSettlement,FromDate periodFromDate,ToDate periodToDate)
+    {
+        HcmEmployment           hcmEmployment;
+        HcmEmploymentDetail     hcmEmploymentDetails;
+        date                    terminationDate, endDate;
+        
+        StartDateTime           periodStart = DateTimeUtil::newDateTime(periodFromDate,00-00-00);
+        EndDateTime             periodEnd = DateTimeUtil::newDateTime(periodToDate,00-00-00);
+
+        hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity,periodEnd);
+        hcmEmploymentDetails = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,periodEnd);
+        terminationDate = DateTimeUtil::date(hcmEmployment.ValidTo);
+
+        if(endOfSettlement)
+        {
+            endDate = terminationDate;
+        }
+        else
+        {
+            endDate = periodToDate;
+        }
+
+        return (endDate - DateTimeUtil::date(hcmEmploymentDetails.AdjustedWorkerStartDate))+1;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpGuaranteedSalary</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpGuaranteedSalary(HcmWorkerRecId worker,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine)
+    {
+        SPYWorkerPositionPayroll    workerPayroll;
+        SPYPayElementTable          payElementTable;
+        SPYPayrollPeriodLine        payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine -1 );
+        TransDate                   periodStart = payrollPeriodLineTab.PeriodStartDate;
+        TransDate                   periodEnd = payrollPeriodLineTab.PeriodEndDate;
+        SPYAmount                   grossSalary;
+        
+
+        while select validTimeState(periodStart) workerPayroll join payElementTable
+            where workerPayroll.Worker == worker &&
+                    workerPayroll.PayrollPeriod == payrollPeriodLineTab.PayrollPeriod &&
+                    workerPayroll.LegalEntity == legalEntity &&
+                        payElementTable.RecId == workerPayroll.Payroll &&
+                        (payElementTable.PayElementCode == "Basic" || payElementTable.PayElementCode == "HousingAllowance" || payElementTable.PayElementCode == "OtherAllowance")
+
+        {
+            grossSalary += workerPayroll.Monthly;
+        }
+
+
+        return grossSalary;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTHolidayType</Name>
+				<Source><![CDATA[
+    public static str Exp_OTHolidayType()
+    {
+        return 'Holiday@1.50Basic';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTNightType</Name>
+				<Source><![CDATA[
+    public static str Exp_OTNightType()
+    {
+        return 'Night@1.50Guaranteed';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTWeekendType</Name>
+				<Source><![CDATA[
+    public static str Exp_OTWeekendType()
+    {
+        return 'Weekend@1.50Basic';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTWorkingType</Name>
+				<Source><![CDATA[
+    public static str Exp_OTWorkingType()
+    {
+        return 'Working@1.25';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTHolidayTotal</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTHolidayTotal(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYOvertimeTypeTable        spyOvertimeTypeTable;
+        
+        select sum( OvertimeHours ) from overtimeLedger join spyOvertimeTypeTable
+        where overtimeLedger.Worker == worker &&
+            overtimeLedger.OvertimeDate <= timesheetToDate &&
+            overtimeLedger.OvertimeDate >= timesheetFromDate &&
+            spyOvertimeTypeTable.RecId == overtimeLedger.OvertimeType &&
+            spyOvertimeTypeTable.OvertimeTypeCode == SPYExpressionFunctionMethod::Exp_OTHolidayType();
+        
+        return overtimeLedger.OvertimeHours;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTNightTotal</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTNightTotal(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYOvertimeTypeTable        spyOvertimeTypeTable;
+        
+        select sum( OvertimeHours ) from overtimeLedger join spyOvertimeTypeTable
+        where overtimeLedger.Worker == worker &&
+            overtimeLedger.OvertimeDate <= timesheetToDate &&
+            overtimeLedger.OvertimeDate >= timesheetFromDate &&
+            spyOvertimeTypeTable.RecId == overtimeLedger.OvertimeType &&
+            spyOvertimeTypeTable.OvertimeTypeCode == SPYExpressionFunctionMethod::Exp_OTNightType();
+        
+        return overtimeLedger.OvertimeHours;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTWeekendTotal</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTWeekendTotal(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYOvertimeTypeTable        spyOvertimeTypeTable;
+        
+        select sum( OvertimeHours ) from overtimeLedger join spyOvertimeTypeTable
+        where overtimeLedger.Worker == worker &&
+            overtimeLedger.OvertimeDate <= timesheetToDate &&
+            overtimeLedger.OvertimeDate >= timesheetFromDate &&
+            spyOvertimeTypeTable.RecId == overtimeLedger.OvertimeType &&
+            spyOvertimeTypeTable.OvertimeTypeCode == SPYExpressionFunctionMethod::Exp_OTWeekendType();
+        
+        return overtimeLedger.OvertimeHours;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_OTWorkingTotal</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_OTWorkingTotal(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYOvertimeLedger           overtimeLedger;
+        SPYOvertimeTypeTable        spyOvertimeTypeTable;
+        
+        select sum( OvertimeHours ) from overtimeLedger join spyOvertimeTypeTable
+        where overtimeLedger.Worker == worker &&
+            overtimeLedger.OvertimeDate <= timesheetToDate &&
+            overtimeLedger.OvertimeDate >= timesheetFromDate &&
+            spyOvertimeTypeTable.RecId == overtimeLedger.OvertimeType &&
+            spyOvertimeTypeTable.OvertimeTypeCode == SPYExpressionFunctionMethod::Exp_OTWorkingType();
+        
+        return overtimeLedger.OvertimeHours;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpUnpaidDaysTS</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpUnpaidDaysTS(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate, ToDate timesheetToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        SPYAmount                  days;
+        boolean                    ret = false;
+
+        select sum(AbsenceDays) from absenceLedger
+    where absenceLedger.Worker == worker &&
+            absenceLedger.AbsenceDate >= timesheetFromDate &&
+            absenceLedger.AbsenceDate <= timesheetToDate &&
+        absenceLedger.HRMAbsenceCodeId == SPYExpressionConfigurationTable::findByKey("UnpaidLeave").Value;
+
+        days = - absenceLedger.AbsenceDays;
+
+        return days;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpHajjDaysTS</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpHajjDaysTS(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate, ToDate timesheetToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        SPYAmount                  days;
+        boolean                    ret = false;
+
+        select sum(AbsenceDays) from absenceLedger
+    where absenceLedger.Worker == worker &&
+            absenceLedger.AbsenceDate >= timesheetFromDate &&
+            absenceLedger.AbsenceDate <= timesheetToDate &&
+            absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_LeaveCodeHajj() &&
+            absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+
+
+        days = - absenceLedger.AbsenceDays;
+
+        return days;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeave16to45TS</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeave16to45TS(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate, ToDate timesheetToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;
+        
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal(worker, legalEntity, timesheetFromDate, timesheetToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, timesheetFromDate, timesheetToDate);
+        
+        leaveCount = 0;
+        
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+        
+            if ( totalSickLeave > 15 )
+            {
+                totalSickLeaveProcessed =  totalSickLeaveProcessed > 15 ? totalSickLeaveProcessed : 15 ;
+                for ( ctr=totalSickLeaveProcessed; ( ctr < totalSickLeave )  && ( ctr < 45 ); ctr++ )
+                {
+                    leaveCount++;
+                }
+            }
+        }
+        
+        return leaveCount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeaveAbove45TS</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeaveAbove45TS(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate, ToDate timesheetToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;
+        real    slab1SickLeave;
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal( worker, legalEntity, timesheetFromDate, timesheetToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, timesheetFromDate, timesheetToDate);
+        slab1SickLeave = SPYExpressionFunctionMethod::Exp_EmpSickLeave16to45TS(worker, legalEntity, timesheetFromDate, timesheetToDate);
+       
+        leaveCount = 0;
+        
+        if ( totalSickLeave > 45 )
+        {
+            leaveCount = totalSickLeave - totalSickLeaveProcessed - slab1SickLeave ;
+        }
+        
+        return leaveCount ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpMaternityInFirstYearTS</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpMaternityInFirstYearTS(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate,ToDate timesheetToDate)
+    {
+        SPYAbsenceLedger    absenceLedger;
+        Date                dteCalculation, AnnvDate, startDate, endDate;
+        utcDateTime         DOJ, AnnivDate, AnnivDate2;
+        
+        DOJ =  SPYExpressionFunctionMethod::Exp_EmpJoiningDate(worker, legalEntity);
+        dteCalculation = DateTimeUtil::date( DOJ );
+        AnnivDate = DateTimeUtil::addYears( DOJ, 1);
+        AnnivDate2 = DateTimeUtil::addDays( AnnivDate, -1);
+        AnnvDate = DateTimeUtil::date( AnnivDate2 );
+
+        startDate = dteCalculation < timesheetFromDate ? timesheetFromDate : dteCalculation;
+        endDate   = AnnvDate > timesheetToDate ? timesheetToDate : AnnvDate;
+
+        select sum ( AbsenceDays )
+        from absenceLedger
+        where absenceLedger.Worker == worker
+            && absenceLedger.AbsenceDate >= startDate
+            && absenceLedger.AbsenceDate <= endDate
+            && absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_MaternityLeaveCode()
+            && absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+        
+        if(-absenceLedger.AbsenceDays > 45)
+        return 45;
+        else
+        return -absenceLedger.AbsenceDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpMaternityLeaveAbove45TS</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpMaternityLeaveAbove45TS(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate, ToDate timesheetToDate)
+    {
+        real    ctr, leaveCount, leavecountabove45;
+        real    totalSickLeave, totalSickLeaveProcessed;
+
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_EmpMaternityLeaveTotal( worker, legalEntity, timesheetFromDate, timesheetToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_EmpMaternityLeaveProcessed(worker, legalEntity, timesheetFromDate, timesheetToDate);
+
+        leaveCount = 0;
+        leavecountabove45  = 0;
+
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+
+            if ( totalSickLeave > 45 )
+            {
+                for ( ctr=totalSickLeaveProcessed; ( ctr <= totalSickLeave) && ( ctr < 45 )  ; ctr++ )
+                {
+                    leaveCount++;
+                }
+                leavecountabove45 = totalSickLeave - totalSickLeaveProcessed - leaveCount ;
+            }
+        }
+
+        return leavecountabove45;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpJoiningDate</Name>
+				<Source><![CDATA[
+    public static utcDateTime Exp_EmpJoiningDate(HcmWorkerRecId worker,LegalEntityRecId legalEntity)
+    {
+        HcmEmployment   hcmEmployment;
+        utcDateTime     DOJ, tranDate;
+        TransDate       confirmDate;
+        
+        select firstOnly hcmEmployment
+        order by hcmEmployment.ValidFrom desc
+        where hcmEmployment.Worker == worker
+            && hcmEmployment.LegalEntity == legalEntity;
+        
+        if ( hcmEmployment )
+        {
+            DOJ = hcmEmployment.ValidFrom;
+        }
+        
+        return DOJ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpUmraTS</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpUmraTS(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate timesheetFromDate, ToDate timesheetToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        SPYAmount                  days;
+        boolean                    ret = false;
+
+        select sum(AbsenceDays) from absenceLedger
+    where absenceLedger.Worker == worker &&
+            absenceLedger.AbsenceDate >= timesheetFromDate &&
+            absenceLedger.AbsenceDate <= timesheetToDate &&
+            absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_LeaveCodeUmra() &&
+            absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+
+        days = - absenceLedger.AbsenceDays;
+
+        return days;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_LeaveCodeHajj</Name>
+				<Source><![CDATA[
+    public static str Exp_LeaveCodeHajj()
+    {
+        return 'Hajj';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_LeaveCodeUmra</Name>
+				<Source><![CDATA[
+    public static str Exp_LeaveCodeUmra()
+    {
+        return 'Umra';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_LeaveCodeCompassion</Name>
+				<Source><![CDATA[
+    public static str Exp_LeaveCodeCompassion()
+    {
+        return 'Compassion';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_LeaveCodeUnpaidSick</Name>
+				<Source><![CDATA[
+    public static str Exp_LeaveCodeUnpaidSick()
+    {
+        return 'UnpaidSick';
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpBasicSalary</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpBasicSalary(HcmWorkerRecId worker,LegalEntityRecId legalEntity,TransDate transDate)
+    {
+        SPYWorkerPositionPayroll    workerPayroll;
+        SPYPayElementTable          payElementTable;
+        SPYAmount                   allowanceAmount;
+
+        select firstonly validTimeState(transDate,transDate) Monthly from workerPayroll
+    join RecId from payElementTable
+    where workerPayroll.Worker == worker &&
+            workerPayroll.Payroll == payElementTable.RecId &&
+            workerPayroll.LegalEntity == legalEntity &&
+            payElementTable.PayElementCode == SPYExpressionFunctionMethod::Exp_BasicPayElement();
+
+        allowanceAmount = workerPayroll.Monthly;
+
+        return allowanceAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpUnpaidDaysPP</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpUnpaidDaysPP(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate, ToDate periodToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        SPYAmount                  days;
+        boolean                    ret = false;
+
+        select sum(AbsenceDays) from absenceLedger
+    where absenceLedger.Worker == worker &&
+            absenceLedger.AbsenceDate >= periodFromDate &&
+            absenceLedger.AbsenceDate <= periodToDate &&
+        absenceLedger.HRMAbsenceCodeId == SPYExpressionConfigurationTable::findByKey("UnpaidLeave").Value;
+
+        days = - absenceLedger.AbsenceDays;
+
+        return days;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpCompassionateLeavePP</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpCompassionateLeavePP(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate, ToDate periodToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        SPYAmount                  days;
+        boolean                    ret = false;
+
+        select sum(AbsenceDays) from absenceLedger
+    where absenceLedger.Worker == worker &&
+            absenceLedger.AbsenceDate >= periodFromDate &&
+            absenceLedger.AbsenceDate <= periodToDate &&
+            absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_LeaveCodeCompassion() &&
+            absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+
+        days = - absenceLedger.AbsenceDays;
+
+        return days;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpUnpaidSickLeavePP</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpUnpaidSickLeavePP(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate, ToDate periodToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        SPYAmount                  days;
+        boolean                    ret = false;
+
+        select sum(AbsenceDays) from absenceLedger
+    where absenceLedger.Worker == worker &&
+            absenceLedger.AbsenceDate >= periodFromDate &&
+            absenceLedger.AbsenceDate <= periodToDate &&
+            absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_LeaveCodeUnpaidSick() &&
+            absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+
+        days = - absenceLedger.AbsenceDays;
+
+        return days;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpUmraPP</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpUmraPP(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate, ToDate periodToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        SPYAmount                  days;
+        boolean                    ret = false;
+
+        select sum(AbsenceDays) from absenceLedger
+    where absenceLedger.Worker == worker &&
+            absenceLedger.AbsenceDate >= periodFromDate &&
+            absenceLedger.AbsenceDate <= periodToDate &&
+            absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_LeaveCodeUmra() &&
+            absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+
+        days = - absenceLedger.AbsenceDays;
+
+        return days;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpMaternityInFirstYearPP</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpMaternityInFirstYearPP(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate,ToDate periodToDate)
+    {
+        SPYAbsenceLedger    absenceLedger;
+        Date                dteCalculation, AnnvDate, startDate, endDate;
+        utcDateTime         DOJ, AnnivDate, AnnivDate2;
+        
+        DOJ =  SPYExpressionFunctionMethod::Exp_EmpJoiningDate(worker, legalEntity);
+        dteCalculation = DateTimeUtil::date( DOJ );
+        AnnivDate = DateTimeUtil::addYears( DOJ, 1);
+        AnnivDate2 = DateTimeUtil::addDays( AnnivDate, -1);
+        AnnvDate = DateTimeUtil::date( AnnivDate2 );
+
+        startDate = dteCalculation < periodFromDate ? periodFromDate : dteCalculation;
+        endDate   = AnnvDate > periodToDate ? periodToDate : AnnvDate;
+
+        select sum ( AbsenceDays )
+        from absenceLedger
+        where absenceLedger.Worker == worker
+            && absenceLedger.AbsenceDate >= startDate
+            && absenceLedger.AbsenceDate <= endDate
+            && absenceLedger.HRMAbsenceCodeId == SPYExpressionFunctionMethod::Exp_MaternityLeaveCode()
+            && absenceLedger.SourceDocument != tableNum(SPYAbsenceConfigTable);
+        
+        if(-absenceLedger.AbsenceDays > 45)
+        return 45;
+        else
+        return -absenceLedger.AbsenceDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpMaternityLeaveAbove45PP</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpMaternityLeaveAbove45PP(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate, ToDate periodToDate)
+    {
+        real    ctr, leaveCount, leavecountabove45;
+        real    totalSickLeave, totalSickLeaveProcessed;
+
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_EmpMaternityLeaveTotal( worker, legalEntity, periodFromDate, periodToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_EmpMaternityLeaveProcessed(worker, legalEntity, periodFromDate, periodToDate);
+
+        leaveCount = 0;
+        leavecountabove45  = 0;
+
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+
+            if ( totalSickLeave > 45 )
+            {
+                for ( ctr=totalSickLeaveProcessed; ( ctr <= totalSickLeave) && ( ctr < 45 )  ; ctr++ )
+                {
+                    leaveCount++;
+                }
+                leavecountabove45 = totalSickLeave - totalSickLeaveProcessed - leaveCount ;
+            }
+        }
+
+        return leavecountabove45;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeave16to45PP</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeave16to45PP(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate, ToDate periodToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;
+        
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal(worker, legalEntity, periodFromDate, periodToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, periodFromDate, periodToDate);
+        
+        leaveCount = 0;
+        
+        if ( totalSickLeaveProcessed < totalSickLeave )
+        {
+        
+            if ( totalSickLeave > 15 )
+            {
+                totalSickLeaveProcessed =  totalSickLeaveProcessed > 15 ? totalSickLeaveProcessed : 15 ;
+                for ( ctr=totalSickLeaveProcessed; ( ctr < totalSickLeave )  && ( ctr < 45 ); ctr++ )
+                {
+                    leaveCount++;
+                }
+            }
+        }
+        
+        return leaveCount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EmpSickLeaveAbove45PP</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EmpSickLeaveAbove45PP(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate, ToDate periodToDate)
+    {
+        real     ctr, leaveCount;
+        real    totalSickLeave, totalSickLeaveProcessed;
+        real    slab1SickLeave;
+        
+        totalSickLeave = SPYExpressionFunctionMethod::Exp_SickLeaveTotal( worker, legalEntity, periodFromDate, periodToDate);
+        totalSickLeaveProcessed = SPYExpressionFunctionMethod::Exp_SickLeaveProcessed(worker, legalEntity, periodFromDate, periodToDate);
+        slab1SickLeave = SPYExpressionFunctionMethod::Exp_EmpSickLeave16to45TS(worker, legalEntity, periodFromDate, periodToDate);
+       
+        leaveCount = 0;
+        
+        if ( totalSickLeave > 45 )
+        {
+            leaveCount = totalSickLeave - totalSickLeaveProcessed - slab1SickLeave ;
+        }
+        
+        return leaveCount ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_IsLeaveSettlement</Name>
+				<Source><![CDATA[
+    public static boolean Exp_IsLeaveSettlement(NoYesId leaveSettlement)
+    {
+        return leaveSettlement;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_IsLeaveApplication</Name>
+				<Source><![CDATA[
+    public static boolean Exp_IsLeaveApplication(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate,ToDate periodToDate,SPYLeaveApplicationRecId leaveApplication)
+    {
+        SPYLeaveApplicationTable        leaveApplicationTable;
+        SPYLeaveApplicationLine         leaveApplicationLine;
+        boolean                         ret = false;
+        date                            peridoFrom = dateNull(), periodTo = dateMax();
+
+        select validtimestate(peridoFrom,periodTo) leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == leaveApplication &&
+                  ((leaveApplicationLine.ValidFrom <= periodFromDate &&
+                    leaveApplicationLine.ValidTo >= periodFromDate) ||
+                    (leaveApplicationLine.ValidFrom <= periodToDate &&
+                    leaveApplicationLine.ValidTo >= periodToDate));
+
+        if(leaveApplicationLine)
+        {
+            ret = true;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BenefitQtyAnnualEncashment</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BenefitQtyAnnualEncashment(HcmWorkerRecId worker,SPYPayElementRecId payElement,NoYesId endOfSettlement,FromDate periodFromDate,ToDate periodToDate)
+    {
+        SPYAmount                   QTYAnnual;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        if(endOfSettlement)
+        {
+            select firstonly ValidTimeState(periodFromDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            QTYAnnual = workerPositionBenefit.QtyAnnual;
+        }
+        else
+        {
+            select firstonly ValidTimeState(periodToDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            QTYAnnual = workerPositionBenefit.QtyAnnual;
+        }
+
+        return QTYAnnual;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BenefitAmountAnnualEncashment</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BenefitAmountAnnualEncashment(HcmWorkerRecId worker,SPYPayElementRecId payElement,NoYesId endOfSettlement,FromDate periodFromDate,ToDate periodToDate)
+    {
+        SPYAmount                   ret;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        if(endOfSettlement)
+        {
+            select firstonly ValidTimeState(periodFromDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            ret = workerPositionBenefit.AmountAnnual;
+        }
+        else
+        {
+            select firstonly ValidTimeState(periodToDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            ret = workerPositionBenefit.AmountAnnual;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_MonthlyQtyEncashment</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_MonthlyQtyEncashment(HcmWorkerRecId worker,SPYPayElementRecId payElement,NoYesId endOfSettlement,FromDate periodFromDate,ToDate periodToDate)
+    {
+        SPYAmount                   ret;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        if(endOfSettlement)
+        {
+            select firstonly ValidTimeState(periodFromDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            ret = workerPositionBenefit.QtyMonthly;
+        }
+        else
+        {
+            select firstonly ValidTimeState(periodToDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            ret = workerPositionBenefit.QtyMonthly;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BenefitAmountMonthlyEncashment</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BenefitAmountMonthlyEncashment(HcmWorkerRecId worker,SPYPayElementRecId payElement,NoYesId endOfSettlement,FromDate periodFromDate,ToDate periodToDate)
+    {
+        SPYAmount                   ret;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        if(endOfSettlement)
+        {
+            select firstonly ValidTimeState(periodFromDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            ret = workerPositionBenefit.AmountMonthly;
+        }
+        else
+        {
+            select firstonly ValidTimeState(periodToDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            ret = workerPositionBenefit.AmountMonthly;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_BenefitQtyMonthlyEncashment</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_BenefitQtyMonthlyEncashment(HcmWorkerRecId worker,SPYPayElementRecId payElement,NoYesId endOfSettlement,FromDate periodFromDate,ToDate periodToDate)
+    {
+        SPYAmount                   ret;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        if(endOfSettlement)
+        {
+            select firstonly ValidTimeState(periodFromDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            ret = workerPositionBenefit.QtyMonthly;
+        }
+        else
+        {
+            select firstonly ValidTimeState(periodToDate) workerPositionBenefit
+            where workerPositionBenefit.Worker == worker
+            && workerPositionBenefit.Benefit == payElement;
+            
+            ret = workerPositionBenefit.QtyMonthly;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_GetGridNetSalary</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_GetGridNetSalary(HcmWorkerRecId worker,LegalEntityRecId legalEntity)
+    {
+        SPYGridTable     SPYGridTable;
+        select firstonly SPYGridTable
+            where SPYGridTable.worker == worker &&
+                  SPYGridTable.legalEntity == legalEntity &&
+                  SPYGridTable.row == 1 &&
+                  SPYGridTable.column == 1;
+        return SPYGridTable.value;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PERIOD_CALDAYS</Name>
+				<Source><![CDATA[
+    public static int Exp_PERIOD_CALDAYS(FromDate periodFromDate,ToDate periodToDate)
+    {
+        int     noOfDays;
+
+        noOfDays = (periodToDate - periodFromDate ) + 1;
+
+        return ( noOfDays ) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_DAYS_MATERNITY</Name>
+				<Source><![CDATA[
+    public static int Exp_DAYS_MATERNITY(HcmWorkerRecId worker,ToDate calcToDate)
+    {
+        SPYAbsenceLedger    spyAbsenceLedger;
+        HCMWorker   hcmWorker;
+        HRMAbsenceCode  hrmAbsenceCode;
+        int   total;
+        TransDate   fromDate, uptoDate;
+        int leaveYear;
+
+        leaveYear = year(calcToDate);
+        fromDate = mkDate(1,1,leaveYear-1);
+        uptoDate = calcToDate;
+
+        select sum(AbsenceDays)
+            from spyAbsenceLedger
+            join hrmAbsenceCode
+                where hrmAbsenceCode.hrmAbsenceCodeId == spyAbsenceLedger.HRMAbsenceCodeId
+                && hrmAbsenceCode.hrmAbsenceCodeId == 'Maternity'
+            join hcmWorker
+            where hcmWorker.RecId == spyAbsenceLedger.Worker
+                && spyAbsenceLedger.AbsenceDate >= fromDate
+                && spyAbsenceLedger.AbsenceDate <= uptoDate
+                && spyAbsenceLedger.Worker == worker;
+
+        total = real2int(spyAbsenceLedger.AbsenceDays);
+
+        return( total ) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_PROBATION_ACCRUAL</Name>
+				<Source><![CDATA[
+    //attached to the benefit encashment pay element to auto encash the amount accrued during the probation
+    public static SPYAmount Exp_PROBATION_ACCRUAL(HcmWorkerRecId worker,FromDate calcFromDate,ToDate calcToDate,RecId payElement)
+    {
+        HCMWorker                   hcmWorker ;
+        HcmEmployment          hcmEmployment;
+        HcmEmploymentEmployee   hcmEmploymentEmployee;
+        SPYAmount                    TotalAmount;
+        TransDate                       confirmationDate;
+        SPYBenefitLedger          spyBenefitLedger;
+
+        select *
+            from hcmWorker
+            join hcmEmployment
+                where hcmEmployment.Worker == hcmWorker.RecId
+                //&& hcmEmployment.ValidTo <= DateTimeUtil::newDateTime( calcFromDate ,0)
+                && hcmWorker.RecId == worker
+            join hcmEmploymentEmployee
+                where hcmEmploymentEmployee.Employment == hcmEmployment.RecId;
+
+        confirmationDate = DateTimeUtil::date(hcmEmploymentEmployee.ProbationEndDate);
+
+        if ( ( confirmationDate >= calcFromDate) && ( confirmationDate <= calcToDate ) )
+        {
+            select sum( AccountingCurrencyAmount )
+                from spyBenefitLedger
+                 where spyBenefitLedger.Worker == worker
+                    && spyBenefitLedger.Benefit == payElement
+                    && spyBenefitLedger.TransDate <= confirmationDate;
+
+            TotalAmount = spyBenefitLedger.AccountingCurrencyAmount;
+        }
+        else
+        {
+            TotalAmount = 0;
+        }
+
+        return( TotalAmount * -1 ); //the amount is reversed as this has to be reduced from benefit ledger
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_TAXUPDATE</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_TAXUPDATE(HcmWorkerRecId worker,LegalEntityRecId legalEntity,RecId payrollPeriodLine,RecId payElement,SPYExpressionReturnValue expressionReturn)
+    {
+        SPYGridTable        gridTable;
+        SPYExpressionConfigurationTable     configTable;
+        SPYPayElementTable      payelementTable;
+        SPYGridElementSetup   gridElementSetup;
+         
+        select firstonly gridElementSetup where gridElementSetup.GridElementCode == "TAXSAL";
+
+        select firstonly configTable
+            where configTable.ConfigurationKey like "TAX*"
+            join payelementTable
+            where payelementTable.PayElementCode == configTable.Value &&
+            payelementTable.RecId == payElement;
+
+        if(configTable)
+        {
+            select firstonly forupdate gridTable
+                where gridTable.Worker == worker && gridTable.LegalEntity == legalEntity && gridTable.PayrollPeriodLine == payrollPeriodLine &&
+                 gridElementSetup.Row == gridTable.Row && gridElementSetup.Column == gridTable.Column &&
+                gridTable.GridElement == gridElementSetup.RecId;
+            if(gridTable)
+            {
+                gridTable.Value = gridTable.Value + conPeek(expressionReturn,1);
+                gridTable.update();
+            }
+            else
+            {
+                gridTable.GridElement = gridElementSetup.RecId;
+                gridTable.Worker = worker;
+                gridTable.LegalEntity = legalEntity;
+                gridTable.PayrollPeriodLine = payrollPeriodLine;
+                gridTable.Row = gridElementSetup.Row;
+                gridTable.Column = gridElementSetup.Column;
+                gridTable.Value = conPeek(expressionReturn,1);
+                gridTable.insert();
+            }
+        }
+        return 0;
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_NSSFUPDATE</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_NSSFUPDATE(HcmWorkerRecId worker,LegalEntityRecId legalEntity,RecId payrollPeriodLine,RecId payElement,SPYExpressionReturnValue expressionReturn)
+    {
+        SPYGridTable        gridTable;
+        SPYExpressionConfigurationTable     configTable;
+        SPYPayElementTable      payelementTable;
+        SPYGridElementSetup   gridElementSetup;
+         
+        select firstonly gridElementSetup where gridElementSetup.GridElementCode == "NSSFSAL";
+
+        select firstonly configTable
+            where configTable.ConfigurationKey like "NSSF*"
+            join payelementTable
+            where payelementTable.PayElementCode == configTable.Value &&
+            payelementTable.RecId == payElement;
+
+        if(configTable)
+        {
+            select firstonly forupdate gridTable
+                where gridTable.Worker == worker && gridTable.LegalEntity == legalEntity && gridTable.PayrollPeriodLine == payrollPeriodLine &&
+                 gridElementSetup.Row == gridTable.Row && gridElementSetup.Column == gridTable.Column &&
+                gridTable.GridElement == gridElementSetup.RecId;
+            if(gridTable)
+            {
+                gridTable.Value = gridTable.Value + conPeek(expressionReturn,1);
+                gridTable.update();
+            }
+            else
+            {
+                gridTable.GridElement = gridElementSetup.RecId;
+                gridTable.Worker = worker;
+                gridTable.LegalEntity = legalEntity;
+                gridTable.PayrollPeriodLine = payrollPeriodLine;
+                gridTable.Row = gridElementSetup.Row;
+                gridTable.Column = gridElementSetup.Column;
+                gridTable.Value = conPeek(expressionReturn,1);
+                gridTable.insert();
+            }
+        }
+        return 0;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_CURTAXSAL</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_CURTAXSAL(HcmWorkerRecId worker,LegalEntityRecId legalEntity,RecId payrollPeriodLine)
+    {
+        SPYGridTable        gridTable;
+        SPYGridElementSetup   gridElementSetup;
+
+        select firstonly gridTable
+                where gridTable.Worker == worker && gridTable.LegalEntity == legalEntity && gridTable.PayrollPeriodLine == payrollPeriodLine
+            join gridElementSetup
+            where gridElementSetup.Row == gridTable.Row && gridElementSetup.Column == gridTable.Column &&
+                gridTable.GridElement == gridElementSetup.RecId &&
+            gridElementSetup.GridElementCode == "TAXSAL";
+
+        return gridTable.Value;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_CURNSSFSAL</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_CURNSSFSAL(HcmWorkerRecId worker,LegalEntityRecId legalEntity,RecId payrollPeriodLine)
+    {
+        SPYGridTable        gridTable;
+        SPYGridElementSetup   gridElementSetup;
+
+        select firstonly gridTable
+                where gridTable.Worker == worker && gridTable.LegalEntity == legalEntity && gridTable.PayrollPeriodLine == payrollPeriodLine
+            join gridElementSetup
+            where gridElementSetup.Row == gridTable.Row && gridElementSetup.Column == gridTable.Column &&
+                gridTable.GridElement == gridElementSetup.RecId &&
+            gridElementSetup.GridElementCode == "NSSFSAL";
+
+        return gridTable.Value;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_PREVNSSFSAL</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_PREVNSSFSAL(HcmWorkerRecId worker,FromDate periodFromDate)
+    {
+        SPYExpressionConfigurationTable     configTable;
+        SPYPayElementTable      payelementTable;
+        SPYPayrollLedger        payrollLedger;
+        date        startDate = mkDate(1,1,year(periodFromDate));
+
+        select sum(TransactionCurrencyAmount) from payrollLedger
+            where payrollLedger.Worker == worker &&
+            payrollLedger.TransDate >= startDate &&
+            payrollLedger.TransDate < periodFromDate
+            join payelementTable
+            where payelementTable.RecId == payrollLedger.Payroll
+            join configTable
+            where configTable.Value == payelementTable.PayElementCode &&
+            configTable.ConfigurationKey like "NSSF*";
+
+        return payrollLedger.TransactionCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_SERVICEMONTHS</Name>
+				<Source><![CDATA[
+    public static int Exp_EMP_SERVICEMONTHS(HcmWorkerRecId worker,LegalEntityRecId legalEntity,FromDate periodFromDate,ToDate periodToDate)
+    {
+        HcmEmployment           hcmEmployment;
+        
+        StartDateTime           periodStart = DateTimeUtil::newDateTime(periodFromDate,00-00-00);
+        EndDateTime             periodEnd = DateTimeUtil::newDateTime(periodToDate,00-00-00);
+        
+        select firstonly validTimeState(periodStart, periodEnd) hcmEmployment
+            where hcmEmployment.Worker == worker &&
+                    hcmEmployment.LegalEntity == legalEntity;
+        
+        return ((periodToDate - DateTimeUtil::date(hcmEmployment.ValidFrom) ) + 1) / 30;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_PREVSTBPROVISION</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_PREVSTBPROVISION(HcmWorkerRecId worker,FromDate periodFromDate)
+    {
+        SPYExpressionConfigurationTable     configTable;
+        SPYPayElementTable      payelementTable;
+        SPYBenefitLedger        benefitLedger;
+
+        select sum(AccountingCurrencyAmount) from benefitLedger
+            where benefitLedger.Worker == worker &&
+            benefitLedger.TransDate < periodFromDate
+            join payelementTable
+            where payelementTable.RecId == benefitLedger.Benefit &&
+            payelementTable.PayElementCode == "STB_PROVISION";
+
+        return benefitLedger.AccountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_CALCSTARTDAY</Name>
+				<Source><![CDATA[
+    public static int Exp_CALCSTARTDAY(FromDate calcFromDate)
+    {
+        return dayOfMth(calcFromDate);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_PREVTAXSAL</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_PREVTAXSAL(HcmWorkerRecId worker,FromDate periodFromDate)
+    {
+        SPYExpressionConfigurationTable     configTable;
+        SPYPayElementTable      payelementTable;
+        SPYPayrollLedger        payrollLedger;
+        date        startDate = mkDate(1,1,year(periodFromDate));
+
+        select sum(TransactionCurrencyAmount) from payrollLedger
+            where payrollLedger.Worker == worker &&
+            payrollLedger.TransDate >= startDate &&
+            payrollLedger.TransDate < periodFromDate
+            join payelementTable
+            where payelementTable.RecId == payrollLedger.Payroll
+            join configTable
+            where configTable.Value == payelementTable.PayElementCode &&
+            configTable.ConfigurationKey like "TAX*";
+
+        return payrollLedger.TransactionCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_TAXDEDUCTED</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_TAXDEDUCTED(HcmWorkerRecId worker,FromDate periodFromDate)
+    {
+        SPYPayElementTable      payelementTable;
+        SPYReferencePayElementLedger        payrollLedger;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+        date        startDate = mkDate(1,1,year(periodFromDate));
+
+        select sum(TransactionCurrencyAmount) from payrollLedger
+            where payrollLedger.Worker == worker 
+            join payrollPeriodLine
+                where (payrollPeriodLine.RecId == payrollLedger.PayrollPeriodLine || payrollPeriodLine.RecId == payrollLedger.ArrearPeriodLine )
+                && payrollPeriodLine.PeriodStartDate >= startDate
+                && payrollPeriodLine.PeriodStartDate < periodFromDate
+            join payelementTable
+            where payelementTable.RecId == payrollLedger.PayElement &&
+            payelementTable.PayElementCode == "REF_TAX";
+
+        return payrollLedger.TransactionCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_VACATIONDAYS</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_VACATIONDAYS(HcmWorkerRecId worker,FromDate calcFromDate,ToDate calcToDate)
+    {
+        SPYAbsenceLedger           absenceLedger;
+        
+        select sum(AbsenceDays) from absenceLedger
+            where absenceLedger.Worker == worker &&
+                    absenceLedger.AbsenceDate >= calcFromDate &&
+                    absenceLedger.AbsenceDate <= calcToDate &&
+                    absenceLedger.HRMAbsenceCodeId == "vacation" &&
+                    absenceLedger.AbsenceDays < 0;
+        
+        return -absenceLedger.AbsenceDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_EMP_NSSFDEDUCTED</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_EMP_NSSFDEDUCTED(HcmWorkerRecId worker,FromDate periodFromDate)
+    {
+        SPYPayElementTable      payelementTable;
+        SPYPayrollLedger        payrollLedger;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+
+        date        startDate = mkDate(1,1,year(periodFromDate));
+
+        select sum(TransactionCurrencyAmount) 
+            from payrollLedger
+            where payrollLedger.Worker == worker 
+            join payrollPeriodLine
+                where payrollPeriodLine.RecId == payrollLedger.PayrollPeriodLine
+                && payrollPeriodLine.PeriodStartDate >= startDate
+                && payrollPeriodLine.PeriodStartDate < periodFromDate
+            join payelementTable
+            where payelementTable.RecId == payrollLedger.Payroll &&
+            payelementTable.PayElementCode == "NSSF_DED";
+
+        return payrollLedger.TransactionCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Exp_GetTravelExpense01</Name>
+				<Source><![CDATA[
+    public static SPYAmount Exp_GetTravelExpense01(HcmWorkerRecId hcmWorkerRecId,LegalEntityRecId legalEntity,SPYPayrollPeriodLineRecId payrollPeriodLine )
+    {        
+        TrvExpTable         trvExpTable;
+        TrvExpTrans         trvExpTrans;
+        SPYPayrollPeriodLine    payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+
+        select firstonly sum(Amountcurr) from trvExpTrans
+            where trvExpTrans.CreatingWorker == hcmWorkerRecId &&
+            trvExpTrans.LegalEntity == legalEntity &&
+            trvExpTrans.TransDate >= payrollPeriodLineTab.PeriodStartDate &&
+            trvExpTrans.TransDate <= payrollPeriodLineTab.PeriodEndDate &&
+            trvExpTrans.ApprovalStatus == TrvAppStatus::Approved;
+
+        return trvExpTrans.AmountCurr;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

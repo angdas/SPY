@@ -1,0 +1,583 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.SPYAirFareCity_ID(1)
+    #define.LogisticsAddressCityDestination_ID(2)
+    #define.LogisticsAddressCityOrigin_ID(3)
+    
+    // Data source buffers
+    SPYAirFareCity m_SPYAirFareCity;
+    LogisticsAddressCity m_LogisticsAddressCityDestination;
+    LogisticsAddressCity m_LogisticsAddressCityOrigin;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYAirFareCity'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('LogisticsAddressCityDestination'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('LogisticsAddressCityOrigin'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private boolean isAnyFieldSet_DS2(LogisticsAddressCity _logisticsAddressCityDestination, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_logisticsAddressCityDestination.isFieldSet(fieldnum(LogisticsAddressCity,CityKey)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _logisticsAddressCityDestination) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS3(LogisticsAddressCity _logisticsAddressCityOrigin, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_logisticsAddressCityOrigin.isFieldSet(fieldnum(LogisticsAddressCity,CityKey)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _logisticsAddressCityOrigin) ? true : false;
+        return rtrn;
+    }
+    private void foreignKeyPropagation_DS1(DataEntityRuntimeContext _entityCtx, SPYAirFareCity _sPYAirFareCity)
+    {
+        LogisticsAddressCity logisticsAddressCityDestination_ = _entityCtx.getRuntimeContextByName('LogisticsAddressCityDestination').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('LogisticsAddressCityDestination').conflictDetectionInvoked() || logisticsAddressCityDestination_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYAirFareCity.DestinationCity != logisticsAddressCityDestination_.RecId)
+            {
+                _sPYAirFareCity.DestinationCity = logisticsAddressCityDestination_.RecId;
+            }
+        }
+        
+        LogisticsAddressCity logisticsAddressCityOrigin_ = _entityCtx.getRuntimeContextByName('LogisticsAddressCityOrigin').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('LogisticsAddressCityOrigin').conflictDetectionInvoked() || logisticsAddressCityOrigin_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYAirFareCity.OriginCity != logisticsAddressCityOrigin_.RecId)
+            {
+                _sPYAirFareCity.OriginCity = logisticsAddressCityOrigin_.RecId;
+            }
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('SPYAirFareCity').getDatabaseOperation();
+        SPYAirFareCityEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYAirFareCityEntity, DestinationCity)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYAirFareCity'), _entityCtx.getRuntimeContextByName('LogisticsAddressCityDestination'), dataSourceDBOperation, 'SPYAirFareCity.DestinationCity', _sPYAirFareCity, fieldnum(SPYAirFareCity, DestinationCity), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYAirFareCityEntity, OriginCity)))
+        {
+            if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYAirFareCity'), _entityCtx.getRuntimeContextByName('LogisticsAddressCityOrigin'), dataSourceDBOperation, 'SPYAirFareCity.OriginCity', _sPYAirFareCity, fieldnum(SPYAirFareCity, OriginCity), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // save/update data sources referenced by [SPYAirFareCity].
+            {
+                // handle datasources which are part of extensions and need to be saved before [LogisticsAddressCityDestination]
+                if(!this.preSaveDataSource(_entityCtx, 'LogisticsAddressCityDestination'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('LogisticsAddressCityDestination');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS2(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        LogisticsAddressCity logisticsAddressCityDestination_ = _dataSourceCtx.getBuffer();
+                        if((logisticsAddressCityDestination_.CityKey))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [LogisticsAddressCityDestination].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [LogisticsAddressCityOrigin]
+                if(!this.preSaveDataSource(_entityCtx, 'LogisticsAddressCityOrigin'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('LogisticsAddressCityOrigin');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS3(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        LogisticsAddressCity logisticsAddressCityOrigin_ = _dataSourceCtx.getBuffer();
+                        if((logisticsAddressCityOrigin_.CityKey))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [LogisticsAddressCityOrigin].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            // handle datasources which are part of extensions and need to be saved before [SPYAirFareCity]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYAirFareCity'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYAirFareCity');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // propagates foreign key values from referenced data sources.
+            this.foreignKeyPropagation_DS1(_entityCtx, _dataSourceCtx.getBuffer());
+            // inserts/updates data source [SPYAirFareCity].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [SPYAirFareCity]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYAirFareCity'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYAirFareCity');
+            // deletes data source [SPYAirFareCity].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+            // deletes data sources referenced by [SPYAirFareCity].
+            {
+                // handle datasources which are part of extensions and need to be saved before [LogisticsAddressCityDestination]
+                if(!this.preSaveDataSource(_entityCtx, 'LogisticsAddressCityDestination'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('LogisticsAddressCityDestination');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [LogisticsAddressCityDestination].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [LogisticsAddressCityOrigin]
+                if(!this.preSaveDataSource(_entityCtx, 'LogisticsAddressCityOrigin'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('LogisticsAddressCityOrigin');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [LogisticsAddressCityOrigin].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYAirFareCity _sPYAirFareCity, SPYAirFareCityEntity _sPYAirFareCityEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAirFareCityEntity, fieldnum(SPYAirFareCityEntity, DestinationCity), _sPYAirFareCity, fieldnum(SPYAirFareCity, DestinationCity), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAirFareCityEntity, fieldnum(SPYAirFareCityEntity, OriginCity), _sPYAirFareCity, fieldnum(SPYAirFareCity, OriginCity), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYAirFareCity, _sPYAirFareCityEntity);
+        _sPYAirFareCity.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS2(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, LogisticsAddressCity _logisticsAddressCityDestination, SPYAirFareCityEntity _sPYAirFareCityEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAirFareCityEntity, fieldnum(SPYAirFareCityEntity, LogisticsAddressCityDestination_Name), _logisticsAddressCityDestination, fieldnum(LogisticsAddressCity, CityKey), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _logisticsAddressCityDestination, _sPYAirFareCityEntity);
+        _logisticsAddressCityDestination.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS3(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, LogisticsAddressCity _logisticsAddressCityOrigin, SPYAirFareCityEntity _sPYAirFareCityEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAirFareCityEntity, fieldnum(SPYAirFareCityEntity, LogisticsAddressCityOrigin_Name), _logisticsAddressCityOrigin, fieldnum(LogisticsAddressCity, CityKey), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _logisticsAddressCityOrigin, _sPYAirFareCityEntity);
+        _logisticsAddressCityOrigin.trackFieldExternallySet(false);
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAirFareCity_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #LogisticsAddressCityDestination_ID:
+                this.mapToDataSource_DS2(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #LogisticsAddressCityOrigin_ID:
+                this.mapToDataSource_DS3(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYAirFareCity _sPYAirFareCity, SPYAirFareCityEntity _sPYAirFareCityEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYAirFareCity, fieldnum(SPYAirFareCity, DestinationCity), _sPYAirFareCityEntity, fieldnum(SPYAirFareCityEntity, DestinationCity), false);
+        this.mapDataSourceFieldToEntityField(_sPYAirFareCity, fieldnum(SPYAirFareCity, OriginCity), _sPYAirFareCityEntity, fieldnum(SPYAirFareCityEntity, OriginCity), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYAirFareCity, _sPYAirFareCityEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYAirFareCityEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYAirFareCity);
+    }
+    private void mapFromDataSource_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, LogisticsAddressCity _logisticsAddressCityDestination, SPYAirFareCityEntity _sPYAirFareCityEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_logisticsAddressCityDestination, fieldnum(LogisticsAddressCity, CityKey), _sPYAirFareCityEntity, fieldnum(SPYAirFareCityEntity, LogisticsAddressCityDestination_Name), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _logisticsAddressCityDestination, _sPYAirFareCityEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYAirFareCityEntity.fromViewDataSource(_dataSourceCtx.id(), _logisticsAddressCityDestination);
+    }
+    private void mapFromDataSource_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, LogisticsAddressCity _logisticsAddressCityOrigin, SPYAirFareCityEntity _sPYAirFareCityEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_logisticsAddressCityOrigin, fieldnum(LogisticsAddressCity, CityKey), _sPYAirFareCityEntity, fieldnum(SPYAirFareCityEntity, LogisticsAddressCityOrigin_Name), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _logisticsAddressCityOrigin, _sPYAirFareCityEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYAirFareCityEntity.fromViewDataSource(_dataSourceCtx.id(), _logisticsAddressCityOrigin);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAirFareCity_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #LogisticsAddressCityDestination_ID:
+                this.mapFromDataSource_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #LogisticsAddressCityOrigin_ID:
+                this.mapFromDataSource_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAirFareCity_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #LogisticsAddressCityDestination_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS2(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #LogisticsAddressCityOrigin_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS3(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(SPYAirFareCityEntity _sPYAirFareCityEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYAirFareCityEntity.isFieldSet(fieldnum(SPYAirFareCityEntity, DestinationCity)))
+        {
+            return true;
+        }
+        if(_sPYAirFareCityEntity.isFieldSet(fieldnum(SPYAirFareCityEntity, OriginCity)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYAirFareCityEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS2(SPYAirFareCityEntity _sPYAirFareCityEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYAirFareCityEntity.isFieldSet(fieldnum(SPYAirFareCityEntity, LogisticsAddressCityDestination_Name)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYAirFareCityEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS3(SPYAirFareCityEntity _sPYAirFareCityEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYAirFareCityEntity.isFieldSet(fieldnum(SPYAirFareCityEntity, LogisticsAddressCityOrigin_Name)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYAirFareCityEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAirFareCity_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            case #LogisticsAddressCityDestination_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS2(_entityCtx.getEntityRecord());
+                break;
+            case #LogisticsAddressCityOrigin_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS3(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, SPYAirFareCityEntity _sPYAirFareCityEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYAirFareCity _sPYAirFareCity)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYAirFareCityEntity, _dataSourceCtx, _sPYAirFareCity) ? rtrn : false;
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAirFareCity_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYAirFareCity _sPYAirFareCity, SPYAirFareCity _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAirFareCity, fieldnum(SPYAirFareCity, DestinationCity), _matchingRecord, fieldnum(SPYAirFareCity, DestinationCity), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAirFareCity, fieldnum(SPYAirFareCity, OriginCity), _matchingRecord, fieldnum(SPYAirFareCity, OriginCity), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYAirFareCityEntity), _sPYAirFareCity, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, LogisticsAddressCity _logisticsAddressCityDestination, LogisticsAddressCity _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _logisticsAddressCityDestination, fieldnum(LogisticsAddressCity, CityKey), _matchingRecord, fieldnum(LogisticsAddressCity, CityKey), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYAirFareCityEntity), _logisticsAddressCityDestination, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, LogisticsAddressCity _logisticsAddressCityOrigin, LogisticsAddressCity _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _logisticsAddressCityOrigin, fieldnum(LogisticsAddressCity, CityKey), _matchingRecord, fieldnum(LogisticsAddressCity, CityKey), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYAirFareCityEntity), _logisticsAddressCityOrigin, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAirFareCity_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #LogisticsAddressCityDestination_ID:
+                this.mapToMatchingRecord_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #LogisticsAddressCityOrigin_ID:
+                this.mapToMatchingRecord_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        // Ensure that the entity configuration key is enabled
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            // Entity configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityConfigKeyDisabled",'SPYPayroll'));
+        }
+    }
+    protected boolean hasDataSourceRecordChanged(int _dataSourceId, common _originalRecord, common _updatedRecord)
+    {
+        boolean hasDataSourceRecordChanged_ = true;
+        
+        // The method is called for OCC validation and only upon data sources that have One-to-Many relationships.
+        
+        switch (_dataSourceId)
+        {
+            case #LogisticsAddressCityDestination_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS2(_originalRecord, _updatedRecord);
+                break;
+            case #LogisticsAddressCityOrigin_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS3(_originalRecord, _updatedRecord);
+                break;
+        }
+        return hasDataSourceRecordChanged_;
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'SPYAirFareCity', m_SPYAirFareCity, this.getDataSourceId('SPYAirFareCity'), this.getDataSourceId('SPYAirFareCity'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'LogisticsAddressCityDestination', m_LogisticsAddressCityDestination, this.getDataSourceId('LogisticsAddressCityDestination'), this.getDataSourceId('LogisticsAddressCityDestination'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'LogisticsAddressCityOrigin', m_LogisticsAddressCityOrigin, this.getDataSourceId('LogisticsAddressCityOrigin'), this.getDataSourceId('LogisticsAddressCityOrigin'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private boolean hasDataSourceRecordChanged_DS2(LogisticsAddressCity _originalRecord, LogisticsAddressCity _updatedRecord)
+    {
+        if (_originalRecord.CityKey != _updatedRecord.CityKey)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS3(LogisticsAddressCity _originalRecord, LogisticsAddressCity _updatedRecord)
+    {
+        if (_originalRecord.CityKey != _updatedRecord.CityKey)
+        {
+            return true;
+        }
+        return false;
+    }
+    private SPYAirFareCity LookForUniqueKeyMatch_DS1(SPYAirFareCityEntity _sPYAirFareCityEntity, SPYAirFareCity _sPYAirFareCity)
+    {
+        SPYAirFareCity sPYAirFareCity_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                sPYAirFareCity_
+        where
+            sPYAirFareCity_.DestinationCity == _sPYAirFareCity.DestinationCity && sPYAirFareCity_.OriginCity == _sPYAirFareCity.OriginCity
+        ;
+        
+        if (sPYAirFareCity_)
+        {
+            return sPYAirFareCity_;
+        }
+        
+        return sPYAirFareCity_;
+    }
+    private LogisticsAddressCity LookForUniqueKeyMatch_DS2(SPYAirFareCityEntity _sPYAirFareCityEntity, LogisticsAddressCity _logisticsAddressCityDestination)
+    {
+        LogisticsAddressCity logisticsAddressCity_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        logisticsAddressCity_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                CityKey, RecId
+            from
+                logisticsAddressCity_
+        where
+            logisticsAddressCity_.CityKey == _logisticsAddressCityDestination.CityKey
+        ;
+        
+        if (logisticsAddressCity_)
+        {
+            return logisticsAddressCity_;
+        }
+        
+        return logisticsAddressCity_;
+    }
+    private LogisticsAddressCity LookForUniqueKeyMatch_DS3(SPYAirFareCityEntity _sPYAirFareCityEntity, LogisticsAddressCity _logisticsAddressCityOrigin)
+    {
+        LogisticsAddressCity logisticsAddressCity_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        logisticsAddressCity_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                CityKey, RecId
+            from
+                logisticsAddressCity_
+        where
+            logisticsAddressCity_.CityKey == _logisticsAddressCityOrigin.CityKey
+        ;
+        
+        if (logisticsAddressCity_)
+        {
+            return logisticsAddressCity_;
+        }
+        
+        return logisticsAddressCity_;
+    }
+
+}
+

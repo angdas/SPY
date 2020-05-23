@@ -1,0 +1,1021 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebDbUpdateServiceHRRequest</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWebDbUpdateServiceHRRequest extends SPYWebDbUpdateService
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(SPYWebAPI.Service _apiService, str _token, URL  _portalAPIUrl, PageNo _messagePageSize)
+    {
+        apiService = _apiService;
+        token = _token;
+        portalAPIUrl = _portalAPIUrl;
+        messagePageSize = _messagePageSize;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postHRRequest</Name>
+				<Source><![CDATA[
+    public void postHRRequest()
+    {
+        SPYDocumentRequestTable    documentRequestTable;
+        SPYDocumentRequestLine      documentRequestLine;
+        HcmWorker                        hcmWorker;
+        CLRObject                          documentRequestTableList   = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog         webDocumentLog;
+        TransDate               validFrom = dateNull(), validTo = dateMax();
+        int     pageNo = 1;
+        boolean     callPending;
+        SPYWebAPI.Model.HRRequestLine t = new SPYWebAPI.Model.HRRequestLine();
+        //CLRObject  test    = new ClrObject("System.Collections.Generic.List`1[SPYWebAPI.Model.LeaveApplicationLine]");
+        while select documentRequestTable
+        join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYDocumentRequestTable) &&
+            webDocumentLog.RefRecId == documentRequestTable.RecId
+            join hcmWorker
+            where hcmWorker.RecId == documentRequestTable.Worker
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.HRRequestTable documentRequestTableModel  = new SPYWebAPI.Model.HRRequestTable();
+                documentRequestTableModel.HRRequestCode = documentRequestTable.DocumentRequestCode;
+                documentRequestTableModel.Number = documentRequestTable.PortalNumber;
+                documentRequestTableModel.WorkerId = hcmWorker.PersonnelNumber;
+                documentRequestTableModel.Remarks = documentRequestTable.Description;
+                documentRequestTableModel.Status = enum2Str(documentRequestTable.WorkflowStatus);
+                documentRequestTableModel.DataArea = documentRequestTable.DataAreaId;
+                documentRequestTableModel.ERPRecId = documentRequestTable.RecId;
+                CLRObject  documentRequestLineList  = apiService.getBlankHRRequestLineList();
+                while select documentRequestLine where
+                    documentRequestLine.DocumentRequest == documentRequestTable.RecId
+                {
+                    SPYWebAPI.Model.HRRequestLine documentRequestLineModel = new SPYWebAPI.Model.HRRequestLine();
+                    documentRequestLineModel.HRRequestCode = documentRequestTable.DocumentRequestCode;
+                    documentRequestLineModel.TableNumber = documentRequestTable.PortalNumber;
+                    documentRequestLineModel.DocumentRequestAddressCode =  SPYDocumentRequestAddress::find(documentRequestLine.DocumentRequestAddress).DocumentRequestAddressCode;
+                    documentRequestLineModel.DocumentRequestTypeCode = SPYDocumentRequestType::find(documentRequestLine.DocumentRequestType).DocumentRequestTypeCode;
+                    documentRequestLineModel.DocumentLanguage = documentRequestLine.DocumentLanguage;
+                    documentRequestLineModel.IncludeSalary = documentRequestLine.IncludeSalary;
+                    documentRequestLineModel.ConsulateType = enum2Str(documentRequestLine.ConsulateType);
+                    documentRequestLineModel.CertificateType = enum2Str(documentRequestLine.CertificateType);
+                    documentRequestLineModel.Purpose = documentRequestLine.Purpose;
+                    documentRequestLineModel.LineNumber = documentRequestLine.LineNum;
+                    documentRequestLineModel.Remarks = documentRequestLine.Remarks;
+                    documentRequestLineModel.DataArea = documentRequestLine.DataAreaId;
+                    documentRequestLineModel.ERPRecId = documentRequestLine.RecId;
+                    documentRequestLineList.Add(documentRequestLineModel);
+                }
+                
+                documentRequestTableModel.HRRequestLine = documentRequestLineList;
+                documentRequestTableList.Add(documentRequestTableModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callHRRequestAPI(documentRequestTableList);
+                documentRequestTableList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callHRRequestAPI(documentRequestTableList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callHRRequestAPI</Name>
+				<Source><![CDATA[
+    private void callHRRequestAPI(CLRObject _docReqList, boolean _callFromError = false)
+    {
+        str calldescription = "UpdateHRRequests";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_docReqList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        if(_callFromError)
+            return;
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("HR request sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _docReqList = apiService.convertToHRRequestList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoDocReqList, errorDocReqList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing HR request.");
+        }
+        else
+        {
+            ClrObject applicationListEnumerator = _docReqList.GetEnumerator();
+            while (applicationListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.HRRequestTable docReqTableModel = applicationListEnumerator.get_Current();
+                SPYDocumentRequestTable       documentReqTableUpdate = SPYDocumentRequestTable::findByCode(docReqTableModel.HRRequestCode, true);
+                if(docReqTableModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoDocReqList += strFmt("HR request %1 synced to portal. \n", documentReqTableUpdate.DocumentRequestCode);
+                    if(documentReqTableUpdate)
+                    {
+                        documentReqTableUpdate.PortalNumber = docReqTableModel.Number;
+                        documentReqTableUpdate.update();
+                    }
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == documentReqTableUpdate.TableId &&
+                        webDocumentLogUpdate.RefRecId == documentReqTableUpdate.RecId;
+                }
+                else
+                {
+                    errorDocReqList += strFmt("Error in HR request %1. %2. \n", documentReqTableUpdate.DocumentRequestCode,
+                        docReqTableModel.ErrorMessage);
+                }
+            }
+            if(infoDocReqList)
+                info(infoDocReqList);
+            if(errorDocReqList)
+                error(errorDocReqList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoDocReqList, errorDocReqList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getHRRequest</Name>
+				<Source><![CDATA[
+    public void getHRRequest()
+    {
+        str calldescription = "GetHRRequests";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+
+        ClrObject  responseList;
+        ClrObject responseListEnumerator;
+        //responseList = apiService.makeGet(url, token);
+        SPYWebAPI.Model.DataAreaModel   dataAreaModel  = new SPYWebAPI.Model.DataAreaModel();
+        dataAreaModel.DataArea = curExt();
+        str requestStr  = apiService.serializeObj(dataAreaModel);
+        responseList = apiService.makePost(url, requestStr, token);
+        responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("HR requests from portal are synced successfully.");
+                }
+                else
+                {
+                    error = true;
+                    error("Error occurred while fetching HR request from portal.");
+                }
+            }
+            else
+            {
+                if(!error)
+                {
+                    this.updateHRRequests(responseStr);
+                }
+                this.updateLog(calldescription, callStatus, url, "", responseStr, "", "");
+            }
+            counter++;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateHRRequests</Name>
+				<Source><![CDATA[
+    private void updateHRRequests(str _documentRequests)
+    {
+        WorkflowWorkItemTable           workflowWorkItemTable;
+        WorkflowTrackingStatusTable     workflowTrackingStatusTable;
+        ClrObject docReqList = apiService.convertToHRRequestList(_documentRequests);
+        ClrObject docReqListEnumerator = docReqList.GetEnumerator();
+
+        while (docReqListEnumerator.MoveNext())
+        {
+            ttsbegin;
+            boolean   created;
+            SPYWebAPI.Model.HRRequestTable  docReqTableModel = docReqListEnumerator.get_Current();
+            ClrObject docReqLineList  = docReqTableModel.HRRequestLine;
+            ClrObject docReqLineListEnumerator = docReqLineList.GetEnumerator();
+            SPYDocumentRequestTable     documentRequestTable;
+            select firstonly forupdate documentRequestTable
+                where documentRequestTable.PortalNumber == docReqTableModel.Number;
+            HcmWorker  worker = HcmWorker::findByPersonnelNumber(docReqTableModel.WorkerId);
+            SPYWorkflowStatus  status;
+            status = str2Enum(status, docReqTableModel.Status);
+            if(documentRequestTable)
+            {
+                if(documentRequestTable.WorkflowStatus == SPYWorkflowStatus::Created &&
+                    status == SPYWorkflowStatus::Submitted)
+                {
+                    documentRequestTable.WorkflowStatus = status;
+                    Workflow::activateFromWorkflowType(workflowTypeStr(SPYDocumentRequest),documentRequestTable.RecId,"Submitted from portal",false);
+                }
+                else if(docReqTableModel.Approved)
+                {
+                    HcmWorker   approver = HcmWorker::findByPersonnelNumber(docReqTableModel.ApproveWorker);
+                    DirPersonUser   dirPersonUser;
+                    UserId  approverUserId;
+                    if(approver)
+                    {
+                        select firstonly dirPersonUser
+                            where dirPersonUser.PersonParty == approver.Person;
+                        approverUserId = dirPersonUser.User;
+                    }
+                    else
+                        approverUserId = curUserId();
+                    select workflowWorkItemTable
+                        join workflowTrackingStatusTable
+                        where workflowTrackingStatusTable.CorrelationId == workflowWorkItemTable.CorrelationId &&
+                        workflowTrackingStatusTable.ContextRecId == documentRequestTable.RecId &&
+                        workflowTrackingStatusTable.ContextTableId == tableNum(SPYDocumentRequestTable);
+                    if(workflowWorkItemTable)
+                    {
+                        documentRequestTable.WorkflowStatus = SPYWorkflowStatus::Started;
+                        WorkflowWorkItemActionManager::dispatchWorkItemAction(WorkflowWorkItemTable,
+                                                                                                                docReqTableModel.WorkflowRemarks,
+                                                                                                                approverUserId,
+                                                                                                                WorkflowWorkItemActionType::Complete,
+                                                                                                                "SPYDocumentRequestApprove");
+                    }
+                }
+                else if(docReqTableModel.Rejected)
+                {
+                    HcmWorker   approver = HcmWorker::findByPersonnelNumber(docReqTableModel.RejectWorker);
+                    DirPersonUser   dirPersonUser;
+                    UserId  approverUserId;
+                    if(approver)
+                    {
+                        select firstonly dirPersonUser
+                            where dirPersonUser.PersonParty == approver.Person;
+                        approverUserId = dirPersonUser.User;
+                    }
+                    else
+                        approverUserId = curUserId();
+                    select workflowWorkItemTable
+                        join workflowTrackingStatusTable
+                        where workflowTrackingStatusTable.CorrelationId == workflowWorkItemTable.CorrelationId &&
+                        workflowTrackingStatusTable.ContextRecId == documentRequestTable.RecId &&
+                        workflowTrackingStatusTable.ContextTableId == tableNum(SPYDocumentRequestTable);
+                    if(workflowWorkItemTable)
+                    {
+                        documentRequestTable.WorkflowStatus = status;
+                        WorkflowWorkItemActionManager::dispatchWorkItemAction(WorkflowWorkItemTable,
+                                                                                                            docReqTableModel.WorkflowRemarks,
+                                                                                                            approverUserId,
+                                                                                                            WorkflowWorkItemActionType::Complete,
+                                                                                                            "SPYDocumentRequestReject");
+                    }
+                }
+                
+                documentRequestTable.update();
+                created = this.updateHRRequestLine(documentRequestTable, docReqLineListEnumerator);
+            }
+            else
+            {
+                //if(_contract.parmIsDeleted())
+                //return _contract;
+                documentRequestTable.initValue();
+                documentRequestTable.DocumentRequestCode = NumberSeq::newGetNum(SPYPayrollParameters::numRefDocumentRequestCode()).num();
+                documentRequestTable.Worker = worker.RecId;
+                documentRequestTable.WorkflowStatus = status;
+                documentRequestTable.PortalNumber = docReqTableModel.Number;
+                documentRequestTable.insert();
+                this.updateHRRequestLine(documentRequestTable, docReqLineListEnumerator);
+                if(status == SPYWorkflowStatus::Submitted)
+                {
+                    Workflow::activateFromWorkflowType(workflowTypeStr(SPYDocumentRequest),documentRequestTable.RecId,"Submitted from portal",false);
+                }
+            }
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateHRRequestLine</Name>
+				<Source><![CDATA[
+    private boolean updateHRRequestLine(SPYDocumentRequestTable _documentRequestTable, ClrObject _lineListEnum)
+    {
+        SPYDocumentRequestLine     documentRequestLine;
+        SPYAmount                       workingHours;
+        boolean                         created = true;
+
+        delete_from documentRequestLine
+            where documentRequestLine.DocumentRequest == _documentRequestTable.RecId;
+        while(_lineListEnum.moveNext())
+        {
+            SPYWebAPI.Model.HRRequestLine  docReqLineModel  = _lineListEnum.get_Current();
+            documentRequestLine.initValue();
+            documentRequestLine.DocumentRequest  = _documentRequestTable.RecId;
+            documentRequestLine.LineNum  = docReqLineModel.LineNumber;
+            documentRequestLine.DocumentLanguage  = docReqLineModel.DocumentLanguage;
+            SPYDocumentCertificateType  certificateType;
+            if(docReqLineModel.CertificateType)
+                certificateType = str2Enum(certificateType, docReqLineModel.CertificateType);
+            SPYDocumentConsulateType  consulateType;
+            if(docReqLineModel.ConsulateType)
+                consulateType = str2Enum(consulateType, docReqLineModel.ConsulateType);
+            documentRequestLine.CertificateType = certificateType;
+            documentRequestLine.ConsulateType = consulateType;
+            documentRequestLine.DocumentRequestType  = SPYDocumentRequestType::findByCode(docReqLineModel.DocumentRequestTypeCode).RecId;
+            documentRequestLine.DocumentRequestAddress  = SPYDocumentRequestAddress::findByCode(docReqLineModel.DocumentRequestAddressCode).RecId;
+            documentRequestLine.Remarks = docReqLineModel.Remarks;
+            documentRequestLine.insert();
+        }
+        return created;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postHRRequestType</Name>
+				<Source><![CDATA[
+    public void postHRRequestType()
+    {
+        SPYDocumentRequestType  documentRequestType;
+        CLRObject                   documentRequestTypeList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        boolean                     recFound;
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select documentRequestType
+            join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYDocumentRequestType) &&
+            webDocumentLog.RefRecId == documentRequestType.RecId &&
+            !webDocumentLog.IsDeleted
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.HRRequestType docRequestTypeModel = new SPYWebAPI.Model.HRRequestType();
+                docRequestTypeModel.HRRequestTypeCode = documentRequestType.DocumentRequestTypeCode;
+                docRequestTypeModel.Description = documentRequestType.Description;
+                docRequestTypeModel.DataArea = curExt();
+                docRequestTypeModel.ERPRecId = documentRequestType.RecId;
+                documentRequestTypeList.Add(docRequestTypeModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callHRRequestTypeUpdateAPI(documentRequestTypeList);
+                documentRequestTypeList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callHRRequestTypeUpdateAPI(documentRequestTypeList);
+            ttscommit;
+        }
+                
+        //Deleted entries
+        pageNo = 0;
+        documentRequestTypeList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        callPending = false;
+        while select webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYDocumentRequestType) &&
+            webDocumentLog.IsDeleted
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.HRRequestType docRequestTypeModel = new SPYWebAPI.Model.HRRequestType();
+                docRequestTypeModel.DataArea = curExt();
+                docRequestTypeModel.ERPRecId = webDocumentLog.RefRecId;
+                documentRequestTypeList.Add(docRequestTypeModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callHRRequestTypeDeleteAPI(documentRequestTypeList);
+                documentRequestTypeList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callHRRequestTypeDeleteAPI(documentRequestTypeList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callHRRequestTypeUpdateAPI</Name>
+				<Source><![CDATA[
+    private void callHRRequestTypeUpdateAPI(CLRObject _docReqTypeList)
+    {
+        str calldescription = "UpdateHRRequestTypes";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_docReqTypeList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("HR request type sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _docReqTypeList = apiService.convertToHRRequestTypeList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoDocReqTypeList, errorDocReqTypeList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing HR request type.");
+        }
+        else
+        {
+            ClrObject docReqTypeListEnumerator = _docReqTypeList.GetEnumerator();
+            while (docReqTypeListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.HRRequestType docReqTypeModel = docReqTypeListEnumerator.get_Current();
+                SPYDocumentRequestType  documentRequestType;
+                select documentRequestType
+                    where documentRequestType.DocumentRequestTypeCode == docReqTypeModel.HRRequestTypeCode;
+                if(docReqTypeModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                
+                    infoDocReqTypeList += strFmt("HR request type %1 synced to portal. \n", documentRequestType.DocumentRequestTypeCode);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == documentRequestType.TableId &&
+                        webDocumentLogUpdate.RefRecId == documentRequestType.RecId &&
+                        !webDocumentLogUpdate.IsDeleted;
+                }
+                else
+                {
+                    errorDocReqTypeList += strFmt("Error for HR request type %1. %2. \n", documentRequestType.DocumentRequestTypeCode,
+                        docReqTypeModel.ErrorMessage);
+                }
+            }
+            if(infoDocReqTypeList)
+                info(infoDocReqTypeList);
+            if(errorDocReqTypeList)
+                error(errorDocReqTypeList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoDocReqTypeList, errorDocReqTypeList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callHRRequestTypeDeleteAPI</Name>
+				<Source><![CDATA[
+    private void callHRRequestTypeDeleteAPI(CLRObject _docReqTypeList)
+    {
+        str calldescription = "DeleteHRRequestTypes";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_docReqTypeList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("HR request type sync(deleting) is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _docReqTypeList = apiService.convertToHRRequestTypeList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoDocReqTypeList, errorDocReqTypeList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing HR request type for deleting.");
+        }
+        else
+        {
+            ClrObject docReqTypeListEnumerator = _docReqTypeList.GetEnumerator();
+            while (docReqTypeListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.HRRequestType docReqTypeModel = docReqTypeListEnumerator.get_Current();
+                if(docReqTypeModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;                
+                    infoDocReqTypeList += strFmt("HR request type %1 synced(deleting) to portal. \n", docReqTypeModel.ERPRecId);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == tableNum(SPYDocumentRequestType) &&
+                        webDocumentLogUpdate.RefRecId == docReqTypeModel.ERPRecId &&
+                        webDocumentLogUpdate.IsDeleted;
+                }
+                else
+                {
+                    errorDocReqTypeList += strFmt("Error for HR request type %1(deleting). %2. \n", docReqTypeModel.ERPRecId,
+                        docReqTypeModel.ErrorMessage);
+                }
+            }
+            if(infoDocReqTypeList)
+                info(infoDocReqTypeList);
+            if(errorDocReqTypeList)
+                error(errorDocReqTypeList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoDocReqTypeList, errorDocReqTypeList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postHRRequestAddress</Name>
+				<Source><![CDATA[
+    public void postHRRequestAddress()
+    {
+        SPYDocumentRequestAddress  documentRequestAddress;
+        CLRObject                   documentRequestAddressList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        boolean                     recFound;
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select documentRequestAddress
+            join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYDocumentRequestAddress) &&
+            webDocumentLog.RefRecId == documentRequestAddress.RecId &&
+            !webDocumentLog.IsDeleted
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.HRRequestAddress docRequestAddressModel = new SPYWebAPI.Model.HRRequestAddress();
+                docRequestAddressModel.HRRequestAddressCode = documentRequestAddress.DocumentRequestAddressCode;
+                docRequestAddressModel.DocumentAddressTo = enum2Str(documentRequestAddress.DocumentAddress);
+                docRequestAddressModel.DataArea = curExt();
+                docRequestAddressModel.ERPRecId = documentRequestAddress.RecId;
+                documentRequestAddressList.Add(docRequestAddressModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callHRRequestAddressUpdateAPI(documentRequestAddressList);
+                documentRequestAddressList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callHRRequestAddressUpdateAPI(documentRequestAddressList);
+            ttscommit;
+        }
+
+        //Deleted entries
+        pageNo = 0;
+        documentRequestAddressList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        callPending = false;
+        while select webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYDocumentRequestAddress) &&
+            webDocumentLog.IsDeleted
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.HRRequestAddress docRequestAddressModel = new SPYWebAPI.Model.HRRequestAddress();
+                docRequestAddressModel.DataArea = curExt();
+                docRequestAddressModel.ERPRecId = webDocumentLog.RefRecId;
+                documentRequestAddressList.Add(docRequestAddressModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callHRRequestAddressDeleteAPI(documentRequestAddressList);
+                documentRequestAddressList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callHRRequestAddressDeleteAPI(documentRequestAddressList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callHRRequestAddressUpdateAPI</Name>
+				<Source><![CDATA[
+    private void callHRRequestAddressUpdateAPI(CLRObject _docReqAddressList)
+    {
+        str calldescription = "UpdateHRRequestAddresses";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_docReqAddressList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("HR request address sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _docReqAddressList = apiService.convertToHRRequestAddressList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoDocReqAddressList, errorDocReqAddressList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing HR request address.");
+        }
+        else
+        {
+            ClrObject docReqAddressListEnumerator = _docReqAddressList.GetEnumerator();
+            while (docReqAddressListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.HRRequestAddress docReqAddressModel = docReqAddressListEnumerator.get_Current();
+                SPYDocumentRequestAddress  documentRequestAddress;
+                select documentRequestAddress
+                    where documentRequestAddress.DocumentRequestAddressCode == docReqAddressModel.HRRequestAddressCode;
+                if(docReqAddressModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                
+                    infoDocReqAddressList += strFmt("HR request address %1 synced to portal. \n", documentRequestAddress.DocumentRequestAddressCode);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == documentRequestAddress.TableId &&
+                        webDocumentLogUpdate.RefRecId == documentRequestAddress.RecId &&
+                        !webDocumentLogUpdate.IsDeleted;;
+                }
+                else
+                {
+                    errorDocReqAddressList += strFmt("Error for HR request address %1. %2. \n", documentRequestAddress.DocumentRequestAddressCode,
+                        docReqAddressModel.ErrorMessage);
+                }
+            }
+            if(infoDocReqAddressList)
+                info(infoDocReqAddressList);
+            if(errorDocReqAddressList)
+                error(errorDocReqAddressList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoDocReqAddressList, errorDocReqAddressList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callHRRequestAddressDeleteAPI</Name>
+				<Source><![CDATA[
+    private void callHRRequestAddressDeleteAPI(CLRObject _docReqAddressList)
+    {
+        str calldescription = "DeleteHRRequestAddresses";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_docReqAddressList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("HR request address sync(deleting) is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _docReqAddressList = apiService.convertToHRRequestAddressList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoDocReqAddressList, errorDocReqAddressList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing HR request address for deleting.");
+        }
+        else
+        {
+            ClrObject docReqAddressListEnumerator = _docReqAddressList.GetEnumerator();
+            while (docReqAddressListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.HRRequestAddress docReqAddressModel = docReqAddressListEnumerator.get_Current();
+                if(docReqAddressModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                
+                    infoDocReqAddressList += strFmt("HR request address %1 synced(deleting) to portal. \n", docReqAddressModel.ERPRecId);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == tableNum(SPYDocumentRequestAddress) &&
+                        webDocumentLogUpdate.RefRecId == docReqAddressModel.ERPRecId &&
+                        webDocumentLogUpdate.IsDeleted;
+                }
+                else
+                {
+                    errorDocReqAddressList += strFmt("Error for HR request address %1(deleting). %2. \n", docReqAddressModel.ERPRecId,
+                        docReqAddressModel.ErrorMessage);
+                }
+            }
+            if(infoDocReqAddressList)
+                info(infoDocReqAddressList);
+            if(errorDocReqAddressList)
+                error(errorDocReqAddressList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoDocReqAddressList, errorDocReqAddressList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postHRRequestApproval</Name>
+				<Source><![CDATA[
+    public void postHRRequestApproval()
+    {
+        WorkflowWorkItemTable               workflowWorkItemTable;
+        WorkflowTrackingStatusTable         workflowTrackingStatusTable;
+        SPYDocumentRequestTable        documentRequestTable;
+        DirPersonUser                       personUser;
+        HcmWorker                           worker;
+        CLRObject                   docReqApprovalList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select * from workflowTrackingStatusTable
+            where workflowTrackingStatusTable.ContextTableId == tableNum(SPYDocumentRequestTable) &&
+            workflowTrackingStatusTable.TrackingStatus == WorkflowTrackingStatus::Pending
+        join workflowWorkItemTable
+            where workflowWorkItemTable.CorrelationId == workflowTrackingStatusTable.CorrelationId &&
+            workflowWorkItemTable.Status == WorkflowWorkItemStatus::Pending
+        join documentRequestTable
+             where documentRequestTable.RecId == workFlowTrackingStatusTable.ContextRecId &&
+                (documentRequestTable.WorkflowStatus != SPYWorkflowStatus::Approved ||
+                documentRequestTable.WorkflowStatus != SPYWorkflowStatus::Rejected)
+        join personUser
+            where personUser.User == workflowWorkItemTable.UserId
+        join worker
+            where worker.Person == personUser.PersonParty
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.HRRequestApproval     docReqApprovalModel = new SPYWebAPI.Model.HRRequestApproval();
+                docReqApprovalModel.ERPRecID = workflowWorkItemTable.RecId;
+                docReqApprovalModel.HRRequestCode = documentRequestTable.DocumentRequestCode;
+                docReqApprovalModel.ApprovalId = worker.PersonnelNumber;
+                
+                docReqApprovalList.Add(docReqApprovalModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callHRRequestApprovalAPI(docReqApprovalList);
+                docReqApprovalList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callHRRequestApprovalAPI(docReqApprovalList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callHRRequestApprovalAPI</Name>
+				<Source><![CDATA[
+    private void callHRRequestApprovalAPI(CLRObject _docReqApprovalList)
+    {
+        str calldescription = "UpdateHrRequestApprovals";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_docReqApprovalList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("HR request approval sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _docReqApprovalList = apiService.convertToHRRequestApprovalList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoDocReqApprovalList, errorDocReqApprovalList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing HR request approval.");
+        }
+        else
+        {
+            ClrObject docReqApprovalListEnumerator = _docReqApprovalList.GetEnumerator();
+            while (docReqApprovalListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.HRRequestApproval docReqApprovalModel = docReqApprovalListEnumerator.get_Current();
+                /*
+                HcmWorker       hcmWorkerUpdate = HcmWorker::findByPersonnelNumber(workerModel.WorkerId);
+                if(leaveApplicationApprovalModel.Error == false)
+                {
+                SPYWebDocumentLog       webDocumentLogUpdate;
+                infoLeaveApprovalList += strFmt("@SPY:WorkerSyncedToPortal", hcmWorkerUpdate.PersonnelNumber);
+                delete_from webDocumentLogUpdate
+                where webDocumentLogUpdate.RefTableId == hcmWorkerUpdate.TableId &&
+                webDocumentLogUpdate.RefRecId == hcmWorkerUpdate.RecId;
+                }
+                else
+                {
+                errorLeaveApprovalList += strFmt("@SPY:ErrorForWorker", hcmWorkerUpdate.PersonnelNumber, leaveApplicationApprovalModel.ErrorMessage);
+                }*/
+            }
+            if(infoDocReqApprovalList)
+                info(infoDocReqApprovalList);
+            if(errorDocReqApprovalList)
+                error(errorDocReqApprovalList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoDocReqApprovalList, errorDocReqApprovalList);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTimesheetDelegateUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYTimesheetDelegateUpload extends RunBaseBatch
+{
+    FileName                 fileNameOpen;
+    AsciiStreamIo           fileIO;
+    DialogField             dlgLeave;
+    Description             journalDesc;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+    journalDesc
+    #endmacro
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    // Specifies whether the functionality can run in a new session window
+    public boolean canRunInNewSession()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase           dialog; //= super();
+        FormBuildButtonControl  buttonControlUpload;
+        DialogGroup             dlgGroup;
+        FormBuildGroupControl   buttonGroup;
+
+        dialog = super();
+
+        dlgGroup            = dialog.addGroup('');
+        buttonGroup         = dialog.formBuildDesign().control(dlgGroup.formBuildGroup().id());
+        buttonControlUpload = buttonGroup.addControl(FormControlType::Button, "Upload delegate list");
+        buttonControlUpload.text("Upload delegate list");
+        buttonControlUpload.registerOverrideMethod(methodStr(FormButtonControl, clicked),
+                                    methodStr(SPYTimesheetDelegateUpload, uploadClickedEvent),
+                                    this);
+        
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadClickedEvent</Name>
+				<Source><![CDATA[
+    private void uploadClickedEvent(FormButtonControl _formButtonControl)
+    {
+        FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+        If (result && result.getUploadStatus())
+        {
+            fileIO = AsciiStreamIo::constructForRead(result.openResult());
+            if (fileIO)
+            {
+                if (fileIO.status())
+                {
+                    throw error("@SPY:ImportingProblem");
+                }
+                fileIO.inFieldDelimiter(',');
+                fileIO.inRecordDelimiter('\r\n');
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+        throw error("");
+    
+        try
+        {
+            this.readCSV(fileIO);
+        }
+        catch(Exception::Error)
+        {
+            ttsabort;
+            throw error("@SPY:ImportingException");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readCSV</Name>
+				<Source><![CDATA[
+    public void readCSV(AsciiStreamIo  file)
+    {
+        COMVariantType                  type;
+        HcmWorkerRecId                  worker;
+        boolean                         errorResource, errorDelegate;
+        container                       record;
+        int                             cnt = 0, numberofUploadedRecords, cntUpdate = 0;
+        ResourceWorkerView              resourceView;
+        UserInfo                        userInfo;
+        HcmWorker                       hcmWorker;
+        TSAppEmplSub                    tsAppEmplSub;
+        DirPersonUser                   personUser;
+        HcmPersonnelNumberId            resourceId, delegateId;
+        RecId                           timesheetResource;
+        str                             startDate, endDate;
+        UserId                          delegateUser;
+
+        ttsbegin;
+        while (!file.status())
+        {
+            cnt++;
+            record = file.read();
+            
+            if( cnt > 1)
+            {
+                resourceId         = conpeek(record,1);
+                delegateId         = conpeek(record,2);
+                startDate          = conpeek(record,3);
+                endDate            = conpeek(record,4);
+
+                errorResource        = false;
+                errorDelegate        = false;
+
+                int i = conLen(record);
+                if (conLen(record))
+                {
+                    //Check for resource
+                    select RecId
+                    from resourceView where resourceView.PersonnelNumber == resourceId;
+                    timesheetResource = resourceView.recid;
+                    if(!timesheetResource)
+                    {
+                        warning(strfmt("Timesheet resource not valid in row number %1",cnt));
+                        errorResource = true;
+                    }
+
+                    hcmWorker = HcmWorker::findByPersonnelNumber(delegateId);
+                    select personUser
+                    where personUser.PersonParty == hcmWorker.Person;
+
+                    delegateUser = personUser.User;
+                    if(!delegateUser)
+                    {
+                        warning(strfmt("Delegate not valid in row number %1",cnt));
+                        errorDelegate = true;
+                    }
+                    
+                    
+                    if(errorResource == false && errorDelegate == false)
+                    {
+                        cntUpdate++;
+
+                        tsAppEmplSub.TimesheetResource  = timesheetResource;
+                        tsAppEmplSub.DelegatedUser      = delegateUser;
+                        tsAppEmplSub.DateFrom           = str2Date(startDate,213);
+                        tsAppEmplSub.DateTo             = str2Date(endDate,213);
+
+                        tsAppEmplSub.insert();
+
+
+
+                    }
+                }
+            }
+        }
+        ttscommit;
+        info(strfmt("@SPY:UploadedRecords",cntUpdate));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    // Unpacking of parameters
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+        ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    // Validation
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+        return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYTimesheetDelegateUpload construct()
+    {
+        return new SPYTimesheetDelegateUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "Timesheet delegate upload";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYTimesheetDelegateUpload    delegateUpload;
+    
+        delegateUpload = SPYTimesheetDelegateUpload::construct();
+    
+        if (delegateUpload.prompt())
+        delegateUpload.runOperationNow();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

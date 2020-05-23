@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollJourPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayrollJourPostService extends SysOperationServiceBase
+{
+    SPYPayrollJourPostContract          contract;
+    boolean                             callFromPost;
+    LedgerJournalId                     glJournalId;    
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>createLedgerJournalFromDistribution</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckSkipStatementValidation","skipDeleteActions is already implemented")]
+    private void createLedgerJournalFromDistribution(SPYPayrollJournalTable  _payrollJournalTable)
+    {
+        LedgerJournalTable          ledgerJournalTable;
+        LedgerJournalTrans          ledgerJournalTrans;
+        SPYPayrollJournalLine       payrollJournalLine;
+        AccountingDistribution      accountingDistribution;
+        RecordInsertList            journalLineList = new RecordInsertList(tableNum(LedgerJournalTrans));
+        #AviFiles
+        SysOperationProgress        progressBar = new SysOperationProgress();
+        int                         progressCount,totalCount;
+        boolean                     lineCreated;
+
+        select count(RecId) from accountingDistribution group by LedgerDimension
+        join payrollJournalLine group by OffsetLedgerDimension
+        where accountingDistribution.SourceDocumentLine == payrollJournalLine.SourceDocumentLine &&
+              accountingDistribution.SourceDocumentHeader == _payrollJournalTable.SourceDocumentHeader &&
+              payrollJournalLine.PayrollJournal == _payrollJournalTable.RecId;
+
+        totalCount = int642int(accountingDistribution.RecId);
+        progressBar.setCaption("@SPY1125");
+        progressBar.setAnimation(#AviUpdate);
+        progressBar.setTotal(totalCount);
+        progressCount = 1;
+        ledgerJournalTable.initValue();
+        ledgerJournalTable.JournalNum   = NumberSeq::newGetNum(LedgerParameters::numRefJournalNum()).num();
+        ledgerJournalTable.Name         = "@SPY22";
+        ledgerJournalTable.JournalName  = SPYPayrollParameters::find().LedgerJournalNameId;
+        ledgerJournalTable.initFromLedgerJournalName();
+        if(!ledgerJournalTable.JournalName)
+        throw error("@SPY1309");
+        ledgerJournalTable.insert();
+        glJournalId = ledgerJournalTable.JournalNum;
+        
+        while select sum(TransactionCurrencyAmount) from accountingDistribution group by LedgerDimension
+        join OffsetLedgerDimension from payrollJournalLine group by OffsetLedgerDimension,PayrollPeriodLine,Currency,ExchRate
+        where accountingDistribution.SourceDocumentLine == payrollJournalLine.SourceDocumentLine &&
+              accountingDistribution.SourceDocumentHeader == _payrollJournalTable.SourceDocumentHeader &&
+              payrollJournalLine.PayrollJournal == _payrollJournalTable.RecId
+        {
+            progressBar.setText(strfmt("@SPY1115", progressCount,totalCount));
+            progressBar.setCount(progressCount, 1);
+            if(round(accountingDistribution.TransactionCurrencyAmount,0.01) != 0)
+            {
+                ledgerJournalTrans.clear();
+                ledgerJournalTrans.initValue();
+                ledgerJournalTrans.JournalNum               = glJournalId;
+                ledgerJournalTrans.Approver                 = HcmWorkerLookup::currentWorker();
+                ledgerJournalTrans.TransDate                = SPYPayrollPeriodLine::find(payrollJournalLine.PayrollPeriodLine).PeriodEndDate;
+                ledgerJournalTrans.Voucher                  = new JournalVoucherNum(JournalTableData::newTable(ledgerJournalTable)).getNew(false);
+                ledgerJournalTrans.AccountType              = LedgerJournalACType::Ledger;
+                ledgerJournalTrans.LedgerDimension          = accountingDistribution.LedgerDimension;
+                ledgerJournalTrans.OffsetAccountType        = LedgerJournalACType::Ledger;
+                ledgerJournalTrans.OffsetLedgerDimension    = LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                              (payrollJournalLine.OffsetLedgerDimension,
+                    LedgerDimensionFacade::getDefaultDimensionFromLedgerDimension(accountingDistribution.LedgerDimension));
+                if(accountingDistribution.TransactionCurrencyAmount > 0)
+                ledgerJournalTrans.AmountCurDebit       = round(accountingDistribution.TransactionCurrencyAmount,0.01);
+                else
+                ledgerJournalTrans.AmountCurCredit      = -round(accountingDistribution.TransactionCurrencyAmount,0.01);
+                ledgerJournalTrans.CurrencyCode             = payrollJournalLine.Currency;
+                ledgerJournalTrans.ExchRate                 = ExchangeRateHelper::exchRate(ledgerJournalTrans.CurrencyCode,ledgerJournalTrans.TransDate);
+                ledgerJournalTrans.Txt                      = "Monthly payroll";
+                ledgerJournalTrans.Approved                 = true;
+                journalLineList.add(ledgerJournalTrans);
+                lineCreated = true;
+            }
+            progressCount++;
+        }
+        if(lineCreated)
+        {
+            journalLineList.insertDatabase();
+            info(strFmt("@SPY1308",glJournalId),"",SysInfoAction_TableField::newBuffer(ledgerJournalTable));
+        }
+        else
+        {
+            ledgerJournalTable.skipDeleteActions(true);
+            ledgerJournalTable.skipDeleteMethod(true);
+            delete_from ledgerJournalTable
+            where ledgerJournalTable.JournalNum == glJournalId;
+            info("@SPY1156");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createLedgerJournalFromLine</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckSkipStatementValidation","skipDeleteActions is already implemented")]
+    private void createLedgerJournalFromLine(SPYPayrollJournalTable  _payrollJournalTable)
+    {
+        LedgerJournalTable          ledgerJournalTable;
+        LedgerJournalTrans          ledgerJournalTrans;
+        SPYPayrollJournalLine       payrollJournalLine;
+        RecordInsertList            journalLineList = new RecordInsertList(tableNum(LedgerJournalTrans));
+        #AviFiles
+        SysOperationProgress        progressBar = new SysOperationProgress();
+        int                         progressCount,totalCount;
+        boolean                     lineCreated;
+    
+        select count(RecId) from payrollJournalLine group by LedgerDimension,OffsetLedgerDimension,PayrollPeriodLine,Currency,ExchRate
+            where payrollJournalLine.PayrollJournal == _payrollJournalTable.RecId;
+        totalCount = int642int(payrollJournalLine.RecId);
+        progressBar.setCaption("@SPY1125");
+        progressBar.setAnimation(#AviUpdate);
+        progressBar.setTotal(totalCount);
+        progressCount = 1;
+        ledgerJournalTable.initValue();
+        ledgerJournalTable.JournalNum   = NumberSeq::newGetNum(LedgerParameters::numRefJournalNum()).num();
+        ledgerJournalTable.Name         = "@SPY22";
+        ledgerJournalTable.JournalName  = SPYPayrollParameters::find().LedgerJournalNameId;
+        ledgerJournalTable.initFromLedgerJournalName();
+        if(!ledgerJournalTable.JournalName)
+            throw error("@SPY1309");
+        ledgerJournalTable.insert();
+        glJournalId = ledgerJournalTable.JournalNum;
+        //Commented below line & inserted new without grouping as it is inserting credit & debit in same line
+
+        //while select sum(AmountCurDebit),sum(AmountCurCredit) from payrollJournalLine group by LedgerDimension,OffsetLedgerDimension,PayrollPeriodLine,Currency,ExchRate,DefaultDimension
+        //    where payrollJournalLine.PayrollJournal == _payrollJournalTable.RecId
+
+        while select AmountCurDebit, AmountCurCredit, Currency, DefaultDimension, LedgerDimension, OffsetLedgerDimension, ExchRate, PayrollPeriodLine from payrollJournalLine
+            where payrollJournalLine.PayrollJournal == _payrollJournalTable.RecId
+        {
+            progressBar.setText(strfmt("@SPY1115", progressCount,totalCount));
+            progressBar.setCount(progressCount, 1);
+            if(round(payrollJournalLine.AmountCurDebit,0.01) != 0 || round(payrollJournalLine.AmountCurCredit,0.01) != 0)
+            {
+                ledgerJournalTrans.clear();
+                ledgerJournalTrans.initValue();
+                ledgerJournalTrans.JournalNum               = glJournalId;
+                ledgerJournalTrans.Approver                 = HcmWorkerLookup::currentWorker();
+                ledgerJournalTrans.TransDate                = SPYPayrollPeriodLine::find(payrollJournalLine.PayrollPeriodLine).PeriodEndDate;
+                ledgerJournalTrans.Voucher                  = new JournalVoucherNum(JournalTableData::newTable(ledgerJournalTable)).getNew(false);
+                ledgerJournalTrans.AccountType              = LedgerJournalACType::Ledger;
+                ledgerJournalTrans.LedgerDimension          = LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                              (payrollJournalLine.LedgerDimension,
+                                                              payrollJournalLine.DefaultDimension);
+                ledgerJournalTrans.OffsetAccountType        = LedgerJournalACType::Ledger;
+                ledgerJournalTrans.OffsetLedgerDimension    = LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                              (payrollJournalLine.OffsetLedgerDimension,
+                                                              payrollJournalLine.DefaultDimension);
+                ledgerJournalTrans.AmountCurDebit           = round(payrollJournalLine.AmountCurDebit,0.01);
+                ledgerJournalTrans.AmountCurCredit          = round(payrollJournalLine.AmountCurCredit,0.01);
+                ledgerJournalTrans.CurrencyCode             = payrollJournalLine.Currency;
+                ledgerJournalTrans.ExchRate                 = ExchangeRateHelper::exchRate(ledgerJournalTrans.CurrencyCode,ledgerJournalTrans.TransDate);
+                ledgerJournalTrans.Txt                      = "Monthly payroll";
+                ledgerJournalTrans.Approved                 = true;
+                journalLineList.add(ledgerJournalTrans);
+                lineCreated = true;
+            }
+            progressCount++;
+        }
+        if(lineCreated)
+        {
+            journalLineList.insertDatabase();
+            info(strFmt("@SPY1308",glJournalId),"",SysInfoAction_TableField::newBuffer(ledgerJournalTable));
+        }
+        else
+        {
+            ledgerJournalTable.skipDeleteActions(true); 
+            ledgerJournalTable.skipDeleteMethod(true);
+            delete_from ledgerJournalTable
+                where ledgerJournalTable.JournalNum == glJournalId;
+            info("@SPY1156");
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYPayrollJourPostContract _contract)
+    {
+        QueryRun                payrollJourQueryRun;
+        SPYPayrollJournalTable  payrollJournalTable;
+    
+        payrollJourQueryRun = new QueryRun(_contract.parmPayrollJourTableQuery());
+        try
+        {
+            setPrefix("@SPY327");
+            info(strFmt('Started: %1',DateTimeUtil::utcNow()));
+            callFromPost = true;
+            ttsBegin;
+            if(this.validate(_contract))
+            {
+                while(payrollJourQueryRun.next())
+                {
+                    payrollJournalTable = payrollJourQueryRun.get(tableNum(SPYPayrollJournalTable));
+                    if(!payrollJournalTable.Posted)
+                    {
+                        //SourceDocumentProcessorFacade::submitSourceDocumentImplementation(
+                        //payrollJournalTable, true, SourceDocumentAccountingStatus::Completed);
+                        //this.createJournalFromSql(payrollJournalTable);
+                        if(SPYPayrollParameters::find().PayrollJourDimensionSource == SPYPayrollJourDimensionSource::Fixed)
+                            this.createLedgerJournalFromLine(payrollJournalTable);
+                        else
+                            this.createLedgerJournalFromDistribution(payrollJournalTable);
+                        this.updateJournalHeader(payrollJournalTable);
+                        this.updateWorkerPayrollPeriod(payrollJournalTable.RecId);
+                        //this.updateReferencePayLedgerToPosted(payrollJournalTable.RecId);
+                        //this.updateBenefitAccrualDistribution(payrollJournalTable);
+                    }
+                }
+            }
+            ttsCommit;
+            info(strFmt("@SPY1121",DateTimeUtil::utcNow()));
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateJournalHeader</Name>
+				<Source><![CDATA[
+    private void updateJournalHeader(SPYPayrollJournalTable _payrollJournalTable)
+    {
+        SPYPayrollJournalTable   payrollJourTableUpdate = SPYPayrollJournalTable::find(_payrollJournalTable.RecId,true);
+    
+        if(payrollJourTableUpdate)
+        {
+            payrollJourTableUpdate.Posted           = true;
+            payrollJourTableUpdate.LedgerJournalNum = glJournalId;
+            payrollJourTableUpdate.doUpdate();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateOffsetLedgerDim</Name>
+				<Source><![CDATA[
+    void updateOffsetLedgerDim(SPYPayrollJournalTable  _payrollJournalTable)
+    {
+        LedgerJournalTrans      trans;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+        int                     totalCount;
+    
+        ttsBegin;
+    
+        select count(recid) from trans
+            where trans.JournalNum == _payrollJournalTable.JournalId;
+        totalCount = int642int(trans.RecId);
+        progress.setCaption("@SPY1126");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(totalCount);
+        progressCount = 1;
+        while select forupdate trans
+            where trans.JournalNum == _payrollJournalTable.JournalId
+        {
+            progress.setText(strfmt("@SPY1127",progressCount,totalCount));
+            progress.setCount(progressCount, 1);
+            trans.OffsetLedgerDimension = LedgerDimensionFacade::serviceMergeLedgerDimensions(trans.OffsetLedgerDimension,
+            trans.LedgerDimension);
+            trans.AmountCurDebit = round(trans.AmountCurDebit,0.01);
+            if(trans.AmountCurDebit < 0)
+            {
+                trans.AmountCurCredit = -trans.AmountCurDebit;
+                trans.AmountCurDebit = 0;
+            }
+            trans.doupdate();
+    
+            progressCount++;
+        }
+    
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWorkerPayrollPeriod</Name>
+				<Source><![CDATA[
+    private void updateWorkerPayrollPeriod(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYWorkerPayrollPeriodFinalize      workerPayrollPeriodFinalize;
+        SPYPayrollJournalLine               payrollJournalLine;
+    
+        while select payrollJournalLine group by worker,payrollPeriodLine
+            where payrollJournalLine.PayrollJournal == _payrollJournal
+        {
+            if(!SPYWorkerPayrollPeriodFinalize::exist(payrollJournalLine.Worker,CompanyInfo::current(),payrollJournalLine.PayrollPeriodLine))
+            {
+                workerPayrollPeriodFinalize.initValue();
+                workerPayrollPeriodFinalize.Worker = payrollJournalLine.Worker;
+                workerPayrollPeriodFinalize.LegalEntity = CompanyInfo::current();
+                workerPayrollPeriodFinalize.PayrollPeriodLine = payrollJournalLine.PayrollPeriodLine;
+                workerPayrollPeriodFinalize.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateReferencePayLedgerToPosted</Name>
+				<Source><![CDATA[
+    private void updateReferencePayLedgerToPosted(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYPayrollJournalLine               payrollJournalLine;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+
+        while select payrollLedger group by ExpressionTrace
+            join payrollJournalLine
+            where payrollLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+            payrollJournalLine.PayrollJournal == _payrollJournal
+        {
+            this.updateRefLedger(payrollLedger.ExpressionTrace);
+        }
+
+        while select benefitLedger group by ExpressionTrace
+            join payrollJournalLine
+            where benefitLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+            payrollJournalLine.PayrollJournal == _payrollJournal
+        {
+            this.updateRefLedger(benefitLedger.ExpressionTrace);
+        }
+
+        while select benefitLedger group by ExpressionTrace
+            join payrollJournalLine
+            where benefitLedger.PnLPayrollJournalLine == payrollJournalLine.RecId &&
+            payrollJournalLine.PayrollJournal == _payrollJournal
+        {
+            this.updateRefLedger(benefitLedger.ExpressionTrace);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateRefLedger</Name>
+				<Source><![CDATA[
+    private void updateRefLedger(SPYExpressionTraceRecId _expressionTrace)
+    {
+        SPYReferencePayElementLedger    referencePayElementLedger;
+        /*
+        update_recordset referencePayElementLedger
+            setting PostedToGL = true
+            where referencePayElementLedger.ExpressionTrace == _expressionTrace &&
+            !referencePayElementLedger.PostedToGL;
+        */
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(SPYPayrollJourPostContract _contract)
+    {
+        boolean                     ret = true;
+        QueryRun                payrollJourQueryRun;
+        SPYPayrollJournalTable  payrollJournalTable;
+    
+        payrollJourQueryRun = new QueryRun(_contract.parmPayrollJourTableQuery());
+        if(!callFromPost)
+            setPrefix("@SPY856");
+        while(payrollJourQueryRun.next())
+        {
+            payrollJournalTable = payrollJourQueryRun.get(tableNum(SPYPayrollJournalTable));
+            if(!payrollJournalTable.Posted)
+            {
+                if(!this.validatePayrollJournal(payrollJournalTable))
+                    ret = checkFailed(strFmt("@SPY1158",payrollJournalTable.JournalId));
+                else
+                {
+                    if(!callFromPost)
+                        info(strFmt("@SPY1159",payrollJournalTable.JournalId));
+                }
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validatePayrollJournal</Name>
+				<Source><![CDATA[
+    private boolean validatePayrollJournal(SPYPayrollJournalTable _payrollJournalTable)
+    {
+        boolean                     ret = true;
+        SPYPayrollJournalLine       payrollJournalLine;
+        SPYPayrollPeriodLine        payrollPeriodLine;
+        boolean                     isWorkflowEnabled = WorkflowTable::findActiveTemplate(workflowtypestr(SPYPayrollJour)) ? true : false;
+    
+        if(isWorkflowEnabled && _payrollJournalTable.WorkflowStatus != SPYWorkFlowStatus::Approved)
+            ret = checkFailed(strFmt("@SPY1157",_payrollJournalTable.JournalId));
+        while select payrollJournalLine
+            where payrollJournalLine.PayrollJournal == _payrollJournalTable.RecId
+        {
+            if(!payrollJournalLine.Worker)
+                ret = checkFailed(strFmt("@SPY286",payrollJournalLine.LineNum));
+            if(!payrollJournalLine.TransDate)
+                ret = checkFailed(strFmt("@SPY288",payrollJournalLine.LineNum));
+            select firstOnly payrollPeriodLine
+                where payrollPeriodLine.PeriodStartDate <= payrollJournalLine.TransDate &&
+                      payrollPeriodLine.PeriodEndDate >= payrollJournalLine.TransDate &&
+                      payrollPeriodLine.PeriodStatus != SPYPayrollPeriodStatus::Open;
+            if(payrollPeriodLine)
+                ret = checkFailed(strFmt("@SPY1154",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,payrollJournalLine.TransDate,payrollJournalLine.LineNum));
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYMobileUserContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYMobileUserContract
+{
+    SPYMobileUserId     userId;
+    Description         password;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPassword</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Password")]
+    public Description parmPassword(Description _password = password)
+    {
+        password = _password;
+    
+        return password;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmUserId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("UserId")]
+    public SPYMobileUserId parmUserId(SPYMobileUserId _userId = userId)
+    {
+        userId = _userId;
+    
+        return userId;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

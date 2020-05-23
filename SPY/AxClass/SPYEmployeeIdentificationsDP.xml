@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEmployeeIdentificationsDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SRSReportParameterAttribute(classStr(SPYEmployeeIdentificationsContract))
+]
+public class SPYEmployeeIdentificationsDP extends SrsReportDataProviderPreProcess
+{
+
+    HcmWorker                           hcmWorker, hcmWorkerName;
+    SPYEmployeeIndentificationsTmp      employeeIdentificationsTmp;
+    HcmPersonIdentificationNumber       hcmPersonIdentification;
+    HcmPositionDetail                   hcmPositionDetail;
+    HcmPositionWorkerAssignment         hcmPositionWorkerAssignment;
+    OMOperatingUnit                     omOperatingUnit;
+
+    FromDate                            fromDate;
+    ToDate                              toDate;
+    OMOperatingUnitNumber               department;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYEmployeeIndentificationsTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYEmployeeIndentificationsTmp))]
+    public SPYEmployeeIndentificationsTmp getSPYEmployeeIndentificationsTmp()
+    {
+        select employeeIdentificationsTmp;
+        return employeeIdentificationsTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYEmployeeIdentificationsContract  contract = this.parmDataContract() as SPYEmployeeIdentificationsContract;
+        Query                               query;
+        QueryRun                            queryRun;
+        QueryBuildDataSource                qbdHcmPerson;
+        HcmIdentificationTypeId             hcmIdentificationTypeId;
+        HcmIdentificationType               hcmIdentificationType;
+        ListIterator                        identificationListIterator;
+    
+        fromDate                       = contract.parmFromDate();
+        toDate                         = contract.parmToDate();
+        department                     = contract.parmDepartment();
+        identificationListIterator     = new ListIterator(contract.parmIdentificationTypeList());
+    
+        query                          = new Query();
+        qbdHcmPerson                   = query.addDataSource(TableNum(HcmPersonIdentificationNumber));
+    
+        if(toDate == dateNull())
+        {
+            toDate                     = maxDate();
+        }
+    
+        qbdHcmPerson.addRange(FieldNum(HcmPersonIdentificationNumber, ExpirationDate))
+                    .value(queryRange(fromDate, toDate));
+    
+        while(identificationListIterator.more())
+        {
+            hcmIdentificationTypeId = identificationListIterator.value();
+            qbdHcmPerson.addRange(FieldNum(HcmPersonIdentificationNumber, IdentificationType))
+                        .value(SysQuery::value(HcmIdentificationType::findByIdentificationType(hcmIdentificationTypeId).RecId));
+            identificationListIterator.next();
+        }
+    
+        queryRun = new QueryRun(query);
+    
+        while(queryRun.next())
+        {
+            employeeIdentificationsTmp.clear();
+            hcmPersonIdentification     = queryRun.get(tableNum(HcmPersonIdentificationNumber));
+            hcmWorker                   = HcmWorker::findByPerson(hcmPersonIdentification.Person);
+    
+            if(department == "" || (department && department == hcmWorker.primaryDepartmentName()))
+            {
+                hcmIdentificationType                                 = HcmIdentificationType::find(hcmPersonIdentification.IdentificationType);
+                employeeIdentificationsTmp.IdentificationDescription  = hcmIdentificationType.Description;
+                employeeIdentificationsTmp.IdentificationNumber       = hcmPersonIdentification.IdentificationNumber;
+                employeeIdentificationsTmp.IssuedDate                 = hcmPersonIdentification.IssuedDate;
+                employeeIdentificationsTmp.ExpirationDate             = hcmPersonIdentification.ExpirationDate;
+                employeeIdentificationsTmp.Person                     = hcmPersonIdentification.Person;
+                employeeIdentificationsTmp.EmployeeName               = hcmWorker.name();
+                employeeIdentificationsTmp.Title                      = hcmWorker.title();
+                employeeIdentificationsTmp.Department                 = hcmWorker.primaryDepartmentName();
+                employeeIdentificationsTmp.PersonnelNumber            = hcmWorker.PersonnelNumber;
+                employeeIdentificationsTmp.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

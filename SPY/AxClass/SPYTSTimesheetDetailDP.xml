@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSTimesheetDetailDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classstr(SPYTSTimesheetDetailContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerLookup))
+]
+public class SPYTSTimesheetDetailDP extends SRSReportDataProviderBase
+{
+    SPYTSTimesheetDetailTmp     timesheetDetailTmp;
+    HcmWorker                   hcmWorker, hcmWorker_Supervisor;
+    HcmPositionDetail           hcmPositionDetail;
+    SPYAbsenceLedger            absenceLedger;
+    TSTimesheetTable            timesheetTable;
+    TSTimesheetLine             timesheetLine;
+    TSTimesheetLineWeek         timesheetLineWeek;
+    SPYOvertimeLedger           overtimeLedger;
+    WorkCalendarEmployment      workCalendarEmployment;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getAFZTSTimesheetDetailTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tablestr(SPYTSTimesheetDetailTmp))]
+    public SPYTSTimesheetDetailTmp getAFZTSTimesheetDetailTmp()
+    {
+        select timesheetDetailTmp;
+        return timesheetDetailTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {        
+        ListEnumerator                      le;
+        str                                 workerRange;
+        Query                               q;
+        QueryBuildDataSource                qbd;
+        QueryBuildRange                     qbr;
+        QueryRun                            qr;
+        int                                 i;
+        TransDate                           fromDate, toDate;
+            
+        //fromDate    = contract.parmFromDate();
+        //todate      = contract.parmToDate();
+    
+        q = this.parmQuery();
+        qbd = q.dataSourceTable(tableNum(HcmWorker));
+        qbd = qbd.addDataSource(tableNum(ResourceWorkerView), "ResourceWorkerView");
+        qbd.joinMode(JoinMode::InnerJoin);
+        qbd.fetchMode(QueryFetchMode::One2One);
+        qbd.addLink(fieldNum(HcmWorker, RecId), fieldNum(ResourceWorkerView, Worker));
+        qbd = qbd.addDataSource(tableNum(TSTimesheetTable), "TSTimesheetTable");
+        qbd.joinMode(JoinMode::InnerJoin);
+        qbd.fetchMode(QueryFetchMode::One2One);
+        qbd.addLink(fieldNum(ResourceWorkerView, RecId), fieldNum(TSTimesheetTable, Resource));
+        qbr = qbd.addRange(fieldNum(TSTimesheetTable, PeriodFrom));
+        //qbr.value(strFmt("(((%1.%2 <= %4) && (%1.%3 >= %4)) || ((%1.%2 >= %4) && (%1.%3 <= %5)))", tableStr(TSTimesheetTable), fieldStr(TSTimesheetTable, PeriodFrom), fieldStr(TSTimesheetTable, PeriodTo), date2StrXpp(fromDate), date2StrXpp(toDate)));
+        //qbr.value(strFmt("((%1.%2 == %4) && (%1.%3 == %5))", tablenum(TSTimesheetTable).name(), fieldStr(TSTimesheetTable, PeriodFrom), fieldStr(TSTimesheetTable, PeriodTo), date2StrXpp(fromDate), date2StrXpp(toDate)));
+        qbd = qbd.addDataSource(tableNum(TSTimesheetLine), "TSTimesheetLine");
+        qbd.joinMode(JoinMode::InnerJoin);
+        qbd.fetchMode(QueryFetchMode::One2One);
+        qbd.addLink(fieldNum(TSTimesheetTable, TimesheetNbr), fieldNum(TSTimesheetLine, TimesheetNbr));
+    
+        qbd = qbd.addDataSource(tableNum(TSTimesheetLineWeek), "TSTimesheetLineWeek");
+        qbd.joinMode(JoinMode::InnerJoin);
+        qbd.fetchMode(QueryFetchMode::One2One);
+        qbd.addLink(fieldNum(TSTimesheetLine, RecId), fieldNum(TSTimesheetLineWeek, TSTimesheetLine));
+    
+    
+        qr = new QueryRun(q);
+        qr.prompt();
+        while(qr.next())
+        {
+            hcmWorker               = qr.get(tableNum(HcmWorker));
+            hcmPositionDetail       = qr.get(tableNum(HcmPositionDetail));
+            hcmWorker_Supervisor    = qr.get(tableNum(HcmWorker), 2);
+            timesheetTable          = qr.get(tableNum(TSTimesheetTable));
+            timesheetLine           = qr.get(tableNum(TSTimesheetLine));
+            timesheetLineWeek       = qr.get(tableNum(TSTimesheetLineWeek));
+            workCalendarEmployment  = qr.get(tableNum(workCalendarEmployment));
+    
+            for(i = 0; i < 7; i++)
+            {
+                if(timesheetLineWeek.Hours[i+1])
+                {
+                    timesheetDetailTmp.TransDate    = timesheetLineWeek.DayFrom + i;
+                    if(SPYTSTimesheetDetailTmp::exist(timesheetDetailTmp.Worker, timesheetDetailTmp.TransDate))
+                    {
+                        timesheetDetailTmp = SPYTSTimesheetDetailTmp::find(timesheetDetailTmp.Worker, timesheetDetailTmp.TransDate, "", true);
+                        timesheetDetailTmp.Hours += timesheetLineWeek.Hours[i+1];
+                        timesheetDetailTmp.update();
+                    }
+                    else
+                    {
+                        timesheetDetailTmp.clear();
+                        timesheetDetailTmp.Worker                       = hcmWorker.RecId;
+                        timesheetDetailTmp.PersonnelNumber              = hcmWorker.PersonnelNumber;
+                        timesheetDetailTmp.Name                         = hcmWorker.name();                        
+                        timesheetDetailTmp.PersonnelNumber_Supervisor   = hcmWorker_Supervisor.PersonnelNumber;
+                        timesheetDetailTmp.Name_Supervisor              = hcmWorker_Supervisor.name();
+                        timesheetDetailTmp.Department                   = OMOperatingUnit::find(hcmPositionDetail.Department, OMOperatingUnitType::OMDepartment).Name;
+                        timesheetDetailTmp.CalendarId                   = workCalendarEmployment.CalendarId;
+                        timesheetDetailTmp.CategoryId                   = timesheetLine.CategoryId;
+                        timesheetDetailTmp.TimesheetNbr                 = timesheetTable.TimesheetNbr;
+                        timesheetDetailTmp.Hours                        = timesheetLineWeek.Hours[i+1];
+                        timesheetDetailTmp.insert();
+                    }
+                }
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

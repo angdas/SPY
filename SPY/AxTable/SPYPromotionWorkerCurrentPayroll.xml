@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPromotionWorkerCurrentPayroll</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPromotionWorkerCurrentPayroll extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getTotalSalary</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    Display SPYAmount getTotalSalary()
+    {
+        SPYPromotionWorkerCurrentPayroll   promotionWorkerCurrentPayroll;
+        SPYAmount                          totalSalary;
+
+        select sum(Monthly) from promotionWorkerCurrentPayroll
+        where promotionWorkerCurrentPayroll.PromotionWorker == this.PromotionWorker;
+
+        totalSalary = promotionWorkerCurrentPayroll.Monthly;
+        return totalSalary;
+
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY99</DeveloperDocumentation>
+	<Label>@SPY1900</Label>
+	<TableGroup>Main</TableGroup>
+	<TitleField1>PromotionWorker</TitleField1>
+	<CacheLookup>Found</CacheLookup>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Payroll</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Rate</Name>
+			<Label>@SYS4193</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Monthly</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Monthly</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<HelpText>@SPY454</HelpText>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Payroll</Name>
+			<Label>@SPYLabel:Payroll</Label>
+			<Mandatory>Yes</Mandatory>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PromotionWorker</Name>
+			<ExtendedDataType>SPYPromotionWorkerTableRecId</ExtendedDataType>
+			<Label>@SPYLabel:PromotionWorker</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes />
+	<Mappings />
+	<Relations>
+		<AxTableRelation>
+			<Name>SPYPayrollTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPayrollTable</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Payroll</Name>
+					<Field>Payroll</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYPromotionWorkerTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPromotionWorkerTable</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PromotionWorker</Name>
+					<Field>PromotionWorker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

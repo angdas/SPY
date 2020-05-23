@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAccDistRulePayrollJournal</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SourceDocumentEnumExtensionAttribute(enumStr(SPYBusinessEvent_PayrollJournal),
+    SPYBusinessEvent_PayrollJournal::Journal,
+    MonetaryAmount::PayrollCost)
+]
+public class SPYAccDistRulePayrollJournal extends AccountingDistributionRule
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>initDimAllocList</Name>
+				<Source><![CDATA[
+    protected void initDimAllocList()
+    {
+        LedgerDimensionAllocation                   ldAllocation;
+        LedgerDimensionAllocationListEnumerator     ldaListEnumerator;
+
+        super();
+        ldaListEnumerator = this.parmLedgerDimensionAllocList().getEnumerator();
+        ldaListEnumerator.moveNext();
+
+        ldAllocation = ldaListEnumerator.current();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerPostingType</Name>
+				<Source><![CDATA[
+    public LedgerPostingType parmLedgerPostingType()
+    {
+        return LedgerPostingType::PayrollDebitAccount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSide</Name>
+				<Source><![CDATA[
+    public DebitCredit parmSide()
+    {
+        if(this.parmAmount() > 0)
+            return DebitCredit::Debit;
+        else
+            return DebitCredit::Credit;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

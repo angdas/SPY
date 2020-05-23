@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYProjCatEnableStdHoursParam</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYProjCatEnableStdHoursParam
+{
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>ProjCategory_OnActivated</Name>
+				<Source><![CDATA[
+     //<summary>
+     //</summary>
+     //<param name="sender"></param>
+     //<param name="e"></param>
+    [FormDataSourceEventHandler(formDataSourceStr(ProjCategory, ProjCategory), FormDataSourceEventType::Activated)]
+    public static void ProjCategory_OnActivated(FormDataSource sender, FormDataSourceEventArgs e)
+    {
+        FormDataSource          fds = sender.formRun().dataSource("ProjCategory");
+        ProjCategory            projCategory = fds.cursor();
+        FormRun                 fr = sender.formRun();
+        FormControl             standardHours = fr.design(0).controlName("SPYOvertime_SPYStandardHoursInReport");
+        FormControl             overtime = fr.design(0).controlName("SPYOvertime_SPYOvertimeType");
+
+
+        if(projCategory.SPYStandardHoursInReport == NoYes::Yes && projCategory.SPYOvertimeType != 0)
+        {
+            throw error("@SPYLabel:ProjcategoryValidation2");
+
+            overtime.enabled(true);
+            standardHours.enabled(true);
+           
+        }
+        else
+        {
+            if(projCategory.SPYStandardHoursInReport == NoYes::Yes)
+            {
+                overtime.enabled(false);
+            }
+            else if(projCategory.SPYStandardHoursInReport == NoYes::No)
+            {
+                overtime.enabled(true);
+            }
+
+            if(projCategory.SPYOvertimeType != 0)
+            {
+                standardHours.enabled(false);
+            }
+            else if(projCategory.SPYOvertimeType == 0)
+            {
+                standardHours.enabled(true);
+            }
+        } 
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>ProjCategory_onValidatingWrite</Name>
+				<Source><![CDATA[
+    //table event handler
+    [DataEventHandler(tableStr(ProjCategory), DataEventType::ValidatingWrite)]
+    public static void ProjCategory_onValidatingWrite(Common sender, DataEventArgs e)
+    {
+        ValidateEventArgs   event           = e as ValidateEventArgs;
+        ProjCategory        projCategory    = sender as ProjCategory;
+
+        boolean  result = event.parmValidateResult();
+
+        if(projCategory.SPYStandardHoursInReport == NoYes::Yes && projCategory.SPYOvertimeType != 0)
+        {
+            result = checkFailed("@SPYLabel:ProjcategoryValidation2");
+            box::stop("@SPYLabel:ProjCategoryValidation");
+        }
+        event.parmValidateResult(result);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

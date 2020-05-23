@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>AccountingDistribution_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[ExtensionOf(tablestr(AccountingDistribution))]
+final class AccountingDistribution_Extension
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>distributionAmount</Name>
+				<Source><![CDATA[
+    [SysClientCacheDataMethodAttribute(true)]
+    public static display  SPYAmount distributionAmount(AccountingDistribution  _accountingDistribution)
+    {
+        SPYPayrollJournalLine   SPYPayrollJournalLine;
+        //SPYAmount               amount;
+
+        select AmountCurDebit, AmountCurCredit from SPYPayrollJournalLine
+            where SPYPayrollJournalLine.SourceDocumentLine  == _accountingDistribution.SourceDocumentLine;
+
+        return SPYPayrollJournalLine.amount()*_accountingDistribution.percentage()/100;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

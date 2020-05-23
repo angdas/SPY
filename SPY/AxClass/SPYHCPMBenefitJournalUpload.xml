@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYHCPMBenefitJournalUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYHCPMBenefitJournalUpload extends RunBaseBatch
+{
+    FileNAMe                fileNameOpen;
+    //DialogField             dlgfileName;
+    AsciiStreamIo           fileIO;
+    DialogField             dlgJrnDesc;
+    DialogField             dlgJrnType;
+    Description             journalDesc;
+    SPYBenefitJournalType   journalType;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+    fileNameOpen,
+    journalDesc,
+    journalType
+    #endmacro
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    // Specifies whether the functionality can run in a new session window
+    public boolean canRunInNewSession()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase           dialog; //= super();
+        FormBuildButtonControl  buttonControlUpload;
+        DialogGroup             dlgGroup;
+        FormBuildGroupControl   buttonGroup;
+
+        dialog = super();
+
+        dlgGroup = dialog.addGroup('');
+        buttonGroup    = dialog.formBuildDesign().control(dlgGroup.formBuildGroup().id());
+        buttonControlUpload  = buttonGroup.addControl(FormControlType::Button, "@SPY:UploadBenefitJournalDetails");
+        buttonControlUpload.text("@SPY:UploadFile");
+        buttonControlUpload.registerOverrideMethod(methodStr(FormButtonControl, clicked),
+                                        methodStr(SPYHCPMBenefitJournalUpload, uploadClickedEvent),
+                                        this);
+
+        dlgJrnDesc = dialog.addFieldValue(extendedTypeStr(Description),journalDesc,"@SPY:JournalDescription");
+        dlgJrnType = dialog.addFieldValue(enumStr(SPYBenefitJournalType),journalType);
+        /*
+        dialog.addImage(#ImageExcel_Dyn01);
+        dialog.addInfoImage();
+        dlgFileName = dialog.addFieldValue(extendedTypeStr(FileNameOpen),fileNameOpen);
+        */
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadClickedEvent</Name>
+				<Source><![CDATA[
+    private void uploadClickedEvent(FormButtonControl _formButtonControl)
+    {
+        FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+        If (result && result.getUploadStatus())
+        {
+            fileIO = AsciiStreamIo::constructForRead(result.openResult());
+            if (fileIO)
+            {
+                if (fileIO.status())
+                {
+                    throw error("@SPY:ImportingProblem");
+                }
+                fileIO.inFieldDelimiter(',');
+                fileIO.inRecordDelimiter('\r\n');
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        journalDesc = dlgJrnDesc.value();
+        journalType = dlgJrnType.value();
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            this.readCSV(fileIO);
+        }
+        catch(Exception::Error)
+        {
+            ttsabort;
+            throw error("@SPY:ImportingException");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readCSV</Name>
+				<Source><![CDATA[
+    public void readCSV(AsciiStreamIo  file)
+    {
+        SPYPayrollPeriodLine    payrollPeriodLine;
+        COMVariantType          type;
+        HcmWorkerRecId          worker;
+        SPYBenefitJournalTable  benefitJournalTable,benefitJournalTabledeleted;
+        SPYBenefitJournalTrans  benefitJournalTrans;
+        SPYPayrollPeriodRecId   payrollPeriod;
+        SPYPayElementRecId      benefit;
+        boolean                 errorWorker,errorPayrollPeriod,errorBenefitPayelement;
+        container               record;
+        int                     cnt = 0,numberofUploadedRecords;
+        HcmPersonnelNumberId    employeeId;
+        SPYPayrollPeriodCode    payrollperiodExcel;
+        str                     transdate;
+        SPYBenefitJournalCode   benefitCode;
+        Description255          description;
+        Qty                     qty;
+        Amount                  amount;
+        HcmEmployment           hcmemployment;
+        utcdatetime             validfrom,validto;
+
+        
+        ttsbegin;
+        while (!file.status())
+        {
+            cnt++;
+            record = file.read();
+            
+            employeeId = conpeek(record,1);
+            payrollperiodExcel = conpeek(record,2);
+            transdate = conpeek(record,3);
+            benefitCode = conpeek(record,4);
+            description = conpeek(record,5);
+            qty = conpeek(record,6);
+            amount = conpeek(record,7);
+
+            if(cnt == 1)
+            {
+                // Creation of Benefit Journal Header
+                benefitJournalTable.BenefitJournalCode  = Numberseq::newGetNum(SPYPayrollParameters::numRefBenefitJournalCode()).num();
+                benefitJournalTable.Description         = journalDesc;
+                benefitJournalTable.JournalType         = journalType;
+                benefitJournalTable.insert();
+            }
+            
+            if(cnt != 1 && cnt != 0)
+            {
+                errorWorker         = false;
+                errorPayrollPeriod  = false;
+                errorBenefitPayelement  = false;
+
+                int i = conLen(record);
+                if (conLen(record))
+                {
+                    //Check for worker
+                    worker = Hcmworker::findByPersonnelNumber(employeeId).RecId;
+                    if(worker == 0)
+                    {
+                        warning(strfmt("@SPY:EmployeeIdnotValid",cnt));
+                        errorWorker = true;
+                    }
+
+                    // Check for PayrollPeriod
+                    payrollPeriod = SPYPayrollPeriod::findByCode(payrollperiodExcel).RecId;
+                    if(payrollPeriod == 0)
+                    {
+                        warning(strfmt("@SPY:PayrollPeriodNotValid",cnt));
+                        errorPayrollPeriod = true;
+                    }
+
+                    // check for BenefitPay element
+                    benefit = SPYPayElementTable::findByCode(benefitCode).RecId;
+                    if(benefit == 0)
+                    {
+                        warning(strFmt("@SPY:BenefitCodeNotValid",cnt));
+                        errorBenefitPayelement = true;
+                    }
+
+                    if(errorWorker             == false &&
+                       errorPayrollPeriod      == false &&
+                       errorBenefitPayelement  == false)
+                    {
+                        select firstOnly payrollPeriodLine
+                                where payrollPeriodLine.PeriodStartDate <= str2Date(transdate,213) &&
+                                      payrollPeriodLine.PeriodEndDate >= str2Date(transdate,213) &&
+                                      payrollPeriodLine.PayrollPeriod == payrollPeriod;
+                        benefitJournalTrans.clear();
+                        benefitJournalTrans.initValue();
+                        benefitJournalTrans.BenefitJournal              = benefitJournalTable.RecId;
+                        benefitJournalTrans.LineNum                     = cnt - 1;
+                        benefitJournalTrans.Worker                      = worker;
+                        benefitJournalTrans.Benefit                     = benefit;
+                        benefitJournalTrans.Quantity                    = qty;
+                        benefitJournalTrans.AccountingCurrencyAmount    = amount;
+                        benefitJournalTrans.TransactionCurrencyAmount   = amount;
+                        benefitJournalTrans.TransDate                   = str2date(transdate,213);
+                        benefitJournalTrans.PayrollPeriodlLine          = payrollPeriodLine.RecId;
+                        benefitJournalTrans.Txt                         = description;
+
+                        if(HcmWorker::find(worker).workerStatus() == hcmWorkerStatus::Employed)
+                        {
+                            validfrom = DateTimeUtil::minValue();
+                            validto   = datetimeutil::maxValue();
+                            benefitJournalTrans.Currency = HcmEmploymentDetail::findByEmployment(HcmEmployment::getActiveEmploymentsByWorker(worker,validfrom,validto).RecId).SPYDefaultPayrollCurrency;
+                        }
+                        else
+                        {
+                            validfrom = DateTimeUtil::minValue();
+                            validto   = DateTimeUtil::utcNow();
+
+                            select validtimestate(validfrom,validto) hcmemployment where hcmemployment.Worker == worker;
+                            if(hcmemployment)
+                            {
+                                benefitJournalTrans.Currency = HcmEmploymentDetail::findByEmployment(hcmemployment.RecId).SPYDefaultPayrollCurrency;
+                            }
+                        }
+
+                        benefitJournalTrans.modifiedField(fieldNum(SPYBenefitJournalTrans,TransactionCurrencyAmount));
+                        if(SPYPayrollPeriodLine::find(payrollPeriodLine.RecId))
+                        {
+                            benefitJournalTrans.insert();
+                        }
+                        else
+                        {
+                            warning(strfmt("@SPY:PayrollPeriodLineNotFound",cnt));
+                        }
+                    }
+                    if(benefitJournalTrans.RecId == 0)
+                    {
+                        delete_from benefitJournalTabledeleted where benefitJournalTabledeleted.RecId == benefitJournalTable.RecId;
+                        throw error(strfmt("@SPY:LinenotCreated",cnt));
+                    }
+                }
+            }   
+        }
+        ttscommit;
+        info(strfmt("@SPY:UploadedRecords",cnt-1));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    // Unpacking of parameters
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+        ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    // Validation
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYHCPMBenefitJournalUpload construct()
+    {
+        return new SPYHCPMBenefitJournalUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "@SPY:BenefitJournalUpload";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYHCPMBenefitJournalUpload    benefitJournalUpload;
+    
+        benefitJournalUpload = SPYHCPMBenefitJournalUpload::construct();
+    
+        if (benefitJournalUpload.prompt())
+            benefitJournalUpload.runOperationNow();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

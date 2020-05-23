@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayProcessService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayProcessService extends SPYPayService
+{
+    SPYPayProcessContract       contract;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>checkAbsence</Name>
+				<Source><![CDATA[
+    private void checkAbsence() //check absence for payroll disbursement mode
+    {
+        SPYAbsenceLedger                    absenceLedger;
+        HcmEmployment                       hcmEmploymentTab;
+        TransDateTime                       transDateTime;
+        HcmEmploymentDetail                 hcmEmploymentDetailTab;
+    
+        //check if worker has leave on last day of period
+        //make disbursement mode to cash
+        select firstonly absenceLedger
+            where absenceLedger.Worker == worker.RecId &&
+                  absenceLedger.AbsenceDate == periodEnd;
+    
+        if(absenceLedger)
+        {
+            transDateTime = DateTimeUtil::newDateTime(periodStart,00-00);
+            if(hcmEmployment)
+                hcmEmploymentTab = hcmEmployment;
+            else
+                hcmEmploymentTab = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,transDateTime);
+            if(!hcmEmploymentTab)
+            {
+                transDateTime = DateTimeUtil::newDateTime(periodEnd,00-00);
+                hcmEmploymentTab = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,transDateTime);
+            }
+            if(hcmEmploymentDetail)
+                hcmEmploymentDetailTab = HcmEmploymentDetail::find(hcmEmploymentDetail.RecId,true);
+            else
+                hcmEmploymentDetailTab = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,transDateTime,transDateTime,true);
+            if(hcmEmploymentDetailTab)
+            {
+                hcmEmploymentDetailTab.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                hcmEmploymentDetailTab.SPYPayrollDisbursementMode = SPYPayrollDisbursementMode::Cash;
+                hcmEmploymentDetailTab.update();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payProcessApplicable</Name>
+				<Source><![CDATA[
+    protected boolean payProcessApplicable()
+    {
+        SPYEOSRunTable          eosRunTable;
+        boolean                 ret;
+    
+        ret = super();
+    
+        if(ret)
+        {
+            //Process payroll if EOS not done
+            select firstOnly eosRunTable
+                where eosRunTable.Worker == worker.RecId &&
+                      eosRunTable.WorkflowStatus != SPYWorkflowStatus::Rejected;
+            if(eosRunTable)
+            {
+                ret = false;
+                workerValidationText = workerValidationText + "\n" + (strFmt("@SPY1431",
+                worker.name(),worker.PersonnelNumber));
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerPayrollProcess</Name>
+				<Source><![CDATA[
+    protected void postWorkerPayrollProcess()
+    {
+        /*
+        payProcessLog.initValue();
+        payProcessLog.PayProcessSteps = SPYPayProcessSteps::Payroll;
+        payProcessLog.PayProcessStage = SPYPayProcessStage::Completed;*/
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>preWorkerPayrollProcess</Name>
+				<Source><![CDATA[
+    protected void preWorkerPayrollProcess()
+    {
+        super();
+        //this.checkAbsence();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///     Payroll process
+    /// </summary>
+    /// <param name="_contract">
+    ///     Paroll process contract
+    /// </param>
+    /// <remarks>
+    ///     Regular payroll process of worker
+    /// </remarks>
+    public void process(SPYPayProcessContract   _contract)
+    {
+        contract = _contract as SPYPayProcessContract;
+        this.setLegalEntity(contract.parmLegalEntity());
+        this.setCallFromBatchTask(contract.parmCallFromBatchTask());
+        //this.initialize();
+    
+        changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+        {
+            this.preLegalEntityPayrollProcess();
+            this.processPayElement();
+            this.postLegalEntityPayrollProcess();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processPayElement</Name>
+				<Source><![CDATA[
+    private void processPayElement()
+    {
+        boolean                 payrollParameterState;
+        ListEnumerator          workerListEnumerator;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+    
+        this.setPayrollPeriodLine(contract.parmPayrollPeriodLine());
+        this.setTransDate(contract.parmTransDate());
+        this.initialize();
+        this.addObserver(tracer,1);
+        if(contract.parmPayrollParameterState().parmCalledFromMasterProcess())
+        {
+            payrollParameterState = true;
+            this.initializeWorkerList(true,contract.parmPayrollParameterState().parmWorkerContainer());
+            this.initializePayElementMap(true,contract.parmPayrollParameterState().parmPayElementContainer());
+        }
+        else
+        {
+            this.initializeWorkerList(false,contract.parmWorkerQuery());
+            this.initializePayElementMap(false,contract.parmPayElementQuery());
+        }
+        this.initializeAllPayElementMap();
+        workerListEnumerator = workerList.getEnumerator();
+    
+        progress.setCaption("@SPY881");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(workerList.elements());
+        progressCount = 1;
+        setPrefix("@SPY378");
+        info(strFmt("@SPY253",DateTimeUtil::utcNow()));
+        //ttsBegin;
+        while(workerListEnumerator.moveNext())
+        {
+            try
+            {
+                ttsBegin;
+                this.setWorker(HcmWorker::find(workerListEnumerator.current()));
+                progress.setText(strfmt("@SPY1105", worker.name(),worker.PersonnelNumber));
+                progress.setCount(progressCount, 1);
+                this.notifyObserver("@SYS80745",worker.name(),3);
+                if(this.payProcessApplicable())
+                {
+                    //--<Pay calculation>--
+                    this.preWorkerPayrollProcess();
+                    this.workerPayroll();
+                    this.workerBenefit();
+                    this.postWorkerPayrollProcess();
+                    //--</Pay calculation>--
+                }
+                else
+                {
+                    setPrefix(strFmt("@SPY1432",worker.name(),worker.PersonnelNumber));
+                    this.showWorkerValidationText();
+                    this.clearWorkerValidationText();
+                    error(strFmt("@SPY1433"));
+                }
+                progressCount++;
+                ttsCommit;
+            }
+            catch(Exception::Error)
+            {
+                checkFailed("@SPY252");
+                ttsAbort;
+            }
+        }
+        //this.finalizeProcess();  //Ledger inserted in every loop   
+        //ttsCommit;
+        info("@SPY379");
+        info(strFmt("@SPY254",DateTimeUtil::utcNow()));
+        if(contract.parmCheckTrace())
+        {
+            this.checkTrace(strFmt('%1\\Trace_%2_%3_%4.html',WinAPIServer::getTempPath(),curUserId(),
+            date2str(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),123,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2),
+            DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone())));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollCalcDate</Name>
+				<Source><![CDATA[
+    public void setPayrollCalcDate(TransDate _validFrom,TransDate _validTo)
+    {
+        calcStart   = max(periodStart,_validFrom);
+        calcEnd     = min(periodEnd,_validTo);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollTimesheetDate</Name>
+				<Source><![CDATA[
+    public void setPayrollTimesheetDate(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+        SPYPayrollPeriodLine        payrollPeriodLineTable;
+        TransDate                   periodProcessDate = _payrollPeriodLineTab.PayrollDate;
+        TransDate                   prevPeriodProcessDate;
+    
+        select firstOnly PayrollDate from payrollPeriodLineTable order by PeriodEndDate desc
+            where payrollPeriodLineTable.PayrollPeriod == _payrollPeriodLineTab.PayrollPeriod &&
+                  payrollPeriodLineTable.PeriodEndDate < _payrollPeriodLineTab.PeriodStartDate;
+        prevPeriodProcessDate = payrollPeriodLineTable.PayrollDate;
+    
+        timesheetStart = prevPeriodProcessDate + 1;
+        timesheetEnd = periodProcessDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

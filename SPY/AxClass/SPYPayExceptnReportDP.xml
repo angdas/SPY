@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayExceptnReportDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYPayExceptnReportContract))
+]
+public class SPYPayExceptnReportDP extends SrsReportDataProviderPreProcess
+{
+    SPYPayExceptnTmp    payExceptnData;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>addSQLUnion</Name>
+				<Source><![CDATA[
+    private str addSQLUnion(str query)
+    {
+        if (query == "")
+            return "";
+        else
+            return strFmtLB( "\n union \n");
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPayExceptnData</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>STPLedgerBalanceReportData</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>STPLedgerBalanceReportData</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYPayExceptnTmp))]
+    public SPYPayExceptnTmp getPayExceptnData()
+    {
+        select payExceptnData;
+        return payExceptnData;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2ReportData</Name>
+				<Source><![CDATA[
+    private void insert2ReportData(ResultSet _resultSet)
+    {
+        RecordInsertList        recordInsertPayExceptnData;
+        
+        recordInsertPayExceptnData = new RecordInsertList(tableNum(SPYPayExceptnTmp));
+        while(_resultSet.next())
+        {
+           payExceptnData.initValue();
+           payExceptnData.Type = _resultSet.getInt(1);//type
+           payExceptnData.Worker = _resultSet.getInt64(2); //WorkerID
+           payExceptnData.PersonnelNumber = _resultSet.getString(3); //personnel no
+           payExceptnData.Description = _resultSet.getString(4) ;//description
+           payExceptnData.Field1 = _resultSet.getString(5);
+           payExceptnData.Field2 = _resultSet.getString(6);
+           payExceptnData.Field3 = _resultSet.getString(7);
+           //payExceptnData.Field4 = _resultSet.getString(8); //not created for all the queries
+            recordInsertPayExceptnData.add(payExceptnData);
+        }
+        recordInsertPayExceptnData.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYPayExceptnReportContract  contract = this.parmDataContract() as SPYPayExceptnReportContract;
+    
+        this.setTableConnections();
+    
+        this.sqlQuery(contract);
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>query</Name>
+				<Source><![CDATA[
+    private str query(SPYPayExceptnReportContract _contract)
+    {
+        SPYPayrollPeriodLine        payrollPeriodLine;
+        str                         periodFrom, periodTo;
+        str                         s;
+    
+    
+        select * from payrollPeriodLine
+        where payrollPeriodLine.RecId == _contract.parmPayrollPeriod();
+    
+        if ( payrollPeriodLine.RecId != 0 )
+        {
+            periodFrom = date2str( payrollPeriodLine.PeriodStartDate, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+            periodTo =  date2str( payrollPeriodLine.PeriodEndDate, 321, DateDay::Digits2,DateSeparator::Hyphen,DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4);
+        }
+        else
+        {
+            throw error("Please specificy a payroll period.") ;
+        }
+    
+    
+        if (_Contract.parmBlnRule1() == NoYes::Yes) //business stream should be present on the Employment record
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + " select 1 ExecptionType, W.RecID Worker, W.PERSONNELNUMBER";
+            s = s + "         , case when ( ISNULL ( DDIM.Business_Stream, '') = '' and ISNULL ( DDIM.Department, '') = '' ) then 'Missing financial dimension on employment' ";
+            s = s + "             when ISNULL ( DDIM.Business_Stream, '') = '' then 'Missing business stream dimension'";
+            s = s + "             when ISNULL ( DDIM.Department, '') = '' then 'Missing department dimension'            ";
+            s = s + "         end Description        ";
+            s = s + "         , DDIM.Business_Stream Field1, DDIM.Department Field2, '' Field3";
+            s = s + " from HCMWorker W";
+            s = s + " inner join HCMEmployment E";
+            s = s + "     on E.Worker = W.RecID    ";
+            s = s + strFmt( "     and '%1' between E.ValidFrom and E.ValidTo", periodTo) ;
+            s = s + " inner join DIRPARTYTABLE C  ";
+            s = s + "     on C.RECID = E.LEGALENTITY ";
+            s = s + strFmt( "     and C.DATAAREA = '%1' ", curext() ) ;
+    
+            s = s + " inner join HCMEMPLOYMENTDETAIL ED";
+            s = s + "     on ED.Employment = E.RecID    ";
+            s = s + strFmt( "     and '%1' between ED.ValidFrom and ED.ValidTo", periodTo) ;
+            s = s + " left join ";
+            s = s + "     ( ";
+            s = s + "         select DAVS.RECID        ";
+            s = s + "             , max( case when DA.NAME = 'Business_Stream' then DAVSI.DISPLAYVALUE else '' end ) Business_Stream";
+            s = s + "             , max( case when DA.NAME = 'Department' then DAVSI.DISPLAYVALUE else '' end ) Department";
+            s = s + "             , max( case when DA.NAME = 'Properties' then DAVSI.DISPLAYVALUE else '' end ) Properties";
+            s = s + "             , max( case when DA.NAME = 'Employee' then DAVSI.DISPLAYVALUE else '' end ) Employee";
+            s = s + "             , max( case when DA.NAME = 'Related_party' then DAVSI.DISPLAYVALUE else '' end ) Related_party";
+            s = s + "         from DimensionAttributeValueSet DAVS";
+            s = s + "         inner join DimensionAttributeValueSetItem DAVSI";
+            s = s + "             on DAVSI.DIMENSIONATTRIBUTEVALUESET = DAVS.RECID";
+            s = s + "         inner join DIMENSIONATTRIBUTEVALUE DAV";
+            s = s + "             on DAV.RECID = DAVSI.DIMENSIONATTRIBUTEVALUE";
+            s = s + "         inner join DIMENSIONATTRIBUTE DA";
+            s = s + "             on DA.RECID = DAV.DIMENSIONATTRIBUTE";
+            s = s + "         group by DAVS.RECID        ";
+            s = s + "     ) DDIM";
+            s = s + "     on DDIM.RECID = E.DEFAULTDIMENSION";
+            s = s + " where 1=1";
+            s = s + "     and ( ISNULL ( DDIM.Business_Stream, '') = '' or ISNULL ( DDIM.Department, '') = '')";
+        }
+    
+    
+        if (_Contract.parmBlnRule2() == NoYes::Yes) //project dimension mismatch
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + "     select 2 Type, W.RECID, W.PERSONNELNUMBER, 'Timesheet:' + isnull( TSH.TIMESHEETNBR,'') + ',Project:' + isnull( TSL.PROJID,'') + ',Dimension:' + isnull( DIM.Business_Stream, '' ) ";
+            s = s + "         , TSH.TIMESHEETNBR";
+            s = s + "         , TSL.PROJID";
+            s = s + "         , DIM.Business_Stream";
+            s = s + "     from TSTIMESHEETTABLE TSH";
+            s = s + "     inner join TSTIMESHEETLINE TSL";
+            s = s + "         on TSL.TIMESHEETNBR = TSH.TIMESHEETNBR";
+            s = s + "     inner join TSTIMESHEETLINEWEEK TSLW";
+            s = s + "         on TSLW.TSTIMESHEETLINE = TSL.RECID";
+            s = s + "     inner join HCMWORKER W";
+            s = s + "         on W.RECID = TSL.WORKER";
+            s = s + "     left join";
+            s = s + "         (";
+            s = s + "         select DAVS.RECID        ";
+            s = s + "             , max( case when DA.NAME = 'Business_Stream' then DAVSI.DISPLAYVALUE else '' end ) Business_Stream";
+            s = s + "             , max( case when DA.NAME = 'Department' then DAVSI.DISPLAYVALUE else '' end ) Department";
+            s = s + "             , max( case when DA.NAME = 'Properties' then DAVSI.DISPLAYVALUE else '' end ) Properties";
+            s = s + "             , max( case when DA.NAME = 'Employee' then DAVSI.DISPLAYVALUE else '' end ) Employee";
+            s = s + "             , max( case when DA.NAME = 'Related_party' then DAVSI.DISPLAYVALUE else '' end ) Related_party";
+            s = s + "         from DimensionAttributeValueSet DAVS";
+            s = s + "         inner join DimensionAttributeValueSetItem DAVSI";
+            s = s + "             on DAVSI.DIMENSIONATTRIBUTEVALUESET = DAVS.RECID";
+            s = s + "         inner join DIMENSIONATTRIBUTEVALUE DAV";
+            s = s + "             on DAV.RECID = DAVSI.DIMENSIONATTRIBUTEVALUE";
+            s = s + "         inner join DIMENSIONATTRIBUTE DA";
+            s = s + "             on DA.RECID = DAV.DIMENSIONATTRIBUTE";
+            s = s + "         group by DAVS.RECID    ";
+            s = s + "         ) DIM";
+            s = s + "         on DIM.RECID = TSL.DEFAULTDIMENSION";
+    
+            //applying the period filters
+            s = s +  strFmt( "     where TSH.PERIODFROM between '%1' and '%2'", periodFrom, periodTo);
+            s = s + strFmt( "   and TSH.DataAreaID = '%1' ", curext() ) ;
+            s = s + "         and DIM.Business_Stream <> TSL.PROJID";
+            s = s + "         and (TSLW.HOURS + TSLW.HOURS2_ + TSLW.HOURS3_ + TSLW.HOURS4_ + TSLW.HOURS5_ + TSLW.HOURS6_ + TSLW.HOURS7_ ) > 0 ";
+        }
+    
+    
+        if (_Contract.parmBlnRule3() == NoYes::Yes) //department dimension missing
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + " select 3 Type, W.RecID, W.PERSONNELNUMBER, 'Deparment missing' Description, isnull( DIM.Business_Stream,'') , isnull ( DIM.Department,'') , '' Field3";
+            s = s + " from HCMWORKER W";
+            s = s + " inner join HCMEMPLOYMENT E";
+            s = s + "     on E.WORKER = W.RECID    ";
+            s = s + "     and E.VALIDTO > '2154-01-01'";
+    
+            s = s + " inner join DIRPARTYTABLE C  ";
+            s = s + "     on C.RECID = E.LEGALENTITY ";
+            s = s + strFmt( "     and C.DATAAREA = '%1' ", curext() ) ;
+    
+            s = s + " left join (";
+            s = s + "         select DAVS.RECID        ";
+            s = s + "         , max( case when DA.NAME = 'Business_Stream' then DAVSI.DISPLAYVALUE else '' end ) Business_Stream";
+            s = s + "         , max( case when DA.NAME = 'Department' then DAVSI.DISPLAYVALUE else '' end ) Department";
+            s = s + "         , max( case when DA.NAME = 'Properties' then DAVSI.DISPLAYVALUE else '' end ) Properties";
+            s = s + "         , max( case when DA.NAME = 'Employee' then DAVSI.DISPLAYVALUE else '' end ) Employee";
+            s = s + "         , max( case when DA.NAME = 'Related_party' then DAVSI.DISPLAYVALUE else '' end ) Related_party";
+            s = s + "     from DimensionAttributeValueSet DAVS";
+            s = s + "     inner join DimensionAttributeValueSetItem DAVSI";
+            s = s + "         on DAVSI.DIMENSIONATTRIBUTEVALUESET = DAVS.RECID";
+            s = s + "     inner join DIMENSIONATTRIBUTEVALUE DAV";
+            s = s + "         on DAV.RECID = DAVSI.DIMENSIONATTRIBUTEVALUE";
+            s = s + "     inner join DIMENSIONATTRIBUTE DA";
+            s = s + "         on DA.RECID = DAV.DIMENSIONATTRIBUTE";
+            s = s + "     group by DAVS.RECID    ";
+            s = s + " ) DIM";
+            s = s + " on DIM.RECID = E.DEFAULTDIMENSION";
+            s = s + " where isnull( DIM.Department, '' ) = ''";
+    
+        }
+    
+        if (_Contract.parmBlnRule4() == NoYes::Yes) //suspended dimensions
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + "    select 4 Type, W.RECID, W.PERSONNELNUMBER, 'Suspended project dimension:' + DIM.Business_Stream + ' on timesheet :' + TSH.TIMESHEETNBR txt ";
+            s = s + "     , TSL.PROJID, TSH.TIMESHEETNBR, '' Field3";
+            s = s + "     from TSTIMESHEETTABLE TSH";
+            s = s + "     inner join TSTIMESHEETLINE TSL";
+            s = s + "         on TSL.TIMESHEETNBR = TSH.TIMESHEETNBR";
+            s = s + "     inner join TSTIMESHEETLINEWEEK TSLW";
+            s = s + "         on TSLW.TSTIMESHEETLINE = TSL.RECID";
+            s = s + "     inner join HCMWORKER W";
+            s = s + "         on W.RECID = TSL.WORKER";
+            s = s + "     inner join ";
+            s = s + "         (";
+            s = s + "         select DAVS.RECID        ";
+            s = s + "             , max( case when DA.NAME = 'Business_Stream' then DAVSI.DISPLAYVALUE else '' end ) Business_Stream";
+            s = s + "             , max( case when DA.NAME = 'Department' then DAVSI.DISPLAYVALUE else '' end ) Department";
+            s = s + "             , max( case when DA.NAME = 'Properties' then DAVSI.DISPLAYVALUE else '' end ) Properties";
+            s = s + "             , max( case when DA.NAME = 'Employee' then DAVSI.DISPLAYVALUE else '' end ) Employee";
+            s = s + "             , max( case when DA.NAME = 'Related_party' then DAVSI.DISPLAYVALUE else '' end ) Related_party";
+            s = s + "         from DimensionAttributeValueSet DAVS";
+            s = s + "         inner join DimensionAttributeValueSetItem DAVSI";
+            s = s + "             on DAVSI.DIMENSIONATTRIBUTEVALUESET = DAVS.RECID";
+            s = s + "         inner join DIMENSIONATTRIBUTEVALUE DAV";
+            s = s + "             on DAV.RECID = DAVSI.DIMENSIONATTRIBUTEVALUE";
+            s = s + "         inner join DIMENSIONATTRIBUTE DA";
+            s = s + "             on DA.RECID = DAV.DIMENSIONATTRIBUTE";
+            s = s + "         group by DAVS.RECID    ";
+            s = s + "         ) DIM";
+            s = s + "         on DIM.RecID = TSL.DEFAULTDIMENSION";
+            s = s + "     inner join (";
+            s = s + "             select DA.NAME ";
+            s = s + "                 , DFT.VALUE ";
+            s = s + "                 , DA.Type ";
+            s = s + "                 , DAT.TOVALUE";
+            s = s + "             from DIMENSIONFINANCIALTAG DFT            ";
+            s = s + "             inner join DIMENSIONATTRIBUTEDIRCATEGORY DADC";
+            s = s + "                 on DADC.RECID = DFT.FINANCIALTAGCATEGORY";
+            s = s + "             inner join DIMENSIONATTRIBUTE DA";
+            s = s + "                 on DA.RECID = DADC.DIMENSIONATTRIBUTE";
+            s = s + "             inner join DIMENSIONATTRIBUTEVALUE DAV";
+            s = s + "                 on DAV.DIMENSIONATTRIBUTE = DA.RECID";
+            s = s + "                 and DAV.ENTITYINSTANCE = DFT.RECID                ";
+            s = s + "                 and ( DAV.ISSUSPENDED = 1 or DAV.ISTOTAL = 1 )";
+            s = s + "             inner join DIMENSIONATTRIBUTEVALUETOTALLINGCRITERIA DAT";
+            s = s + "                 on DFT.VALUE between DAT.FROMVALUE and DAT.TOVALUE";
+            s = s + "             Where DA.NAME = 'Business_Stream'    ";
+            s = s + "     ) SUS";
+            s = s + "     on SUS.VALUE = TSL.PROJID";
+    
+            //applying date filters
+            s = s + strFmt( "     where TSH.PERIODFROM between '%1' and '%2'", periodFrom, periodTo) ;
+            s = s + strFmt( "   and TSH.DataAreaID = '%1' ", curext() ) ;
+            s = s + "         and (TSLW.HOURS + TSLW.HOURS2_ + TSLW.HOURS3_ + TSLW.HOURS4_ + TSLW.HOURS5_ + TSLW.HOURS6_ + TSLW.HOURS7_ ) > 0 ";
+    
+        }
+    
+    
+        if(_contract.parmBlnRule5() == NoYes::Yes)
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + " select distinct 5 Type, W.RecId, W.PERSONNELNUMBER, TSH.TIMESHEETNBR txt, ";
+            s = s + "     case TSH.APPROVALSTATUS";
+            s = s + "     when 1 then 'Create'";
+            s = s + "     when 2 then 'Submitted'";
+            s = s + "     when 3 then 'Returned'";
+            s = s + "     when 4 then 'Ready'";
+            s = s + "     when 10 then 'Transferred'";
+            s = s + "     when 6 then 'Ledger'";
+            s = s + "     When 9 then 'Pending'";
+            s = s + "     end ApprovalStatus, '' Field2, '' Field3";
+    
+            s = s + " from TSTIMESHEETTABLE TSH";
+            s = s + " inner join TSTIMESHEETLINE TSL";
+            s = s + "     on TSL.TIMESHEETNBR = TSH.TIMESHEETNBR";
+            s = s + " inner join TSTIMESHEETLINEWEEK TSLW";
+            s = s + "     on TSLW.TSTIMESHEETLINE = TSL.RECID";
+            s = s + " inner join HCMWORKER W";
+            s = s + "     on W.RECID = TSL.WORKER";
+            s = s + " inner join HCMEMPLOYMENT E";
+            s = s + "     on E.WORKER = W.RECID";
+            s = s + strFmt("     and '%1' between E.VALIDFROM and E.VALIDTO ", periodTo);
+            s = s + " inner join HCMEMPLOYMENTDETAIL ED";
+            s = s + "     on ED.EMPLOYMENT = E.RECID";
+            s = s + strFmt("     and '%1' between ED.ValidFrom and ED.VALIDTO", periodTo);
+    
+            //applying date filters
+            s = s + strFmt( " where TSH.PERIODFROM between '%1' and '%2'", periodFrom, periodTo);
+            s = s + strFmt( "   and TSH.DataAreaID = '%1' ", curext() ) ;
+            s = s + "     and TSH.APPROVALSTATUS <> 3";
+            s = s + "     and (TSLW.HOURS + TSLW.HOURS2_ + TSLW.HOURS3_ + TSLW.HOURS4_ + TSLW.HOURS5_ + TSLW.HOURS6_ + TSLW.HOURS7_ ) > 0 ";
+        }
+    
+        if(_contract.parmBlnRule6() == NoYes::Yes)
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + " select 6 Type, W.RecID, W.PERSONNELNUMBER,L.LEAVEAPPLICATIONCODE + 'missing in absence ledger for ' + convert ( varchar, DT.DateValue, 105) txt ";
+            s = s + "     , WCE.CALENDARID, DATENAME( DW, DT.DateValue ) [DayOfWeek]        ";
+            s = s + "     , case when ED.SPYLEAVEACCRUALBASIS = 0 then 'WorkingDays' else 'CalendarDays' end LeaveAccrualBasis    ";
+            s = s + " from SPYLEAVEAPPLICATIONTABLE L";
+            s = s + " inner join SPYLEAVEAPPLICATIONLINE LL";
+            s = s + "     on LL.LEAVEAPPLICATION = L.RECID";
+            s = s + "     and LL.DATAAREAID = L.DATAAREAID";
+            s = s + "     and L.WORKFLOWSTATUS = 3    ";
+            s = s + " cross join DateTable DT";
+            s = s + " inner join HCMWORKER W    ";
+            s = s + "     on W.RECID = L.WORKER";
+            s = s + " inner join HCMEMPLOYMENT E";
+            s = s + "     on E.WORKER = W.RECID    ";
+            s = s + "     and E.VALIDTO > '2154-01-01'";
+    
+            s = s + " inner join DIRPARTYTABLE C  ";
+            s = s + "     on C.RECID = E.LEGALENTITY ";
+            s = s + strFmt( "     and C.DATAAREA = '%1' ", curext() ) ;
+    
+            s = s + " inner join HCMEMPLOYMENTDETAIL ED";
+            s = s + "     on ED.EMPLOYMENT = E.RECID    ";
+            s = s + "     and ED.VALIDTO > '2154-01-01'";
+            s = s + " inner join WorkCalendarEmployment WCE";
+            s = s + "     on WCE.EMPLOYMENT = E.RECID        ";
+            s = s + " inner join WORKCALENDARDATE WCD";
+            s = s + "     on WCD.CALENDARID = WCE.CALENDARID";
+            s = s + "     and WCD.TRANSDATE = DT.DateValue";
+            s = s + " left join ";
+            s = s + "     (";
+            s = s + "     select CALENDARID, TransDate, sum( TOTIME - FROMTIME ) / 3600.00 [Hours]";
+            s = s + "     from WORKCALENDARDATELINE";
+            s = s + "     group by CALENDARID, TransDate    ";
+            s = s + "     ) CH";
+            s = s + "     on CH.CALENDARID = WCD.CALENDARID";
+            s = s + "     and CH.TRANSDATE = WCD.TRANSDATE";
+            s = s + " left join SPYABSENCELEDGER ABL";
+            s = s + "     on ABL.WORKER = W.RECID    ";
+            s = s + "     and ABL.DATAAREAID = LL.DATAAREAID";
+            s = s + "     and ABL.ABSENCEDATE = DT.DateValue    ";
+            s = s + " where DT.DateValue between LL.ACTUALSTARTDATE and LL.ACTUALENDDATE";
+    
+            //applying date filters
+            s = s + strFmt( "     and DT.DateValue between '%1' and '%2'", periodFrom, periodTo) ;
+            s = s + strFmt( "     and L.DataAreaID = '%1' ", curext() ) ;
+            s = s + "     and CH.Hours > 0        ";
+            s = s + "     and ABL.RECID is null     ";
+        }
+    
+        if(_contract.parmBlnRule7() == NoYes::Yes)
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + " select 7 Type, W.RecID, W.PERSONNELNUMBER, ' Leave code :' + AL.HRMABSENCECODEID + ', Leave days =' + str( isnull( SUM( AbsenceDays), 0 ) , 5, 2) + ', encashed =' + str( isnull( LE.EncashQuantity, 0 ) , 5, 2), '' Field1, '' Field2, '' Field3";
+            s = s + " from SPYABSENCELEDGER AL";
+            s = s + " inner join HCMWORKER W";
+            s = s + "     on W.RECID = AL.WORKER";
+            s = s + " inner join HCMEMPLOYMENT E";
+            s = s + "     on E.WORKER = W.RECID";
+            s = s + "     and E.VALIDTO > '2154-01-01' ";
+    
+            s = s + " inner join DIRPARTYTABLE C  ";
+            s = s + "     on C.RECID = E.LEGALENTITY ";
+            s = s + strFmt( "     and C.DATAAREA = '%1' ", curext() ) ;
+    
+            s = s + " inner join HRMABSENCECODE AB";
+            s = s + "     on AB.HRMABSENCECODEID = AL.HRMABSENCECODEID    ";
+            s = s + "     and AB.DATAAREAID = AL.DATAAREAID ";
+            s = s + " inner join SPYPAYELEMENTTABLE PE";
+            s = s + "     on PE.RECID = AB.SPYBENEFIT";
+            s = s + " cross join SPYPAYROLLPERIODLINE PPL";
+            s = s + " left join (";
+            s = s + "             select BL.DATAAREAID, BL.WORKER, BL.BENEFIT, BL.PAYROLLPERIODLINE, SUM( BL.Quantity ) EncashQuantity";
+            s = s + "             from SPYBENEFITLEDGER BL";
+            s = s + "             inner join HCMWORKER W";
+            s = s + "                 on W.RECID = BL.WORKER";
+            s = s + "             inner join HRMABSENCECODE AB";
+            s = s + "                 on AB.SPYBENEFIT = BL.BENEFIT";
+            s = s + "                 and AB.DATAAREAID = BL.DATAAREAID";
+            s = s + "             where BL.JOURNALTYPE = 1 ";
+            s = s + "                 and BL.BENEFITJOURNALTRANS = 0";
+            s = s + "                 and BL.SOURCEDOCUMENT = 103618";
+            s = s + "             group by BL.DATAAREAID, BL.WORKER, BL.BENEFIT, BL.PAYROLLPERIODLINE";
+            s = s + "         ) LE ";
+            s = s + "     on LE.WORKER = AL.WORKER";
+            s = s + "     and LE.DATAAREAID = AL.DATAAREAID";
+            s = s + "     and LE.PAYROLLPERIODLINE = PPL.RECID";
+            s = s + "     and LE.BENEFIT = PE.RECID";
+            s = s + " where AL.ABSENCEDATE between PPL.PERIODSTARTDATE and PPL.PERIODENDDATE";
+    
+            //applying date filters
+            s = s + strFmt( "     and PPL.PERIODSTARTDATE = '%1'    ", periodFrom) ;
+            s = s + strFmt( "     and AL.DATAAREAID = '%1'", curext() ) ;
+            s = s + " group by PPL.PAYROLLPERIOD, W.RecID,W.PERSONNELNUMBER, AL.HRMABSENCECODEID, LE.EncashQuantity";
+            s = s + " having SUM( AbsenceDays) <> ISNULL( LE.EncashQuantity, 0 ) ";
+        }
+    
+    
+        if(_contract.parmBlnRule8() == NoYes::Yes)  //leave marked on off day
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + " select 8 Type, W.RECID, W.PERSONNELNUMBER ";
+            s = s + "     , 'Leave marked on ' + CONVERT( varchar, AL.ABSENCEDATE, 105) + ' - (' + DATENAME( DW, AL.AbsenceDate) + ')' txt";
+            s = s + "     , WCE.CALENDARID";
+            s = s + "     , convert( varchar, AL.ABSENCEDATE, 105 ) AbsenceDate";
+            s = s + "     , DATENAME( DW, AL.AbsenceDate) [DayOfWeek]";
+            s = s + "     , AL.HRMABSENCECODEID AbsenceCode";
+            s = s + " from SPYABSENCELEDGER AL";
+            s = s + " inner join HCMWORKER W    ";
+            s = s + "     on W.RECID = AL.WORKER";
+            s = s + " inner join HCMEMPLOYMENT E";
+            s = s + "     on E.WORKER = W.RECID";
+            s = s + "     and E.VALIDTO > '2154-01-01'";
+    
+            s = s + " inner join DIRPARTYTABLE C  ";
+            s = s + "     on C.RECID = E.LEGALENTITY ";
+            s = s + strFmt( "     and C.DATAAREA = '%1' ", curext() ) ;
+    
+            s = s + " inner join HCMEMPLOYMENTDETAIL ED";
+            s = s + "     on ED.EMPLOYMENT = E.RECID";
+            s = s + strFmt( "     and '%1' between ED.ValidFrom and ED.VALIDTO ", periodFrom );
+            s = s + " inner join WorkCalendarEmployment WCE";
+            s = s + "     on WCE.EMPLOYMENT = E.RECID    ";
+            s = s + " where ED.SPYLEAVEACCRUALBASIS = 0";
+    
+            //adding date filter
+            s = s + strFmt( "     and AL.ABSENCEDATE between '%1' and '%2' ", periodFrom, periodTo) ;
+            s = s + strFmt( "     and AL.DATAAREAID = '%1'", curext() ) ;
+    
+            s = s + "     and not exists ( select * ";
+            s = s + "                         from WORKCALENDARDATELINE DL ";
+            s = s + "                         where DL.CALENDARID = WCE.CALENDARID";
+            s = s + "                         and DL.TRANSDATE = AL.ABSENCEDATE";
+            s = s + "                     )";
+    
+        }
+    
+    
+        if(_contract.parmBlnRule9() == NoYes::Yes)      //ledgers pending posting
+        {
+            s = s + this.addSQLUnion(s);
+    
+            s = s + " select 9 Type, W.RECID, W.PERSONNELNUMBER, PE.PAYELEMENTCODE, str(BL.TRANSACTIONCURPNLAMOUNT, 8,2) Amount, str( BL.TRANSACTIONCURRENCYAMOUNT, 8,2) PNLAmount, '' Field3";
+            s = s + " from SPYBENEFITLEDGER BL";
+            s = s + " inner join HCMWorker W";
+            s = s + "     on W.RecID = BL.Worker    ";
+            s = s + " inner join SPYPAYROLLPERIODLINE PPL";
+            s = s + "     on PPL.RECID = BL.PAYROLLPERIODLINE";
+            s = s + " inner join SPYPAYELEMENTTABLE PE";
+            s = s + "     on PE.RECID = BL.BENEFIT    ";
+    
+            //>>2016-01-01_SNK_START
+            //if the posting is against a journal that does not exist
+            //Found dec 2015 where posting was against a PJ that did not exists or maybe
+            //when the PJ was delete one employee records were not reset
+            s = s + " left join SPYPayrollJournalLine PJL";
+            s = s + "     on PJL.RecID = BL.PayrollJournalLine";
+            s = s + "     or PJL.RecID = BL.PNLPayrollJournalLine ";
+            //<<2016-01-01_SNK_STOP
+    
+            //adding date filter
+            s = s + strFmt( " where PPL.PERIODSTARTDATE = '%1'    ", periodFrom) ;
+    
+            s = s + "     and ( ( BL.PAYROLLJOURNALLINE = 0 and BL.PNLPAYROLLJOURNALLINE = 0) or ( PJL.RECID is null )  )";
+            s = s + "     and BL.TRANSACTIONCURPNLAMOUNT + BL.TRANSACTIONCURRENCYAMOUNT <> 0 ";
+            s = s + strFmt( "     and BL.DataAreaID = '%1' ", curext()) ;
+    
+            s = s + "     union";
+    
+            s = s + " select 9 Type, W.RECID, W.PERSONNELNUMBER, PE.PAYELEMENTCODE, str( PL.TRANSACTIONCURRENCYAMOUNT, 8, 2) , '' Field2, '' Field3";
+            s = s + " from SPYPAYROLLLEDGER PL";
+            s = s + " inner join HCMWorker W";
+            s = s + "     on W.RecID = PL.Worker    ";
+            s = s + " inner join SPYPAYROLLPERIODLINE PPL";
+            s = s + "     on PPL.RECID = PL.PAYROLLPERIODLINE";
+            s = s + " inner join SPYPAYELEMENTTABLE PE";
+            s = s + "     on PE.RECID = PL.PAYROLL";
+    
+            //adding date filter
+            s = s + strFmt( " where PPL.PERIODSTARTDATE = '%1'    ", periodFrom) ;
+            s = s + "     and PL.PAYROLLJOURNALLINE = 0     ";
+            s = s + "     and PL.TRANSACTIONCURRENCYAMOUNT <> 0     ";
+            s = s + strFmt( "     and PL.DataAreaID = '%1' ", curext()) ;
+    
+        }
+    
+    
+        if(_contract.parmBlnRule10() == NoYes::Yes) //employees not processesed
+        {
+    
+            s = s + this.addSQLUnion(s);
+    
+            s = s + " select 10 Type, W.RecID, W.PERSONNELNUMBER, P.NAME txt, '' Field1, '' Field2, '' Field3";
+            s = s + " from HCMWorker W";
+            s = s + " inner join DirPartyTable P";
+            s = s + "    on P.RecID = W.Person";
+            s = s + " cross join SPYPAYROLLPERIODLINE PPL";
+            s = s + " inner join HCMEMPLOYMENT E";
+            s = s + "     on E.WORKER = W.RECID";
+            s = s + "     and E.VALIDFROM < PPL.PERIODSTARTDATE";
+            s = s + "     and E.VALIDTO > PPL.PERIODSTARTDATE";
+    
+            s = s + " inner join DIRPARTYTABLE C  ";
+            s = s + "     on C.RECID = E.LEGALENTITY ";
+            s = s + strFmt( "     and C.DATAAREA = '%1' ", curext() ) ;
+    
+            s = s + " left join SPYPAYROLLLEDGER PL";
+            s = s + "     on PL.WORKER = W.RECID";
+            s = s + "     and PL.PAYROLLPERIODLINE = PPL.RECID";
+            s = s + " left join SPYBenefitLedger BL";
+            s = s + "     on BL.WORKER = W.RECID";
+            s = s + "     and BL.PAYROLLPERIODLINE = PPL.RECID";
+    
+            //Adding date filter
+            s = s + strFmt( " where PPL.PERIODSTARTDATE = '%1'    ", periodFrom) ;
+    
+            s = s + "     and ( PL.RECID is null or BL.RECID is null) ";
+        }
+    
+    
+        if(_contract.parmBlnRule11() == NoYes::Yes) //PJ with suspended dimensions
+        {
+    
+            s = s + this.addSQLUnion(s);
+    
+            s = s + "     select 11 Type, W.RECID, W.PERSONNELNUMBER, PJT.JOURNALID, str( PJL.LINENUM, 10, 2 ) Field1, DIM.Business_Stream Field2, DSET.ISSUSPENDED Field3";
+            s = s + "     from SPYPAYROLLJOURNALTABLE PJT ";
+            s = s + "     inner join SPYPAYROLLJOURNALLINE PJL ";
+            s = s + "         on PJL.PAYROLLJOURNAL = PJT.RECID ";
+            s = s + "     inner join HCMWORKER W";
+            s = s + "         on W.RECID = PJL.WORKER    ";
+            s = s + "     inner join SPYPAYELEMENTTABLE PE";
+            s = s + "         on PE.RECID = PJL.PAYELEMENT";
+            s = s + "     inner join ACCOUNTINGDISTRIBUTION AD ";
+            s = s + "         on PJL.SOURCEDOCUMENTLINE = AD.SOURCEDOCUMENTLINE";
+            s = s + "         and PJT.SOURCEDOCUMENTHEADER = AD.SOURCEDOCUMENTHEADER";
+            s = s + "     inner join ";
+            s = s + "         (";
+            s = s + "             select DALV.PARTITION  ";
+            s = s + "                 , DALV.VALUECOMBINATIONRECID LedgerDimension";
+            s = s + "                 , isnull( max( case when NAME = 'Business_Stream' then DISPLAYVALUE else '' end ), '') Business_Stream";
+            s = s + "                 , isnull( max( case when NAME = 'Department' then DISPLAYVALUE else '' end ) , '') Department";
+            s = s + "                 , isnull( max( case when NAME = 'Properties' then DISPLAYVALUE else '' end ), '') Properties";
+            s = s + "                 , isnull( max( case when NAME = 'Employee' then DISPLAYVALUE else '' end ), '') Employee";
+            s = s + "                 , isnull( max( case when NAME = 'Related_party' then DISPLAYVALUE else '' end ), '') Related_party";
+            s = s + "                 , isnull( max( case when NAME = 'Job_No' then DISPLAYVALUE else '' end ), '') Job_No";
+            s = s + "                 , isnull( max( case when NAME = 'MainAccount' then DISPLAYVALUE else '' end ), '') MainAccount";
+            s = s + "             from DIMENSIONATTRIBUTELEVELVALUEALLVIEW DALV";
+            s = s + "             inner join DIMENSIONATTRIBUTE DA";
+            s = s + "                 on DA.RECID = DALV.DIMENSIONATTRIBUTE";
+            s = s + "             group by DALV.PARTITION, DALV.VALUECOMBINATIONRECID                 ";
+            s = s + "         )  DIM        ";
+            s = s + "         on DIM.PARTITION = AD.PARTITION";
+            s = s + "         and DIM.LedgerDimension = AD.LEDGERDIMENSION        ";
+            s = s + "     inner join ";
+            s = s + "         (";
+            s = s + "             select DA.NAME    ";
+            s = s + "                 , DFT.VALUE    ";
+            s = s + "                 , DA.Type    ";
+            s = s + "                 , DAT.TOVALUE";
+            s = s + "                 , DAV.ISSUSPENDED";
+            s = s + "                 , DAV.ISTOTAL";
+            s = s + "             from DIMENSIONFINANCIALTAG DFT            ";
+            s = s + "             inner join DIMENSIONATTRIBUTEDIRCATEGORY DADC";
+            s = s + "                 on DADC.RECID = DFT.FINANCIALTAGCATEGORY";
+            s = s + "             inner join DIMENSIONATTRIBUTE DA";
+            s = s + "                 on DA.RECID = DADC.DIMENSIONATTRIBUTE";
+            s = s + "             inner join DIMENSIONATTRIBUTEVALUE DAV";
+            s = s + "                 on DAV.DIMENSIONATTRIBUTE = DA.RECID";
+            s = s + "                 and DAV.ENTITYINSTANCE = DFT.RECID            ";
+            s = s + "             inner join DIMENSIONATTRIBUTEVALUETOTALLINGCRITERIA DAT";
+            s = s + "                 on DFT.VALUE between DAT.FROMVALUE and DAT.TOVALUE                    ";
+            s = s + "             where DAV.ISSUSPENDED = 1";
+            s = s + "                 or DAV.ISTOTAL = 1";
+            s = s + "         ) DSET        ";
+            s = s + "         on DSET.NAME = 'Business_Stream'";
+            s = s + "         and DSET.VALUE = DIM.Business_Stream";
+            s = s + "     where PJT.JOURNALID in ( ";
+            s = s + "                                 select PJ.JOURNALID ";
+            s = s + "                                 from SPYPAYROLLJOURNALTABLE PJ";
+            s = s + strFmt( "                                 where exists ( select * from SPYPAYROLLJOURNALLINE PL inner join SPYPAYROLLPERIODLINE PPL on PPL.RECID = PL.PAYROLLPERIODLINE and PPL.PERIODSTARTDATE = '%1' where PL.PAYROLLJOURNAL = PJ.RECID  )", periodFrom ) ;
+            s = s + "                         )         ";
+            s = s + strFmt( " and PJT.DataAreaID = '%1' ", curext() ) ;
+        }
+    
+    
+    
+    
+        if ( s == "" )
+            throw error("Please specificy a payroll period.") ;
+        else
+            return s;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        payExceptnData.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>sqlQuery</Name>
+				<Source><![CDATA[
+    private void sqlQuery(SPYPayExceptnReportContract _contract)
+    {
+        Connection                      connection = new Connection();
+        Statement                       statement = connection.createStatement();
+        ResultSet                       resultSet;
+        SqlStatementExecutePermission   permission;
+        str                             sqlStatement;
+    
+        sqlStatement = this.query(_contract);
+    
+        permission = new SqlStatementExecutePermission(sqlStatement);
+        permission.assert();
+    
+        try
+        {
+            //resultSet = statement.executeQuery(sqlStatement); //TODO UPGRADE
+            this.insert2ReportData(resultSet);
+        }
+        catch(Exception::Error)
+        {
+            info("Error");
+        }
+        CodeAccessPermission::revertAssert();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

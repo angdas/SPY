@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSRunController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYEOSRunController extends SrsReportRunController
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>prePromptModifyContract</Name>
+				<Source><![CDATA[
+    public void prePromptModifyContract()
+    {
+        SPYEOSRunTable              SPYEOSRunTable;
+    
+        if(this.parmArgs().record().TableId == tableNum(SPYEOSRunTable))
+        {
+            SPYEOSRunTable = this.parmArgs().record();
+    
+            SrsReportHelper::addParameterValueRangeToQuery(this.getFirstQuery(),tableNum(SPYEOSRunTable),fieldNum(SPYEOSRunTable, Worker),SysQuery::value(SPYEOSRunTable.Worker));
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static client void main(Args args)
+    {
+        SPYEOSRunController              sPYEOSRunController;
+        sPYEOSRunController              = new SPYEOSRunController();
+    
+        sPYEOSRunController.parmArgs(args);
+    
+        sPYEOSRunController.parmReportName(ssrsReportStr(SPYEOSRunReport, Report));
+    
+        sPYEOSRunController.parmShowDialog(false);
+        sPYEOSRunController.startOperation();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

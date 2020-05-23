@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDocumentRequestSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYDocumentRequestSubmitManager
+{
+    SPYDocumentRequestTable         documentRequestTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmDocumentRequestTable</Name>
+				<Source><![CDATA[
+    private SPYDocumentRequestTable parmDocumentRequestTable(SPYDocumentRequestTable _documentRequestTable = documentRequestTable)
+    {
+        documentRequestTable = _documentRequestTable;
+    
+        return documentRequestTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;
+        FormDataSource                  formDataSource;    
+        
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            documentRequestTable.submitToWorkflow(workFlowTypeStr(SPYDocumentRequest), workflowSubmitDialog.parmWorkflowComment(), false);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYDocumentRequestSubmitManager     documentRequestSubmit = new SPYDocumentRequestSubmitManager();
+        SPYDocumentRequestTable             documentRequestTable = args.record();
+    
+        documentRequestSubmit.parmDocumentRequestTable(documentRequestTable);
+    
+        switch (args.menuItemName())
+        {            
+            case menuitemActionStr(SPYDocumentRequestSubmitMenuItem) :
+                documentRequestSubmit.submit(args);
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

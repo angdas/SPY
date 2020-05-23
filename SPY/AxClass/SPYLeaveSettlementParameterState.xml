@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveSettlementParameterState</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYLeaveSettlementParameterState
+{
+    container               leaveApplQuery;
+    container               leaveApplContainer;
+    boolean                 calledFromSettlementProcess;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmCalledFromSettlementProcess</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmCalledFromSettlementProcess(boolean _calledFromSettlementProcess = calledFromSettlementProcess)
+    {
+        calledFromSettlementProcess = _calledFromSettlementProcess;
+    
+        return calledFromSettlementProcess;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLeaveApplContainer</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmLeaveApplContainer(container _leaveApplContainer = leaveApplContainer)
+    {
+        leaveApplContainer = _leaveApplContainer;
+    
+        return leaveApplContainer;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLeaveApplQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmLeaveApplQuery(container _leaveApplQuery = leaveApplQuery)
+    {
+        leaveApplQuery = _leaveApplQuery;
+    
+        return leaveApplQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

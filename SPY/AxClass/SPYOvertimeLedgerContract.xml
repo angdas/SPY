@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYOvertimeLedgerContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute,
+    SysOperationGroupAttribute('PayrollPeriod','Payroll period','1')
+]
+class SPYOvertimeLedgerContract implements SysOperationValidatable
+{
+    SPYPayrollPeriodLineRecId   payrollPeriodLineFrom, payrollPeriodLineTo;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayrollPeriodLineFrom</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLineFrom'),
+        SysOperationLabelAttribute(literalStr("@SPY635")),
+        SysOperationHelpTextAttribute(literalStr("@SPY168")),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLineFrom(SPYPayrollPeriodLineRecId _payrollperiodLineFrom = payrollPeriodLineFrom)
+    {
+        payrollPeriodLineFrom =_payrollperiodLineFrom;
+    
+        return payrollPeriodLineFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodLineTo</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLineTo'),
+        SysOperationLabelAttribute(literalStr("@SPY636")),
+        SysOperationHelpTextAttribute(literalStr("@SPY168")),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLineTo(SPYPayrollPeriodLineRecId _payrollperiodLineTo = payrollPeriodLineTo)
+    {
+        payrollPeriodLineTo =_payrollperiodLineTo;
+    
+        return payrollPeriodLineTo;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate()
+    {
+        SPYPayrollPeriodLine    payrollPeriodFrom = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        SPYPayrollPeriodLine    payrollPeriodTo = SPYPayrollPeriodLine::find(payrollPeriodLineTo);
+        boolean                 ret = true;
+    
+        if(payrollPeriodLineFrom == 0)
+            ret = checkFailed("@SPY1651");
+    
+        if(payrollPeriodLineTo == 0)
+            ret = checkFailed("@SPY1652");
+    
+        if(payrollPeriodFrom.PayrollPeriod != payrollPeriodTo.PayrollPeriod)
+            ret = checkFailed("@SPY1653");
+    
+        if(payrollPeriodFrom.PeriodStartDate > payrollPeriodTo.PeriodStartDate)
+            ret = checkFailed("@SPY1654");
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

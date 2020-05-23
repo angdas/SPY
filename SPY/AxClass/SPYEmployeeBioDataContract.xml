@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEmployeeBioDataContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYEmployeeBioDataContract
+{
+    NoYes   isProfile;
+    NoYes   isIdentification;
+    NoYes   isSalary;
+    NoYes   isProject;
+    NoYes   isLeave;
+    NoYes   isIncrement;
+    NoYes   isPosition;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmProfile</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute,
+        SysOperationLabelAttribute(literalStr('Show profile')),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public NoYes parmProfile(NoYes _isProfile = isProfile)
+    {
+        isProfile =_isProfile;
+    
+        return isProfile;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmIdentification</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute,
+        SysOperationLabelAttribute(literalStr('Show identification')),
+        SysOperationDisplayOrderAttribute('2')
+    ]
+    public NoYes parmIdentification(NoYes _isIdentification = isIdentification)
+    {
+        isIdentification =_isIdentification;
+    
+        return isIdentification;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSalary</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute,
+        SysOperationLabelAttribute(literalStr('Show current salary')),
+        SysOperationDisplayOrderAttribute('3')
+    ]
+    public NoYes parmSalary(NoYes _isSalary = isSalary)
+    {
+        isSalary =_isSalary;
+    
+        return isSalary;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmProject</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute,
+        SysOperationLabelAttribute(literalStr('Show project details')),
+        SysOperationDisplayOrderAttribute('4')
+    ]
+    public NoYes parmProject(NoYes _isProject = isProject)
+    {
+        isProject =_isProject;
+    
+        return isProject;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLeave</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute,
+        SysOperationLabelAttribute(literalStr('Show leave details')),
+        SysOperationDisplayOrderAttribute('5')
+    ]
+    public NoYes parmLeave(NoYes _isLeave = isLeave)
+    {
+        isLeave = _isLeave;
+    
+        return isLeave;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmIncrement</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute,
+        SysOperationLabelAttribute(literalStr('Show increment history')),
+        SysOperationDisplayOrderAttribute('6')
+    ]
+    public NoYes parmIncrement(NoYes _isIncrement = isIncrement)
+    {
+        isIncrement = _isIncrement;
+    
+        return isIncrement;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPosition</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute,
+        SysOperationLabelAttribute(literalStr('Show position assignment history')),
+        SysOperationDisplayOrderAttribute('7')
+    ]
+    public NoYes parmPosition(NoYes _isPosition = isPosition)
+    {
+        isPosition = _isPosition;
+    
+        return isPosition;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBankFileGenerationServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYBankFileGenerationServiceController extends SysOperationServiceController
+{
+    FormRun                             bankFileGenerationEdit;
+    SPYBankFileGenerationContract       bankFileGenerationContract;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!bankFileGenerationEdit)
+        {
+            bankFileGenerationEdit = classfactory.formRunClass(SPYBankFileGenerationServiceController::newClientArgs(formStr(SPYBankFileGenerationEdit), this));
+            bankFileGenerationEdit.init();
+        }
+    
+        return bankFileGenerationEdit as IDialogable;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+    
+        if (this.canGoBatch())
+           this.batchInfo().dialog(dlg);
+    
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cleanupDialog</Name>
+				<Source><![CDATA[
+    protected void  cleanupDialog()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogRun</Name>
+				<Source><![CDATA[
+    protected SysOperationStartResult dialogRun()
+    {
+        SysOperationStartResult result;
+        CompanyId               companyId = curext();
+
+        result = super();
+
+        if (result == SysOperationStartResult::Canceled)
+        {
+            this.cleanupDialog();
+        }
+
+        if(companyId != curext())
+        {
+            appl.setDefaultCompany(companyId, false);
+        }
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getBankFileGenerationContract</Name>
+				<Source><![CDATA[
+    public SPYBankFileGenerationContract getBankFileGenerationContract()
+    {
+        return bankFileGenerationContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYBankFileGenerationContract parmServiceContract(SPYBankFileGenerationContract _bankFileGenerationContract = bankFileGenerationContract)
+    {
+        bankFileGenerationContract = _bankFileGenerationContract;
+        return bankFileGenerationContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYBankFileGenerationServiceController construct(IdentifierName _className  = '',
+                                                          IdentifierName _methodName = '',
+                                                          SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYBankFileGenerationServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYBankFileGenerationServiceController  bankFileGenerationServiceController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        bankFileGenerationServiceController = SPYBankFileGenerationServiceController::construct(className, methodName, mode);
+    
+        if(bankFileGenerationServiceController.prompt())
+            bankFileGenerationServiceController.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYBankFileGenerationServiceController _timesheetProcessServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_timesheetProcessServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

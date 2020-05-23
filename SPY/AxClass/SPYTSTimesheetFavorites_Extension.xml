@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSTimesheetFavorites_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[ExtensionOf(tableStr(TSTimesheetFavorites))]
+final class SPYTSTimesheetFavorites_Extension
+{
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>SPYGetHours</Name>
+				<Source><![CDATA[
+    public TSHoursTotal SPYGetHours(int _day)
+    {
+        TSHoursTotal    hrs;
+
+        switch (_day)
+        {
+            case 1:
+                hrs = this.TSDailyHoursTotal;
+                break;
+
+            case 2:
+                hrs = this.TSDailyHoursTotal1;
+                break;
+
+            case 3:
+                hrs = this.TSDailyHoursTotal2;
+                break;
+
+            case 4:
+                hrs = this.TSDailyHoursTotal3;
+                break;
+
+            case 5:
+                hrs = this.TSDailyHoursTotal4;
+                break;
+
+            case 6:
+                hrs = this.TSDailyHoursTotal5;
+                break;
+
+            case 7:
+                hrs = this.TSDailyHoursTotal6;
+                break;
+
+            case 8:
+                hrs = this.TSDailyHoursTotal7;
+                break;
+
+            case 9:
+                hrs = this.TSDailyHoursTotal8;
+                break;
+
+            case 10:
+                hrs = this.TSDailyHoursTotal9;
+                break;
+
+            case 11:
+                hrs = this.TSDailyHoursTotal10;
+                break;
+
+            case 12:
+                hrs = this.TSDailyHoursTotal11;
+                break;
+
+            case 13:
+                hrs = this.TSDailyHoursTotal12;
+                break;
+
+            case 14:
+                hrs = this.TSDailyHoursTotal13;
+                break;
+
+            case 15:
+                hrs = this.TSDailyHoursTotal14;
+                break;
+
+            case 16:
+                hrs = this.TSDailyHoursTotal15;
+                break;
+
+            case 17:
+                hrs = this.TSDailyHoursTotal16;
+                break;
+
+            case 18:
+                hrs = this.TSDailyHoursTotal17;
+                break;
+
+            case 19:
+                hrs = this.TSDailyHoursTotal18;
+                break;
+
+            case 20:
+                hrs = this.TSDailyHoursTotal19;
+                break;
+
+            case 21:
+                hrs = this.TSDailyHoursTotal20;
+                break;
+
+            case 22:
+                hrs = this.TSDailyHoursTotal21;
+                break;
+
+            case 23:
+                hrs = this.TSDailyHoursTotal22;
+                break;
+
+            case 24:
+                hrs = this.TSDailyHoursTotal23;
+                break;
+
+            case 25:
+                hrs = this.TSDailyHoursTotal24;
+                break;
+
+            case 26:
+                hrs = this.TSDailyHoursTotal25;
+                break;
+
+            case 27:
+                hrs = this.TSDailyHoursTotal26;
+                break;
+
+            case 28:
+                hrs = this.TSDailyHoursTotal27;
+                break;
+
+            case 29:
+                hrs = this.TSDailyHoursTotal28;
+                break;
+
+            case 30:
+                hrs = this.TSDailyHoursTotal29;
+                break;
+
+            case 31:
+                hrs = this.TSDailyHoursTotal30;
+                break;
+
+            default:
+                hrs = 0;
+                break;
+
+
+
+        }
+
+        return hrs;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYAddNewTimesheetLines</Name>
+				<Source><![CDATA[
+    static boolean SPYAddNewTimesheetLines(ProjWorkerRecId _workerRecId, TSTimesheetNbr _sTimesheetNbr, RefRecId _refRecId = 0)
+    {
+        boolean                     bRet = false;
+        TSTimesheetFavorites        tTimesheetFavorites;
+        TSTimesheetTable            timesheetTable = TSTimesheetTable::find(_sTimesheetNbr);
+        TSTimesheetLine             tTimesheetLine;
+        ProjValEmplProjSetup        workerValidation;
+        ProjValEmplProjSetup        projectValidation;
+        boolean                     isIntercompanyEnabled = false;
+
+        TSTimesheetLine             tTimesheetLineExisting; // buffer to check if there is a existing line then do not copy from roster
+
+        boolean                     createdFlag;  // AFZ Check Table-Group-All logic
+        ResourceWorkerView          resourceWorkerView;
+
+        void insertLine(TSTimesheetFavorites _tTimesheetFavorites)  // modified AFZ Pathikrit insertline()
+        {
+            //TSTimesheetLineForm timesheetLineForm;
+            TSTimesheetFavorites tsFavourites;
+
+            tsFavourites = _tTimesheetFavorites;
+
+            tTimesheetLine = null;
+
+            tTimesheetLine.ProjId = tTimesheetFavorites.ProjId;
+            // Set the Timesheet number
+            tTimesheetLine.TimesheetNbr = timesheetTable.TimesheetNbr;
+            tTimesheetLine.ActivityNumber= tTimesheetFavorites.ActivityNumber;
+            tTimesheetLine.CategoryId = tTimesheetFavorites.CategoryId;
+            tTimesheetLine.ProjPeriodTimesheetWeek = _refRecId;
+            tTimesheetLine.ProjectDataAreaId = tTimesheetFavorites.ProjectDataAreaId;
+            tTimesheetLine.initValue();
+
+            if (tTimesheetLine.validateWrite())
+            {
+                tTimesheetLine.insert();
+
+                // TSTimesheetLineWeek::loadFromLine(tTimesheetLine, NoYes::No);  // commented AFZ Pathikrit
+
+                TSTimesheetLineWeek::SPYLoadFromLine(tTimesheetLine,tsFavourites);  // added AFZ Pathikrit
+
+                bRet = true;
+            }
+            else
+            {
+                // Could not create timesheet line for Project: (%1)  Activity: (%2)  Category: (%3)
+                info(strFmt("@SYS183928", tTimesheetFavorites.ProjId,
+                                      tTimesheetFavorites.ActivityNumber,
+                                      tTimesheetFavorites.CategoryId));
+                bRet = false;
+            }
+        }
+
+        // Derive from project paramters
+        isIntercompanyEnabled = ProjParameters::find(false).EnableIntercompanyTimesheet;
+
+        if (_workerRecId && _sTimesheetNbr)
+        {            
+            while select * from tTimesheetFavorites
+                join resourceWorkerView
+                where tTimesheetFavorites.Resource == resourceWorkerView.RecId &&
+                      resourceWorkerView.Worker == _workerRecId &&
+                      tTimesheetFavorites.TableGroupAll == TableGroupAll::Table &&
+                      // If the isIntercompanyEnabled is false, only then add the data areaid condition
+                      // Else do not add any condition on dataareaid
+                      (isIntercompanyEnabled || tTimesheetFavorites.ProjectDataAreaId == curext())
+                notExists join tTimesheetLineExisting 
+                where tTimesheetFavorites.ProjId == tTimesheetLineExisting.ProjId  &&// buffer to check if there is a existing line then do not copy from roster
+                      tTimesheetLineExisting.TimesheetNbr == _sTimesheetNbr
+            {
+                createdFlag = true;  // AFZ -- Table relation is valid
+                if(!TSTimesheetLine::existFavorite(_sTimesheetNbr, tTimesheetFavorites, _refRecId))
+                {
+
+                    insertLine(tTimesheetFavorites);        // modified AFZ Pathikrit insertline()
+                }
+            }
+
+            if(!createdFlag)   // AFZ -- Search and insert only if matching Table relation is not found
+            {
+                while select GroupId, Projid from workerValidation 
+                    join GroupId, Projid from projectValidation
+                    group by workerValidation.GroupId, workerValidation.Projid
+                    join resourceWorkerView
+                    where workerValidation.GroupId == projectValidation.GroupId &&
+                          workerValidation.Resource == resourceWorkerView.RecId &&
+                          resourceWorkerView.Worker == _workerRecId &&
+                          workerValidation.Projid == '' &&
+                          projectValidation.Resource == 0                
+                    join * from tTimesheetFavorites
+                        where tTimesheetFavorites.ProjValEmplGroup == workerValidation.GroupId &&
+                              tTimesheetFavorites.TableGroupAll == TableGroupAll::GroupId &&
+                              // If the isIntercompanyEnabled is false, only then add the data areaid condition
+                              // Else do not add any condition on dataareaid
+                              (isIntercompanyEnabled || tTimesheetFavorites.ProjectDataAreaId == curext())
+                        notExists join tTimesheetLineExisting 
+                        where tTimesheetFavorites.ProjId == tTimesheetLineExisting.ProjId &&// buffer to check if there is a existing line then do not copy from roster
+                              tTimesheetLineExisting.TimesheetNbr == _sTimesheetNbr
+                {
+                    if(!TSTimesheetLine::existFavorite(_sTimesheetNbr, tTimesheetFavorites, _refRecId))
+                    {
+                        createdFlag = true;
+                        insertLine(tTimesheetFavorites);  // modified AFZ Pathikrit insertline()
+                    }
+                }                
+            }
+        }
+
+        if (_sTimesheetNbr && !createdFlag)   // AFZ -- Search and insert only if matching Table or Group relation is not found
+        {
+            // all
+            while select * from tTimesheetFavorites
+                where tTimesheetFavorites.TableGroupAll == TableGroupAll::All &&
+                      // If the isIntercompanyEnabled is false, only then add the data areaid condition
+                      // Else do not add any condition on dataareaid
+                      (isIntercompanyEnabled || tTimesheetFavorites.ProjectDataAreaId == curext())
+                notExists join tTimesheetLineExisting 
+                where tTimesheetFavorites.ProjId == tTimesheetLineExisting.ProjId &&// buffer to check if there is a existing line then do not copy from roster
+                      tTimesheetLineExisting.TimesheetNbr == _sTimesheetNbr
+            {
+                if(!TSTimesheetLine::existFavorite(_sTimesheetNbr, tTimesheetFavorites, _refRecId))
+                {
+                    insertLine(tTimesheetFavorites);  // modified AFZ Pathikrit insertline()
+                }
+            }
+        }
+
+        return bRet;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYExistForWorker</Name>
+				<Source><![CDATA[
+    static boolean SPYExistForWorker(ProjWorkerRecId    _worker)
+    {
+        TSTimesheetFavorites    timesheetFavorites;
+        ResourceWorkerView      resourceWorkerView;
+
+        select firstonly timesheetFavorites
+            join resourceWorkerView
+            where resourceWorkerView.RecId == timesheetFavorites.Resource &&
+                  resourceWorkerView.Worker == _worker;
+        return timesheetFavorites.RecId != 0;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYTransferNewFavorites</Name>
+				<Source><![CDATA[
+    public static server void SPYTransferNewFavorites(TSTimesheetNbr _timesheetNbr, RefRecId _refRecId = 0)
+    {
+        TSTimesheetTable        timesheetTable;
+        ResourceWorkerView      resourceWorkerView;
+
+        if (!_timesheetNbr)
+        {
+            return;
+        }
+
+        timesheetTable = TSTimesheetTable::find(_timesheetNbr);
+        if ( (timesheetTable.ApprovalStatus != TSAppStatus::Create) &&
+         (timesheetTable.ApprovalStatus != TSAppStatus::Returned) )
+        {
+            // Unable to transfer favorites to timesheet with status %1
+            info(strFmt("@SYS190498", timesheetTable.ApprovalStatus));
+            return;
+        }
+
+        ttsbegin;
+        select firstonly resourceWorkerView
+            where resourceWorkerView.RecId == timesheetTable.Resource;
+        TSTimesheetFavorites::SPYAddNewTimesheetLines(resourceWorkerView.Worker, _timesheetNbr, _refRecId);
+
+        ttscommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>SPYUpdateTimesheetLineWeekHours</Name>
+				<Source><![CDATA[
+    public static void SPYUpdateTimesheetLineWeekHours(TSTimesheetLineWeek _lineWeek, TSTimesheetFavorites _tsFavorites)
+    {
+        ProjTransDate       currDate    = _lineWeek.DayFrom;
+        int                 dayOffset   = TSPeriods::getDayOffset(ProjPeriodTable::find(_lineWeek.timesheetTable().ProjPeriodId).WeekStart, currDate);
+        Counter             i;
+        Int                 day;
+
+        for (i=1; i<=7; i++)
+        {
+            _lineWeek.Hours[i] = 0;
+        }
+
+        // dayOffset variable needs to be set to 1 if the lineWeek period spans over a week
+        if (_lineWeek.DayTo - _lineWeek.DayFrom == 6)
+        dayOffset = 1;
+
+        while (currDate <= _lineWeek.DayTo)
+        {
+            day = dayOfMth(currDate);
+            /*
+            if(!AFZAttendenceRegister::isAbsent(_tsFavorites.Worker, currDate))
+                _lineWeek.Hours[dayOffset] = _tsFavorites.AFZGetHours(day);
+            else
+                _lineWeek.Hours[dayOffset] = 0.00;
+            */
+            _lineWeek.Hours[dayOffset] = 0.00; // Create dummy hours, these will be updated later
+
+            currDate++;
+            dayOffset++;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

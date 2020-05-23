@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYEOSRun</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYEOSRun extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Title>@SPY655</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYEOSRunTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYEOSRunTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYEOSRunPayroll_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYEOSRunPayroll</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<JoinMode>OuterJoin</JoinMode>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYEOSRunBenefit_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYEOSRunBenefit</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<JoinMode>OuterJoin</JoinMode>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges />
+			<GroupBy />
+			<Having />
+			<OrderBy>
+				<AxQuerySimpleOrderByField>
+					<Name>createdDateTime</Name>
+					<DataSource>SPYEOSRunTable_1</DataSource>
+					<Direction>Descending</Direction>
+					<Field>createdDateTime</Field>
+				</AxQuerySimpleOrderByField>
+			</OrderBy>
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

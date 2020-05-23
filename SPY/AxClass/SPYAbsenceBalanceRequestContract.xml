@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceBalanceRequestContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYAbsenceBalanceRequestContract
+{
+    SPYMobileUserId     userId;
+    hrmAbsenceCodeId    hrmAbsenceCodeId;
+    TransDate           asOnDate;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAsOnDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("AsOnDate")]
+    public TransDate parmAsOnDate(TransDate _asOnDate = asOnDate)
+    {
+        asOnDate = _asOnDate;
+    
+        return asOnDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmHrmAbsenceCodeId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("HrmAbsenceCodeId")]
+    public HrmAbsenceCodeId parmHrmAbsenceCodeId(HrmAbsenceCodeId _hrmAbsenceCodeId = hrmAbsenceCodeId)
+    {
+        hrmAbsenceCodeId = _hrmAbsenceCodeId;
+    
+        return hrmAbsenceCodeId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmUserId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("UserId")]
+    public SPYMobileUserId parmUserId(SPYMobileUserId _userId = userId)
+    {
+        userId = _userId;
+    
+        return userId;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

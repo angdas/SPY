@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanPostContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayLoanPostContract
+{
+    container                   loanTableQuery;
+    TransDate                   startDate;
+    TransDate                   endDate;
+    SPYPayrollPeriodRecId       installmentPeriod;
+    int                         noOfInstallments;
+    SPYPayLoanRecId             payLoan;
+    SPYAmount               calculatedAmount;
+    SPYAmount               proposedAmount;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmEndDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public TransDate parmEndDate(TransDate _endDate = endDate)
+    {
+        endDate = _endDate;
+        return endDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmInstallmentPeriod</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodRecId parmInstallmentPeriod(SPYPayrollPeriodRecId _installmentPeriod = installmentPeriod)
+    {
+        installmentPeriod = _installmentPeriod;
+        return installmentPeriod;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLoanTableQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmLoanTableQuery(container _loanTableQuery = loanTableQuery)
+    {
+        loanTableQuery = _loanTableQuery;
+        return loanTableQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmNoOfInstallments</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public int parmNoOfInstallments(int _noOfInstallments = noOfInstallments)
+    {
+        noOfInstallments = _noOfInstallments;
+        return noOfInstallments;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayLoan</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayLoanRecId parmPayLoan(SPYPayLoanRecId _payLoan = payLoan)
+    {
+        payLoan = _payLoan;
+        return payLoan;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmStartDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public TransDate parmStartDate(TransDate _startDate = startDate)
+    {
+        startDate = _startDate;
+        return startDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCalculatedAmount</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYAmount parmCalculatedAmount(SPYAmount _calculatedAmount = calculatedAmount)
+    {
+        calculatedAmount = _calculatedAmount;
+        return calculatedAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmProposedAmount</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYAmount parmProposedAmount(SPYAmount _proposedAmount = proposedAmount)
+    {
+        proposedAmount = _proposedAmount;
+        return proposedAmount;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

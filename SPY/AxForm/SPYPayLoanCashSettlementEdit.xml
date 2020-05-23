@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYPayLoanCashSettlementEdit</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+/* TODO: (Code Upgrade) [Vertical Button Group Rule] Please manually fix the vertical button group [GroupParametersButtonGroup] in this form, it does not conform to any well known rules. The button group does not have any data source or its data source is not part of any root or linked data source query. */ 
+[Form]
+public class SPYPayLoanCashSettlementEdit extends FormRun implements IDialogable
+{
+    SPYPayLoanCashSettlementController          payLoanCashSettlementController;
+    Query                                       loanTableQuery;
+    QueryRun                                    loanTableQueryRun;
+    SPYPayLoanCashSettlementContract            payLoanCashSettlementContract;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>formRun</Name>
+				<Source><![CDATA[
+    public FormRun formRun()
+    {
+        //Required by the SysOperation framework.
+        return this;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>closedOk</Name>
+				<Source><![CDATA[
+    public boolean closedOk()
+    {
+        boolean                     ret;
+
+        ret = super();
+
+        if(payLoanCashSettlementContract)
+        {
+            payLoanCashSettlementContract.parmAmount(Amount.realValue());
+            payLoanCashSettlementContract.parmDescription(Description.valueStr());
+            payLoanCashSettlementContract.parmPayLoan(SPYPayLoanTable::findByCode(payLoanCashSettlementController.parmPayLoanCode()).RecId);
+            payLoanCashSettlementContract.parmSettlementPeriod(SettlementPeriod.value());
+            payLoanCashSettlementContract.parmSettlementDate(SettlementDate.dateValue());
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        if(element.args().caller() && element.args().caller() is SPYPayLoanCashSettlementController)
+        {
+            payLoanCashSettlementController = element.args().caller() as SPYPayLoanCashSettlementController;
+        }
+        super();
+
+        if(payLoanCashSettlementController.getDataContractObject() is SPYPayLoanCashSettlementContract)
+        payLoanCashSettlementContract = payLoanCashSettlementController.getDataContractObject();
+
+        payLoanCashSettlementContract.parmPayLoan(payLoanCashSettlementController.parmPayLoan());
+
+        element.initializeValue();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeValue</Name>
+				<Source><![CDATA[
+    public void initializeValue()
+    {
+        SPYPayLoanLedger    payLoanLedger;
+        SPYPayLoanLine      payLoanLine;
+        Amount              amountRecoveredCash,amountRecoveredPayroll,remainingPayLoanAmount;
+
+        select RecId,Amount from payLoanLine
+        where payLoanLine.PayLoan == payLoanCashSettlementContract.parmPayLoan();
+
+        select sum(TransactionCurrencyAmount) from payLoanLedger
+            where payLoanLedger.PayLoanLine == payLoanLine.RecId
+               && payLoanLedger.PayLoanTransType == SPYPayLoanTransType::CashSettlement;
+
+        amountRecoveredCash = payLoanLedger.TransactionCurrencyAmount;
+
+        while select payLoanLedger
+        where payLoanLedger.PayLoanLine == payLoanLine.RecId &&
+              payLoanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+        {
+            if(payLoanLedger.amountRecoveredTransCur())
+            {
+                amountRecoveredPayroll = amountRecoveredPayroll + payLoanLedger.TransactionCurrencyAmount;
+            }
+        }
+
+        remainingPayLoanAmount = payLoanLine.Amount - (amountRecoveredCash + amountRecoveredPayroll);
+
+        SettlementDate.dateValue(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()));
+        RemainingLoanAmount.realValue(remainingPayLoanAmount);
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runBase</Name>
+				<Source><![CDATA[
+    SPYPayLoanCashSettlementController runBase()
+    {
+        //Method must be named runBase() for the integration to the Batch dialog to work.
+        return payLoanCashSettlementController;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="">
+			<Control>
+				<Name>OK</Name>
+				<Type>CommandButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        /// <summary>
+        ///
+        /// </summary>
+        public void clicked()
+        {
+            boolean ret = false;
+            if(Amount.realValue()<=0)
+            {
+                ret = checkFailed("@SPY1734");
+            }
+            else
+            {
+                super();
+            }
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources />
+	<Design>
+		<Caption xmlns="">Pay loan: Cash settlement</Caption>
+		<Pattern xmlns="">Dialog</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<Style xmlns="">Dialog</Style>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>RemainingAmount</Name>
+				<Pattern>FieldsFieldGroups</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>RemainingLoanAmount</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>Real</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Label>Remaining amount</Label>
+					</AxFormControl>
+				</Controls>
+				<ColumnsMode>Fill</ColumnsMode>
+				<Caption>Remaining loan amount</Caption>
+				<Style>DialogContent</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>CashSettlement</Name>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Pattern>FieldsFieldGroups</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormDateControl">
+						<Name>SettlementDate</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>Date</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Label>Settlement date</Label>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormReferenceGroupControl">
+						<Name>SettlementPeriod</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>ReferenceGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<ExtendedDataType>SPYPayrollPeriodLineRecId</ExtendedDataType>
+						<Label>Settlement period</Label>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormRealControl">
+						<Name>Amount</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>Real</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Label>Amount</Label>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormStringControl">
+						<Name>Description</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<Type>String</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Label>Description</Label>
+					</AxFormControl>
+				</Controls>
+				<ColumnsMode>Fill</ColumnsMode>
+				<Caption>Cash settlement</Caption>
+				<Style>DialogContent</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormButtonGroupControl">
+				<Name>ButtonGroup</Name>
+				<ElementPosition>1610612733</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<LeftMode>AutoRight</LeftMode>
+				<TopMode>BottomEdge</TopMode>
+				<Type>ButtonGroup</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>OK</Name>
+						<ElementPosition>858993458</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>CommandButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>OK</Command>
+						<DefaultButton>Yes</DefaultButton>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>Cancel</Name>
+						<ElementPosition>1288490187</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>CommandButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>Cancel</Command>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormMenuFunctionButtonControl">
+						<Name>ButtonBatch</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1717986916</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>MenuFunctionButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<MenuItemName>BatchDialog</MenuItemName>
+						<MenuItemType>Action</MenuItemType>
+					</AxFormControl>
+				</Controls>
+				<ArrangeMethod>HorizontalRight</ArrangeMethod>
+				<Style>DialogCommitContainer</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYWebDbUpdateEdit</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYWebDbUpdateEdit extends FormRun implements IDialogable
+{
+    SPYWebDbUpdateServiceController                            webDbUpdateServiceController;
+    Query                                                                       workerQuery;
+    QueryRun                                                                 workerQueryRun;
+    container                                                                  workerQueryPack;
+    SPYWebDbUpdateContract                                        webDbUpdateContract;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>formRun</Name>
+				<Source><![CDATA[
+    public FormRun formRun()
+    {
+        //Required by the SysOperation framework.
+        return this;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>closedOk</Name>
+				<Source><![CDATA[
+    public boolean closedOk()
+    {
+        boolean                     ret;
+    
+        ret = super();
+    
+        if(webDbUpdateContract)
+        {
+            webDbUpdateContract.parmTransDate(TransDate.dateValue());
+            webDbUpdateContract.parmSyncConfiguration(SyncConfiguration.value());
+            webDbUpdateContract.parmSyncWorker(SyncWorker.value());
+            webDbUpdateContract.parmSyncAbsenceConfig(syncAbsenceConfig.value());
+            webDbUpdateContract.parmSyncLeaveApplication(SyncLeaveApplication.value());
+            webDbUpdateContract.parmSyncTimesheetConfig(SyncTimesheetConfig.value());
+            webDbUpdateContract.parmSyncTimesheet(SyncTimesheet.value());
+            webDbUpdateContract.parmSyncDocumentRequestConfig(SyncDocumentRequestConfig.value());
+            webDbUpdateContract.parmSyncDocumentRequest(SyncDocumentRequest.value());
+            webDbUpdateContract.parmSyncPayroll(SyncPayroll.value());
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        super();
+        if(element.args().caller() && element.args().caller() is SPYWebDbUpdateServiceController)
+        {
+            webDbUpdateServiceController = element.args().caller() as SPYWebDbUpdateServiceController;
+        }        
+    
+        if(webDbUpdateServiceController.getDataContractObject() is SPYWebDbUpdateContract)
+            webDbUpdateContract = webDbUpdateServiceController.getDataContractObject();
+    
+        element.initializeValue();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeValue</Name>
+				<Source><![CDATA[
+    public void initializeValue()
+    {        
+        TransDate.dateValue(systemDateGet());     
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runBase</Name>
+				<Source><![CDATA[
+    SPYWebDbUpdateServiceController runBase()
+    {//Method must be named runBase() for the integration to the Batch dialog to work.
+        return webDbUpdateServiceController;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="">
+			<Control>
+				<Name>OK</Name>
+				<Type>CommandButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            boolean     ret = true;
+        
+            
+            if(ret)
+                super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources />
+	<Design>
+		<Caption xmlns="">@SPY:WebDbUpdate</Caption>
+		<Pattern xmlns="">Dialog</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<Style xmlns="">Dialog</Style>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>FormActionPaneControl1</Name>
+				<Type>ActionPane</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>GroupParametersButtonGroup</Name>
+						<ElementPosition>1610612734</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<ArrangeMethod>Vertical</ArrangeMethod>
+					</AxFormControl>
+				</Controls>
+				<Style>Strip</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>Group_</Name>
+				<ElementPosition>805306366</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Pattern>FieldsFieldGroups</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>GroupParameter</Name>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<Type>Group</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormDateControl">
+								<Name>TransDate</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>Date</Type>
+								<Visible>No</Visible>
+								<FormControlExtension
+									i:nil="true" />
+								<ExtendedDataType>TransDate</ExtendedDataType>
+								<Label>@SPY:EffectiveDate</Label>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncConfiguration</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncConfiguration</Label>
+								<Value>1</Value>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncWorker</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncWorker</Label>
+								<Value>1</Value>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncAbsenceConfig</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncAbsenceConfig</Label>
+								<Value>1</Value>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncLeaveApplication</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncLeaveApplication</Label>
+								<Value>1</Value>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncTimesheetConfig</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncTimesheetConfig</Label>
+								<Value>1</Value>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncTimesheet</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncTimesheet</Label>
+								<Value>1</Value>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncDocumentRequestConfig</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncHRRequestConfig</Label>
+								<Value>1</Value>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncDocumentRequest</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncHRRequest</Label>
+								<Value>1</Value>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCheckBoxControl">
+								<Name>SyncPayroll</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>CheckBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Label>@SPY:SyncPayroll</Label>
+								<Value>1</Value>
+							</AxFormControl>
+						</Controls>
+					</AxFormControl>
+				</Controls>
+				<ColumnsMode>Fill</ColumnsMode>
+				<Style>DialogContent</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormButtonGroupControl">
+				<Name>ButtonGroup</Name>
+				<ElementPosition>1610612733</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<LeftMode>AutoRight</LeftMode>
+				<TopMode>BottomEdge</TopMode>
+				<Type>ButtonGroup</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>OK</Name>
+						<ElementPosition>858993458</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>CommandButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>OK</Command>
+						<DefaultButton>Yes</DefaultButton>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormMenuFunctionButtonControl">
+						<Name>ButtonBatch</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1717986916</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>MenuFunctionButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<MenuItemName>BatchDialog</MenuItemName>
+						<MenuItemType>Action</MenuItemType>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormCommandButtonControl">
+						<Name>Cancel</Name>
+						<ElementPosition>1288490187</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Skip>Yes</Skip>
+						<Type>CommandButton</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Command>Cancel</Command>
+					</AxFormControl>
+				</Controls>
+				<ArrangeMethod>HorizontalRight</ArrangeMethod>
+				<Style>DialogCommitContainer</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

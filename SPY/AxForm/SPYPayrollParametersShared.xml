@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYPayrollParametersShared</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYPayrollParametersShared extends FormRun
+{
+    str imageFilePathName;
+    container imageContainer;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        super();
+        imageContainer = SPYPayrollParametersShared::find().WebPortalCompanyLogo;
+        element.showImage();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertImage</Name>
+				<Source><![CDATA[
+    void insertImage()
+    {
+        ttsbegin;
+
+        SPYPayrollParametersShared      payrollParametersShared = SPYPayrollParametersShared::find(true);
+
+        if (payrollParametersShared)       
+        {
+            payrollParametersShared.WebPortalCompanyLogo = imageContainer;
+            payrollParametersShared.update();
+        }
+
+        ttscommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteImage</Name>
+				<Source><![CDATA[
+    private void deleteImage()
+    {
+        ttsbegin;
+
+        SPYPayrollParametersShared      payrollParametersShared = SPYPayrollParametersShared::find(true);
+
+        if (payrollParametersShared)
+        {
+            payrollParametersShared.WebPortalCompanyLogo = conNull();
+            payrollParametersShared.update();
+        }
+
+        ttscommit;
+
+        imageContainer = conNull();
+        imageFilePathName = '';
+        element.showImage();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadImageFile</Name>
+				<Source><![CDATA[
+    public boolean uploadImageFile()
+    {
+        FormRun visualForm;
+        FileUpload fileUploadControl;
+
+        str strategyFileFilter = 'ImageFileUploadTemporaryStorageStrategy';
+        visualForm = classFactory::formRunClassOnClient(new Args(formstr(SysGetFileFromUser)));
+        visualForm.init();
+        visualForm.design().caption("@ApplicationPlatform:GetFileImageCaption");
+            
+        fileUploadControl = visualForm.design().controlName('FileUpload1');
+
+        visualForm.run();
+        visualForm.wait();
+
+        FileUploadTemporaryStorageResult fileUploadResult = fileUploadControl.getFileUploadResult();
+
+        if (fileUploadResult != null && fileUploadResult.getUploadStatus())
+        {
+            imageFilePathName = fileUploadResult.getDownloadUrl();
+            return true;
+        }
+
+        return false;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>showImage</Name>
+				<Source><![CDATA[
+    private void showImage()
+    {
+        Image  image;
+        
+        try
+        {
+            //imageContainer = SPYPayrollParametersShared.WebPortalCompanyLogo;
+            if (imageContainer)
+            {
+                image = new Image();
+                image.setData(imageContainer);
+                LogoImage.image(image);
+            }
+            else
+            {
+                LogoImage.image(null);
+            }
+        }
+        catch (Exception::Warning)
+        {
+            throw error(strFmt("@SYS19312", imageFilePathName));
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="" />
+		<DataControls xmlns="">
+			<Control>
+				<Name>CompanyLogoFastTabPage</Name>
+				<Type>TabPage</Type>
+				<Methods>
+					<Method>
+						<Name>updateReportLogoChangeAndRemoveButtonsEnablement</Name>
+						<Source><![CDATA[
+        public void updateReportLogoChangeAndRemoveButtonsEnablement(boolean _enabled)
+        {
+            Change.enabled(_enabled);
+            Remove.enabled(_enabled);
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>expand</Name>
+						<Source><![CDATA[
+        public void expand()
+        {
+            super();
+        
+            //element.updateChangeAndRemoveButtonsEnablement();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>Change</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        public void clicked()
+        {
+            if (element.uploadImageFile())
+            {
+                imageContainer = ImageReference::GetPackedBinaryData(imageFilePathName);
+                element.showImage();
+                element.insertImage();
+            }
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>Remove</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        public void clicked()
+        {
+            super();
+            element.deleteImage();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYPayrollParametersShared</Name>
+			<Table>SPYPayrollParametersShared</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>DataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Key</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ModifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WebAppId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WebClientSecret</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WebPortalApiURL</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WebPortalMessagePageSize</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WebTenantId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY:PayrollSharedParameters</Caption>
+		<DataSource xmlns="">SPYPayrollParametersShared</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<HideIfEmpty xmlns="">No</HideIfEmpty>
+		<Pattern xmlns="">TableOfContents</Pattern>
+		<PatternVersion xmlns="">1.1</PatternVersion>
+		<SetCompany xmlns="">No</SetCompany>
+		<Style xmlns="">TableOfContents</Style>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>TOCGroup</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1073741823</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>GeneralTabPage</Name>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GeneralTitle</Name>
+								<ElementPosition>954437176</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Skip>Yes</Skip>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStaticTextControl">
+										<Name>StaticText1</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Skip>Yes</Skip>
+										<Type>StaticText</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Style>MainInstruction</Style>
+										<Text>@SPY:SetupPayrollParameter</Text>
+									</AxFormControl>
+								</Controls>
+								<AllowUserSetup>No</AllowUserSetup>
+								<FrameType>None</FrameType>
+								<Style>TOCTitleContainer</Style>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormTabControl">
+								<Name>GeneralFastTab</Name>
+								<AlignControl>No</AlignControl>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Tab</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>GeneralFastTabPage</Name>
+										<ElementPosition>572662304</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Pattern>FieldsFieldGroups</Pattern>
+										<PatternVersion>1.1</PatternVersion>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>GroupWebPortal</Name>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormStringControl">
+														<Name>GroupWebPortal_WebPortalApiURL</Name>
+														<Type>String</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataField>WebPortalApiURL</DataField>
+														<DataSource>SPYPayrollParametersShared</DataSource>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormIntegerControl">
+														<Name>GroupWebPortal_WebPortalMessagePageSize</Name>
+														<Type>Integer</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataField>WebPortalMessagePageSize</DataField>
+														<DataSource>SPYPayrollParametersShared</DataSource>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormStringControl">
+														<Name>GroupWebPortal_WebTenantId</Name>
+														<Type>String</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataField>WebTenantId</DataField>
+														<DataSource>SPYPayrollParametersShared</DataSource>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormStringControl">
+														<Name>GroupWebPortal_WebAppId</Name>
+														<Type>String</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataField>WebAppId</DataField>
+														<DataSource>SPYPayrollParametersShared</DataSource>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormStringControl">
+														<Name>GroupWebPortal_WebClientSecret</Name>
+														<Type>String</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<DataField>WebClientSecret</DataField>
+														<DataSource>SPYPayrollParametersShared</DataSource>
+													</AxFormControl>
+												</Controls>
+												<DataGroup>WebPortal</DataGroup>
+												<DataSource>SPYPayrollParametersShared</DataSource>
+											</AxFormControl>
+										</Controls>
+										<ColumnsMode>Fill</ColumnsMode>
+										<Caption>@SYS2952</Caption>
+										<Scrollbars>Auto</Scrollbars>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>CompanyLogoFastTabPage</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<Pattern>ImagePreview</Pattern>
+										<PatternVersion>1.1</PatternVersion>
+										<Type>TabPage</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormActionPaneControl">
+												<Name>ActionPaneLogo</Name>
+												<ElementPosition>715827882</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Skip>Yes</Skip>
+												<Type>ActionPane</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormButtonGroupControl">
+														<Name>ButtonGroupLogo</Name>
+														<ElementPosition>1073741823</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Left>0</Left>
+														<Type>ButtonGroup</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonControl">
+																<Name>Change</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<ElementPosition>1073741822</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<Type>Button</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<ButtonDisplay>TextOnly</ButtonDisplay>
+																<Text>@SYS1038</Text>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormButtonControl">
+																<Name>Remove</Name>
+																<AutoDeclaration>Yes</AutoDeclaration>
+																<ElementPosition>1610612733</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<HeightMode>Auto</HeightMode>
+																<Type>Button</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<WidthMode>Auto</WidthMode>
+																<FormControlExtension
+																	i:nil="true" />
+																<ButtonDisplay>TextOnly</ButtonDisplay>
+																<Text>@SYS26394</Text>
+															</AxFormControl>
+														</Controls>
+														<DataSource>SPYPayrollParametersShared</DataSource>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<AlignChildren>No</AlignChildren>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<DataSource>SPYPayrollParametersShared</DataSource>
+												<Style>Strip</Style>
+											</AxFormControl>
+											<AxFormControl xmlns=""
+												i:type="AxFormGroupControl">
+												<Name>LogoGroup</Name>
+												<AutoDeclaration>Yes</AutoDeclaration>
+												<Type>Group</Type>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormImageControl">
+														<Name>LogoImage</Name>
+														<AutoDeclaration>Yes</AutoDeclaration>
+														<ElementPosition>1431655764</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<Height>0</Height>
+														<Type>Image</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<Width>0</Width>
+														<FormControlExtension
+															i:nil="true" />
+														<Label>@SYS53641</Label>
+														<ShowLabel>No</ShowLabel>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormGroupControl">
+														<Name>ImageFieldsGroup</Name>
+														<ElementPosition>1431655764</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>SizeToAvailable</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>Group</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls />
+														<ColumnsMode>Fill</ColumnsMode>
+														<FrameType>None</FrameType>
+														<OptionValue>0</OptionValue>
+													</AxFormControl>
+												</Controls>
+												<Columns>2</Columns>
+												<DataSource>SPYPayrollParametersShared</DataSource>
+											</AxFormControl>
+										</Controls>
+										<Caption>@SPY:WebPortalCompanyLogo</Caption>
+										<DataSource>SPYPayrollParametersShared</DataSource>
+									</AxFormControl>
+								</Controls>
+								<AlignChild>No</AlignChild>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Style>FastTabs</Style>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SPY:Parameter</Caption>
+						<DataSource>SPYPayrollParametersShared</DataSource>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<Style>VerticalTabs</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

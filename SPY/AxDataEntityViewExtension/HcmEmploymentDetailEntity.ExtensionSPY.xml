@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxDataEntityViewExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>HcmEmploymentDetailEntity.ExtensionSPY</Name>
+	<DataSources>
+		<AxQueryExtensionEmbeddedDataSource>
+			<Parent>HcmEmploymentDetail</Parent>
+			<DataSource>
+				<Name>SPYAbsenceConfigTable</Name>
+				<DynamicFields>Yes</DynamicFields>
+				<IsReadOnly>Yes</IsReadOnly>
+				<Table>SPYAbsenceConfigTable</Table>
+				<DataSources />
+				<DerivedDataSources />
+				<Fields />
+				<Ranges />
+				<JoinMode>OuterJoin</JoinMode>
+				<Relations>
+					<AxQuerySimpleDataSourceRelation>
+						<Name>QueryDataSourceRelation1</Name>
+						<Field>SPYAbsenceConfig</Field>
+						<JoinDataSource>HcmEmploymentDetail</JoinDataSource>
+						<RelatedField>RecId</RelatedField>
+					</AxQuerySimpleDataSourceRelation>
+				</Relations>
+			</DataSource>
+		</AxQueryExtensionEmbeddedDataSource>
+		<AxQueryExtensionEmbeddedDataSource>
+			<Parent>HcmEmploymentDetail</Parent>
+			<DataSource>
+				<Name>SPYPayrollPeriod</Name>
+				<DynamicFields>Yes</DynamicFields>
+				<IsReadOnly>Yes</IsReadOnly>
+				<Table>SPYPayrollPeriod</Table>
+				<DataSources />
+				<DerivedDataSources />
+				<Fields />
+				<Ranges />
+				<JoinMode>OuterJoin</JoinMode>
+				<Relations>
+					<AxQuerySimpleDataSourceRelation>
+						<Name>QueryDataSourceRelation1</Name>
+						<Field>SPYDefaultPayrollPeriod</Field>
+						<JoinDataSource>HcmEmploymentDetail</JoinDataSource>
+						<RelatedField>RecId</RelatedField>
+					</AxQuerySimpleDataSourceRelation>
+				</Relations>
+			</DataSource>
+		</AxQueryExtensionEmbeddedDataSource>
+	</DataSources>
+	<FieldGroupExtensions />
+	<FieldGroups />
+	<FieldModifications />
+	<Fields>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYWorkerSponsor</Name>
+			<DataField>SPYWorkerSponsor</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYWorkerGroupCode</Name>
+			<DataField>SPYWorkerGroupCode</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYSocialSecurity</Name>
+			<DataField>SPYSocialSecurity</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPayrollDisbursementMode</Name>
+			<DataField>SPYPayrollDisbursementMode</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYOvertimeEnabled</Name>
+			<DataField>SPYOvertimeEnabled</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYDefaultPayrollPeriod</Name>
+			<DataField>SPYDefaultPayrollPeriod</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYDefaultPayrollCurrency</Name>
+			<DataField>SPYDefaultPayrollCurrency</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYCostDistributionBasis</Name>
+			<DataField>SPYCostDistributionBasis</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYAirTicketToCity</Name>
+			<DataField>SPYAirTicketToCity</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYAirTicketFromCity</Name>
+			<DataField>SPYAirTicketFromCity</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYAirTicketCount</Name>
+			<DataField>SPYAirTicketCount</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYAirClass</Name>
+			<DataField>SPYAirClass</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYAbsenceConfig</Name>
+			<DataField>SPYAbsenceConfig</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYAbsenceConfigCode</Name>
+			<DataField>AbsenceConfigCode</DataField>
+			<DataSource>SPYAbsenceConfigTable</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPayrollPeriodCode</Name>
+			<DataField>PayrollPeriodCode</DataField>
+			<DataSource>SPYPayrollPeriod</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYPlannedWorkingHourSource</Name>
+			<DataField>SPYPlannedWorkingHourSource</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+		<AxDataEntityViewField xmlns=""
+			i:type="AxDataEntityViewMappedField">
+			<Name>SPYTimesheetProcessSource</Name>
+			<DataField>SPYTimesheetProcessSource</DataField>
+			<DataSource>HcmEmploymentDetail</DataSource>
+		</AxDataEntityViewField>
+	</Fields>
+	<Mappings />
+	<PropertyModifications />
+	<Relations />
+</AxDataEntityViewExtension>

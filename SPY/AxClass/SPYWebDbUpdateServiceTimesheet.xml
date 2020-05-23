@@ -1,0 +1,938 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebDbUpdateServiceTimesheet</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWebDbUpdateServiceTimesheet extends SPYWebDbUpdateService
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(SPYWebAPI.Service _apiService, str _token, URL  _portalAPIUrl, PageNo _messagePageSize)
+    {
+        apiService = _apiService;
+        token = _token;
+        portalAPIUrl = _portalAPIUrl;
+        messagePageSize = _messagePageSize;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postTimesheets</Name>
+				<Source><![CDATA[
+    public void postTimesheets()
+    {
+        HcmWorker   hcmWorker;
+        ResourceWorkerView  resourceWorkerView;
+        TSTimesheetTable    timesheetTable;
+        TSTimesheetLine     timesheetLine;
+        SPYWebDocumentLog   webDocumentLog;
+        CLRObject   timesheetTableList   = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        int     pageNo = 1;
+        boolean     callPending;
+
+        while select timesheetTable
+            join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(TSTimesheetTable) &&
+            webDocumentLog.RefRecId == timesheetTable.RecId &&
+            !webDocumentLog.IsDeleted
+            join resourceWorkerView
+            where timesheetTable.Resource == resourceWorkerView.RecId
+            join hcmWorker
+            where hcmWorker.RecId == resourceWorkerView.Worker
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.TimesheetTable      timesheetTableModel = new SPYWebAPI.Model.TimesheetTable();
+                timesheetTableModel.TimesheetCode = timesheetTable.TimesheetNbr;
+                timesheetTableModel.Number = timesheetTable.SPYPortalNumber;
+                timesheetTableModel.WorkerId = hcmWorker.PersonnelNumber;
+                timesheetTableModel.Status = enum2Str(timesheetTable.ApprovalStatus);
+                timesheetTableModel.PeriodFrom = timesheetTable.PeriodFrom;
+                timesheetTableModel.PeriodTo = timesheetTable.PeriodTo;
+                timesheetTableModel.DataArea = timesheetTable.DataAreaId;
+                timesheetTableModel.ERPRecId = timesheetTable.RecId;
+                CLRObject   timesheetLineList    = apiService.getBlankTimesheetLineList();
+                while select timesheetLine order by timesheetLine.LineNum
+                where timesheetLine.TimesheetNbr == timesheetTable.TimesheetNbr
+                {
+                    TSTimesheetLineWeek     timesheetLineWeek = TSTimesheetLineWeek::findByTimesheetLine(timesheetLine.RecId);
+                    SPYWebAPI.Model.TimesheetLine   timesheetLineModel = new SPYWebAPI.Model.TimesheetLine();
+                    timesheetLineModel.TimesheetCode = timesheetTable.TimesheetNbr;
+                    timesheetLineModel.Number = timesheetTable.SPYPortalNumber;
+                    timesheetLineModel.LineNumber = timesheetLine.LineNum;
+                    timesheetLineModel.ProjId = timesheetLine.ProjId;
+                    timesheetLineModel.ProjDescription = timesheetLine.projName();
+                    timesheetLineModel.ProjActivityId = timesheetLine.ActivityNumber;
+                    timesheetLineModel.ProjActivityDescription = timesheetLine.activityTxt();
+                    timesheetLineModel.CategoryId = timesheetLine.CategoryId;
+                    timesheetLineModel.CategoryDescription = ProjCategory::find(timesheetLine.CategoryId).Name;
+                    timesheetLineModel.Hours1 = timesheetLineWeek.Hours[0];
+                    timesheetLineModel.Hours2 = timesheetLineWeek.Hours[1];
+                    timesheetLineModel.Hours3 = timesheetLineWeek.Hours[2];
+                    timesheetLineModel.Hours4 = timesheetLineWeek.Hours[3];
+                    timesheetLineModel.Hours5 = timesheetLineWeek.Hours[4];
+                    timesheetLineModel.Hours6 = timesheetLineWeek.Hours[5];
+                    timesheetLineModel.Hours7 = timesheetLineWeek.Hours[6];
+                    timesheetLineModel.ExternalComment1 = timesheetLineWeek.ExternalComments[0];
+                    timesheetLineModel.ExternalComment2 = timesheetLineWeek.ExternalComments[1];
+                    timesheetLineModel.ExternalComment3 = timesheetLineWeek.ExternalComments[2];
+                    timesheetLineModel.ExternalComment4 = timesheetLineWeek.ExternalComments[3];
+                    timesheetLineModel.ExternalComment5 = timesheetLineWeek.ExternalComments[4];
+                    timesheetLineModel.ExternalComment6 = timesheetLineWeek.ExternalComments[5];
+                    timesheetLineModel.ExternalComment7 = timesheetLineWeek.ExternalComments[6];
+                    timesheetLineModel.InternalComment1 = timesheetLineWeek.InternalComments[0];
+                    timesheetLineModel.InternalComment2 = timesheetLineWeek.InternalComments[1];
+                    timesheetLineModel.InternalComment3 = timesheetLineWeek.InternalComments[2];
+                    timesheetLineModel.InternalComment4 = timesheetLineWeek.InternalComments[3];
+                    timesheetLineModel.InternalComment5 = timesheetLineWeek.InternalComments[4];
+                    timesheetLineModel.InternalComment6 = timesheetLineWeek.InternalComments[5];
+                    timesheetLineModel.InternalComment7 = timesheetLineWeek.InternalComments[6];
+                    timesheetLineModel.DataArea = timesheetLine.DataAreaId;
+                    timesheetLineModel.ERPRecId = timesheetLine.RecId;
+                    timesheetLineList.Add(timesheetLineModel);
+                }
+                timesheetTableModel.TimesheetLine = timesheetLineList;
+                timesheetTableList.Add(timesheetTableModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callTimesheetAPI(timesheetTableList);
+                timesheetTableList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callTimesheetAPI(timesheetTableList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callTimesheetAPI</Name>
+				<Source><![CDATA[
+    private void callTimesheetAPI(CLRObject _timesheetList, boolean _callFromError = false)
+    {
+        str calldescription = "UpdateTimeSheets";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_timesheetList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        if(_callFromError)
+            return;
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("@SPY:TimesheetSyncDoneSuccessfully");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _timesheetList = apiService.convertToTimesheetList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoTimesheetList, errorTimesheetList;
+        if(error)
+        {
+            error(errorStr);
+            Error("@SPY:ErrorOccurredWhileSyncingTimesheet");
+        }
+        else
+        {
+            ClrObject timesheetListEnumerator = _timesheetList.GetEnumerator();
+            while (timesheetListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.TimesheetTable timesheetModel = timesheetListEnumerator.get_Current();
+                TSTimesheetTable  timesheetTableUpdate = TSTimesheetTable::find(timesheetModel.TimesheetCode, true);
+                if(timesheetModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoTimesheetList += strFmt("@SPY:TimesheetSyncedPortal", timesheetTableUpdate.TimesheetNbr);
+                    if(timesheetTableUpdate)
+                    {
+                        timesheetTableUpdate.SPYPortalNumber = timesheetModel.Number;
+                        timesheetTableUpdate.update();
+                    }
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == timesheetTableUpdate.TableId &&
+                        webDocumentLogUpdate.RefRecId == timesheetTableUpdate.RecId;
+                }
+                else
+                {
+                    errorTimesheetList += strFmt("@SPY:ErrorInTimesheet", timesheetTableUpdate.TimesheetNbr,
+                        timesheetModel.ErrorMessage);
+                }
+            }
+            if(infoTimesheetList)
+                info(infoTimesheetList);
+            if(errorTimesheetList)
+                error(errorTimesheetList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoTimesheetList, errorTimesheetList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getTimesheets</Name>
+				<Source><![CDATA[
+    public void getTimesheets()
+    {
+        str calldescription = "GetTimeSheets";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+
+        ClrObject  responseList;
+        ClrObject responseListEnumerator;
+        //responseList = apiService.makeGet(url, token);
+        SPYWebAPI.Model.DataAreaModel   dataAreaModel  = new SPYWebAPI.Model.DataAreaModel();
+        dataAreaModel.DataArea = curExt();
+        str requestStr  = apiService.serializeObj(dataAreaModel);
+        responseList = apiService.makePost(url, requestStr, token);
+        responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Timesheets from portal are synced successfully.");
+                }
+                else
+                {
+                    error = true;
+                    error("@SPY:ErrorOccurredWhileFetchingTimesheetFromPortal");
+                }
+            }
+            else
+            {
+                if(!error)
+                {
+                    this.updateTimesheets(responseStr);
+                }
+                this.updateLog(calldescription, callStatus, url, "", responseStr, "", "");
+            }
+            counter++;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateTimesheets</Name>
+				<Source><![CDATA[
+    private void updateTimesheets(str _timesheets)
+    {
+        WorkflowWorkItemTable           workflowWorkItemTable;
+        WorkflowTrackingStatusTable     workflowTrackingStatusTable;
+        ResourceWorkerView  resourceWorkerView;
+        HcmWorker  worker;
+        TSTimesheetTable    timesheetTable;
+        str  status;
+        ClrObject   timesheetList = apiService.convertToTimesheetList(_timesheets);
+        ClrObject   timesheetListEnumerator = timesheetList.GetEnumerator();
+
+        while (timesheetListEnumerator.MoveNext())
+        {
+            SPYWebAPI.Model.TimesheetTable  timesheetTableModel = timesheetListEnumerator.get_Current();
+            try
+            {
+                ttsbegin;
+                boolean   created;
+                ClrObject   timesheetLineList  = timesheetTableModel.TimesheetLine;
+                ClrObject   timesheetLineListEnumerator = timesheetLineList.GetEnumerator();
+                select firstonly forupdate timesheetTable
+                    where timesheetTable.SPYPortalNumber == timesheetTableModel.Number;
+                select firstonly resourceWorkerView
+                        join worker
+                        where resourceWorkerView.Worker == worker.RecId &&
+                              worker.PersonnelNumber == timesheetTableModel.WorkerId &&
+                              resourceWorkerView.ResourceCompanyId == curExt();
+                status = timesheetTableModel.Status;//str2Enum(status,timesheetTableModel.Status);
+                if(timesheetTable)
+                {
+                    if(timesheetTable.ApprovalStatus == TSAppStatus::Create &&
+                        status == "Submitted"/*SPYWorkflowStatus::Submitted*/)
+                    {
+                        timesheetTable.ApprovalStatus = TSAppStatus::Submitted;
+                        Workflow::activateFromWorkflowType(workflowTypeStr(TSDocumentTemplate), timesheetTable.RecId, "Submitted from portal", false);
+                    }
+                    else if(timesheetTableModel.Approved)
+                    {
+                        HcmWorker   approver = HcmWorker::findByPersonnelNumber(timesheetTableModel.ApproveWorker);
+                        DirPersonUser   dirPersonUser;
+                        UserId  approverUserId;
+                        if(approver)
+                        {
+                            select firstonly dirPersonUser
+                                where dirPersonUser.PersonParty == approver.Person;
+                            approverUserId = dirPersonUser.User;
+                        }
+                        else
+                            approverUserId = curUserId();
+                        select workflowWorkItemTable
+                            join workflowTrackingStatusTable
+                            where workflowTrackingStatusTable.CorrelationId == workflowWorkItemTable.CorrelationId &&
+                            workflowTrackingStatusTable.ContextRecId == timesheetTable.RecId &&
+                            workflowTrackingStatusTable.ContextTableId == tableNum(TSTimesheetTable);
+                        if(workflowWorkItemTable)
+                        {
+                            //timesheetTable.WorkflowStatus = SPYWorkflowStatus::Started;
+                            WorkflowWorkItemActionManager::dispatchWorkItemAction(WorkflowWorkItemTable,
+                                                                                                                    timesheetTableModel.WorkflowRemarks,
+                                                                                                                   approverUserId,
+                                                                                                                    WorkflowWorkItemActionType::Complete,
+                                                                                                                    "TSWorkflowApprove");
+                        }
+                    }
+                    else if(timesheetTableModel.Rejected)
+                    {
+                        HcmWorker   approver = HcmWorker::findByPersonnelNumber(timesheetTableModel.RejectWorker);
+                        DirPersonUser   dirPersonUser;
+                        UserId  approverUserId;
+                        if(approver)
+                        {
+                            select firstonly dirPersonUser
+                                where dirPersonUser.PersonParty == approver.Person;
+                            approverUserId = dirPersonUser.User;
+                        }
+                        else
+                            approverUserId = curUserId();
+                        select workflowWorkItemTable
+                            join workflowTrackingStatusTable
+                            where workflowTrackingStatusTable.CorrelationId == workflowWorkItemTable.CorrelationId &&
+                            workflowTrackingStatusTable.ContextRecId == timesheetTable.RecId &&
+                            workflowTrackingStatusTable.ContextTableId == tableNum(TSTimesheetTable);
+                        if(workflowWorkItemTable)
+                        {
+                            timesheetTable.ApprovalStatus = TSAppStatus::Returned;
+                            WorkflowWorkItemActionManager::dispatchWorkItemAction(WorkflowWorkItemTable,
+                                                                                                                timesheetTableModel.WorkflowRemarks,
+                                                                                                                approverUserId,
+                                                                                                                WorkflowWorkItemActionType::Complete,
+                                                                                                                "TSWorkflowReturn");
+                        }
+                    }
+                    timesheetTable.update();
+                    this.updateTimesheetLine(timesheetTable, timesheetLineListEnumerator);
+                }
+                else
+                {
+                    //if(_contract.parmIsDeleted())
+                    //return _contract;
+                
+                    timesheetTable.initValue();
+                    timesheetTable.SPYPortalNumber = timesheetTableModel.Number;
+                    timesheetTable.Resource = resourceWorkerView.RecId;
+                    timesheetTable.Worker = worker.RecId;
+                    ProjPeriodLine projPeriodLine = TSTimesheetTable::getValidResourcePeriod(timesheetTable.Resource);
+                    timesheetTable.ProjPeriodId = projPeriodLine.PeriodId;
+                    timesheetTable.PeriodFrom = timesheetTableModel.PeriodFrom;
+                    timesheetTable.PeriodTo = timesheetTableModel.PeriodTo;
+                    ProjPeriodTimesheetWeek projPeriodTimesheetWeek = ProjPeriodTimesheetWeek::findFromPeriod(projPeriodLine.PeriodId, timesheetTable.PeriodFrom);
+                    timesheetTable.ProjPeriodTimesheetWeek  = projPeriodTimesheetWeek.RecId;
+                    timesheetTable.insert();
+                    created =  this.updateTimesheetLine(timesheetTable, timesheetLineListEnumerator);
+                    if(status == "Submitted"/*SPYWorkflowStatus::Submitted*/)
+                    {
+                        timesheetTable.selectForUpdate(true);
+                        timesheetTable.ApprovalStatus = TSAppStatus::Pending;
+                        timesheetTable.update();
+                        Workflow::activateFromWorkflowType(workflowTypeStr(TSDocumentTemplate), timesheetTable.RecId, "Submitted from portal", false);
+                    }
+                }
+                ttscommit;
+            }
+            catch(Exception::Error)
+            {
+                str errorMessage = infolog.text(infologLine());
+
+                timesheetTableModel.Error = true;
+                timesheetTableModel.ErrorMessage = errorMessage;
+                CLRObject   timesheetTableList   = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                timesheetTableList.Add(timesheetTableModel);
+                this.callTimesheetAPI(timesheetTableList, true);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateTimesheetLine</Name>
+				<Source><![CDATA[
+    private boolean updateTimesheetLine(TSTimesheetTable _timesheetTable, ClrObject _lineListEnum)
+    {
+        ResourceWorkerView  resourceWorkerView;
+        HcmWorker   worker;
+        //HcmEmployment   hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId, CompanyInfo::current());
+        //WorkCalendarEmployment  workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+        //CalendarId  calendarId = workCalendarEmployment.CalendarId;
+        TSTimesheetLine         timesheetLine;
+        TSTimesheetLineWeek     timesheetLineWeek;
+        UserInfo    userInfo;
+        boolean     created = true;
+
+        select firstonly worker
+            join resourceWorkerView
+            where worker.RecId == resourceWorkerView.Worker &&
+            resourceWorkerView.RecId == _timesheetTable.Resource;
+        delete_from timesheetLineWeek
+            where timesheetLineWeek.TimesheetNbr == _timesheetTable.TimesheetNbr;
+        delete_from timesheetLine
+            where timesheetLine.TimesheetNbr == _timesheetTable.TimesheetNbr;
+        while(_lineListEnum.moveNext())
+        {
+            SPYWebAPI.Model.TimesheetLine    timesheetLineModel  = _lineListEnum.get_Current();
+            timesheetLine.TimesheetNbr = _timesheetTable.TimesheetNbr;
+            select firstonly userInfo
+                where userInfo.id == DirPersonUser::findParty(worker.Person).User;
+            timesheetLine.ProjectDataAreaId = userInfo.company;
+            timesheetLine.initValue();
+            timesheetLine.initFromResource();
+            timesheetLine.ProjId = timesheetLineModel.ProjId;
+            timesheetLine.initFromProjTable(ProjTable::find(timesheetLine.ProjId));
+            timesheetLine.LineNum = timesheetLineModel.LineNumber;
+            timesheetLine.ActivityNumber = timesheetLineModel.ProjActivityId;
+            timesheetLine.CategoryId = timesheetLineModel.CategoryId ? timesheetLineModel.CategoryId :
+                 ProjCategory::findRecId(ResourceSetup::find(_timesheetTable.Resource).DefaultTimeCategory).CategoryId;
+            timesheetLine.ProjPeriodTimesheetWeek = _timesheetTable.ProjPeriodTimesheetWeek;
+            timesheetLine.insert();
+
+            timesheetLineWeek.initValue();
+            timesheetLineWeek.initFromTSTimesheetLine(timesheetLine);
+            timesheetLineWeek.DayFrom = _timesheetTable.PeriodFrom;
+            timesheetLineWeek.DayTo = _timesheetTable.PeriodTo;
+            timesheetLineWeek.ProjTransDate = _timesheetTable.PeriodFrom;
+            timesheetLineWeek.TSTimesheetLine = timesheetLine.RecId;
+            timesheetLineWeek.ProjPeriodId = _timesheetTable.ProjPeriodId;
+            timesheetLineWeek.Hours[1] = timesheetLineModel.Hours1;
+            timesheetLineWeek.InternalComments[1] = timesheetLineModel.InternalComment1;
+            timesheetLineWeek.ExternalComments[1] = timesheetLineModel.ExternalComment1;
+            timesheetLineWeek.Hours[2] = timesheetLineModel.Hours2;
+            timesheetLineWeek.InternalComments[2] = timesheetLineModel.InternalComment2;
+            timesheetLineWeek.ExternalComments[2] = timesheetLineModel.ExternalComment2;
+            timesheetLineWeek.Hours[3] = timesheetLineModel.Hours3;
+            timesheetLineWeek.InternalComments[3] = timesheetLineModel.InternalComment3;
+            timesheetLineWeek.ExternalComments[3] = timesheetLineModel.ExternalComment3;
+            timesheetLineWeek.Hours[4] = timesheetLineModel.Hours4;
+            timesheetLineWeek.InternalComments[4] = timesheetLineModel.InternalComment4;
+            timesheetLineWeek.ExternalComments[4] = timesheetLineModel.ExternalComment4;
+            timesheetLineWeek.Hours[5] = timesheetLineModel.Hours5;
+            timesheetLineWeek.InternalComments[5] = timesheetLineModel.InternalComment5;
+            timesheetLineWeek.ExternalComments[5] = timesheetLineModel.ExternalComment5;
+            timesheetLineWeek.Hours[6] = timesheetLineModel.Hours6;
+            timesheetLineWeek.InternalComments[6] = timesheetLineModel.InternalComment6;
+            timesheetLineWeek.ExternalComments[6] = timesheetLineModel.ExternalComment6;
+            timesheetLineWeek.Hours[7] = timesheetLineModel.Hours7;
+            timesheetLineWeek.InternalComments[7] = timesheetLineModel.InternalComment7;
+            timesheetLineWeek.ExternalComments[7] = timesheetLineModel.ExternalComment7;
+            timesheetLineWeek.insert();
+        }
+        return created;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postTimesheetApproval</Name>
+				<Source><![CDATA[
+    public void postTimesheetApproval()
+    {
+        WorkflowWorkItemTable               workflowWorkItemTable;
+        WorkflowTrackingStatusTable         workflowTrackingStatusTable;
+        TSTimesheetTable    timesheetTable;
+        DirPersonUser                       personUser;
+        HcmWorker                           worker;
+        CLRObject                   timesheetApprovalList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select * from workflowTrackingStatusTable
+            where workflowTrackingStatusTable.ContextTableId == tableNum(TSTimesheetTable)
+        join workflowWorkItemTable
+            where workflowWorkItemTable.CorrelationId == workflowTrackingStatusTable.CorrelationId
+        join timesheetTable
+             where timesheetTable.RecId == workFlowTrackingStatusTable.ContextRecId
+        join personUser
+            where personUser.User == workflowWorkItemTable.UserId
+        join worker
+            where worker.Person == personUser.PersonParty
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.TimesheetApproval     timesheetApprovalModel = new SPYWebAPI.Model.TimesheetApproval();
+                timesheetApprovalModel.ERPRecID = workflowWorkItemTable.RecId;
+                timesheetApprovalModel.TimesheetCode = timesheetTable.TimesheetNbr;
+                timesheetApprovalModel.ApprovalId = worker.PersonnelNumber;
+                
+                timesheetApprovalList.Add(timesheetApprovalModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callTimesheetApprovalAPI(timesheetApprovalList);
+                timesheetApprovalList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callTimesheetApprovalAPI(timesheetApprovalList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callTimesheetApprovalAPI</Name>
+				<Source><![CDATA[
+    private void callTimesheetApprovalAPI(CLRObject _timesheetApprovalList)
+    {
+        str calldescription = "UpdateTimesheetApprovals";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_timesheetApprovalList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Timesheet approval sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _timesheetApprovalList = apiService.convertToTimesheetApprovalList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoTimesheetApprovalList, errorTimesheetApprovalList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing timesheet approval.");
+        }
+        else
+        {
+            ClrObject timesheetApprovalListEnumerator = _timesheetApprovalList.GetEnumerator();
+            while (timesheetApprovalListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.TimesheetApproval timesheetApprovalModel = timesheetApprovalListEnumerator.get_Current();
+                /*
+                HcmWorker       hcmWorkerUpdate = HcmWorker::findByPersonnelNumber(workerModel.WorkerId);
+                if(timesheetApprovalModel.Error == false)
+                {
+                SPYWebDocumentLog       webDocumentLogUpdate;
+                infoTimesheetApprovalList += strFmt("@SPY:WorkerSyncedToPortal", hcmWorkerUpdate.PersonnelNumber);
+                delete_from webDocumentLogUpdate
+                where webDocumentLogUpdate.RefTableId == hcmWorkerUpdate.TableId &&
+                webDocumentLogUpdate.RefRecId == hcmWorkerUpdate.RecId;
+                }
+                else
+                {
+                errorTimesheetApprovalList += strFmt("@SPY:ErrorForWorker", hcmWorkerUpdate.PersonnelNumber, timesheetApprovalModel.ErrorMessage);
+                }*/
+            }
+            if(infoTimesheetApprovalList)
+                info(infoTimesheetApprovalList);
+            if(errorTimesheetApprovalList)
+                error(errorTimesheetApprovalList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoTimesheetApprovalList, errorTimesheetApprovalList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerProjects</Name>
+				<Source><![CDATA[
+    public void postWorkerProjects()
+    {
+        ProjValEmplProjSetup        projValEmplProjSetup;
+        SPYWebAPI.Model.WorkerProject      workerProjectModel;
+        ResourceWorkerView          resourceWorkerView;
+        HcmWorker   hcmWorker;
+        ProjTable   projTable;
+        CLRObject                   workerProjectList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        TransDateTime               validFrom, validTo;
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select projValEmplProjSetup
+            join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(ProjValEmplProjSetup) &&
+            webDocumentLog.RefRecId == projValEmplProjSetup.RecId
+            join resourceWorkerView
+            where projValEmplProjSetup.Resource == resourceWorkerView.RecId
+            join hcmWorker
+            where hcmWorker.RecId == resourceWorkerView.Worker
+            join projTable
+            where projTable.ProjId == projValEmplProjSetup.Projid
+        {
+            if(pageNo <= messagePageSize)
+            {
+                workerProjectList = this.getProjectActivity(hcmWorker.PersonnelNumber, projValEmplProjSetup.Projid, projTable.Name, workerProjectList);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerProjectAPI(workerProjectList);
+                workerProjectList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerProjectAPI(workerProjectList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getProjectActivity</Name>
+				<Source><![CDATA[
+    private CLRObject getProjectActivity(HcmPersonnelNumberId _workerId, ProjId _projId, Description _projDescription, CLRObject   _workerProjectList)
+    {
+        List                            activityList = New List(Types::Class);
+        smmActivities                   smmActivities;
+        HierarchyTreeLookup             hierarchyTreeLookup = new HierarchyTreeLookup();
+        ProjTable                       projTable = ProjTable::find(_projId);
+        QueryRun                        queryRun;
+        boolean   found;
+ 
+        hierarchyTreeLookup.parmRefRecId(projTable.RecId);
+        hierarchyTreeLookup.parmRefTableId(projTable.TableId);
+        queryRun = new QueryRun(hierarchyTreeLookup.buildQueryListView(true));
+        while(queryRun.next())
+        {
+            SPYWebAPI.Model.WorkerProject workerProjectModel = new SPYWebAPI.Model.WorkerProject();
+            smmActivities = queryRun.get(tableNum(smmActivities));
+            workerProjectModel.WorkerId = _workerId;
+            workerProjectModel.ProjId = projTable.ProjId;
+            workerProjectModel.ProjDescription = _projDescription;
+            workerProjectModel.ProjActivityId = smmActivities.ActivityNumber;
+            workerProjectModel.ProjActivityDescription = smmActivities.Purpose;
+            workerProjectModel.DataArea = projTable.DataAreaId;
+            workerProjectModel.ERPRecId = projTable.RecId;
+            _workerProjectList.Add(workerProjectModel);
+            found = true;
+        }
+        if(!found)
+        {
+            SPYWebAPI.Model.WorkerProject workerProjectModel = new SPYWebAPI.Model.WorkerProject();
+            workerProjectModel.WorkerId = _workerId;
+            workerProjectModel.ProjId = _projId;
+            workerProjectModel.ProjDescription = _projDescription;
+            workerProjectModel.ProjActivityId = "";
+            workerProjectModel.ProjActivityDescription = "";
+            workerProjectModel.DataArea = projTable.DataAreaId;
+            workerProjectModel.ERPRecId = projTable.RecId;
+            _workerProjectList.Add(workerProjectModel);
+        }
+
+        return _workerProjectList;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerProjectAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerProjectAPI(CLRObject _projectList)
+    {
+        str calldescription = "UpdateWorkerProjects";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_projectList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("@SPY:WorkerProjectSyncDoneSuccessfully");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _projectList = apiService.convertToWorkerProjectList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoProjectList, errorProjectList;
+        if(error)
+        {
+            error(errorStr);
+            Error("@SPY:ErrorOccurredWhileSyncingWorkerProject");
+        }
+        else
+        {
+            ClrObject projectListEnumerator = _projectList.GetEnumerator();
+            while (projectListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.WorkerProject workerProjectModel = projectListEnumerator.get_Current();
+                if(workerProjectModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoProjectList += strFmt("@SPY:WorkerProjectActivitySyncedPortal", workerProjectModel.WorkerId,
+                        workerProjectModel.ProjId, workerProjectModel.ProjActivityId);/*
+                    delete_from webDocumentLogUpdate
+                    where webDocumentLogUpdate.RefTableId == projPeriodEmpl.TableId &&
+                    webDocumentLogUpdate.RefRecId == projPeriodEmpl.RecId;*/
+                }
+                else
+                {
+                    errorProjectList += strFmt("@SPY:ErrorWorkerProjectActivity", workerProjectModel.WorkerId,
+                        workerProjectModel.ProjId, workerProjectModel.ProjActivityId, workerProjectModel.ErrorMessage);
+                }
+            }
+            if(infoProjectList)
+                info(infoProjectList);
+            if(errorProjectList)
+                error(errorProjectList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoProjectList, errorProjectList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerPeriods</Name>
+				<Source><![CDATA[
+    public void postWorkerPeriods()
+    {
+        ProjPeriodEmpl      projPeriodEmpl;
+        ResourceWorkerView          resourceWorkerView;
+        HcmWorker   hcmWorker;
+        CLRObject                   workerPeriodList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        boolean                     recFound;
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select projPeriodEmpl
+            join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(ProjPeriodEmpl) &&
+            webDocumentLog.RefRecId == projPeriodEmpl.RecId
+            join resourceWorkerView
+            where projPeriodEmpl.Resource == resourceWorkerView.RecId
+            join hcmWorker
+            where hcmWorker.RecId == resourceWorkerView.Worker
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.WorkerTimesheetPeriod workerPeriodModel = new SPYWebAPI.Model.WorkerTimesheetPeriod();
+                workerPeriodModel.WorkerId = hcmWorker.PersonnelNumber;
+                workerPeriodModel.PeriodId = projPeriodEmpl.PeriodId;
+                workerPeriodModel.PeriodFrom = projPeriodEmpl.PeriodFrom;
+                workerPeriodModel.PeriodTo = projPeriodEmpl.periodTo();
+                workerPeriodModel.DataArea = curExt();
+                workerPeriodModel.ERPRecId = projPeriodEmpl.RecId;
+                workerPeriodList.Add(workerPeriodModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerPeriodAPI(workerPeriodList);
+                workerPeriodList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerPeriodAPI(workerPeriodList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerPeriodAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerPeriodAPI(CLRObject _periodList)
+    {
+        str calldescription = "UpdateWorkerTimesheetPeriods";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_periodList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("@SPY:WorkerPeriodSyncDoneSuccessfully");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _periodList = apiService.convertToWorkerPeriodList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoPeriodList, errorPeriodList;
+        if(error)
+        {
+            error(errorStr);
+            Error("@SPY:ErrorOccurredSyncingWorkerPeriod");
+        }
+        else
+        {
+            ClrObject periodListEnumerator = _periodList.GetEnumerator();
+            while (periodListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.WorkerTimesheetPeriod workerPeriodModel = periodListEnumerator.get_Current();
+                ResourceWorkerView          resourceWorkerView;
+                HcmWorker            hcmWorker;
+                select resourceWorkerView
+                    join hcmWorker
+                    where resourceWorkerView.Worker == hcmWorker.RecId &&
+                    hcmWorker.PersonnelNumber == workerPeriodModel.WorkerId;
+                ProjPeriodEmpl      projPeriodEmpl = ProjPeriodEmpl::find(resourceWorkerView.RecId, workerPeriodModel.PeriodFrom);
+                if(workerPeriodModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                
+                    infoPeriodList += strFmt("@SPY:WorkerTimesheetPeriodWorkerPeriodSyncedPortal", hcmWorker.PersonnelNumber,
+                        projPeriodEmpl.PeriodFrom);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == projPeriodEmpl.TableId &&
+                        webDocumentLogUpdate.RefRecId == projPeriodEmpl.RecId;
+                }
+                else
+                {
+                    errorPeriodList += strFmt("@SPY:ErrorForWorkerPeriod", hcmWorker.PersonnelNumber,
+                        projPeriodEmpl.PeriodFrom, workerPeriodModel.ErrorMessage);
+                }
+            }
+            if(infoPeriodList)
+                info(infoPeriodList);
+            if(errorPeriodList)
+                error(errorPeriodList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoPeriodList, errorPeriodList);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

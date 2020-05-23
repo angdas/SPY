@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntTimesheetLineContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntTimesheetLineContract
+{
+    ProjId              projId;
+    LineNum             lineNum;
+    ProjCategoryId      categoryId;
+    ProjActivityNumber  activityNumber;
+    ProjName            projName;
+    DataAreaId          projDataAreaId;
+    Description         categoryName;
+    Description         activityName;
+    List                timesheetLineDateList;
+    Qty                 totalHrs;
+    boolean             isDeleted;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmLineNum</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("LineNum")]
+    public LineNum parmLineNum(LineNum _lineNum = lineNum)
+    {
+        lineNum = _lineNum;
+
+        return lineNum;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmProjDataAreaId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ProjDataAreaId")]
+    public ProjId parmProjDataAreaId(DataAreaId _projDataAreaId = projDataAreaId)
+    {
+        projDataAreaId = _projDataAreaId;
+
+        return projDataAreaId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmProjId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ProjId")]
+    public ProjId parmProjId(ProjId _projId = projId)
+    {
+        projId = _projId;
+
+        return projId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCategoryId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("CategoryId")]
+    public ProjCategoryId parmCategoryId(ProjCategoryId _categoryId = categoryId)
+    {
+        categoryId = _categoryId;
+
+        return categoryId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmActivityNumber</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ProjActivityNumber")]
+    public ProjActivityNumber parmActivityNumber(ProjActivityNumber _activityNumber = activityNumber)
+    {
+        activityNumber = _activityNumber;
+
+        return activityNumber;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmProjName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ProjName")]
+    public ProjName parmProjName(ProjName _projName = projName)
+    {
+        projName = _projName;
+
+        return projName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTimesheetLineDateList</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("TimesheetLineDateList"),
+    AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntTimesheetLineDateContract))]
+    public List parmTimesheetLineDateList(List _timesheetLineDateList = timesheetLineDateList)
+    {
+        timesheetLineDateList = _timesheetLineDateList;
+
+        return timesheetLineDateList;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTotalHours</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("TotalHrs")]
+    public Decimals parmTotalHours(Decimals _totalHrs = totalHrs)
+    {
+        totalHrs = _totalHrs;
+
+        return totalHrs;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmIsDeleted</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("IsDeleted")]
+    public Decimals parmIsDeleted(Decimals _isDeleted = isDeleted)
+    {
+        isDeleted = _isDeleted;
+
+        return isDeleted;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCategoryName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("CategoryName")]
+    public Description parmCategoryName(Description _categoryName = categoryName)
+    {
+        categoryName = _categoryName;
+
+        return categoryName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmActivityName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ActivityName")]
+    public Description parmActivityName(Description _activityName = activityName)
+    {
+        activityName = _activityName;
+
+        return activityName;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

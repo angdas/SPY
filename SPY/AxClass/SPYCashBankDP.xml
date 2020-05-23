@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYCashBankDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SRSReportParameterAttribute(classStr(SPYCashBankContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerNoPosition))
+]
+public class SPYCashBankDP extends SrsReportDataProviderPreProcess
+{
+    SPYCashBankHeaderFooterTmp  cashBankHeaderFooterTmp;
+    SPYCashBankDetailsTmp       cashBankDetailsTmp;
+
+    HcmWorker                   hcmWorker;
+    SPYWorkerPositionPayroll    workerPositionPayroll;
+
+    SPYPayrollPeriodLineRecId   payrollPeriodLineRecId;
+    SPYPayrollPeriodLine        payrollPeriodLine;
+    CompanyInfo                 companyInfo;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYCashBankDetailsTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYCashBankDetailsTmp))]
+    public SPYCashBankDetailsTmp getSPYCashBankDetailsTmp()
+    {
+        select cashBankDetailsTmp;
+        return cashBankDetailsTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYCashBankHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYCashBankHeaderFooterTmp))]
+    public SPYCashBankHeaderFooterTmp getSPYCashBankHeaderFooterTmp()
+    {
+        select cashBankHeaderFooterTmp;
+        return cashBankHeaderFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoCashBankDetailsTmp</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    public void insertIntoCashBankDetailsTmp()
+    {
+        SPYPayrollLedger                    payrollLedger;
+        RecordInsertList                    recordInsertCashBankDetails;
+        
+        HcmWorkerBankAccount                workerBankAccount;
+        PayrollBankAccountDisbursement      payrollBankAccountDisbursement;
+        Amount                              accAmount, transAmount;
+
+        recordInsertCashBankDetails = new RecordInsertList(tableNum(SPYCashBankDetailsTmp));
+        
+        while select Currency, sum(TransactionCurrencyAmount), ExchRate, sum(AccountingCurrencyAmount) from payrollLedger
+        group by Currency, ExchRate
+        where payrollLedger.Worker == hcmWorker.RecId &&
+              payrollLedger.PayrollPeriodLine == payrollPeriodLineRecId &&
+              payrollLedger.PayrollJournalLine
+        {
+            cashBankDetailsTmp.clear();
+            cashBankDetailsTmp.Worker                    = hcmWorker.RecId;
+            cashBankDetailsTmp.WorkerName                = hcmWorker.name();
+            cashBankDetailsTmp.WorkerPersonnelNumber     = hcmWorker.PersonnelNumber;
+            cashBankDetailsTmp.Currency                  = payrollLedger.Currency;
+            cashBankDetailsTmp.ExchRate                  = payrollLedger.ExchRate;
+
+            transAmount                                  = payrollLedger.TransactionCurrencyAmount;
+            accAmount                                    = payrollLedger.AccountingCurrencyAmount;
+
+            while select payrollBankAccountDisbursement join workerBankAccount
+                order by payrollBankAccountDisbursement.Priority
+                where payrollBankAccountDisbursement.WorkerBankAccount == workerBankAccount.RecId &&
+            workerBankAccount.Worker == hcmWorker.RecId &&
+            payrollBankAccountDisbursement.LegalEntity == CompanyInfo::current()
+            {
+                if(accAmount <= 0 || transAmount <= 0 || (!payrollBankAccountDisbursement.IsRemainder && payrollBankAccountDisbursement.AccountingCurrencyAmount == 0))
+                continue;
+
+                cashBankDetailsTmp.BankName          = workerBankAccount.AccountId;
+                cashBankDetailsTmp.BankAccountNumber = workerBankAccount.AccountNum;
+
+                if(payrollBankAccountDisbursement.IsRemainder)
+                {
+                    cashBankDetailsTmp.TransactionCurrencyAmount = transAmount;
+                    cashBankDetailsTmp.AccountingCurrencyAmount  = accAmount;
+                    accAmount = 0;
+                    transAmount = 0;
+                }
+                else
+                {
+                    if(payrollBankAccountDisbursement.AccountingCurrencyAmount <= accAmount && payrollBankAccountDisbursement.AccountingCurrencyAmount != 0)
+                    {
+                        cashBankDetailsTmp.TransactionCurrencyAmount = CurrencyExchangeHelper::amountCur2MST(payrollBankAccountDisbursement.AccountingCurrencyAmount, payrollLedger.Currency, payrollLedger.ExchRate);
+                        cashBankDetailsTmp.AccountingCurrencyAmount = payrollBankAccountDisbursement.AccountingCurrencyAmount;
+                    }
+                    else
+                    {
+                        cashBankDetailsTmp.TransactionCurrencyAmount = transAmount;
+                        cashBankDetailsTmp.AccountingCurrencyAmount = accAmount;
+                    }
+                    transAmount = transAmount - CurrencyExchangeHelper::amountCur2MST(payrollBankAccountDisbursement.AccountingCurrencyAmount, payrollLedger.Currency, payrollLedger.ExchRate);
+                    accAmount = accAmount - payrollBankAccountDisbursement.AccountingCurrencyAmount;
+                }
+                recordInsertCashBankDetails.add(cashBankDetailsTmp);
+            }
+        }
+        recordInsertCashBankDetails.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYCashBankHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYCashBankHeaderFooterTmp()
+    {
+        cashBankHeaderFooterTmp.clear();
+        cashBankHeaderFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        cashBankHeaderFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        cashBankHeaderFooterTmp.CompanyName      = companyInfo.Name();
+        cashBankHeaderFooterTmp.CompanyEmail     = companyInfo.email();
+        cashBankHeaderFooterTmp.CompanyPhone     = companyInfo.phone();
+        cashBankHeaderFooterTmp.CompanyURL       = companyInfo.url();
+        cashBankHeaderFooterTmp.PeriodCode       = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+        cashBankHeaderFooterTmp.PeriodStartDate  = payrollPeriodLine.PeriodStartDate;
+        cashBankHeaderFooterTmp.PeriodEndDate    = payrollPeriodLine.PeriodEndDate;
+        cashBankHeaderFooterTmp.CompanyCurrency  = Ledger::accountingCurrency();
+        cashBankHeaderFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    public void processReport()
+    {
+        SPYCashBankContract         contract = this.parmDataContract() as SPYCashBankContract;
+        Query                       query;
+        QueryRun                    queryRun;
+        HcmEmployment               hcmEmployment;
+        HcmEmploymentDetail         hcmEmploymentDetail;
+        SPYPayrollDisbursementMode  mode;
+        TransDate                   validFrom = dateNull();
+        TransDate                   validTo = dateMax();
+    
+        this.setTableConnections();
+    
+        payrollPeriodLineRecId = contract.parmPayrollPeriodline();
+        mode = contract.parmShowCashBank();
+    
+        companyInfo         = CompanyInfo::find();
+        payrollPeriodLine   = SPYPayrollPeriodLine::find(payrollPeriodLineRecId);
+    
+        this.insertIntoSPYCashBankHeaderFooterTmp();
+    
+        query = this.parmQuery();
+        queryRun = new QueryRun(query);
+    
+        while(queryRun.next())
+        {
+            hcmWorker = queryRun.get(tableNum(HcmWorker));
+            while select Employment from hcmEmploymentDetail join hcmEmployment
+                 where hcmEmploymentDetail.Employment == hcmEmployment.RecId &&
+                       hcmEmploymentDetail.SPYPayrollDisbursementMode == mode &&
+                       hcmEmployment.Worker == hcmWorker.RecId
+            {
+                this.insertIntoCashBankDetailsTmp();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEmplBanks</Name>
+				<Source><![CDATA[
+    public void setEmplBanks()
+    {
+        HcmWorkerBankAccount                workerBankAccount;
+        PayrollBankAccountDisbursement      payrollBankAccountDisbursement;
+    
+        select WorkerBankAccount from payrollBankAccountDisbursement join workerBankAccount
+            where payrollBankAccountDisbursement.WorkerBankAccount == workerBankAccount.RecId &&
+                    workerBankAccount.Worker == hcmWorker.RecId &&
+                    payrollBankAccountDisbursement.IsRemainder &&
+                    payrollBankAccountDisbursement.LegalEntity == CompanyInfo::current();
+    
+        cashBankDetailsTmp.BankName          = workerBankAccount.AccountId;
+        cashBankDetailsTmp.BankAccountNumber = workerBankAccount.AccountNum;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        cashBankHeaderFooterTmp.setConnection(this.parmUserConnection());
+        cashBankDetailsTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTimesheetProcessServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYTimesheetProcessServiceController extends SysOperationServiceController
+{
+    FormRun                                    timesheetProcessEdit;
+    SPYTimesheetProcessContract      timesheetProcessContract;
+    SPYPayrollParameterState            payrollParameterState;
+    TransDate                                   timesheetStartDate, timesheetEndDate;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!timesheetProcessEdit)
+        {
+            timesheetProcessEdit = classfactory.formRunClass(SPYTimesheetProcessServiceController::newClientArgs(formStr(SPYTimesheetProcessEdit), this));
+            timesheetProcessEdit.init();
+        }
+    
+        return timesheetProcessEdit as IDialogable;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+    
+        if (this.canGoBatch())
+           this.batchInfo().dialog(dlg);
+    
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cleanupDialog</Name>
+				<Source><![CDATA[
+    protected void  cleanupDialog()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogRun</Name>
+				<Source><![CDATA[
+    protected SysOperationStartResult dialogRun()
+    {
+        SysOperationStartResult result;
+        CompanyId               companyId = curext();
+
+        result = super();
+
+        if (result == SysOperationStartResult::Canceled)
+        {
+            this.cleanupDialog();
+        }
+
+        if(companyId != curext())
+        {
+            appl.setDefaultCompany(companyId, false);
+        }
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getTimesheetProcessContract</Name>
+				<Source><![CDATA[
+    public SPYTimesheetProcessContract getTimesheetProcessContract()
+    {
+        return timesheetProcessContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollParameterState</Name>
+				<Source><![CDATA[
+    public SPYPayrollParameterState parmPayrollParameterState(SPYPayrollParameterState _payrollParameterState = payrollParameterState)
+    {
+        payrollParameterState = _payrollParameterState;
+    
+        return payrollParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTimesheetStartDate</Name>
+				<Source><![CDATA[
+    public TransDate parmTimesheetStartDate(TransDate _timesheetStartDate = timesheetStartDate)
+    {
+        timesheetStartDate = _timesheetStartDate;
+        return timesheetStartDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTimesheetEndDate</Name>
+				<Source><![CDATA[
+    public TransDate parmTimesheetEndDate(TransDate _timesheetEndDate = timesheetEndDate)
+    {
+        timesheetEndDate = _timesheetEndDate;
+        return timesheetEndDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYTimesheetProcessContract parmServiceContract(SPYTimesheetProcessContract _timesheetProcessContract = timesheetProcessContract)
+    {
+        timesheetProcessContract = _timesheetProcessContract;
+        return timesheetProcessContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYTimesheetProcessServiceController construct(IdentifierName _className  = '',
+                                                          IdentifierName _methodName = '',
+                                                          SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYTimesheetProcessServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYTimesheetProcessServiceController    timesheetProcessServiceController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        timesheetProcessServiceController = SPYTimesheetProcessServiceController::construct(className, methodName, mode);
+    
+        if(args.caller() && args.caller().payrollParameterState())
+            timesheetProcessServiceController.parmPayrollParameterState(args.caller().payrollParameterState());
+    
+        if(timesheetProcessServiceController.prompt())
+            timesheetProcessServiceController.run();
+
+        if(args.caller())
+        {
+            args.caller().parmTimesheetStartDate(timesheetProcessServiceController.parmTimesheetStartDate());
+            args.caller().parmTimesheetEndDate(timesheetProcessServiceController.parmTimesheetEndDate());
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYTimesheetProcessServiceController _timesheetProcessServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_timesheetProcessServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

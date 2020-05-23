@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTimesheetReportDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[   
+SRSReportParameterAttribute(classStr(SPYTimesheetReportContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerNoPosition))]
+class SPYTimesheetReportDP extends SRSReportDataProviderBase
+{
+    SPYTimesheetReportTmp    timesheetReportTmp;
+    SPYTimesheetReportTmp    timesheetReportTmpMonth;
+    SPYTimesheetReportTmp    timesheetReportTmpFinalise;
+    HcmWorker           hcmWorker;
+    SPYPayrollPeriodLineRecId       payrollPeriodLineFrom;
+    SPYPayrollPeriodLine            payrollPeriodFrom;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYTimesheetReportTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tablestr(SPYTimesheetReportTmp))]
+    public SPYTimesheetReportTmp getSPYTimesheetReportTmp()
+    {
+        select timesheetReportTmpFinalise;
+
+        return timesheetReportTmpFinalise;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYTimesheetReportContract          contract = this.parmDataContract() as SPYTimesheetReportContract;
+        TSTimesheetLineWeek tsTimesheetLineWeek;
+        Query query = this.parmQuery();
+        payrollPeriodLineFrom = contract.parmPayrollPeriodLineFrom();
+        payrollPeriodFrom       = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        FromDate    fromDate = payrollPeriodFrom.PeriodStartDate;
+        ToDate    toDate = payrollPeriodFrom.PeriodEndDate;
+        SPYThresholdCriteria thresholdCriteria = contract.parmThresholdCriteria();
+
+        QueryBuildDataSource qbd = query.dataSourceTable(tableNum(HcmWorker));
+        QueryBuildDataSource ResourceQbd = qbd.addDataSource(tableNum(ResourceWorkerView), "ResourceWorkerView");
+        ResourceQbd.joinMode(JoinMode::InnerJoin);
+        ResourceQbd.fetchMode(QueryFetchMode::One2One);
+        ResourceQbd.addLink(fieldNum(HcmWorker, RecId), fieldNum(ResourceWorkerView, Worker));
+
+        QueryBuildDataSource TimesheetTableQbd = ResourceQbd.addDataSource(tableNum(TSTimesheetTable), "TSTimesheetTable");
+        TimesheetTableQbd.relations(true);
+        
+        QueryBuildDataSource timesheetLineQbd = TimesheetTableQbd.addDataSource(tableNum(TSTimesheetLine), "TSTimesheetLine");
+        timesheetLineQbd.relations(true);
+    
+        QueryBuildDataSource timesheetWeekQbd = timesheetLineQbd.addDataSource(tableNum(TSTimesheetLineWeek), "TSTimesheetLineWeek");
+        timesheetWeekQbd.relations(true);
+        
+        QueryBuildRange qbr = timesheetWeekQbd.addRange(fieldNum(TSTimesheetLineWeek, DataAreaId));
+
+        qbr.value(strFmt('(((%5.%1 >= %2) && (%5.%1 <= %3)) || ((%5.%4 >= %2) && (%5.%4 <= %3)) || ((%5.%1 <= %2) && (%5.%4 >= %3)))',
+             fieldStr(TSTimesheetLineWeek, DayFrom),
+            date2StrXpp(fromDate),
+            date2StrXpp(toDate),
+            fieldStr(TSTimesheetLineWeek, DayTo),
+            tableStr(TSTimesheetLineWeek)));
+           
+        QueryRun qr = new QueryRun(query);
+        //FromDate fromDate = contract.parmFromDate();
+        //ToDate toDate = contract.parmToDate();
+
+        while(qr.next())
+        {
+            hcmWorker       = qr.get(tableNum(HcmWorker));
+            tsTimesheetLineWeek = qr.get(tableNum(TSTimesheetLineWeek));
+            TransDate periodFrom = tsTimesheetLineWeek.DayFrom;
+            TransDate periodTo= tsTimesheetLineWeek.DayTo;
+            int cntHrs;
+            while (periodFrom <= periodTo)
+            {
+                cntHrs++;
+                if (periodFrom >= fromDate && periodFrom <= toDate)
+                {
+                    timesheetReportTmp.clear();
+                    timesheetReportTmp.WorkerName = hcmWorker.name();
+                    timesheetReportTmp.WorkerPersonnelId = hcmWorker.PersonnelNumber;
+                    timesheetReportTmp.TimesheetDate = periodFrom;
+                    timesheetReportTmp.Hours = tsTimesheetLineWeek.Hours[cntHrs];
+                    timesheetReportTmp.PayrollPeriodLineRecId = payrollPeriodLineFrom;
+                    
+                    timesheetReportTmp.insert();
+                }
+                periodFrom++;
+
+            }
+
+        }
+        if (thresholdCriteria == SPYThresholdCriteria::Daily)
+        {
+            while select sum(Hours) from timesheetReportTmp
+            group by WorkerName,WorkerPersonnelId,TimesheetDate
+            {
+            
+                timesheetReportTmpFinalise.clear();
+                timesheetReportTmpFinalise.WorkerName = timesheetReportTmp.WorkerName;
+                timesheetReportTmpFinalise.WorkerPersonnelId = timesheetReportTmp.WorkerPersonnelId ;
+                timesheetReportTmpFinalise.TimesheetDate =  timesheetReportTmp.TimesheetDate;
+                timesheetReportTmpFinalise.Hours = timesheetReportTmp.Hours;
+            
+                timesheetReportTmpFinalise.insert();
+            }
+
+            delete_from timesheetReportTmpFinalise where timesheetReportTmpFinalise.Hours < contract.parmHourThreshold();
+        }
+        else if (thresholdCriteria == SPYThresholdCriteria::Monthly)
+        {
+            while select sum(Hours) from timesheetReportTmp
+            group by WorkerName,WorkerPersonnelId,PayrollPeriodLineRecId
+            {
+            
+                timesheetReportTmpMonth.WorkerName = timesheetReportTmp.WorkerName;
+                timesheetReportTmpMonth.WorkerPersonnelId = timesheetReportTmp.WorkerPersonnelId ;
+                
+                timesheetReportTmpMonth.Hours = timesheetReportTmp.Hours;
+            
+                timesheetReportTmpMonth.insert();
+            }
+            delete_from timesheetReportTmpMonth where timesheetReportTmpMonth.Hours < contract.parmHourThreshold();
+
+            while select timesheetReportTmp join timesheetReportTmpMonth
+                where timesheetReportTmp.WorkerPersonnelId == timesheetReportTmpMonth.WorkerPersonnelId
+            {
+                timesheetReportTmpFinalise.clear();
+                timesheetReportTmpFinalise.WorkerName = timesheetReportTmp.WorkerName;
+                timesheetReportTmpFinalise.WorkerPersonnelId = timesheetReportTmp.WorkerPersonnelId ;
+                timesheetReportTmpFinalise.TimesheetDate =  timesheetReportTmp.TimesheetDate;
+                timesheetReportTmpFinalise.Hours = timesheetReportTmp.Hours;
+            
+                timesheetReportTmpFinalise.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

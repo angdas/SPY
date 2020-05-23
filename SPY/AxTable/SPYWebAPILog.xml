@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebAPILog</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYWebAPILog extends common
+{
+}
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<Label>@SPY:WebAPILog</Label>
+	<SubscriberAccessLevel>
+		<Read>Allow</Read>
+	</SubscriberAccessLevel>
+	<TableGroup>Transaction</TableGroup>
+	<TitleField1>CallDescription</TitleField1>
+	<TitleField2>CallStatus</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>CallDescription</Name>
+			<Label>@SPY:CallDescription</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CallDescription</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CallStatus</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ApiURL</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Log</Name>
+			<Label>@SPY:Log</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CreatedBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CreatedDateTime</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Message</Name>
+			<Label>@SPY:Message</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>RequestMessage</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ResponseMessage</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SuccessMessage</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>ErrorMessage</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>RequestMessage</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<Label>@SPY:RequestMessage</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ResponseMessage</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<Label>@SPY:ResponseMessage</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>CallDescription</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+			<Label>@SPY:CallDescription</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>CallStatus</Name>
+			<ExtendedDataType>Description</ExtendedDataType>
+			<Label>@SPY:CallStatus</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>Token</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<Label>@SPY:Token</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ApiURL</Name>
+			<ExtendedDataType>URL</ExtendedDataType>
+			<Label>@SPY:APIURL</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>SuccessMessage</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<Label>@SPY:SuccessMessage</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>ErrorMessage</Name>
+			<ExtendedDataType>Notes</ExtendedDataType>
+			<Label>@SPY:ErrorMessage</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes />
+	<Mappings />
+	<Relations />
+	<StateMachines />
+</AxTable>

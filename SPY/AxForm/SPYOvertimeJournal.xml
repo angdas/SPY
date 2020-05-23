@@ -1,0 +1,1664 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYOvertimeJournal</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYOvertimeJournal extends FormRun
+{
+    SPYOvertimeJournalTable           overtimeJournalTableCaller;
+    NumberSeqFormHandler              numberSeqFormHandler;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow()
+    {
+        boolean ret;
+    
+        ret = SPYOvertimeJournalTable.canSubmitToWorkflow();
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        if(element.args().record() is SPYOvertimeJournalTable)
+            overtimeJournalTableCaller = element.args().record() as SPYOvertimeJournalTable;
+    
+        super();
+    
+        element.setEnable();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>numberSeqFormHandler</Name>
+				<Source><![CDATA[
+    NumberSeqFormHandler numberSeqFormHandler()
+    {
+        if (!numberSeqFormHandler)
+        {
+            numberSeqFormHandler = NumberSeqFormHandler::newForm(SPYPayrollParameters::numRefOvertimeJournalCode().NumberSequenceId,
+                                                                 element,
+                                                                 SPYOvertimeJournalTable_ds,
+                                                                 fieldNum(SPYOvertimeJournalTable,OvertimeJournalCode)
+                                                                );
+        }
+        return numberSeqFormHandler;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshDataSource</Name>
+				<Source><![CDATA[
+    void refreshDataSource()
+    {
+        SPYOvertimeJournalTable_ds.research(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEnable</Name>
+				<Source><![CDATA[
+    void setEnable()
+    {
+        boolean allowEdit;
+    
+        SPYOvertimeJournalValidate.enabled(!SPYOvertimeJournalTable.Posted);
+        SPYOvertimeJournalPost.enabled(!SPYOvertimeJournalTable.Posted);
+        SPYOvertimeLedger.enabled(SPYOvertimeJournalTable.Posted);
+        allowEdit = (SPYOvertimeJournalTable.WorkflowStatus == SPYWorkflowStatus::Created) ||
+                    (SPYOvertimeJournalTable.WorkflowStatus == SPYWorkflowStatus::Rejected) ||
+                    (SPYOvertimeJournalTable.WorkflowStatus == SPYWorkflowStatus::RequestChange);
+        SPYOvertimeJournalTable_ds.allowEdit(allowEdit);
+        SPYOvertimeJournalTable_ds.allowDelete(allowEdit);
+        SPYOvertimeJournalTrans_ds.allowCreate(allowEdit);
+        SPYOvertimeJournalTrans_ds.allowEdit(allowEdit);
+        SPYOvertimeJournalTrans_ds.allowDelete(allowEdit);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTitleText</Name>
+				<Source><![CDATA[
+    public void setTitleText()
+    {
+        headerTitle.text(strFmt('%1 : %2', SPYOvertimeJournalTable.OvertimeJournalCode,
+                                SPYOvertimeJournalTable.Description));
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYOvertimeJournalTable</Name>
+				<Methods>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+        
+            if(overtimeJournalTableCaller)
+            {
+                this.query().dataSourceTable(tableNum(SPYOvertimeJournalTable)).addRange(fieldNum(SPYOvertimeJournalTable,OvertimeJournalCode))
+                .value(queryValue(overtimeJournalTableCaller.OvertimeJournalCode));
+            }
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret;
+        
+            ret = super();
+        
+            element.setTitleText();
+            element.setEnable();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>create</Name>
+						<Source><![CDATA[
+        public void create(boolean _append = false)
+        {
+            element.numberSeqFormHandler().formMethodDataSourceCreatePre();
+        
+            super(_append);
+        
+            element.numberSeqFormHandler().formMethodDataSourceCreate(true);
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>delete</Name>
+						<Source><![CDATA[
+        public void delete()
+        {
+            element.numberSeqFormHandler().formMethodDataSourceDelete();
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>write</Name>
+						<Source><![CDATA[
+        public void write()
+        {
+            super();
+            element.numberSeqFormHandler().formMethodDataSourceWrite();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>validateWrite</Name>
+						<Source><![CDATA[
+        public boolean validateWrite()
+        {
+            boolean         ret;
+        
+            ret = super();
+            ret = element.numberSeqFormHandler().formMethodDataSourceValidateWrite(ret) && ret;
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>linkActive</Name>
+						<Source><![CDATA[
+        public void linkActive()
+        {
+            element.numberSeqFormHandler().formMethodDataSourceLinkActive();
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>SPYOvertimeJournalTrans</Name>
+				<Methods>
+					<Method>
+						<Name>initValue</Name>
+						<Source><![CDATA[
+        public void initValue()
+        {
+            super();
+        
+            SPYOvertimeJournalTrans.LineNum = SPYOvertimeJournalTrans.nextLineNum(SPYOvertimeJournalTrans.OvertimeJournal);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>SPYOvertimeJournalPost</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            super();
+        
+            element.setEnable();
+            SPYOvertimeJournalTrans_ds.executeQuery();
+            SPYOvertimeJournalTable_ds.research(true);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>Tab</Name>
+				<Type>Tab</Type>
+				<Methods>
+					<Method>
+						<Name>tabChanged</Name>
+						<Source><![CDATA[
+        public void tabChanged(int _FromTab, int _ToTab)
+        {
+            super(_FromTab, _ToTab);
+        
+        
+            // Buttons to show in Grid View
+            /* TODO: (Code Upgrade) [Action Pane Rule] Please consider moving all references to the form task override method and remove the control: ListGroup */
+            ListGroup.visible(TabPageGrid.isActivePage());
+        
+            // Buttons to show in Details View
+            /* TODO: (Code Upgrade) [Action Pane Rule] Please consider moving all references to the form task override method and remove the control: EditRecordButton */
+            //EditRecordButton.visible(!TabPageGrid.isActivePage());
+            //ShowGroup.visible(!TabPageGrid.isActivePage());
+        
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYOvertimeJournalTable</Name>
+			<Table>SPYOvertimeJournalTable</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>OvertimeJournalCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>Posted</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WorkflowStatus</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>SPYOvertimeJournalTrans</Name>
+			<Table>SPYOvertimeJournalTrans</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LineNum</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeDays</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeHours</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeJournal</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>OvertimeType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Txt</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>SPYOvertimeJournalTable</JoinSource>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY849</Caption>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">DetailsTransaction</Pattern>
+		<PatternVersion xmlns="">1.4</PatternVersion>
+		<Style xmlns="">DetailsFormTransaction</Style>
+		<TitleDataSource xmlns="">SPYOvertimeJournalTable</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<WorkflowDataSource xmlns="">SPYOvertimeJournalTable</WorkflowDataSource>
+		<WorkflowEnabled xmlns="">Yes</WorkflowEnabled>
+		<WorkflowType xmlns="">SPYOvertimeJournal</WorkflowType>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPaneHeader</Name>
+				<ElementPosition>715827882</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderHomeTab</Name>
+						<ElementPosition>1193046470</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>ListGroup</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1533916890</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SYS118440</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SPY849</Caption>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderPostTab</Name>
+						<ElementPosition>1789569705</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>PostGroup</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYOvertimeJournalValidate</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<MenuItemName>SPYOvertimeJournalValidate</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYOvertimeJournalPost</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<MenuItemName>SPYOvertimeJournalPost</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Columns>2</Columns>
+								<Caption>@SYS41360</Caption>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>LedgerGroup</Name>
+								<ElementPosition>1610612734</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYOvertimeLedger</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+										<MenuItemName>SPYOvertimeLedger</MenuItemName>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SYS13356</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS41360</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<DataSource>SPYOvertimeJournalTable</DataSource>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>NavigationList</Name>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<Visible>No</Visible>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl>
+						<Name>NavigationListFilter</Name>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension>
+							<Name>QuickFilterControl</Name>
+							<ExtensionComponents />
+							<ExtensionProperties>
+								<AxFormControlExtensionProperty>
+									<Name>targetControlName</Name>
+									<Type>String</Type>
+									<Value>NavigationListGrid</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>defaultColumnName</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>placeholderText</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+							</ExtensionProperties>
+						</FormControlExtension>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGridControl">
+						<Name>NavigationListGrid</Name>
+						<AllowEdit>No</AllowEdit>
+						<Type>Grid</Type>
+						<WidthMode>SizeToContent</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormStringControl">
+								<Name>SPYOvertimeJournalTable_OvertimeJournalCode1</Name>
+								<Type>String</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>OvertimeJournalCode</DataField>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormStringControl">
+								<Name>SPYOvertimeJournalTable_Description1</Name>
+								<Type>String</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>Description</DataField>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormComboBoxControl">
+								<Name>SPYOvertimeJournalTable_WorkflowStatus1</Name>
+								<Type>ComboBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>WorkflowStatus</DataField>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+								<Items />
+							</AxFormControl>
+						</Controls>
+						<DataSource>SPYOvertimeJournalTable</DataSource>
+						<MultiSelect>No</MultiSelect>
+						<ShowRowLabels>No</ShowRowLabels>
+						<Style>List</Style>
+					</AxFormControl>
+				</Controls>
+				<FrameType>None</FrameType>
+				<Style>SidePanel</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1431655764</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageDetails</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>HeaderInfo</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>HeaderTitle</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Skip>Yes</Skip>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Label>@SPY853</Label>
+										<ShowLabel>No</ShowLabel>
+										<Style>TitleField</Style>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormGroupControl">
+										<Name>StatusGroup</Name>
+										<ExtendedStyle>entityStatus</ExtendedStyle>
+										<Type>Group</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormComboBoxControl">
+												<Name>WorkflowStatus</Name>
+												<ElementPosition>1610612733</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<LeftMode>RightEdge</LeftMode>
+												<Skip>Yes</Skip>
+												<Type>ComboBox</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>Posted</DataField>
+												<DataSource>SPYOvertimeJournalTable</DataSource>
+												<ShowLabel>No</ShowLabel>
+												<ViewEditMode>View</ViewEditMode>
+												<Items />
+											</AxFormControl>
+										</Controls>
+										<ArrangeMethod>HorizontalRight</ArrangeMethod>
+										<Breakable>No</Breakable>
+										<FrameType>None</FrameType>
+										<ViewEditMode>View</ViewEditMode>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+								<FrameType>None</FrameType>
+								<Style>DetailTitleContainer</Style>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormTabControl">
+								<Name>DetailsTab</Name>
+								<AlignControl>No</AlignControl>
+								<ElementPosition>1610612733</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Tab</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>LineView</Name>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>LineViewTab</Name>
+												<AlignControl>No</AlignControl>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Type>Tab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewHeader</Name>
+														<ElementPosition>858993458</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupDetails</Name>
+																<ElementPosition>858993458</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupDetails_OvertimeJournalCode</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>OvertimeJournalCode</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupDetails_Description</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Description</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Details</DataGroup>
+																<DataSource>SPYOvertimeJournalTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorkflowStatus</Name>
+																<ElementPosition>1288490187</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>GroupWorkflowStatus_WorkflowStatus</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>WorkflowStatus</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>WorkflowStatus</DataGroup>
+																<DataSource>SPYOvertimeJournalTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupPosted</Name>
+																<ElementPosition>1717986916</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>GroupPosted_Posted</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Posted</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Posted</DataGroup>
+																<DataSource>SPYOvertimeJournalTable</DataSource>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<Caption>@SPY853</Caption>
+														<FastTabExpanded>No</FastTabExpanded>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewLines</Name>
+														<ElementPosition>1288490187</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>SizeToAvailable</HeightMode>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormActionPaneControl">
+																<Name>LinesActionPaneStrip</Name>
+																<ElementPosition>1073741822</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>ActionPane</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormActionPaneTabControl">
+																		<Name>LinesActionPaneTab</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ActionPaneTab</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormButtonGroupControl">
+																				<Name>LinesRecordActions</Name>
+																				<ElementPosition>1431655764</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<HeightMode>Auto</HeightMode>
+																				<Type>ButtonGroup</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<WidthMode>Auto</WidthMode>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCommandButtonControl">
+																						<Name>AddLine</Name>
+																						<ElementPosition>1073741822</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Type>CommandButton</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																						<Command>New</Command>
+																						<MultiSelect>Yes</MultiSelect>
+																						<NormalImage>Add</NormalImage>
+																						<Text>@SYS319116</Text>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCommandButtonControl">
+																						<Name>RemoveLine</Name>
+																						<ElementPosition>1610612733</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Type>CommandButton</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																						<Command>DeleteRecord</Command>
+																						<MultiSelect>Yes</MultiSelect>
+																						<NormalImage>Delete</NormalImage>
+																						<SaveRecord>No</SaveRecord>
+																						<Text>@SYS135131</Text>
+																					</AxFormControl>
+																				</Controls>
+																				<ArrangeMethod>Vertical</ArrangeMethod>
+																			</AxFormControl>
+																		</Controls>
+																		<AlignChild>No</AlignChild>
+																		<AlignChildren>No</AlignChildren>
+																		<ArrangeMethod>Vertical</ArrangeMethod>
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<AlignChild>No</AlignChild>
+																<AlignChildren>No</AlignChildren>
+																<ArrangeMethod>Vertical</ArrangeMethod>
+																<Style>Strip</Style>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGridControl">
+																<Name>LinesGrid</Name>
+																<ElementPosition>1610612734</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Grid</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>SPYOvertimeJournalTrans_LineNum</Name>
+																		<ElementPosition>477218588</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>LineNum</DataField>
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																		<NoOfDecimals>-1</NoOfDecimals>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>SPYOvertimeJournalTrans_Worker</Name>
+																		<ElementPosition>715827882</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																		<ReferenceField>Worker</ReferenceField>
+																		<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>SPYOvertimeJournalTrans_TransDate</Name>
+																		<ElementPosition>954437176</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>TransDate</DataField>
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>SPYOvertimeJournalTrans_Txt</Name>
+																		<ElementPosition>1193046470</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Txt</DataField>
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>SPYOvertimeJournalTrans_OvertimeDate</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>OvertimeDate</DataField>
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>SPYOvertimeJournalTrans_OvertimeDays</Name>
+																		<ElementPosition>1670265058</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>OvertimeDays</DataField>
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																		<NoOfDecimals>-1</NoOfDecimals>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>SPYOvertimeJournalTrans_OvertimeHours</Name>
+																		<ElementPosition>1908874352</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>OvertimeHours</DataField>
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																		<NoOfDecimals>-1</NoOfDecimals>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>SPYOvertimeJournalTrans_OvertimeType</Name>
+																		<ElementPosition>2028178999</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYOvertimeJournalTrans</DataSource>
+																		<ReferenceField>OvertimeType</ReferenceField>
+																	</AxFormControl>
+																</Controls>
+																<DataSource>SPYOvertimeJournalTrans</DataSource>
+																<Style>Tabular</Style>
+																<VisibleRows>5</VisibleRows>
+																<VisibleRowsMode>Fixed</VisibleRowsMode>
+															</AxFormControl>
+														</Controls>
+														<Caption>@SPY861</Caption>
+														<FastTabExpanded>Always</FastTabExpanded>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewLineDetails</Name>
+														<ElementPosition>1717986916</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormTabControl">
+																<Name>LineDetailsTabs</Name>
+																<AlignControl>No</AlignControl>
+																<ElementPosition>1431655764</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Tab</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormTabPageControl">
+																		<Name>LineGeneral</Name>
+																		<ElementPosition>1065788178</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Pattern>FieldsFieldGroups</Pattern>
+																		<PatternVersion>1.1</PatternVersion>
+																		<Type>TabPage</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupWorker</Name>
+																				<ElementPosition>858993458</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormReferenceGroupControl">
+																						<Name>GroupWorker_Worker</Name>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>ReferenceGroup</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls />
+																						<DataSource>SPYOvertimeJournalTrans</DataSource>
+																						<ReferenceField>Worker</ReferenceField>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Worker</DataGroup>
+																				<DataSource>SPYOvertimeJournalTrans</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupTransaction</Name>
+																				<ElementPosition>1288490187</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>GroupTransaction_LineNum</Name>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Real</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>LineNum</DataField>
+																						<DataSource>SPYOvertimeJournalTrans</DataSource>
+																						<NoOfDecimals>-1</NoOfDecimals>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateControl">
+																						<Name>GroupTransaction_TransDate</Name>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Date</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>TransDate</DataField>
+																						<DataSource>SPYOvertimeJournalTrans</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>GroupTransaction_Txt</Name>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>String</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>Txt</DataField>
+																						<DataSource>SPYOvertimeJournalTrans</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Transaction</DataGroup>
+																				<DataSource>SPYOvertimeJournalTrans</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>OvertimeDetails</Name>
+																				<ElementPosition>1717986916</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateControl">
+																						<Name>GroupAmount_OvertimeDate</Name>
+																						<ElementPosition>858993458</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Date</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>OvertimeDate</DataField>
+																						<DataSource>SPYOvertimeJournalTrans</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>GroupAmount_OvertimeDays</Name>
+																						<ElementPosition>1288490187</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Real</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>OvertimeDays</DataField>
+																						<DataSource>SPYOvertimeJournalTrans</DataSource>
+																						<NoOfDecimals>-1</NoOfDecimals>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>GroupAmount_TransactionCurrencyAmount</Name>
+																						<ElementPosition>1717986916</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Real</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>OvertimeHours</DataField>
+																						<DataSource>SPYOvertimeJournalTrans</DataSource>
+																						<NoOfDecimals>-1</NoOfDecimals>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormReferenceGroupControl">
+																						<Name>OvertimeDetails_OvertimeType</Name>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>ReferenceGroup</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls />
+																						<DataSource>SPYOvertimeJournalTrans</DataSource>
+																						<ReferenceField>OvertimeType</ReferenceField>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>OvertimeDetails</DataGroup>
+																				<DataSource>SPYOvertimeJournalTrans</DataSource>
+																			</AxFormControl>
+																		</Controls>
+																		<ColumnsMode>Fill</ColumnsMode>
+																		<Caption>@SYS2952</Caption>
+																		<Scrollbars>Auto</Scrollbars>
+																	</AxFormControl>
+																</Controls>
+																<AlignChild>No</AlignChild>
+																<ArrangeMethod>Vertical</ArrangeMethod>
+															</AxFormControl>
+														</Controls>
+														<BottomMargin>0</BottomMargin>
+														<BottomMarginMode>Fixed</BottomMarginMode>
+														<LeftMargin>0</LeftMargin>
+														<LeftMarginMode>Fixed</LeftMarginMode>
+														<RightMargin>0</RightMargin>
+														<RightMarginMode>Fixed</RightMarginMode>
+														<TopMargin>0</TopMargin>
+														<TopMarginMode>Fixed</TopMarginMode>
+														<Caption>@SYS23823</Caption>
+														<FastTabExpanded>No</FastTabExpanded>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>FastTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<LeftMargin>0</LeftMargin>
+										<LeftMarginMode>Fixed</LeftMarginMode>
+										<RightMargin>0</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<PanelStyle>DetailsLine</PanelStyle>
+										<Scrollbars>Auto</Scrollbars>
+										<Style>DetailsFormDetails</Style>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>HeaderView</Name>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>HeaderDetailsTab</Name>
+												<AlignControl>No</AlignControl>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Type>Tab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>HeaderGeneral</Name>
+														<ElementPosition>1119628224</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupDetails1</Name>
+																<ElementPosition>715827882</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupDetails1_OvertimeJournalCode</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>OvertimeJournalCode</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupDetails1_Description</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Description</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Details</DataGroup>
+																<DataSource>SPYOvertimeJournalTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorkflowStatus1</Name>
+																<ElementPosition>1073741823</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>GroupWorkflowStatus1_WorkflowStatus</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>WorkflowStatus</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>WorkflowStatus</DataGroup>
+																<DataSource>SPYOvertimeJournalTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupPosted1</Name>
+																<ElementPosition>1431655764</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>GroupPosted1_Posted</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Posted</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Posted</DataGroup>
+																<DataSource>SPYOvertimeJournalTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupLog</Name>
+																<ElementPosition>1789569705</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupLog_createdBy</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>createdBy</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																		<Label>@SPY:CreatedBy</Label>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateTimeControl">
+																		<Name>GroupLog_createdDateTime</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>DateTime</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>createdDateTime</DataField>
+																		<DataSource>SPYOvertimeJournalTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Log</DataGroup>
+																<DataSource>SPYOvertimeJournalTable</DataSource>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<Caption>@SYS2952</Caption>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>FastTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<LeftMargin>0</LeftMargin>
+										<LeftMarginMode>Fixed</LeftMarginMode>
+										<RightMargin>0</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<PanelStyle>DetailsHeader</PanelStyle>
+										<Scrollbars>Auto</Scrollbars>
+										<Style>DetailsFormDetails</Style>
+									</AxFormControl>
+								</Controls>
+								<AlignChild>No</AlignChild>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<ShowTabs>No</ShowTabs>
+							</AxFormControl>
+						</Controls>
+						<PanelStyle>Details</PanelStyle>
+						<Scrollbars>Auto</Scrollbars>
+						<Style>DetailsFormDetails</Style>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageGrid</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1610612734</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GridGroupCopy1</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Pattern>CustomAndQuickFilters</Pattern>
+								<PatternVersion>1.1</PatternVersion>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl>
+										<Name>GridFilter</Name>
+										<FormControlExtension>
+											<Name>QuickFilterControl</Name>
+											<ExtensionComponents />
+											<ExtensionProperties>
+												<AxFormControlExtensionProperty>
+													<Name>targetControlName</Name>
+													<Type>String</Type>
+													<Value>Grid</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>defaultColumnName</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>placeholderText</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+											</ExtensionProperties>
+										</FormControlExtension>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+								<FrameType>None</FrameType>
+								<Style>CustomFilter</Style>
+								<ViewEditMode>Edit</ViewEditMode>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>HeaderGrid</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYOvertimeJournalTable_OvertimeJournalCode</Name>
+										<ElementPosition>536870910</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>OvertimeJournalCode</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYOvertimeJournalTable_Description</Name>
+										<ElementPosition>805306365</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Description</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>SPYOvertimeJournalTable_WorkflowStatus</Name>
+										<ElementPosition>1073741820</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ComboBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>WorkflowStatus</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+										<Items />
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>SPYOvertimeJournalTable_Posted</Name>
+										<ElementPosition>1342177275</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<BackgroundColor>WindowBackground</BackgroundColor>
+										<DataField>Posted</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYOvertimeJournalTable_createdBy</Name>
+										<ElementPosition>1610612730</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>createdBy</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateTimeControl">
+										<Name>SPYOvertimeJournalTable_createdDateTime</Name>
+										<ElementPosition>1879048185</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>DateTime</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>createdDateTime</DataField>
+										<DataSource>SPYOvertimeJournalTable</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataSource>SPYOvertimeJournalTable</DataSource>
+								<DefaultAction>MainGridDefaultAction</DefaultAction>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCommandButtonControl">
+								<Name>MainGridDefaultAction</Name>
+								<Type>CommandButton</Type>
+								<Visible>No</Visible>
+								<FormControlExtension
+									i:nil="true" />
+								<Command>DetailsView</Command>
+							</AxFormControl>
+						</Controls>
+						<DataSource>SPYOvertimeJournalTable</DataSource>
+						<PanelStyle>Grid</PanelStyle>
+						<Scrollbars>Auto</Scrollbars>
+						<Style>DetailsFormGrid</Style>
+						<ViewEditMode>Edit</ViewEditMode>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<ShowTabs>No</ShowTabs>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

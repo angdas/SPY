@@ -1,0 +1,625 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEmpCostDistributionUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+// This is a framework class. Customizing this class may cause problems with future upgrades to the software.
+class SPYEmpCostDistributionUpload  extends RunBaseBatch
+{
+    FileName                fileNameOpen;
+    AsciiStreamIo           fileIO;
+    DialogField             dlgLeave;
+    Description             journalDesc;
+    boolean                 errorDim;
+    container               insCon;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+    journalDesc
+    #endmacro
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    // Specifies whether the functionality can run in a new session window
+    public boolean canRunInNewSession()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase           dialog;
+        FormBuildButtonControl  buttonControlUpload;
+        DialogGroup             dlgGroup;
+        FormBuildGroupControl   buttonGroup;
+
+        dialog = super();
+
+        dlgGroup            = dialog.addGroup('');
+        buttonGroup         = dialog.formBuildDesign().control(dlgGroup.formBuildGroup().id());
+        buttonControlUpload = buttonGroup.addControl(FormControlType::Button, "@SPY:UploadEmpCostDist");
+        buttonControlUpload.text("@SPY:UploadEmpCostDist");
+        buttonControlUpload.registerOverrideMethod(methodStr(FormButtonControl, clicked),
+                                        methodStr(SPYLeaveApplicationUpload, uploadClickedEvent),
+                                        this);
+
+        
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadClickedEvent</Name>
+				<Source><![CDATA[
+    private void uploadClickedEvent(FormButtonControl _formButtonControl)
+    {
+        FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+        If (result && result.getUploadStatus())
+        {
+            fileIO = AsciiStreamIo::constructForRead(result.openResult());
+            if (fileIO)
+            {
+                if (fileIO.status())
+                {
+                    throw error("@SPY:ImportingProblem");
+                }
+                fileIO.inFieldDelimiter(',');
+                fileIO.inRecordDelimiter('\r\n');
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            this.readCSV(fileIO);
+        }
+        catch(Exception::Error)
+        {
+            ttsabort;
+            throw error("@SPY:ImportingException");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readCSV</Name>
+				<Source><![CDATA[
+    public void readCSV(AsciiStreamIo  file)
+    {
+        COMVariantType                      type;
+        HcmWorkerRecId                      worker;
+        boolean                             errorWorker, errorRecordExist;
+        container                           record;
+        int                                 cnt = 0, numberofUploadedRecords, cntUpdate = 0, percent;
+        HcmEmploymentDetail                 employmentdetails;
+        
+        DimensionAttributeValueSetItem      DimensionAttributeValueSetItem;
+        DimensionAttributeValue             DimensionAttributeValue;
+        DimensionAttribute                  DimensionAttribute;
+        HcmPersonnelNumberId                employeeId;
+        SPYEmpCostDistributionUploadTmp     tmpTable;
+        ValidFromDate                       startDate;
+        ValidToDate                         endDate;
+        Hours                               hours;
+        Notes                               remarks;
+        str                                 dim, dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8;
+        TransDateTime                       transDateTime = DateTimeUtil::newDateTime(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),00-00);
+        HcmEmployment                       hcmEmployment;
+        int                                 conRec, conLengthEmp, insEmpCnt = 0;
+        int64                               empCheck;
+        SPYPayrollParameters                payrollParametersIns;
+
+        RecordInsertList                    tmpTableList;
+
+        tmpTableList                        = new RecordInsertList(tableNum(SPYEmpCostDistributionUploadTmp));
+
+        
+
+        ttsbegin;
+        delete_from tmpTable;
+        while (!file.status())
+        {
+            cnt++;
+            record = file.read();
+            
+            if( cnt > 1)
+            {
+                employeeId  = conpeek(record,1);
+                dim1        = conpeek(record,2);
+                dim2        = conpeek(record,3);
+                dim3        = conpeek(record,4);
+                dim4        = conpeek(record,5);
+                dim5        = conpeek(record,6);
+                dim6        = conpeek(record,7);
+                dim7        = conpeek(record,8);
+                dim8        = conpeek(record,9);
+                percent     = conpeek(record,10);
+
+                errorWorker             = false;
+                errorDim                = false;
+                errorRecordExist        = false;
+
+                int i = conLen(record);
+                if (conLen(record))
+                {
+                    //Check for worker
+                    worker = Hcmworker::findByPersonnelNumber(employeeId).RecId;
+                    if(worker == 0)
+                    {
+                        warning(strfmt("@SPY:EmployeeIdnotValid",cnt));
+                        errorWorker = true;
+                    }
+                    else
+                    {
+                        hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker,CompanyInfo::findDataArea(curExt()).RecId,transDateTime);
+                        employmentdetails = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,transDateTime);
+                        if(!employmentdetails)
+                        {
+                            warning(strfmt("@SPY:EmploymentDetailsNotAvailable",cnt));
+                            errorWorker = true;
+                        }
+                       
+                    }
+
+                    for(int x = 2; x <= 9; x++)
+                    {
+                        errorDim = false;
+                        dim = conPeek(record, x);
+                        if(dim)
+                        {
+                            this.errorDimValue(x, dim);
+                        }
+                        
+                        if(errorDim == true)
+                        {
+                            warning(strfmt("@SPY:DimensionInValid",cnt, x));
+                        }
+
+                    }
+
+                   
+                    
+                    if(errorWorker == false && errorDim == false)
+                    {
+                        cntUpdate++;
+                        tmpTable.clear();
+                        //conLengthEmp   = conLen(insCon);
+                        //for(conRec = 1; conRec <= conLengthEmp; conRec++)
+                        //{
+                        //    empCheck = conPeek(insCon, conRec);
+                        //    if(empCheck == employmentdetails.RecId)
+                        //    {
+                        //        errorRecordExist = true;
+                        //    }
+
+                        //}
+                        //if(errorRecordExist == false)
+                        //{
+                        //    insCon += employmentdetails.RecId;
+                        //}
+
+                        payrollParametersIns   = SPYPayrollParameters::find();
+                        
+                        tmpTable.EmploymentDetail           = employmentdetails.RecId;
+                        tmpTable.DimensionValue1            = dim1;
+                        tmpTable.DimensionAttributeValue1   = this.dimAttrValueValidation(dim1, payrollParametersIns.CostDistributionDimension1);
+                        tmpTable.DimensionValue2            = dim2;
+                        tmpTable.DimensionAttributeValue2   = this.dimAttrValueValidation(dim2, payrollParametersIns.CostDistributionDimension2);
+                        tmpTable.DimensionValue3            = dim3;
+                        tmpTable.DimensionAttributeValue3   = this.dimAttrValueValidation(dim3, payrollParametersIns.CostDistributionDimension3);
+                        tmpTable.DimensionValue4            = dim4;
+                        tmpTable.DimensionAttributeValue4   = this.dimAttrValueValidation(dim4, payrollParametersIns.CostDistributionDimension4);
+                        tmpTable.DimensionValue5            = dim5;
+                        tmpTable.DimensionAttributeValue5   = this.dimAttrValueValidation(dim5, payrollParametersIns.CostDistributionDimension5);
+                        tmpTable.DimensionValue6            = dim6;
+                        tmpTable.DimensionAttributeValue6   = this.dimAttrValueValidation(dim6, payrollParametersIns.CostDistributionDimension6);
+                        tmpTable.DimensionValue7            = dim7;
+                        tmpTable.DimensionAttributeValue7   = this.dimAttrValueValidation(dim7, payrollParametersIns.CostDistributionDimension7);
+                        tmpTable.DimensionValue8            = dim8;
+                        tmpTable.DimensionAttributeValue8   = this.dimAttrValueValidation(dim8, payrollParametersIns.CostDistributionDimension8);
+                        tmpTable.Percent                    = percent;
+                        //tmpTable.insert();
+                        tmpTableList.add(tmpTable);
+                    }
+                }
+            }
+        }
+        tmpTableList.insertDatabase();
+        ttscommit;
+        //For inserting all the unique employee records
+        while select tmpTable
+             group by EmploymentDetail
+        {
+            insCon += tmpTable.EmploymentDetail;
+        }
+        this.insert();
+        // delete_from tmpTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>errorDimValue</Name>
+				<Source><![CDATA[
+    public boolean errorDimValue(int col, str dimval)
+    {
+        RecId                   daRecId;
+        SPYPayrollParameters    payrollParameters;
+
+        payrollParameters   = SPYPayrollParameters::find();
+
+        //daRecId = this.dimAttrValue(dimval);
+
+        switch(col)
+        {
+            case 2:
+                daRecId = this.dimAttrValueValidation(dimval, payrollParameters.CostDistributionDimension1);
+                errorDim    = daRecId  == payrollParameters.CostDistributionDimension1 ? false : true;
+                break;
+            case 3:
+                daRecId = this.dimAttrValueValidation(dimval, payrollParameters.CostDistributionDimension2);
+                errorDim    = daRecId  == payrollParameters.CostDistributionDimension2 ? false : true;
+                break;
+            case 4:
+                daRecId = this.dimAttrValueValidation(dimval, payrollParameters.CostDistributionDimension3);
+                errorDim    = daRecId  == payrollParameters.CostDistributionDimension3 ? false : true;
+                break;
+            case 5:
+                daRecId = this.dimAttrValueValidation(dimval, payrollParameters.CostDistributionDimension4);
+                errorDim    = daRecId  == payrollParameters.CostDistributionDimension4 ? false : true;
+                break;
+            case 6:
+                daRecId = this.dimAttrValueValidation(dimval, payrollParameters.CostDistributionDimension5);
+                errorDim    = daRecId  == payrollParameters.CostDistributionDimension5 ? false : true;
+                break;
+            case 7:
+                daRecId = this.dimAttrValueValidation(dimval, payrollParameters.CostDistributionDimension6);
+                errorDim    = daRecId  == payrollParameters.CostDistributionDimension6 ? false : true;
+                break;
+            case 8:
+                daRecId = this.dimAttrValueValidation(dimval, payrollParameters.CostDistributionDimension7);
+                errorDim    = daRecId  == payrollParameters.CostDistributionDimension7 ? false : true;
+                break;
+            case 9:
+                daRecId = this.dimAttrValueValidation(dimval, payrollParameters.CostDistributionDimension8);
+                errorDim    = daRecId  == payrollParameters.CostDistributionDimension8 ? false : true;
+                break;
+        }
+
+        return errorDim;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttrValue</Name>
+				<Source><![CDATA[
+    //returns DimensionAttribute from DimensionAttributeValue
+    public RecId dimAttrValue(str dispValue)
+    {
+        DimensionAttributeValueSetItem      DAVS;
+        DimensionAttributeValue             DAV;
+        DimensionAttribute                  DA;
+
+        select DimensionAttribute from DAV
+            join DAVS where DAVS.DimensionAttributeValue == DAV.RecId
+            && DAVS.DisplayValue == dispValue;
+
+        if(dispValue != "")
+        {
+            return DAV.DimensionAttribute;
+        }
+        else
+        {
+            return 0;
+        }
+
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dimAttrValueValidation</Name>
+				<Source><![CDATA[
+    public RecId dimAttrValueValidation(str dispValue, RecId costDstNo)
+    {
+        DimensionAttributeValueSetItem      DAVS;
+        DimensionAttributeValue             DAV;
+        DimensionAttribute                  DA;
+        DefaultDimensionView                DDV;
+
+        select DDV
+            where DDV.DisplayValue == dispValue
+            && DDV.DimensionAttributeId == costDstNo;
+  
+
+        if(dispValue != "")
+        {
+            return DDV.DimensionAttributeId;
+        }
+        else
+        {
+            return 0;
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert</Name>
+				<Source><![CDATA[
+    public void insert()
+    {
+        SPYEmploymentCostDistribution       empCostDst, empCostDstCheck, empCostDstUpdate;
+        SPYEmpCostDistributionUploadTmp     uploadTmpSum, uploadTmpIns, uploadTmpExist, uploadTmpCnt;
+        int                                 counter, conLength, insCnt = 0;
+        int64                               emp;
+        HcmEmployment                       employmentTmp;
+        HcmEmploymentDetail                 employmentDetailTmp;
+        HcmWorker                           workerTmp;
+
+        RecordInsertList                    empCostDstList;
+
+        empCostDstList                      = new RecordInsertList(tableNum(SPYEmploymentCostDistribution));
+
+        conLength   = conLen(insCon);
+
+        for(counter = 1; counter <= conLength; counter++)
+        {
+            emp = conPeek(insCon, counter);
+
+            
+            select sum(Percent) from uploadTmpSum
+                where uploadTmpSum.EmploymentDetail == emp;
+
+            if(uploadTmpSum.Percent == 100)
+            {
+                //select empCostDstCheck
+                //    where empCostDstCheck.EmploymentDetail == emp;
+                //if(empCostDstCheck)
+                //{
+                ttsbegin;
+                delete_from empCostDstUpdate
+                            where empCostDstUpdate.EmploymentDetail == emp;
+                ttscommit;
+                // }
+                while select uploadTmpIns where uploadTmpIns.EmploymentDetail == emp
+                {
+                    empCostDst.clear();
+                    empCostDst.EmploymentDetail             = uploadTmpIns.EmploymentDetail;
+                    empCostDst.DimensionValue1              = uploadTmpIns.DimensionValue1;
+                    empCostDst.DimensionAttributeValue1     = uploadTmpIns.DimensionAttributeValue1;
+                    empCostDst.DimensionValue2              = uploadTmpIns.DimensionValue2;
+                    empCostDst.DimensionAttributeValue2     = uploadTmpIns.DimensionAttributeValue2;
+                    empCostDst.DimensionValue3              = uploadTmpIns.DimensionValue3;
+                    empCostDst.DimensionAttributeValue3     = uploadTmpIns.DimensionAttributeValue3;
+                    empCostDst.DimensionValue4              = uploadTmpIns.DimensionValue4;
+                    empCostDst.DimensionAttributeValue4     = uploadTmpIns.DimensionAttributeValue4;
+                    empCostDst.DimensionValue5              = uploadTmpIns.DimensionValue5;
+                    empCostDst.DimensionAttributeValue5     = uploadTmpIns.DimensionAttributeValue5;
+                    empCostDst.DimensionValue6              = uploadTmpIns.DimensionValue6;
+                    empCostDst.DimensionAttributeValue6     = uploadTmpIns.DimensionAttributeValue6;
+                    empCostDst.DimensionValue7              = uploadTmpIns.DimensionValue7;
+                    empCostDst.DimensionAttributeValue7     = uploadTmpIns.DimensionAttributeValue7;
+                    empCostDst.DimensionValue8              = uploadTmpIns.DimensionValue8;
+                    empCostDst.DimensionAttributeValue8     = uploadTmpIns.DimensionAttributeValue8;
+                    empCostDst.Percent                      = uploadTmpIns.Percent;
+                    insCnt++;
+                    empCostDstList.add(empCostDst);
+
+                }
+                empCostDstList.insertDatabase();
+
+            }
+
+            else
+            {
+                employmentDetailTmp = HcmEmploymentDetail::find(emp);
+                employmentTmp       = HcmEmployment::find(employmentDetailTmp.Employment);
+                workerTmp               = HcmWorker::find(employmentTmp.Worker);
+                warning(strfmt("@SPY:PercentError",workerTmp.PersonnelNumber));
+            }
+        }
+
+        info(strfmt("@SPY:UploadedRecords",insCnt));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    // Unpacking of parameters
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+        ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    // Validation
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYEmpCostDistributionUpload construct()
+    {
+        return new SPYEmpCostDistributionUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "@SPY:EmpCostDistUpload";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYEmpCostDistributionUpload    costDistributionUpload;
+    
+        costDistributionUpload = SPYEmpCostDistributionUpload::construct();
+    
+        if (costDistributionUpload.prompt())
+            costDistributionUpload.runOperationNow();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

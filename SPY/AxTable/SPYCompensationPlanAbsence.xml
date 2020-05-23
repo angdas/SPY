@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYCompensationPlanAbsence</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYCompensationPlanAbsence extends common
+{
+}
+
+]]></Declaration>
+		<Methods />
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY448</DeveloperDocumentation>
+	<Label>@SPY446</Label>
+	<TableGroup>Reference</TableGroup>
+	<TitleField1>CompensationPlan</TitleField1>
+	<CacheLookup>Found</CacheLookup>
+	<ReplacementKey>PlanBenefit_AK</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationPlan</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationPlan</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>CompensationPlan</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>HRMAbsenceCodeId</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>PayrollPeriod</Name>
+			<Label>@SPY24</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>QtyMax</Name>
+			<Label>@SPY549</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>QtyHourlyMax</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyDailyMax</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyWeeklyMax</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyBiWeeklyMax</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyMonthlyMax</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyQuarterlyMax</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtySemiAnnualMax</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyAnnualMax</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>QtyMid</Name>
+			<Label>@SPY550</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>QtyHourlyMid</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyDailyMid</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyWeeklyMid</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyBiWeeklyMid</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyMonthlyMid</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyQuarterlyMid</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtySemiAnnualMid</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyAnnualMid</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>QtyMin</Name>
+			<Label>@SPY548</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>QtyHourlyMin</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyDailyMin</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyWeeklyMin</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyBiWeeklyMin</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyMonthlyMin</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyQuarterlyMin</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtySemiAnnualMin</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>QtyAnnualMin</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>CompensationPlan</Name>
+			<ExtendedDataType>SPYCompensationPlanRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>HRMAbsenceCodeId</Name>
+			<ExtendedDataType>HRMAbsenceCodeId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollPeriod</Name>
+			<ExtendedDataType>SPYPayrollPeriodRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyAnnualMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS117193</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyAnnualMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS117193</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyAnnualMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS117193</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyBiWeeklyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY97</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyBiWeeklyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY97</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyBiWeeklyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY97</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyDailyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS13656</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyDailyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS13656</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyDailyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS13656</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyHourlyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS24619</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyHourlyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS24619</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyHourlyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS24619</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyMonthlyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyMonthlyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyMonthlyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67526</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyQuarterlyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67527</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyQuarterlyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67527</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyQuarterlyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS67527</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtySemiAnnualMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY98</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtySemiAnnualMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY98</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtySemiAnnualMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SPY98</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyWeeklyMax</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS92558</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyWeeklyMid</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS92558</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>QtyWeeklyMin</Name>
+			<ExtendedDataType>SPYAmount</ExtendedDataType>
+			<Label>@SYS92558</Label>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>PlanBenefit_AK</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>CompensationPlan</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>PayrollPeriod</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HRMAbsenceCode</Name>
+			<RelatedTable>HRMAbsenceCode</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>HRMAbsenceCodeId</Name>
+					<Field>HRMAbsenceCodeId</Field>
+					<RelatedField>dataAreaId</RelatedField>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>HRMAbsenceCodeId_1</Name>
+					<Field>HRMAbsenceCodeId</Field>
+					<RelatedField>hrmAbsenceCodeId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>IdIdx</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYCompensationPlanTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYCompensationPlanTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>CompensationPlan</Name>
+					<Field>CompensationPlan</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollPeriod</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYPayrollPeriod</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollPeriod</Name>
+					<Field>PayrollPeriod</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

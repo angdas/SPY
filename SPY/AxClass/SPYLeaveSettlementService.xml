@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveSettlementService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLeaveSettlementService extends SPYPayService
+{
+    SPYLeaveSettlementContract          contract;
+    TransDate                           leaveSettlementStartDate,leaveSettlementEndDate;
+    TransDate                           payrollProcessDate;
+    TransDate                           absenceValidFrom;
+    List                                leaveApplList;
+    SPYPayrollPeriodLine                payrollPeriodLineFinalize;
+    SPYLeaveApplicationTable            leaveApplicationTable;
+    
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>checkApplication</Name>
+				<Source><![CDATA[
+    private boolean checkApplication()
+    {
+        boolean     ret = true;
+
+        if(leaveApplicationTable.ApplicationSettled)
+        {
+            error(strFmt("@SPY1737",leaveApplicationTable.LeaveApplicationCode));
+            ret = false;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>checkSettlement</Name>
+				<Source><![CDATA[
+    private boolean checkSettlement()
+    {
+        boolean     ret = true;
+    
+        if(payrollPeriodLineFinalize && !payrollPeriodLineFinalize.nextPeriodLine())
+        {
+            error(strFmt("@SPY1229",SPYPayrollPeriod::find(payrollPeriod).PayrollPeriodCode,
+            payrollPeriodLineFinalize.PeriodEndDate));
+            ret = false;
+        }
+        if(payrollPeriodLineFinalize.nextPeriodLine().PeriodStartDate > leaveSettlementEndDate)
+        {
+            error("@SPY1582",worker.name());
+            ret = false;
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getTxt</Name>
+				<Source><![CDATA[
+    protected NotesLine getTxt(SPYPayElementRecId _payElement)
+    {
+        NotesLine   ret;
+        date        endDate = periodEnd;
+    
+        if(periodEnd > calcEnd )
+            endDate = calcEnd;
+        ret = strFmt("@SPY1581",SPYPayElementTable::find(_payElement).PayElementCode,
+                         worker.name(),periodStart,endDate,leaveApplicationTable.LeaveApplicationCode);
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initialize</Name>
+				<Source><![CDATA[
+    public void initialize()
+    {
+        super();
+        leaveApplList = new List(Types::Int64);
+        this.setLeaveSettlement(true);
+        this.setPayArrear(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeLeaveApplList</Name>
+				<Source><![CDATA[
+    protected void initializeLeaveApplList(boolean _calledFromSettlementProcess,container _leaveApplContainer)
+    {
+        int                         leaveApplContainerLenCount = 1;
+        SPYLeaveApplicationTable    leaveApplicationTab;
+        QueryRun                    leaveApplQueryRun;
+    
+        if(_calledFromSettlementProcess)
+        {
+            while(leaveApplContainerLenCount <= conLen(_leaveApplContainer))
+            {
+                leaveApplList.addEnd(conPeek(_leaveApplContainer,leaveApplContainerLenCount));
+                leaveApplContainerLenCount++;
+            }
+        }
+        else
+        {
+            if(_leaveApplContainer)
+                leaveApplQueryRun = new QueryRun(_leaveApplContainer);
+            else
+                leaveApplQueryRun = new QueryRun(new Query(queryStr(SPYLeaveApplicationSettlement)));
+    
+            while(leaveApplQueryRun.next())
+            {
+                leaveApplicationTab = leaveApplQueryRun.get(tableNum(SPYLeaveApplicationTable));
+                leaveApplList.addEnd(leaveApplicationTab.RecId);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>payrollPeriodLineTable</Name>
+				<Source><![CDATA[
+    public void payrollPeriodLineTable(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+        timesheetStart = periodStart;
+        timesheetEnd = periodEnd;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="_contract">
+    ///
+    /// </param>
+    /// <remarks>
+    ///
+    /// </remarks>
+    public void process(SPYLeaveSettlementContract   _contract)
+    {
+        contract = _contract as SPYLeaveSettlementContract;
+        this.setLegalEntity(contract.parmLegalEntity());
+        this.initialize();
+        changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+        {
+            this.preLegalEntityPayrollProcess();
+            this.processLeaveAppl();
+            this.postLegalEntityPayrollProcess();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processLeaveAppl</Name>
+				<Source><![CDATA[
+    private void processLeaveAppl()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        HRMAbsenceCode              absenceCode;
+        date                        minLeaveDate = dateNull(),maxLeaveDate = dateMax();
+        ListEnumerator              leaveApplListEnumerator;
+        #AviFiles
+        SysOperationProgress        progress = new SysOperationProgress();
+        int                         progressCount;
+        SPYPayrollPeriodLine        payrollPeriodLineLoop;
+        List                        payrollPeriodList = new List(Types::Int64);
+        ListEnumerator              payrollPeriodListEnumerator;
+        ListEnumerator              workerListEnumerator;
+    
+        if(contract.parmParameterState().parmCalledFromSettlementProcess())
+            this.initializeLeaveApplList(true,contract.parmParameterState().parmLeaveApplContainer());
+        else
+            this.initializeLeaveApplList(false,contract.parmLeaveApplQuery());
+        this.setPayrollPeriod(contract.parmPayrollPeriod());
+        this.setTransDate(contract.parmTransDate());
+        this.setPostedPeriodLine(contract.parmSettlementPeriod());
+        this.addObserver(tracer,1);
+        this.initializePayElementMap(false,contract.parmPayElementQuery());
+        this.initializeAllPayElementMap();
+        leaveApplListEnumerator = leaveApplList.getEnumerator();
+        progress.setCaption("@SPY1583");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(leaveApplList.elements());
+        progressCount = 1;
+        setPrefix("@SPY479");
+        info(strFmt("@SPY253",DateTimeUtil::utcNow()));
+        
+        try
+        {
+            ttsBegin;
+            while(leaveApplListEnumerator.moveNext())
+            {
+                workerList = new List(Types::Int64);
+                leaveApplicationTable = SPYLeaveApplicationTable::find(leaveApplListEnumerator.current());
+                this.setLeaveApplication(leaveApplicationTable.RecId);
+                select validTimeState(minLeaveDate,maxLeaveDate) minOf(ActualStartDate),maxOf(ActualEndDate) from leaveApplicationLine
+                    where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId
+                    join absenceCode
+                    where absenceCode.hrmAbsenceCodeId == leaveApplicationLine.HRMAbsenceCode &&
+                          absenceCode.SPYBenefit;
+                leaveSettlementStartDate = leaveApplicationLine.ActualStartDate;
+                leaveSettlementEndDate = leaveApplicationLine.ActualEndDate;
+    
+                workerList.addEnd(leaveApplicationTable.Worker);
+                workerListEnumerator = workerList.getEnumerator();
+                while(workerListEnumerator.moveNext())
+                {
+                    this.setWorker(HcmWorker::find(workerListEnumerator.current()));
+                    payrollPeriodList = new List(Types::Int64);
+                    //this.setFinalizePeriod();
+                    if(this.checkSettlement())
+                    {
+                        this.setLeaveStartDate();
+                        payLedgerUpdate.deleteLedgerForLeaveApplication(worker.RecId,leaveApplication);
+                        while select RecId from payrollPeriodLineLoop
+                            where payrollPeriodLineLoop.PayrollPeriod == payrollPeriod &&
+                                  payrollPeriodLineLoop.PeriodStartDate <= leaveSettlementEndDate &&
+                                  payrollPeriodLineLoop.PeriodEndDate >= leaveSettlementStartDate
+                        {
+                            payrollPeriodList.addEnd(payrollPeriodLineLoop.RecId);
+                        }
+                        payrollPeriodListEnumerator = payrollPeriodList.getEnumerator();
+                        while(payrollPeriodListEnumerator.moveNext())
+                        {
+                            this.setPayrollPeriodLine(payrollPeriodListEnumerator.current());
+                            progress.setText(strfmt("@SPY1105", worker.name(),worker.PersonnelNumber));
+                            progress.setCount(progressCount, 1);                            
+                            this.notifyObserver("@SYS80745",strFmt("%1 (%2-%3)",worker.name(),payrollPeriodLineTab.PeriodStartDate,
+                            payrollPeriodLineTab.PeriodEndDate),3);
+                            if(this.payProcessApplicable())
+                            {
+                                //--<Pay calculation>--
+                                this.preWorkerPayrollProcess();
+                                this.workerPayroll();
+                                this.workerBenefit();
+                                this.postWorkerPayrollProcess();
+                                //--</Pay calculation>--
+                            }
+                            else
+                            {
+                                setPrefix(strFmt("@SPY1518",worker.name(),worker.PersonnelNumber,periodStart,periodEnd));
+                                this.showWorkerValidationText();
+                                this.clearWorkerValidationText();
+                                error(strFmt("@SPY1433"));
+                            }                            
+                        }
+                    }
+                }
+                progressCount++;
+            }
+            this.finalizeProcess();
+            ttsCommit;
+            info("@SPY379");
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+        info(strFmt("@SPY254",DateTimeUtil::utcNow()));
+        if(contract.parmCheckTrace())
+            this.checkTrace(strFmt('%1\\Trace_%2_%3_%4.html',WinAPIServer::getTempPath(),curUserId(),
+            date2str(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),123,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2,DateSeparator::Hyphen,DateDay::Digits2),
+            DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone())));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setFinalizePeriod</Name>
+				<Source><![CDATA[
+    private boolean setFinalizePeriod()
+    {
+        SPYWorkerPayrollPeriodFinalize      workerPayrollPeriodFinalize;
+        boolean                             ret = true;
+    
+        select payrollPeriodLineFinalize order by PeriodStartDate desc join RecId from workerPayrollPeriodFinalize
+            where workerPayrollPeriodFinalize.Worker == worker.RecId &&
+                  workerPayrollPeriodFinalize.LegalEntity == legalEntity &&
+                  payrollPeriodLineFinalize.RecId == workerPayrollPeriodFinalize.PayrollPeriodLine &&
+                  payrollPeriodLineFinalize.PayrollPeriod == payrollPeriod;
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setLeaveStartDate</Name>
+				<Source><![CDATA[
+    private void setLeaveStartDate()
+    {
+        if(!contract.parmSettlementStartDateAsPeriodDate())
+            leaveSettlementStartDate = SPYPayrollPeriodLine::find(postedPeriodLine).PeriodStartDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollCalcDate</Name>
+				<Source><![CDATA[
+    public void setPayrollCalcDate(TransDate _validFrom, TransDate _validTo)
+    {
+        date    settlementPeriodstart = periodStart,settlementPeriodEnd = periodEnd;
+    
+        if(leaveSettlementStartDate >= payrollPeriodLineTab.PeriodStartDate && leaveSettlementStartDate <= payrollPeriodLineTab.PeriodEndDate)
+            settlementPeriodstart = leaveSettlementStartDate;
+    
+        if(leaveSettlementEndDate <= payrollPeriodLineTab.PeriodEndDate)
+            settlementPeriodEnd = leaveSettlementEndDate;
+    
+        calcStart   = max(settlementPeriodstart,_validFrom);
+        calcEnd     = min(settlementPeriodEnd,_validTo);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLeaveApplication</Name>
+				<Source><![CDATA[
+    private void updateLeaveApplication()
+    {
+        if(leaveApplicationTable && !leaveApplicationTable.ApplicationSettled)
+        {
+            leaveApplicationTable.ApplicationSettled = true;
+            leaveApplicationTable.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPostedPeriodLine</Name>
+				<Source><![CDATA[
+    public void setPostedPeriodLine(SPYPayrollPeriodLineRecId _postedPeriodLine)
+    {
+        SPYPayrollPeriodLine    payrollPeriodLineInitial = SPYPayrollPeriodLine::find(_postedPeriodLine);
+    
+        super(_postedPeriodLine);
+        periodStart = payrollPeriodLineInitial.PeriodStartDate;
+        periodEnd = payrollPeriodLineInitial.PeriodEndDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,1250 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.SPYPayrollEarningsJournalTrans_ID(1)
+    #define.HcmWorker_ID(2)
+    #define.SPYPayrollEarningsJournalTable_ID(3)
+    #define.SPYPayrollPeriodLine_ID(4)
+    #define.SPYPayrollPeriod_ID(5)
+    #define.SPYPayrollTable_ID(6)
+    #define.DefaultDimensionDAVS_ID(7)
+    
+    // Data source buffers
+    SPYPayrollEarningsJournalTrans m_SPYPayrollEarningsJournalTrans;
+    HcmWorker m_HcmWorker;
+    SPYPayrollEarningsJournalTable m_SPYPayrollEarningsJournalTable;
+    SPYPayrollPeriodLine m_SPYPayrollPeriodLine;
+    SPYPayrollPeriod m_SPYPayrollPeriod;
+    SPYPayrollTable m_SPYPayrollTable;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTrans'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('HcmWorker'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTable'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollPeriodLine'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollPeriod'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollTable'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private boolean isAnyFieldSet_DS2(HcmWorker _hcmWorker, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_hcmWorker.isFieldSet(fieldnum(HcmWorker,PersonnelNumber)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _hcmWorker) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS3(SPYPayrollEarningsJournalTable _sPYPayrollEarningsJournalTable, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollEarningsJournalTable.isFieldSet(fieldnum(SPYPayrollEarningsJournalTable,JournalCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYPayrollEarningsJournalTable) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS5(SPYPayrollPeriod _sPYPayrollPeriod, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollPeriod.isFieldSet(fieldnum(SPYPayrollPeriod,PayrollPeriodCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYPayrollPeriod) ? true : false;
+        return rtrn;
+    }
+    private void foreignKeyPropagation_DS4(DataEntityRuntimeContext _entityCtx, SPYPayrollPeriodLine _sPYPayrollPeriodLine)
+    {
+        SPYPayrollPeriod sPYPayrollPeriod_ = _entityCtx.getRuntimeContextByName('SPYPayrollPeriod').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('SPYPayrollPeriod').conflictDetectionInvoked() || sPYPayrollPeriod_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYPayrollPeriodLine.PayrollPeriod != sPYPayrollPeriod_.RecId)
+            {
+                _sPYPayrollPeriodLine.PayrollPeriod = sPYPayrollPeriod_.RecId;
+            }
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('SPYPayrollPeriodLine').getDatabaseOperation();
+        SPYPayrollEarningsJournalTransEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PayrollPeriod)))
+        {
+            if(!this.validateDataSourceField(dataSourceDBOperation, 'SPYPayrollPeriodLine.PayrollPeriod', _sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PayrollPeriod), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private boolean isAnyFieldSet_DS4(SPYPayrollPeriodLine _sPYPayrollPeriodLine, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollPeriodLine.isFieldSet(fieldnum(SPYPayrollPeriodLine,PayrollPeriod)))
+        {
+            return true;
+        }
+        if(_sPYPayrollPeriodLine.isFieldSet(fieldnum(SPYPayrollPeriodLine,PeriodEndDate)))
+        {
+            return true;
+        }
+        if(_sPYPayrollPeriodLine.isFieldSet(fieldnum(SPYPayrollPeriodLine,PeriodStartDate)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYPayrollPeriodLine) ? true : false;
+        return rtrn;
+    }
+    private boolean isAnyFieldSet_DS6(SPYPayrollTable _sPYPayrollTable, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollTable.isFieldSet(fieldnum(SPYPayrollTable,PayElementCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYPayrollTable) ? true : false;
+        return rtrn;
+    }
+    private void foreignKeyPropagation_DS1(DataEntityRuntimeContext _entityCtx, SPYPayrollEarningsJournalTrans _sPYPayrollEarningsJournalTrans)
+    {
+        HcmWorker hcmWorker_ = _entityCtx.getRuntimeContextByName('HcmWorker').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_sPYPayrollEarningsJournalTrans.Worker != hcmWorker_.RecId)
+        {
+            _sPYPayrollEarningsJournalTrans.Worker = hcmWorker_.RecId;
+        }
+        
+        SPYPayrollEarningsJournalTable sPYPayrollEarningsJournalTable_ = _entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTable').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTable').conflictDetectionInvoked() || sPYPayrollEarningsJournalTable_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYPayrollEarningsJournalTrans.PayrollEarningsJournal != sPYPayrollEarningsJournalTable_.RecId)
+            {
+                _sPYPayrollEarningsJournalTrans.PayrollEarningsJournal = sPYPayrollEarningsJournalTable_.RecId;
+            }
+        }
+        
+        SPYPayrollPeriodLine sPYPayrollPeriodLine_ = _entityCtx.getRuntimeContextByName('SPYPayrollPeriodLine').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_sPYPayrollEarningsJournalTrans.PayrollPeriodlLine != sPYPayrollPeriodLine_.RecId)
+        {
+            _sPYPayrollEarningsJournalTrans.PayrollPeriodlLine = sPYPayrollPeriodLine_.RecId;
+        }
+        
+        SPYPayrollTable sPYPayrollTable_ = _entityCtx.getRuntimeContextByName('SPYPayrollTable').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_sPYPayrollEarningsJournalTrans.Payroll != sPYPayrollTable_.RecId)
+        {
+            _sPYPayrollEarningsJournalTrans.Payroll = sPYPayrollTable_.RecId;
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTrans').getDatabaseOperation();
+        SPYPayrollEarningsJournalTransEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYPayrollEarningsJournalTransEntity, Worker)))
+        {
+            if(!this.validateDataSourceField(dataSourceDBOperation, 'SPYPayrollEarningsJournalTrans.Worker', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Worker), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYPayrollEarningsJournalTransEntity, PayrollEarningsJournal)))
+        {
+            if(!this.validateDataSourceField(dataSourceDBOperation, 'SPYPayrollEarningsJournalTrans.PayrollEarningsJournal', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, PayrollEarningsJournal), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYPayrollEarningsJournalTransEntity, PayrollPeriodlLine)))
+        {
+            if(!this.validateDataSourceField(dataSourceDBOperation, 'SPYPayrollEarningsJournalTrans.PayrollPeriodlLine', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, PayrollPeriodlLine), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(!dataEntityRecord.skipDataSourceValidateField(fieldnum(SPYPayrollEarningsJournalTransEntity, Payroll)))
+        {
+            if(!this.validateDataSourceField(dataSourceDBOperation, 'SPYPayrollEarningsJournalTrans.Payroll', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Payroll), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+            {
+                validationFailed = true;
+            }
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // save/update data sources referenced by [SPYPayrollEarningsJournalTrans].
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmWorker]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmWorker'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmWorker');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS2(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        HcmWorker hcmWorker_ = _dataSourceCtx.getBuffer();
+                        if((hcmWorker_.Person) || (hcmWorker_.PersonnelNumber))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [HcmWorker].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollEarningsJournalTable]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollEarningsJournalTable'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTable');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS3(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYPayrollEarningsJournalTable sPYPayrollEarningsJournalTable_ = _dataSourceCtx.getBuffer();
+                        if((sPYPayrollEarningsJournalTable_.JournalCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYPayrollEarningsJournalTable].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // save/update data sources referenced by [SPYPayrollPeriodLine].
+                {
+                    // handle datasources which are part of extensions and need to be saved before [SPYPayrollPeriod]
+                    if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollPeriod'))
+                    {
+                        return false;
+                    }
+                    _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollPeriod');
+                    // propagates foreign key values from referenced data sources which are part of extensions.
+                    this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                    if(this.isAnyFieldSet_DS5(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                    {
+                        // invoke conflict detection for read-only data source.
+                        Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                        if(!resolvedRecord)
+                        {
+                            SPYPayrollPeriod sPYPayrollPeriod_ = _dataSourceCtx.getBuffer();
+                            if((sPYPayrollPeriod_.PayrollPeriodCode))
+                            {
+                                checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                                throw Exception::ViewDataSourceValidation;
+                            }
+                        }
+                        // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                        _dataSourceCtx.setDataSaved(true);
+                    }
+                    // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                    {
+                        _dataSourceCtx.setDataSaved(true);
+                    }
+                    _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                    // inserts/updates data source [SPYPayrollPeriod].
+                    this.saveDataSource(_entityCtx, _dataSourceCtx);
+                    this.postSaveDataSource();
+                }
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollPeriodLine]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollPeriodLine'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollPeriodLine');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                // propagates foreign key values from referenced data sources.
+                this.foreignKeyPropagation_DS4(_entityCtx, _dataSourceCtx.getBuffer());
+                if(this.isAnyFieldSet_DS4(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYPayrollPeriodLine sPYPayrollPeriodLine_ = _dataSourceCtx.getBuffer();
+                        if((sPYPayrollPeriodLine_.PayrollPeriod || sPYPayrollPeriodLine_.PeriodEndDate) || (sPYPayrollPeriodLine_.PayrollPeriod || sPYPayrollPeriodLine_.PeriodStartDate) || (sPYPayrollPeriodLine_.PayrollPeriod || sPYPayrollPeriodLine_.PeriodStartDate || sPYPayrollPeriodLine_.PeriodEndDate))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYPayrollPeriodLine].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollTable]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollTable'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollTable');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS6(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYPayrollTable sPYPayrollTable_ = _dataSourceCtx.getBuffer();
+                        if((sPYPayrollTable_.PayElementCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [SPYPayrollTable].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            // handle datasources which are part of extensions and need to be saved before [SPYPayrollEarningsJournalTrans]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollEarningsJournalTrans'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTrans');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // propagates foreign key values from referenced data sources.
+            this.foreignKeyPropagation_DS1(_entityCtx, _dataSourceCtx.getBuffer());
+            // inserts/updates data source [SPYPayrollEarningsJournalTrans].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [SPYPayrollEarningsJournalTrans]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollEarningsJournalTrans'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTrans');
+            // deletes data source [SPYPayrollEarningsJournalTrans].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+            // deletes data sources referenced by [SPYPayrollEarningsJournalTrans].
+            {
+                // handle datasources which are part of extensions and need to be saved before [HcmWorker]
+                if(!this.preSaveDataSource(_entityCtx, 'HcmWorker'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('HcmWorker');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [HcmWorker].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollEarningsJournalTable]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollEarningsJournalTable'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollEarningsJournalTable');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYPayrollEarningsJournalTable].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollPeriodLine]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollPeriodLine'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollPeriodLine');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYPayrollPeriodLine].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+                // deletes data sources referenced by [SPYPayrollPeriodLine].
+                {
+                    // handle datasources which are part of extensions and need to be saved before [SPYPayrollPeriod]
+                    if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollPeriod'))
+                    {
+                        return false;
+                    }
+                    _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollPeriod');
+                    // skips delete operation against read-only data source.
+                    // marks the read-only data source as 'saved' and skips actual delete operation.
+                    _dataSourceCtx.setDataSaved(true);
+                    _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                    // deletes data source [SPYPayrollPeriod].
+                    this.saveDataSource(_entityCtx, _dataSourceCtx);
+                    this.postSaveDataSource();
+                }
+            }
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollTable]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollTable'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollTable');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [SPYPayrollTable].
+                if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+                {
+                    // returns from here if an inner joined data source fails to be saved.
+                    return false;
+                }
+                this.postSaveDataSource();
+            }
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollEarningsJournalTrans _sPYPayrollEarningsJournalTrans, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Amount), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Amount), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Currency), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Currency), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, DefaultDimension), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, DefaultDimension), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, LineNum), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, LineNum), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Payroll), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Payroll), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, PayrollEarningsJournal), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, PayrollEarningsJournal), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, PayrollPeriodlLine), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, PayrollPeriodlLine), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, TransDate), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, TransDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Txt), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Txt), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Worker), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Worker), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, DistributeCost), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, DistributeCost), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollEarningsJournalTrans, _sPYPayrollEarningsJournalTransEntity);
+        _sPYPayrollEarningsJournalTrans.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS2(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmWorker _hcmWorker, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, HcmWorker_PersonnelNumber), _hcmWorker, fieldnum(HcmWorker, PersonnelNumber), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _hcmWorker, _sPYPayrollEarningsJournalTransEntity);
+        _hcmWorker.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS3(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollEarningsJournalTable _sPYPayrollEarningsJournalTable, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollEarningsJournalTable_JournalCode), _sPYPayrollEarningsJournalTable, fieldnum(SPYPayrollEarningsJournalTable, JournalCode), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollEarningsJournalTable, _sPYPayrollEarningsJournalTransEntity);
+        _sPYPayrollEarningsJournalTable.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS4(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollPeriodLine _sPYPayrollPeriodLine, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PayrollPeriod), _sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PayrollPeriod), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PeriodEndDate), _sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PeriodEndDate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PeriodStartDate), _sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PeriodStartDate), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollPeriodLine, _sPYPayrollEarningsJournalTransEntity);
+            _sPYPayrollPeriodLine.trackFieldExternallySet(false);
+        }
+    }
+    private void mapToDataSource_DS5(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollPeriod _sPYPayrollPeriod, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriod_PayrollPeriodCode), _sPYPayrollPeriod, fieldnum(SPYPayrollPeriod, PayrollPeriodCode), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollPeriod, _sPYPayrollEarningsJournalTransEntity);
+            _sPYPayrollPeriod.trackFieldExternallySet(false);
+        }
+    }
+    private void mapToDataSource_DS6(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollTable_PayElementCode), _sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementCode), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollTable, _sPYPayrollEarningsJournalTransEntity);
+        _sPYPayrollTable.trackFieldExternallySet(false);
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollEarningsJournalTrans_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmWorker_ID:
+                this.mapToDataSource_DS2(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollEarningsJournalTable_ID:
+                this.mapToDataSource_DS3(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollPeriodLine_ID:
+                this.mapToDataSource_DS4(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollPeriod_ID:
+                this.mapToDataSource_DS5(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollTable_ID:
+                this.mapToDataSource_DS6(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollEarningsJournalTrans _sPYPayrollEarningsJournalTrans, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Amount), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Amount), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Currency), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Currency), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, DefaultDimension), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, DefaultDimension), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, LineNum), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, LineNum), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Payroll), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Payroll), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, PayrollEarningsJournal), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, PayrollEarningsJournal), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, PayrollPeriodlLine), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, PayrollPeriodlLine), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, TransDate), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, TransDate), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Txt), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Txt), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Worker), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Worker), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, DistributeCost), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, DistributeCost), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollEarningsJournalTrans, _sPYPayrollEarningsJournalTransEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollEarningsJournalTransEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollEarningsJournalTrans);
+    }
+    private void mapFromDataSource_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmWorker _hcmWorker, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_hcmWorker, fieldnum(HcmWorker, PersonnelNumber), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, HcmWorker_PersonnelNumber), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _hcmWorker, _sPYPayrollEarningsJournalTransEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollEarningsJournalTransEntity.fromViewDataSource(_dataSourceCtx.id(), _hcmWorker);
+    }
+    private void mapFromDataSource_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollEarningsJournalTable _sPYPayrollEarningsJournalTable, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollEarningsJournalTable, fieldnum(SPYPayrollEarningsJournalTable, JournalCode), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollEarningsJournalTable_JournalCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollEarningsJournalTable, _sPYPayrollEarningsJournalTransEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollEarningsJournalTransEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollEarningsJournalTable);
+    }
+    private void mapFromDataSource_DS4(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollPeriodLine _sPYPayrollPeriodLine, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PayrollPeriod), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PayrollPeriod), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PeriodEndDate), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PeriodEndDate), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PeriodStartDate), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PeriodStartDate), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollPeriodLine, _sPYPayrollEarningsJournalTransEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollEarningsJournalTransEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollPeriodLine);
+    }
+    private void mapFromDataSource_DS5(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollPeriod _sPYPayrollPeriod, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollPeriod, fieldnum(SPYPayrollPeriod, PayrollPeriodCode), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriod_PayrollPeriodCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollPeriod, _sPYPayrollEarningsJournalTransEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollEarningsJournalTransEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollPeriod);
+    }
+    private void mapFromDataSource_DS6(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementCode), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollTable_PayElementCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollTable, _sPYPayrollEarningsJournalTransEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollEarningsJournalTransEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollTable);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollEarningsJournalTrans_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #HcmWorker_ID:
+                this.mapFromDataSource_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollEarningsJournalTable_ID:
+                this.mapFromDataSource_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollPeriodLine_ID:
+                this.mapFromDataSource_DS4(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollPeriod_ID:
+                this.mapFromDataSource_DS5(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollTable_ID:
+                this.mapFromDataSource_DS6(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollEarningsJournalTrans_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #HcmWorker_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS2(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYPayrollEarningsJournalTable_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS3(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYPayrollPeriodLine_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS4(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYPayrollPeriod_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS5(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYPayrollTable_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS6(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, Amount)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, Currency)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, DefaultDimension)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, LineNum)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, Payroll)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, PayrollEarningsJournal)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, PayrollPeriodlLine)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, TransDate)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, Txt)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, Worker)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, DistributeCost)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollEarningsJournalTransEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS2(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, HcmWorker_PersonnelNumber)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollEarningsJournalTransEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS3(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollEarningsJournalTable_JournalCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollEarningsJournalTransEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS4(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PayrollPeriod)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PeriodEndDate)))
+        {
+            return true;
+        }
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine_PeriodStartDate)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollEarningsJournalTransEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS5(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollPeriod_PayrollPeriodCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollEarningsJournalTransEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS6(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollEarningsJournalTransEntity.isFieldSet(fieldnum(SPYPayrollEarningsJournalTransEntity, SPYPayrollTable_PayElementCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollEarningsJournalTransEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollEarningsJournalTrans_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            case #HcmWorker_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS2(_entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollEarningsJournalTable_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS3(_entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollPeriodLine_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS4(_entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollPeriod_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS5(_entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollTable_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS6(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollEarningsJournalTrans _sPYPayrollEarningsJournalTrans)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Amount), 'SPYPayrollEarningsJournalTransEntity.Amount', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Amount), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Currency), 'SPYPayrollEarningsJournalTransEntity.Currency', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Currency), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, DefaultDimension), 'SPYPayrollEarningsJournalTransEntity.DefaultDimension', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, DefaultDimension), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, LineNum), 'SPYPayrollEarningsJournalTransEntity.LineNum', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, LineNum), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, TransDate), 'SPYPayrollEarningsJournalTransEntity.TransDate', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, TransDate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, Txt), 'SPYPayrollEarningsJournalTransEntity.Txt', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Txt), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollEarningsJournalTransEntity, fieldnum(SPYPayrollEarningsJournalTransEntity, DistributeCost), 'SPYPayrollEarningsJournalTransEntity.DistributeCost', _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, DistributeCost), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYPayrollEarningsJournalTransEntity, _dataSourceCtx, _sPYPayrollEarningsJournalTrans) ? rtrn : false;
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollEarningsJournalTrans_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollEarningsJournalTrans _sPYPayrollEarningsJournalTrans, SPYPayrollEarningsJournalTrans _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Amount), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, Amount), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Currency), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, Currency), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, DefaultDimension), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, DefaultDimension), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, LineNum), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, LineNum), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Payroll), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, Payroll), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, PayrollEarningsJournal), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, PayrollEarningsJournal), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, PayrollPeriodlLine), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, PayrollPeriodlLine), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, TransDate), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, TransDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Txt), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, Txt), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, Worker), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, Worker), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTrans, fieldnum(SPYPayrollEarningsJournalTrans, DistributeCost), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTrans, DistributeCost), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollEarningsJournalTransEntity), _sPYPayrollEarningsJournalTrans, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, HcmWorker _hcmWorker, HcmWorker _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _hcmWorker, fieldnum(HcmWorker, PersonnelNumber), _matchingRecord, fieldnum(HcmWorker, PersonnelNumber), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollEarningsJournalTransEntity), _hcmWorker, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollEarningsJournalTable _sPYPayrollEarningsJournalTable, SPYPayrollEarningsJournalTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollEarningsJournalTable, fieldnum(SPYPayrollEarningsJournalTable, JournalCode), _matchingRecord, fieldnum(SPYPayrollEarningsJournalTable, JournalCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollEarningsJournalTransEntity), _sPYPayrollEarningsJournalTable, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS4(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollPeriodLine _sPYPayrollPeriodLine, SPYPayrollPeriodLine _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PayrollPeriod), _matchingRecord, fieldnum(SPYPayrollPeriodLine, PayrollPeriod), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PeriodEndDate), _matchingRecord, fieldnum(SPYPayrollPeriodLine, PeriodEndDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollPeriodLine, fieldnum(SPYPayrollPeriodLine, PeriodStartDate), _matchingRecord, fieldnum(SPYPayrollPeriodLine, PeriodStartDate), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollEarningsJournalTransEntity), _sPYPayrollPeriodLine, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS5(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollPeriod _sPYPayrollPeriod, SPYPayrollPeriod _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollPeriod, fieldnum(SPYPayrollPeriod, PayrollPeriodCode), _matchingRecord, fieldnum(SPYPayrollPeriod, PayrollPeriodCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollEarningsJournalTransEntity), _sPYPayrollPeriod, _matchingRecord);
+    }
+    private void mapToMatchingRecord_DS6(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable, SPYPayrollTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementCode), _matchingRecord, fieldnum(SPYPayrollTable, PayElementCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollEarningsJournalTransEntity), _sPYPayrollTable, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollEarningsJournalTrans_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #HcmWorker_ID:
+                this.mapToMatchingRecord_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYPayrollEarningsJournalTable_ID:
+                this.mapToMatchingRecord_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYPayrollPeriodLine_ID:
+                this.mapToMatchingRecord_DS4(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYPayrollPeriod_ID:
+                this.mapToMatchingRecord_DS5(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYPayrollTable_ID:
+                this.mapToMatchingRecord_DS6(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        // Ensure that the entity configuration key is enabled
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            // Entity configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityConfigKeyDisabled",'SPYPayroll'));
+        }
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            // Inner joined data source configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'SPYPayrollPeriodLine','SPYExpression'));
+        }
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            if(this.isAnyMappedDataSourceFieldSet_DS5(_entityCtx.getEntityRecord(), 'SPYExpression'))
+            {
+                // Outer joined data source configuration key is disabled and fields mapped to this data source are set
+                throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'SPYPayrollPeriod','SPYExpression'));
+            }
+        }
+    }
+    protected boolean hasDataSourceRecordChanged(int _dataSourceId, common _originalRecord, common _updatedRecord)
+    {
+        boolean hasDataSourceRecordChanged_ = true;
+        
+        // The method is called for OCC validation and only upon data sources that have One-to-Many relationships.
+        
+        switch (_dataSourceId)
+        {
+            case #HcmWorker_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS2(_originalRecord, _updatedRecord);
+                break;
+            case #SPYPayrollEarningsJournalTable_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS3(_originalRecord, _updatedRecord);
+                break;
+            case #SPYPayrollPeriodLine_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS4(_originalRecord, _updatedRecord);
+                break;
+            case #SPYPayrollPeriod_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS5(_originalRecord, _updatedRecord);
+                break;
+            case #SPYPayrollTable_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS6(_originalRecord, _updatedRecord);
+                break;
+        }
+        return hasDataSourceRecordChanged_;
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'SPYPayrollEarningsJournalTrans', m_SPYPayrollEarningsJournalTrans, this.getDataSourceId('SPYPayrollEarningsJournalTrans'), this.getDataSourceId('SPYPayrollEarningsJournalTrans'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'HcmWorker', m_HcmWorker, this.getDataSourceId('HcmWorker'), this.getDataSourceId('HcmWorker'), false/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYPayrollEarningsJournalTable', m_SPYPayrollEarningsJournalTable, this.getDataSourceId('SPYPayrollEarningsJournalTable'), this.getDataSourceId('SPYPayrollEarningsJournalTable'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYPayrollPeriodLine', m_SPYPayrollPeriodLine, this.getDataSourceId('SPYPayrollPeriodLine'), this.getDataSourceId('SPYPayrollPeriodLine'), false/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYPayrollPeriod', m_SPYPayrollPeriod, this.getDataSourceId('SPYPayrollPeriod'), this.getDataSourceId('SPYPayrollPeriod'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYPayrollTable', m_SPYPayrollTable, this.getDataSourceId('SPYPayrollTable'), this.getDataSourceId('SPYPayrollTable'), false/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private boolean hasDataSourceRecordChanged_DS2(HcmWorker _originalRecord, HcmWorker _updatedRecord)
+    {
+        if (_originalRecord.PersonnelNumber != _updatedRecord.PersonnelNumber)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS3(SPYPayrollEarningsJournalTable _originalRecord, SPYPayrollEarningsJournalTable _updatedRecord)
+    {
+        if (_originalRecord.JournalCode != _updatedRecord.JournalCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS4(SPYPayrollPeriodLine _originalRecord, SPYPayrollPeriodLine _updatedRecord)
+    {
+        if (_originalRecord.PayrollPeriod != _updatedRecord.PayrollPeriod)
+        {
+            return true;
+        }
+        if (_originalRecord.PeriodEndDate != _updatedRecord.PeriodEndDate)
+        {
+            return true;
+        }
+        if (_originalRecord.PeriodStartDate != _updatedRecord.PeriodStartDate)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS5(SPYPayrollPeriod _originalRecord, SPYPayrollPeriod _updatedRecord)
+    {
+        if (_originalRecord.PayrollPeriodCode != _updatedRecord.PayrollPeriodCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS6(SPYPayrollTable _originalRecord, SPYPayrollTable _updatedRecord)
+    {
+        if (_originalRecord.PayElementCode != _updatedRecord.PayElementCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private SPYPayrollEarningsJournalTrans LookForUniqueKeyMatch_DS1(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, SPYPayrollEarningsJournalTrans _sPYPayrollEarningsJournalTrans)
+    {
+        SPYPayrollEarningsJournalTrans sPYPayrollEarningsJournalTrans_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                sPYPayrollEarningsJournalTrans_
+        where
+            sPYPayrollEarningsJournalTrans_.PayrollEarningsJournal == _sPYPayrollEarningsJournalTrans.PayrollEarningsJournal && sPYPayrollEarningsJournalTrans_.LineNum == _sPYPayrollEarningsJournalTrans.LineNum
+        ;
+        
+        if (sPYPayrollEarningsJournalTrans_)
+        {
+            return sPYPayrollEarningsJournalTrans_;
+        }
+        
+        return sPYPayrollEarningsJournalTrans_;
+    }
+    private HcmWorker LookForUniqueKeyMatch_DS2(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, HcmWorker _hcmWorker)
+    {
+        HcmWorker hcmWorker_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        hcmWorker_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PersonnelNumber, RecId
+            from
+                hcmWorker_
+        where
+            hcmWorker_.PersonnelNumber == _hcmWorker.PersonnelNumber
+        ;
+        
+        if (hcmWorker_)
+        {
+            return hcmWorker_;
+        }
+        
+        return hcmWorker_;
+    }
+    private SPYPayrollEarningsJournalTable LookForUniqueKeyMatch_DS3(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, SPYPayrollEarningsJournalTable _sPYPayrollEarningsJournalTable)
+    {
+        SPYPayrollEarningsJournalTable sPYPayrollEarningsJournalTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYPayrollEarningsJournalTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                JournalCode, RecId
+            from
+                sPYPayrollEarningsJournalTable_
+        where
+            sPYPayrollEarningsJournalTable_.JournalCode == _sPYPayrollEarningsJournalTable.JournalCode
+        ;
+        
+        if (sPYPayrollEarningsJournalTable_)
+        {
+            return sPYPayrollEarningsJournalTable_;
+        }
+        
+        return sPYPayrollEarningsJournalTable_;
+    }
+    private SPYPayrollPeriodLine LookForUniqueKeyMatch_DS4(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, SPYPayrollPeriodLine _sPYPayrollPeriodLine)
+    {
+        SPYPayrollPeriodLine sPYPayrollPeriodLine_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYPayrollPeriodLine_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PayrollPeriod, PeriodEndDate, PeriodStartDate, RecId
+            from
+                sPYPayrollPeriodLine_
+        where
+            sPYPayrollPeriodLine_.PayrollPeriod == _sPYPayrollPeriodLine.PayrollPeriod && sPYPayrollPeriodLine_.PeriodEndDate == _sPYPayrollPeriodLine.PeriodEndDate
+        ;
+        
+        if (sPYPayrollPeriodLine_)
+        {
+            return sPYPayrollPeriodLine_;
+        }
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PayrollPeriod, PeriodEndDate, PeriodStartDate, RecId
+            from
+                sPYPayrollPeriodLine_
+        where
+            sPYPayrollPeriodLine_.PayrollPeriod == _sPYPayrollPeriodLine.PayrollPeriod && sPYPayrollPeriodLine_.PeriodStartDate == _sPYPayrollPeriodLine.PeriodStartDate
+        ;
+        
+        if (sPYPayrollPeriodLine_)
+        {
+            return sPYPayrollPeriodLine_;
+        }
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PayrollPeriod, PeriodEndDate, PeriodStartDate, RecId
+            from
+                sPYPayrollPeriodLine_
+        where
+            sPYPayrollPeriodLine_.PayrollPeriod == _sPYPayrollPeriodLine.PayrollPeriod && sPYPayrollPeriodLine_.PeriodStartDate == _sPYPayrollPeriodLine.PeriodStartDate && sPYPayrollPeriodLine_.PeriodEndDate == _sPYPayrollPeriodLine.PeriodEndDate
+        ;
+        
+        if (sPYPayrollPeriodLine_)
+        {
+            return sPYPayrollPeriodLine_;
+        }
+        
+        return sPYPayrollPeriodLine_;
+    }
+    private SPYPayrollPeriod LookForUniqueKeyMatch_DS5(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, SPYPayrollPeriod _sPYPayrollPeriod)
+    {
+        SPYPayrollPeriod sPYPayrollPeriod_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYPayrollPeriod_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PayrollPeriodCode, RecId
+            from
+                sPYPayrollPeriod_
+        where
+            sPYPayrollPeriod_.PayrollPeriodCode == _sPYPayrollPeriod.PayrollPeriodCode
+        ;
+        
+        if (sPYPayrollPeriod_)
+        {
+            return sPYPayrollPeriod_;
+        }
+        
+        return sPYPayrollPeriod_;
+    }
+    private SPYPayrollTable LookForUniqueKeyMatch_DS6(SPYPayrollEarningsJournalTransEntity _sPYPayrollEarningsJournalTransEntity, SPYPayrollTable _sPYPayrollTable)
+    {
+        SPYPayrollTable sPYPayrollTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYPayrollTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PayElementCode, RecId
+            from
+                sPYPayrollTable_
+        where
+            sPYPayrollTable_.PayElementCode == _sPYPayrollTable.PayElementCode
+        ;
+        
+        if (sPYPayrollTable_)
+        {
+            return sPYPayrollTable_;
+        }
+        
+        return sPYPayrollTable_;
+    }
+
+}
+

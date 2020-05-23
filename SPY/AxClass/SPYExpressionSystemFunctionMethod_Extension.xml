@@ -1,0 +1,2769 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYExpressionSystemFunctionMethod_Extension</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+//the base class is defined in expression package and extended here
+[ExtensionOf(classStr(SPYExpressionSystemFunctionMethod))]
+final class SPYExpressionSystemFunctionMethod_Extension
+{   
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>CALC_DAYS</Name>
+				<Source><![CDATA[
+    //this function returns the no of days the payrofll is being calcualted for
+    //this is different from period days when there is a mid month change in salary
+    //the period days does not change, however the calcdays would change.
+    public int CALC_DAYS()
+    {
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        ToDate calcToDate = expressionContext.calcToDate();
+
+        return ( (calcToDate - calcFromDate ) + 1 );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>PERIOD_CALDAYS</Name>
+				<Source><![CDATA[
+    //this function returns the calendar days in a period
+    public SPYAmount PERIOD_CALDAYS()
+    {
+        FromDate periodFromDate = expressionContext.periodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate();
+
+        return (PeriodToDate - PeriodFromDate) + 1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>PERIOD_WORKDAYS</Name>
+				<Source><![CDATA[
+    //this function returns the no of working days in the calendar
+    public int PERIOD_WORKDAYS()
+    {
+        CalendarId workerCalendarId = expressionContext.workerCalendarId();
+        FromDate periodFromDate = expressionContext.periodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate();
+
+        WorkCalendarDate    workCalendarDate;
+        int     noOfDays;
+
+        select count(RecId)
+            from workCalendarDate
+            where workCalendarDate.CalendarId == workerCalendarId
+                && workCalendarDate.ClosedForPickup == NoYes::No
+                && workCalendarDate.SPYHoliday == NoYes::No
+                && workCalendarDate.TransDate >= periodFromDate
+                && workCalendarDate.TransDate <= periodToDate;
+
+        noOfDays = int642int( workCalendarDate.RecId);
+
+        return ( noOfDays ) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>PL_GETAMT</Name>
+				<Source><![CDATA[
+    //this function returns the total of a payroll type of pay element in a given date range
+    public SPYAmount PL_GETAMT()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate() ;
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayrollLedger spyPayrollLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine   spyPayrollPeriodLine;
+        SPYAmount retValue;
+
+        while select sum(AccountingCurrencyAmount)
+            from spyPayrollLedger
+            where spyPayrollLedger.Worker == worker
+            join spyPayrollPeriodLine
+             where spyPayrollPeriodLine.RecId == spyPayrollLedger.PayrollPeriodLine
+                && spyPayrollPeriodLine.PeriodStartDate >= periodFromDate
+                && spyPayrollPeriodLine.PeriodEndDate <= periodToDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyPayrollLedger.Payroll
+                && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyPayrollLedger.AccountingCurrencyAmount ;
+        }
+        ;
+        
+        return( retValue );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>PL_GETAMT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //this function returns the total of a payroll type of pay element in a given date range (Transaction currency)
+    public SPYAmount PL_GETAMT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate() ;
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayrollLedger spyPayrollLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine   spyPayrollPeriodLine;
+        SPYAmount retValue;
+
+        while select sum(TransactionCurrencyAmount)
+            from spyPayrollLedger
+            where spyPayrollLedger.Worker == worker
+            join spyPayrollPeriodLine
+             where spyPayrollPeriodLine.RecId == spyPayrollLedger.PayrollPeriodLine
+                && spyPayrollPeriodLine.PeriodStartDate >= periodFromDate
+                && spyPayrollPeriodLine.PeriodEndDate <= periodToDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyPayrollLedger.Payroll
+                && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyPayrollLedger.TransactionCurrencyAmount ;
+        }
+        ;
+        
+        return( retValue );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>PL_YTDAMOUNT</Name>
+				<Source><![CDATA[
+    //this method is used to return the year to date amount for a given pay element
+    //the year start is picked from 1st Jan of the year of payroll processing
+    public SPYAmount PL_YTDAMOUNT()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayrollLedger    spyPayrollLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+        TransDate   yearStartDate = mkDate(1,1, Year(periodFromDate) );
+        SPYAmount   retValue;
+
+        select sum( AccountingCurrencyAmount) from spyPayrollLedger
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyPayrollLedger.payroll
+            && spyPayrollLedger.worker == worker
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+            join spyPayrollPeriodLine
+            where spyPayrollPeriodLine.RecId == spyPayrollLedger.PayrollPeriodLine
+            && spyPayrollPeriodLine.PeriodStartDate >=yearStartDate
+            && spyPayrollPeriodLine.PeriodStartDate <= periodFromDate;
+
+        retValue = spyPayrollLedger.AccountingCurrencyAmount;
+
+        return (retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>PL_YTDAMOUNT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //this method is used to return the year to date amount for a given pay element
+    //the year start is picked from 1st Jan of the year of payroll processing (Transaction currency)
+    public SPYAmount PL_YTDAMOUNT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayrollLedger    spyPayrollLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+        TransDate   yearStartDate = mkDate(1,1, Year(periodFromDate) );
+        SPYAmount   retValue;
+
+        select sum( TransactionCurrencyAmount) from spyPayrollLedger
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyPayrollLedger.payroll
+            && spyPayrollLedger.worker == worker
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+            join spyPayrollPeriodLine
+            where spyPayrollPeriodLine.RecId == spyPayrollLedger.PayrollPeriodLine
+            && spyPayrollPeriodLine.PeriodStartDate >=yearStartDate
+            && spyPayrollPeriodLine.PeriodStartDate <= periodFromDate;
+
+        retValue = spyPayrollLedger.TransactionCurrencyAmount;
+
+        return (retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>BL_GETAMT</Name>
+				<Source><![CDATA[
+    //this function returns the total of a benefit type of pay element in a given date range
+    public SPYAmount BL_GETAMT()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate() ;
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYBenefitLedger spyBenefitLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine   spyPayrollPeriodLine;
+        SPYAmount retValue;
+
+        while select sum(AccountingCurrencyAmount), sum(AccountingCurPnLAmount )
+            from spyBenefitLedger
+            where spyBenefitLedger.Worker == worker
+            join spyPayrollPeriodLine
+             where spyPayrollPeriodLine.RecId == spyBenefitLedger.PayrollPeriodLine
+                && spyPayrollPeriodLine.PeriodStartDate >= periodFromDate
+                && spyPayrollPeriodLine.PeriodEndDate <= periodToDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyBenefitLedger.Benefit
+                && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyBenefitLedger.AccountingCurrencyAmount + spyBenefitLedger.AccountingCurPnLAmount ;
+        }
+        ;
+        
+        return( retValue );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>BL_GETAMT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //this function returns the total of a benefit type of pay element in a given date range (Transaction currency)
+    public SPYAmount BL_GETAMT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate() ;
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYBenefitLedger spyBenefitLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine   spyPayrollPeriodLine;
+        SPYAmount retValue;
+
+        while select sum(TransactionCurrencyAmount), sum(TransactionCurPnLAmount)
+            from spyBenefitLedger
+            where spyBenefitLedger.Worker == worker
+            join spyPayrollPeriodLine
+             where spyPayrollPeriodLine.RecId == spyBenefitLedger.PayrollPeriodLine
+                && spyPayrollPeriodLine.PeriodStartDate >= periodFromDate
+                && spyPayrollPeriodLine.PeriodEndDate <= periodToDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyBenefitLedger.Benefit
+                && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyBenefitLedger.TransactionCurrencyAmount + spyBenefitLedger.TransactionCurPnLAmount;
+        }
+        ;
+        
+        return( retValue );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>BL_YTDAMOUNT</Name>
+				<Source><![CDATA[
+    //this method is used to return the year to date amount for a given pay element
+    //the year start is picked from 1st Jan of the year of payroll processing
+    public SPYAmount BL_YTDAMOUNT()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYBenefitLedger    spyBenefitLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+        TransDate   yearStartDate = mkDate(1,1, Year(periodFromDate) );
+        SPYAmount   retValue;
+
+        select sum( AccountingCurrencyAmount) , sum( AccountingCurPnLAmount )
+            from spyBenefitLedger
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyBenefitLedger.Benefit
+            && spyBenefitLedger.worker == worker
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+            join spyPayrollPeriodLine
+            where spyPayrollPeriodLine.RecId == spyBenefitLedger.PayrollPeriodLine
+            && spyPayrollPeriodLine.PeriodStartDate >=yearStartDate
+            && spyPayrollPeriodLine.PeriodStartDate <= periodFromDate;
+
+        retValue = spyBenefitLedger.AccountingCurrencyAmount + spyBenefitLedger.AccountingCurPnLAmount ;
+
+        return (retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>BL_BALAMOUNT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //this method is used to return the balanace amount for a given pay element    
+    public SPYAmount BL_BALAMOUNT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYBenefitLedger    spyBenefitLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+
+        SPYAmount   retValue;
+
+        select sum( TransactionCurrencyAmount), sum( TransactionCurPnLAmount )
+            from spyBenefitLedger
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyBenefitLedger.Benefit
+            && spyBenefitLedger.worker == worker
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+            join spyPayrollPeriodLine
+            where spyPayrollPeriodLine.RecId == spyBenefitLedger.PayrollPeriodLine;
+
+        retValue = spyBenefitLedger.TransactionCurrencyAmount + spyBenefitLedger.TransactionCurPnLAmount;
+
+        return (retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>BL_BALAMOUNT</Name>
+				<Source><![CDATA[
+    //this method is used to return the balanace amount for a given pay element
+    public SPYAmount BL_BALAMOUNT()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYBenefitLedger    spyBenefitLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+
+        SPYAmount   retValue;
+
+        select sum( AccountingCurrencyAmount), sum( AccountingCurPnLAmount )
+            from spyBenefitLedger
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyBenefitLedger.Benefit
+            && spyBenefitLedger.worker == worker
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+            join spyPayrollPeriodLine
+            where spyPayrollPeriodLine.RecId == spyBenefitLedger.PayrollPeriodLine;
+
+        retValue = spyBenefitLedger.AccountingCurrencyAmount + spyBenefitLedger.AccountingCurPnLAmount;
+
+        return (retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>BL_BALQTY</Name>
+				<Source><![CDATA[
+    //this method is used to return the balanace quantity for a given pay element
+    public SPYAmount BL_BALQTY()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYBenefitLedger    spyBenefitLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+
+        SPYAmount   retValue;
+
+        select sum( Quantity)
+            from spyBenefitLedger
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyBenefitLedger.Benefit
+            && spyBenefitLedger.worker == worker
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+            join spyPayrollPeriodLine
+            where spyPayrollPeriodLine.RecId == spyBenefitLedger.PayrollPeriodLine;
+
+        retValue = spyBenefitLedger.Quantity ;
+
+        return (retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>BL_YTDAMOUNT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //this method is used to return the year to date amount for a given pay element
+    //the year start is picked from 1st Jan of the year of payroll processing (Transaction currency)
+    public SPYAmount BL_YTDAMOUNT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYBenefitLedger    spyBenefitLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+        TransDate   yearStartDate = mkDate(1,1, Year(periodFromDate) );
+        SPYAmount   retValue;
+
+        select sum( TransactionCurrencyAmount), sum( TransactionCurPnLAmount )
+            from spyBenefitLedger
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyBenefitLedger.Benefit
+            && spyBenefitLedger.worker == worker
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+            join spyPayrollPeriodLine
+            where spyPayrollPeriodLine.RecId == spyBenefitLedger.PayrollPeriodLine
+            && spyPayrollPeriodLine.PeriodStartDate >=yearStartDate
+            && spyPayrollPeriodLine.PeriodStartDate <= periodFromDate;
+
+        retValue = spyBenefitLedger.TransactionCurrencyAmount + spyBenefitLedger.TransactionCurPnLAmount;
+
+        return (retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_DOJ</Name>
+				<Source><![CDATA[
+    //this function returns the date of joining of the current employee
+    public date EMP_DOJ()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        HcmEmployment   hcmEmpoyment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity);
+        date      dateDOJ = DateTimeUtil::date(hcmEmpoyment.ValidFrom);
+        
+        return( dateDOJ);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_DOT</Name>
+				<Source><![CDATA[
+    //this function return the date of terminiation of the current employee
+    public date EMP_DOT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        date    TransDate = DateTimeUtil::newDateTime( expressionContext.periodFromDate(), 0 );
+
+        HcmEmployment   hcmEmpoyment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity,TransDate,TransDate);
+        date      dateDOT = DateTimeUtil::date(hcmEmpoyment.ValidTo);
+        
+        return( dateDOT);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_CURYEARMNTHS</Name>
+				<Source><![CDATA[
+    //This function returns the no of months that an employee has server in the current legal entity in the current payroll year. 
+    public SPYAmount EMP_CURYEARMNTHS()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate periodFromDate = expressionContext.periodFromDate();
+        ToDate periodToDate = expressionContext.PeriodToDate();
+
+        HcmEmployment   hcmEmpoyment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity);
+        date      startDate = max(mkDate(1,1,year(periodToDate)), DateTimeUtil::date(hcmEmpoyment.ValidFrom));
+        SPYAmount   months = startDate == DateTimeUtil::date(hcmEmpoyment.ValidFrom) ? (endMth(startDate) - startDate) / 30 : 1;
+        int cnt = 2;
+        date monthStartDate,monthEndDate;
+        SPYAmount absenceDays;
+
+        monthStartDate = startDate;
+        monthEndDate = endMth(startDate);
+        absenceDays = this.AB_UNPAID_DAYS();
+        if(absenceDays)
+            months = months + max(-30,absenceDays)/30;
+        while (cnt <= mthOfYr(periodToDate))
+        {
+            monthStartDate = mkDate(1,cnt,year(periodToDate));
+            monthEndDate = endMth(monthStartDate);
+            
+            absenceDays = this.AB_UNPAID_DAYS();
+            absenceDays = absenceDays > 30 ? 30 : absenceDays;
+            months += (30+absenceDays)/30;
+            cnt++;
+        }
+
+        return months;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>REF_GETAMT</Name>
+				<Source><![CDATA[
+    //this function returns the total of a reference type of pay element in a given date range
+    public SPYAmount REF_GETAMT()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate() ;
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYReferencePayElementLedger spyReferencePayElementLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine   spyPayrollPeriodLine;
+        SPYAmount retValue;
+
+        while select sum(AccountingCurrencyAmount)
+            from spyReferencePayElementLedger
+            where spyReferencePayElementLedger.Worker == worker
+            join spyPayrollPeriodLine
+             where spyPayrollPeriodLine.RecId == spyReferencePayElementLedger.PayrollPeriodLine
+                && spyPayrollPeriodLine.PeriodStartDate >= periodFromDate
+                && spyPayrollPeriodLine.PeriodEndDate <= periodToDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyReferencePayElementLedger.PayElement
+                && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyReferencePayElementLedger.AccountingCurrencyAmount ;
+        }
+        ;
+        
+        return( retValue );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>REF_GETAMT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //this function returns the total of a reference type of pay element in a given date range (Transaction currency)
+    public SPYAmount REF_GETAMT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.Worker();
+        FromDate periodFromDate = expressionContext.PeriodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate() ;
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYReferencePayElementLedger spyReferencePayElementLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine   spyPayrollPeriodLine;
+        SPYAmount retValue;
+
+        while select sum(TransactionCurrencyAmount)
+            from spyReferencePayElementLedger
+            where spyReferencePayElementLedger.Worker == worker
+            join spyPayrollPeriodLine
+             where spyPayrollPeriodLine.RecId == spyReferencePayElementLedger.PayrollPeriodLine
+                && spyPayrollPeriodLine.PeriodStartDate >= periodFromDate
+                && spyPayrollPeriodLine.PeriodEndDate <= periodToDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyReferencePayElementLedger.PayElement
+                && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyReferencePayElementLedger.TransactionCurrencyAmount ;
+        }
+        ;
+        
+        return( retValue );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>REF_GETYTDAMT</Name>
+				<Source><![CDATA[
+    //get the sum of amount from the refence ledger for a given pay element from the begining of the year
+    public SPYAmount REF_GETYTDAMT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        ToDate periodFromDate = expressionContext.periodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYReferencePayElementLedger spyReferencePayElementLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+        TransDate   yearStartDate = mkDate(1,1, Year(periodFromDate) );
+        SPYAmount retValue;
+
+        while select sum(AccountingCurrencyAmount)
+            from spyReferencePayElementLedger
+            where spyReferencePayElementLedger.Worker == worker
+            join spyPayrollPeriodLine
+            where //( (spyReferencePayElementLedger.PayrollPeriodLine == spyPayrollPeriodLine.RecId && spyReferencePayElementLedger.ArrearPeriodLine == 0 ) ||  spyReferencePayElementLedger.ArrearPeriodLine == spyPayrollPeriodLine.RecId )
+            spyReferencePayElementLedger.PayrollPeriodLine == spyPayrollPeriodLine.RecId
+            && spyPayrollPeriodLine.PeriodStartDate >= yearStartDate
+            && spyPayrollPeriodLine.PeriodStartDate <= periodFromDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyReferencePayElementLedger.PayElement
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyReferencePayElementLedger.AccountingCurrencyAmount ;
+        }
+        ;
+
+        return ( retValue) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>REF_GETYTDAMT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //get the sum of amount from the refence ledger for a given pay element from the begining of the year (Transaction currency)
+    public SPYAmount REF_GETYTDAMT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        ToDate periodFromDate = expressionContext.periodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYReferencePayElementLedger spyReferencePayElementLedger;
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollPeriodLine    spyPayrollPeriodLine;
+        TransDate   yearStartDate = mkDate(1,1, Year(periodFromDate) );
+        SPYAmount retValue;
+
+        while select sum(TransactionCurrencyAmount)
+            from spyReferencePayElementLedger
+            where spyReferencePayElementLedger.Worker == worker
+            join spyPayrollPeriodLine
+            where //( (spyReferencePayElementLedger.PayrollPeriodLine == spyPayrollPeriodLine.RecId && spyReferencePayElementLedger.ArrearPeriodLine == 0 ) ||  spyReferencePayElementLedger.ArrearPeriodLine == spyPayrollPeriodLine.RecId )
+            spyReferencePayElementLedger.PayrollPeriodLine == spyPayrollPeriodLine.RecId
+            && spyPayrollPeriodLine.PeriodStartDate >= yearStartDate
+            && spyPayrollPeriodLine.PeriodStartDate <= periodFromDate
+            join spyPayElementTable
+            where spyPayElementTable.RecId == spyReferencePayElementLedger.PayElement
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1
+        {
+            retValue = spyReferencePayElementLedger.TransactionCurrencyAmount ;
+        }
+        ;
+
+        return ( retValue) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>JNL_ADJAMTYTD</Name>
+				<Source><![CDATA[
+    //total amount posted in the adjustment amount in the current year
+    public SPYAmount JNL_ADJAMTYTD()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        ToDate calcToDate = expressionContext.calcToDate();
+        FromDate periodFromDate = expressionContext.periodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollEarningsJournalTrans  spyPayrollEarningsJournalTrans;
+        SPYPayrollEarningsJournalTable  spyPayrollEarningsJournalTable;
+        TransDate   yearStartDate = mkDate(1,1, Year(periodToDate) );
+        SPYAmount retValue = 0;
+
+        if ( calcFromDate != periodFromDate ) //in case of increment YTD should only return differential from increment date
+        {
+            yearStartDate = calcFromDate;
+        }
+
+        select sum( Amount)
+            from spyPayrollEarningsJournalTrans
+            where spyPayrollEarningsJournalTrans.Worker == worker
+                && spyPayrollEarningsJournalTrans.TransDate >= yearStartDate
+                && spyPayrollEarningsJournalTrans.TransDate <= calcToDate
+            join spyPayrollEarningsJournalTable
+            where spyPayrollEarningsJournalTable.RecId == spyPayrollEarningsJournalTrans.PayrollEarningsJournal &&
+            spyPayrollEarningsJournalTable.Posted
+            join SPYPayElementTable
+            where SPYPayElementTable.PayElementCode == expressionFunctionParameter1
+                && spyPayElementTable.RecId == spyPayrollEarningsJournalTrans.Payroll;
+
+        retValue = spyPayrollEarningsJournalTrans.Amount;
+
+        return( retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_NATIONALITY</Name>
+				<Source><![CDATA[
+    //employee country or nationality
+    public str EMP_NATIONALITY()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+
+        HcmWorker                  hcmworker = HcmWorker::find(worker);
+        HcmPersonPrivateDetails    personDetails = HcmPersonPrivateDetails::findByPerson(hcmworker.Person);
+
+        if(personDetails.CitizenshipCountryRegion)
+            return personDetails.CitizenshipCountryRegion;
+        else
+            return "N/A";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>JNL_ADJAMOUNT</Name>
+				<Source><![CDATA[
+    //adjustment amount posted in the current period
+    public SPYAmount JNL_ADJAMOUNT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        FromDate periodFromDate = expressionContext.periodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayElementTable  spyPayElementTable;
+        SPYPayrollEarningsJournalTrans  spyPayrollEarningsJournalTrans;
+        SPYPayrollEarningsJournalTable  spyPayrollEarningsJournalTable;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+        SPYAmount retValue = 0;
+
+        select sum( Amount)
+            from spyPayrollEarningsJournalTrans
+            where spyPayrollEarningsJournalTrans.Worker == worker
+            join payrollPeriodLine
+            where payrollPeriodLine.RecId == spyPayrollEarningsJournalTrans.PayrollPeriodlLine &&
+            payrollPeriodLine.PeriodStartDate <= calcFromDate &&
+            payrollPeriodLine.PeriodEndDate >= calcFromDate
+            join spyPayrollEarningsJournalTable
+            where spyPayrollEarningsJournalTable.RecId == spyPayrollEarningsJournalTrans.PayrollEarningsJournal &&
+            spyPayrollEarningsJournalTable.Posted
+            join SPYPayElementTable
+            where SPYPayElementTable.PayElementCode == expressionFunctionParameter1
+                && spyPayElementTable.RecId == spyPayrollEarningsJournalTrans.Payroll;
+
+        retValue = spyPayrollEarningsJournalTrans.Amount;
+
+        return( retValue);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>MONTHLY_PARENT_AMT</Name>
+				<Source><![CDATA[
+    //This function returns the monthly amount of the parent element that is attached to the payelement being processed
+    public SPYAmount MONTHLY_PARENT_AMT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        SPYPayElementRecId payElement = expressionContext.payElement();
+
+        SPYPayElementTable  spyPayElement, spyParentPayElement;
+        SPYWorkerPositionPayroll spyWorkerPositionPayroll;
+        SPYWorkerPositionBenefit    spyWorkerPositionBenefit;
+        SPYAmount monthlyAmount;
+
+        select firstonly *
+            from spyParentPayElement
+            join spyPayElement
+            where spyPayElement.RecId == payElement
+            && spyParentPayElement.RecId == spyPayElement.ParentPayElement;
+
+        if ( spyParentPayElement.PayElementType == SPYPayElementType::Payroll )
+        {
+            select firstonly validtimestate(calcFromDate) spyWorkerPositionPayroll
+                where spyWorkerPositionPayroll.Payroll == spyParentPayElement.RecId
+                    && spyWorkerPositionPayroll.Worker == worker
+                    && spyWorkerPositionPayroll.LegalEntity == legalEntity;
+
+            monthlyAmount = spyWorkerPositionPayroll.Monthly;
+        }
+        else
+        {
+            select firstonly validtimestate(calcFromDate) spyWorkerPositionBenefit
+            where spyWorkerPositionBenefit.Benefit == spyParentPayElement.RecId
+                && spyWorkerPositionBenefit.Worker == worker
+                && spyWorkerPositionBenefit.LegalEntity == legalEntity;
+
+            monthlyAmount = spyWorkerPositionBenefit.AmountMonthly;
+        }
+
+        return (monthlyAmount);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>OTHOURS</Name>
+				<Source><![CDATA[
+    //this function returns the total OT hours of a given type from the Overtime ledger
+    public SPYAmount OTHOURS()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        FromDate timesheetFromDate = expressionContext.timesheetFromDate();
+        ToDate timesheetToDate = expressionContext.timesheetToDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYOvertimeLedger spyOvertimeLedger;
+        SPYOvertimeTypeTable    overtimeTypeTable;
+
+        select  sum( OvertimeHours )
+            from spyOvertimeLedger
+            where spyOvertimeLedger.worker == worker
+                && spyOvertimeLedger.OvertimeDate >= timesheetFromDate
+                && spyOvertimeLedger.OvertimeDate <= timesheetToDate
+            join overtimeTypeTable
+            where overtimeTypeTable.RecId == spyOvertimeLedger.OvertimeType
+                && overtimeTypeTable.OvertimeTypeCode == expressionFunctionParameter1 ;
+
+        return ( spyOvertimeLedger.OvertimeHours );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>AB_LEAVE_DAYS</Name>
+				<Source><![CDATA[
+    //this function return the total leaves applied by the current employee in the current attendance period
+    //irrespective of any leave type
+    public SPYAmount AB_LEAVE_DAYS()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        SPYLeaveApplicationLine     spyLeaveApplicationLine;
+        
+        FromDate timesheetFromDate = expressionContext.timesheetFromDate();
+        ToDate timesheetToDate = expressionContext.timesheetToDate();        
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        SPYAbsenceLedger    absenceLedger;
+
+        if ( expressionFunctionParameter1 == '' )
+        {
+        select sum ( AbsenceDays )
+            from absenceLedger
+            where absenceLedger.Worker == worker
+                && absenceLedger.TransDate >= timesheetFromDate
+                && absenceLedger.TransDate <= timesheetToDate            
+            && ( absenceLedger.LeaveApplicationLine || absenceLedger.AbsenceDays < 0) ;
+        }
+        else
+        {
+            select sum ( AbsenceDays )
+            from absenceLedger
+                join spyLeaveApplicationLine
+            where absenceLedger.Worker == worker
+                && absenceLedger.TransDate >= timesheetFromDate
+                && absenceLedger.TransDate <= timesheetToDate
+                && absenceLedger.LeaveApplicationLine == spyLeaveApplicationLine.RecId
+                && spyLeaveApplicationLine.HRMAbsenceCode == expressionFunctionParameter1;
+        }
+
+        return absenceLedger.AbsenceDays *-1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>AB_EMP_APPLIED</Name>
+				<Source><![CDATA[
+    //this function returns the absence qty applied for by an employee in a given period
+    //using a leave application request or using the absence journal
+    public SPYAmount AB_EMP_APPLIED()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        FromDate timesheetFromDate = expressionContext.timesheetFromDate();
+        ToDate timesheetToDate = expressionContext.timesheetToDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYAbsenceLedger    absenceLedger;
+
+        select sum ( AbsenceDays )
+            from absenceLedger
+            where absenceLedger.Worker == worker
+                && absenceLedger.TransDate >= timesheetFromDate
+                && absenceLedger.TransDate <= timesheetToDate
+            && absenceLedger.HRMAbsenceCodeId == expressionFunctionParameter1
+            && ( absenceLedger.LeaveApplicationLine || absenceLedger.AbsenceDays < 0) ;
+        
+        return absenceLedger.AbsenceDays *-1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>AB_EMP_AVAILED</Name>
+				<Source><![CDATA[
+    //no of days of leave availed in the current year by a given employee
+    public SPYAmount AB_EMP_AVAILED()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        FromDate timesheetFromDate = expressionContext.timesheetFromDate();
+        FromDate periodFromDate = expressionContext.periodFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYAbsenceLedger    absenceLedger;
+        SPYPayrollPeriodLine        payrollPeriodLineTab;
+        date   prevYearDec = mkDate(1,12,Year(periodFromDate) - 1), prevYearDecTimesheetDate;
+
+        select firstonly payrollPeriodLineTab
+            where payrollPeriodLineTab.PayrollPeriod == SPYPayrollPeriodLine::find(payrollPeriodLine).PayrollPeriod
+            &&  payrollPeriodLineTab.PeriodStartDate == prevYearDec;
+
+        prevYearDecTimesheetDate = payrollPeriodLineTab.PayrollDate;
+
+        select sum ( AbsenceDays )
+            from absenceLedger
+            where absenceLedger.Worker == worker
+                && absenceLedger.TransDate > prevYearDecTimesheetDate
+                && absenceLedger.TransDate < timesheetFromDate
+                && absenceLedger.HRMAbsenceCodeId == expressionFunctionParameter1
+                && ( absenceLedger.LeaveApplicationLine || absenceLedger.AbsenceDays < 0)
+                && absenceLedger.EntryType == SPYAbsenceLedgerEntryType::Transaction;
+        
+        return absenceLedger.AbsenceDays *-1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>AB_UNPAID_DAYS</Name>
+				<Source><![CDATA[
+    //this function would return all the unpaid days across all leave types for the timesheet period
+    public SPYAmount AB_UNPAID_DAYS()
+    {
+        SPYAbsenceLedger    spyAbsenceLedger;
+        HRMAbsenceCode  hrmAbsenceCode;
+        SPYAmount   total;
+        HcmWorkerRecId worker = expressionContext.worker();
+        FromDate periodFromDate= expressionContext.timesheetFromDate();
+        ToDate periodToDate = expressionContext.timesheetToDate();
+
+        select sum(AbsenceDays)
+            from spyAbsenceLedger
+            join hrmAbsenceCode
+                where hrmAbsenceCode.hrmAbsenceCodeId == spyAbsenceLedger.HRMAbsenceCodeId
+                && hrmAbsenceCode.SPYIsUnpaid == NoYes::Yes
+            && spyAbsenceLedger.Worker == worker
+            && spyAbsenceLedger.AbsenceDate >= periodFromDate
+            && spyAbsenceLedger.AbsenceDate <= periodToDate;
+
+        total = spyAbsenceLedger.AbsenceDays;
+
+        return( total ) ;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>AB_LEAVEAPP_CNT</Name>
+				<Source><![CDATA[
+    //returns the no of times a leave application has been filed for a given absence code by a given employee
+    //in the current year
+    public int AB_LEAVEAPP_CNT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        RecId payElement = expressionContext.payElement();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayElementTable  spyPayElementTable;
+        HRMAbsenceCode      hrmAbsenceCode;
+        SPYAbsenceLedger    hrmAbsenceLedger;
+        SPYLeaveApplicationLine spyLeaveApplicationLine;
+        SPYLeaveApplicationTable    spyLeaveApplication;
+        int    appCount;
+        
+        SPYPayrollPeriodLine    spyPayrollPeriodLine = SPYPayrollPeriodLine::find( payrollPeriodLine);
+        TransDate   yearStartDate = mkDate(1,1, Year(spyPayrollPeriodLine.PeriodStartDate) );
+
+        while select LeaveApplicationCode
+            from spyLeaveApplication
+            group by LeaveApplicationCode
+            join spyLeaveApplicationLine
+            where spyLeaveApplication.RecId == SPYLeaveApplicationLine.LeaveApplication
+            join hrmAbsenceLedger
+            where hrmAbsenceLedger.Worker == worker
+            && hrmAbsenceLedger.AbsenceDate >= yearStartDate
+            && hrmAbsenceLedger.AbsenceDate <= spyPayrollPeriodLine.PeriodEndDate
+            && spyLeaveApplicationLine.RecId ==hrmAbsenceLedger.LeaveApplicationLine
+            join hrmAbsenceCode
+            where hrmAbsenceCode.hrmAbsenceCodeId == hrmAbsenceLedger.HRMAbsenceCodeId
+            && hrmAbsenceCode.SPYBenefit == payElement
+            && HRMAbsenceCode.hrmAbsenceCodeId == expressionFunctionParameter1
+        {
+            appCount += 1;
+        }
+
+
+        return( appCount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>AB_EMP_ENTITLED</Name>
+				<Source><![CDATA[
+    //return the absence days entitled by an employee from the employee benefits
+    //if the employee benefits are not entered then the entitlement is calculated using the absence ledger
+    public SPYAmount AB_EMP_ENTITLED()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        TransDate transDate = expressionContext.transDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYWorkerPositionBenefit workerBenefit;
+        HRMAbsenceCode  hrmAbsenceCode;
+        SPYPayElementTable  payElementTable;
+        SPYAmount   entitlement;
+        SPYAbsenceLedger absenceLedger;
+        TransDate   yearStart, yearEnd;
+
+        select firstonly validtimestate(transDate) workerBenefit
+            join payElementTable
+            where payElementTable.RecId == workerBenefit.Benefit
+            && workerBenefit.Worker == worker
+            join hrmAbsenceCode
+            where hrmAbsenceCode.SPYBenefit == payElementTable.RecId
+            && hrmAbsenceCode.hrmAbsenceCodeId == expressionFunctionParameter1;
+
+        if ( workerBenefit.RecId == 0 )
+        {
+            yearStart = mkDate( 1,1, Year( transDate ) );
+            yearEnd = mkDate( 31,12, Year( transDate) ) ;
+
+            select sum (AbsenceDays )
+                from absenceLedger
+                where absenceLedger.Worker == worker
+                && absenceLedger.HRMAbsenceCodeId == expressionFunctionParameter1
+                && absenceLedger.EntryType == SPYAbsenceLedgerEntryType::OpeningEntry
+                && absenceLedger.TransDate == yearStart;
+
+            SPYAmount  openingBal = absenceLedger.AbsenceDays;
+
+            select sum (AbsenceDays )
+                from absenceLedger
+                where absenceLedger.Worker == worker
+                && absenceLedger.HRMAbsenceCodeId == expressionFunctionParameter1
+                && absenceLedger.AbsenceDays > 0
+                && !absenceLedger.LeaveApplicationLine
+                && absenceLedger.EntryType == SPYAbsenceLedgerEntryType::Transaction
+                && absenceLedger.TransDate >= yearStart
+                && absenceLedger.TransDate <= yearEnd;
+
+            entitlement = absenceLedger.AbsenceDays + openingBal;
+        }
+        else
+        {
+            entitlement = ( workerBenefit.QtyMonthly * 12.00 );
+        }
+
+        return ( entitlement );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>AB_ACCRUE_QTY</Name>
+				<Source><![CDATA[
+    //this function returns the total quantity accrued for a given absence code from the absence ledger
+    //this does not consider any encashments or adjusments
+    public SPYAmount AB_ACCRUE_QTY()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        ToDate calcToDate = expressionContext.calcToDate();
+        SPYBenefitJournalTrans  spyBenefitJournalTrans;
+        SPYBenefitJournalTable  spyBenefitJournalTable;
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYAbsenceLedger    hrmAbsenceLedger;
+        SPYAmount       monthlyQty;
+
+        select sum( AbsenceDays )
+            from hrmAbsenceLedger
+            where hrmAbsenceLedger.Worker == worker
+            && hrmAbsenceLedger.AbsenceDate >= calcFromDate
+            && hrmAbsenceLedger.AbsenceDate <= calcToDate
+            && hrmAbsenceLedger.LeaveApplicationLine == 0            
+            && hrmAbsenceLedger.HRMAbsenceCodeId == expressionFunctionParameter1 
+            notexists join spyBenefitJournalTrans
+            join spyBenefitJournalTable
+            where spyBenefitJournalTable.RecId == spyBenefitJournalTrans.BenefitJournal
+            && spyBenefitJournalTrans.RecId == hrmAbsenceLedger.BenefitJournalTrans
+            && spyBenefitJournalTable.JournalType == SPYBenefitJournalType::Encashment;
+
+        monthlyQty = hrmAbsenceLedger.AbsenceDays;
+
+        return( monthlyQty );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_MARITAL_STATUS</Name>
+				<Source><![CDATA[
+    //this function returns the marital status of the employee
+    public str EMP_MARITAL_STATUS()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+
+        HcmPersonDetails            HcmPersonDetails;
+        HcmWorker                       hcmWorker;
+        
+        select firstOnly HcmPersonDetails join hcmWorker
+        where HcmPersonDetails.Person== hcmWorker.Person
+        && hcmWorker.RecId==worker;
+        
+        switch ( HcmPersonDetails.MaritalStatus)
+        {
+            case 1 :
+                return "Married";
+            Case 2:
+                return "Single";
+            Default :
+                return " ";
+        }
+        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_AGE</Name>
+				<Source><![CDATA[
+    //returns the age of the employee in years on the transaction date
+    public SPYAmount EMP_AGE()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        TransDate transDate = expressionContext.transDate();
+
+        return ( transDate - HcmWorker::find(worker).getWorkerBirthDate()) / 365;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_PKG</Name>
+				<Source><![CDATA[
+    //calculate the salary package for an employee based on a pay element attribute passed as a parameter
+    public SPYAmount EMP_ATTRIBUTE_PKG()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        TransDate   calcDate = expressionContext.calcFromDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYAmount       salAmount;
+
+        select validtimestate(calcDate) sum(Monthly)
+        from workerPositionPayroll
+        join payElement
+        where payElement.RecId == workerPositionPayroll.Payroll
+            && workerPositionPayroll.Worker == worker
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount = workerPositionPayroll.Monthly;
+
+        select validtimestate(calcDate) sum(AmountMonthly)
+        from workerPositionBenefit
+        join payElement
+        where payElement.RecId == workerPositionBenefit.Benefit
+            && workerPositionBenefit.Worker == worker
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += workerPositionBenefit.AmountMonthly;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_SAL</Name>
+				<Source><![CDATA[
+    //calculate the salary for an employee based on a pay element attribute passed as a parameter
+    public SPYAmount EMP_ATTRIBUTE_SAL()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYReferencePayElementLedger    referenceLedger;
+        SPYAmount       salAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from payrollLedger
+        join payElement
+        where payElement.RecId == payrollLedger.Payroll
+            && payrollLedger.Worker == worker
+            && payrollLedger.PayrollPeriodLine == payrollPeriodLine
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount = payrollLedger.AccountingCurrencyAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from benefitLedger
+        join payElement
+        where payElement.RecId == benefitLedger.Benefit
+            && benefitLedger.Worker == worker
+            && benefitLedger.PayrollPeriodLine == payrollPeriodLine
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += benefitLedger.AccountingCurrencyAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from referenceLedger
+        join payElement
+        where payElement.RecId == referenceLedger.PayElement
+            && referenceLedger.Worker == worker
+            && referenceLedger.PayrollPeriodLine == payrollPeriodLine
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += referenceLedger.AccountingCurrencyAmount;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_SAL_TRANSCUR</Name>
+				<Source><![CDATA[
+    //calculate the salary for an employee based on a pay element attribute passed as a parameter (Transaction currency)
+    public SPYAmount EMP_ATTRIBUTE_SAL_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYReferencePayElementLedger    referenceLedger;
+        SPYAmount       salAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from payrollLedger
+        join payElement
+        where payElement.RecId == payrollLedger.Payroll
+            && payrollLedger.Worker == worker
+            && payrollLedger.PayrollPeriodLine == payrollPeriodLine
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount = payrollLedger.TransactionCurrencyAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from benefitLedger
+        join payElement
+        where payElement.RecId == benefitLedger.Benefit
+            && benefitLedger.Worker == worker
+            && benefitLedger.PayrollPeriodLine == payrollPeriodLine
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += benefitLedger.TransactionCurrencyAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from referenceLedger
+        join payElement
+        where payElement.RecId == referenceLedger.PayElement
+            && referenceLedger.Worker == worker
+            && referenceLedger.PayrollPeriodLine == payrollPeriodLine
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += referenceLedger.TransactionCurrencyAmount;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_YTDSAL</Name>
+				<Source><![CDATA[
+    //calculate the salary for an employee from begining of the year to the current period
+    //based on a pay element attribute
+    //this would exclude the current payroll period
+    public SPYAmount EMP_ATTRIBUTE_YTDSAL()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        PeriodDate periodFromDate = expressionContext.periodFromDate();
+
+        TransDate   yearStartDate = mkDate(1,1, Year(periodFromDate) );
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYPayrollPeriodLine payrollPeriodLine;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYReferencePayElementLedger    referenceLedger;
+        SPYAmount       salAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from payrollLedger
+        join payElement
+        where payElement.RecId == payrollLedger.Payroll
+            && payrollLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= yearStartDate
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount = payrollLedger.AccountingCurrencyAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from benefitLedger
+        join payElement
+        where payElement.RecId == benefitLedger.Benefit
+            && benefitLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= yearStartDate
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += benefitLedger.AccountingCurrencyAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from referenceLedger
+        join payElement
+        where payElement.RecId == referenceLedger.PayElement
+            && referenceLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= yearStartDate
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += referenceLedger.AccountingCurrencyAmount;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_YTDSAL_TRANSCUR</Name>
+				<Source><![CDATA[
+    //calculate the salary for an employee from begining of the year to the current period
+    //based on a pay element attribute
+    //this would exclude the current payroll period (Transaction currency)
+    public SPYAmount EMP_ATTRIBUTE_YTDSAL_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        PeriodDate periodFromDate = expressionContext.periodFromDate();
+
+        TransDate   yearStartDate = mkDate(1,1, Year(periodFromDate) );
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYPayrollPeriodLine payrollPeriodLine;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYReferencePayElementLedger    referenceLedger;
+        SPYAmount       salAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from payrollLedger
+        join payElement
+        where payElement.RecId == payrollLedger.Payroll
+            && payrollLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= yearStartDate
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount = payrollLedger.TransactionCurrencyAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from benefitLedger
+        join payElement
+        where payElement.RecId == benefitLedger.Benefit
+            && benefitLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= yearStartDate
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += benefitLedger.TransactionCurrencyAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from referenceLedger
+        join payElement
+        where payElement.RecId == referenceLedger.PayElement
+            && referenceLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= yearStartDate
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += referenceLedger.TransactionCurrencyAmount;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_BTDSAL</Name>
+				<Source><![CDATA[
+    //calculate the total salary paid balance on date for an employee
+    //based on a pay element attribute
+    //this would exclude the current payroll period
+    public SPYAmount EMP_ATTRIBUTE_BTDSAL()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        PeriodDate  periodFromDate = expressionContext.periodFromDate();
+
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYPayrollPeriodLine payrollPeriodLine;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYReferencePayElementLedger    referenceLedger;
+        SPYAmount       salAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from payrollLedger
+        join payElement
+        where payElement.RecId == payrollLedger.Payroll
+            && payrollLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount = payrollLedger.AccountingCurrencyAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from benefitLedger
+        join payElement
+        where payElement.RecId == benefitLedger.Benefit
+            && benefitLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += benefitLedger.AccountingCurrencyAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from referenceLedger
+        join payElement
+        where payElement.RecId == referenceLedger.PayElement
+            && referenceLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += referenceLedger.AccountingCurrencyAmount;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_BTDSAL_TRANSCUR</Name>
+				<Source><![CDATA[
+    //calculate the total salary paid balance on date for an employee
+    //based on a pay element attribute
+    //this would exclude the current payroll period (Transaction currency)
+    public SPYAmount EMP_ATTRIBUTE_BTDSAL_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        PeriodDate  periodFromDate = expressionContext.periodFromDate();
+
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYPayrollPeriodLine payrollPeriodLine;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYReferencePayElementLedger    referenceLedger;
+        SPYAmount       salAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from payrollLedger
+        join payElement
+        where payElement.RecId == payrollLedger.Payroll
+            && payrollLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount = payrollLedger.TransactionCurrencyAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from benefitLedger
+        join payElement
+        where payElement.RecId == benefitLedger.Benefit
+            && benefitLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += benefitLedger.TransactionCurrencyAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from referenceLedger
+        join payElement
+        where payElement.RecId == referenceLedger.PayElement
+            && referenceLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate < periodFromDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == expressionFunctionParameter1;
+
+        salAmount += referenceLedger.TransactionCurrencyAmount;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_SERVICEDAYS</Name>
+				<Source><![CDATA[
+    //this function returns the total no of service days of the employee since the date of joining
+    public SPYAmount EMP_SERVICEDAYS()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate periodFromDate = expressionContext.periodFromDate();
+        ToDate periodToDate = expressionContext.periodToDate();
+
+        HcmEmployment           hcmEmployment;
+        
+        StartDateTime           periodStart = DateTimeUtil::newDateTime(periodFromDate,00-00-00);
+        EndDateTime             periodEnd = DateTimeUtil::newDateTime(periodToDate,00-00-00);
+        
+        select firstonly validTimeState(periodStart, periodEnd) hcmEmployment
+            where hcmEmployment.Worker == worker &&
+                    hcmEmployment.LegalEntity == legalEntity;
+        
+        return (periodToDate - DateTimeUtil::date(hcmEmployment.ValidFrom) ) + 1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>MONTHLY_QTY</Name>
+				<Source><![CDATA[
+    //this function returns the monthly qty from the employee benefits screen
+    public SPYAmount MONTHLY_QTY()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        RecId payElement = expressionContext.payElement();
+
+        SPYWorkerPositionBenefit spyWorkerPositionBenefit;
+        SPYPayElementTable spyPayElementTable;
+        SPYAmount       monthlyAmount;
+
+        select validtimestate(calcFromDate) *
+            from spyWorkerPositionBenefit
+            join spyPayElementTable
+            where spyPayElementTable.RecId == payElement
+            && spyPayElementTable.RecId == spyWorkerPositionBenefit.Benefit
+            && spyWorkerPositionBenefit.Worker == worker
+            && spyWorkerPositionBenefit.LegalEntity == legalEntity;
+
+        if (spyWorkerPositionBenefit.RecId )
+            monthlyAmount = spyWorkerPositionBenefit.QtyMonthly;
+
+        return( monthlyAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>MONTHLY_AMT</Name>
+				<Source><![CDATA[
+    //this function retuns the amount from the monthly amount field
+    //this works for payroll aswell as benefit ledger
+    public SPYAmount MONTHLY_AMT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        RecId payElement = expressionContext.payElement();
+
+        SPYWorkerPositionPayroll spyWorkerPositionPayroll;
+        SPYWorkerPositionBenefit    spyWorkerPositionBenefit;
+        SPYPayElementTable spyPayElementTable;
+        SPYAmount       monthlyAmount;
+
+        select firstonly spyPayElementTable
+            where spyPayElementTable.RecId == payElement;
+
+        if ( spyPayElementTable.PayElementType == SPYPayElementType::Payroll )
+        {
+            select firstonly validtimestate(calcFromDate) *
+            from spyWorkerPositionPayroll
+            join spyPayElementTable
+            where spyPayElementTable.RecId == payElement
+            && spyPayElementTable.RecId == spyWorkerPositionPayroll.Payroll
+            && spyWorkerPositionPayroll.Worker == worker
+            && spyWorkerPositionPayroll.LegalEntity == legalEntity;
+
+            monthlyAmount = spyWorkerPositionPayroll.Monthly;
+        }
+        else
+        {
+            select firstonly validtimestate(calcFromDate) *
+            from spyWorkerPositionBenefit
+            join spyPayElementTable
+            where spyPayElementTable.RecId == payElement
+            && spyPayElementTable.RecId == spyWorkerPositionBenefit.Benefit
+            && spyWorkerPositionBenefit.Worker == worker
+            && spyWorkerPositionBenefit.LegalEntity == legalEntity;
+
+            monthlyAmount = spyWorkerPositionBenefit.AmountMonthly;
+        }
+
+        return( monthlyAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_AMT</Name>
+				<Source><![CDATA[
+    //this function retuns the amount from the employee pay elements
+    //this works for payroll aswell as benefit ledger
+    //whcih amount to return is based on a parameter
+    public SPYAmount EMP_AMT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        RecId payElement = expressionContext.payElement();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYWorkerPositionPayroll spyWorkerPositionPayroll;
+        SPYWorkerPositionBenefit    spyWorkerPositionBenefit;
+        SPYPayElementTable spyPayElementTable;
+        SPYAmount       elementAmount;
+
+        select firstonly spyPayElementTable
+            where spyPayElementTable.RecId == payElement;
+
+        if ( spyPayElementTable.PayElementType == SPYPayElementType::Payroll )
+        {
+            select firstonly validtimestate(calcFromDate) *
+            from spyWorkerPositionPayroll
+            join spyPayElementTable
+            where spyPayElementTable.RecId == payElement
+            && spyPayElementTable.RecId == spyWorkerPositionPayroll.Payroll
+            && spyWorkerPositionPayroll.Worker == worker
+            && spyWorkerPositionPayroll.LegalEntity == legalEntity;
+
+            switch (expressionFunctionParameter1)
+            {
+                case "Monthly":
+                    elementAmount = spyWorkerPositionPayroll.Monthly;
+                    break;
+                case "Annual" :
+                    elementAmount = spyWorkerPositionPayroll.Annual;
+                    break;
+                case "SemiAnnual" :
+                    elementAmount = spyWorkerPositionPayroll.SemiAnnual;
+                    break;
+                case "Daily" :
+                    elementAmount = spyWorkerPositionPayroll.Daily;
+                    break;
+                case "Quarterly" :
+                    elementAmount = spyWorkerPositionPayroll.Quarterly;
+                    break;
+                case "BiWeekly" :
+                    elementAmount = spyWorkerPositionPayroll.BiWeekly;
+                    break;
+                case "Weekly" :
+                    elementAmount = spyWorkerPositionPayroll.Weekly;
+                    break;
+                case "Hourly" :
+                    elementAmount = spyWorkerPositionPayroll.Hourly;
+                    break;
+                default:
+                    elementAmount = spyWorkerPositionPayroll.Monthly;
+            }       
+        }
+        else
+        {
+            select firstonly validtimestate(calcFromDate) *
+            from spyWorkerPositionBenefit
+            join spyPayElementTable
+            where spyPayElementTable.RecId == payElement
+            && spyPayElementTable.RecId == spyWorkerPositionBenefit.Benefit
+            && spyWorkerPositionBenefit.Worker == worker
+            && spyWorkerPositionBenefit.LegalEntity == legalEntity;
+
+            switch (expressionFunctionParameter1)
+            {
+                case "Monthly":
+                    elementAmount = spyWorkerPositionBenefit.AmountMonthly;
+                    break;
+                case "Annual" :
+                    elementAmount = spyWorkerPositionBenefit.AmountAnnual;
+                    break;
+                case "SemiAnnual" :
+                    elementAmount = spyWorkerPositionBenefit.AmountSemiAnnual;
+                    break;
+                case "Daily" :
+                    elementAmount = spyWorkerPositionBenefit.AmountDaily;
+                    break;
+                case "Quarterly" :
+                    elementAmount = spyWorkerPositionBenefit.AmountQuarterly;
+                    break;
+                case "BiWeekly" :
+                    elementAmount = spyWorkerPositionBenefit.AmountBiWeekly;
+                    break;
+                case "Weekly" :
+                    elementAmount = spyWorkerPositionBenefit.AmountWeekly;
+                    break;
+                case "Hourly" :
+                    elementAmount = spyWorkerPositionBenefit.AmountHourly;
+                    break;
+                default:
+                    elementAmount = spyWorkerPositionBenefit.AmountMonthly;
+            }
+        }
+
+        return( elementAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_QTY</Name>
+				<Source><![CDATA[
+    //this function retuns the amount from the employee pay elements
+    //this works for payroll aswell as benefit ledger
+    //whcih amount to return is based on a parameter
+    public SPYAmount EMP_QTY()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        RecId payElement = expressionContext.payElement();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYWorkerPositionPayroll spyWorkerPositionPayroll;
+        SPYWorkerPositionBenefit    spyWorkerPositionBenefit;
+        SPYPayElementTable spyPayElementTable;
+        SPYAmount       elementQty;
+
+
+        select firstonly validtimestate(calcFromDate) *
+        from spyWorkerPositionBenefit
+        join spyPayElementTable
+        where spyPayElementTable.RecId == payElement
+        && spyPayElementTable.RecId == spyWorkerPositionBenefit.Benefit
+        && spyWorkerPositionBenefit.Worker == worker
+        && spyWorkerPositionBenefit.LegalEntity == legalEntity;
+
+        switch (expressionFunctionParameter1)
+        {
+            case "Monthly":
+                elementQty = spyWorkerPositionBenefit.QtyMonthly;
+                break;
+            case "Annual" :
+                elementQty = spyWorkerPositionBenefit.QtyAnnual;
+                break;
+            case "SemiAnnual" :
+                elementQty = spyWorkerPositionBenefit.QtySemiAnnual;
+                break;
+            case "Daily" :
+                elementQty = spyWorkerPositionBenefit.QtyDaily;
+                break;
+            case "Quarterly" :
+                elementQty = spyWorkerPositionBenefit.QtyQuarterly;
+                break;
+            case "BiWeekly" :
+                elementQty = spyWorkerPositionBenefit.QtyBiWeekly;
+                break;
+            case "Weekly" :
+                elementQty = spyWorkerPositionBenefit.QtyWeekly;
+                break;
+            case "Hourly" :
+                elementQty = spyWorkerPositionBenefit.QtyHourly;
+                break;
+            default:
+                elementQty = spyWorkerPositionBenefit.QtyMonthly;
+        }
+
+        return( elementQty );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_SALARY</Name>
+				<Source><![CDATA[
+    //this function returns the total salary for an employee in the given payroll run instance
+    public SPYAmount EMP_SALARY()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        SPYWorkerPositionPayroll spyWorkerPositionPayroll;
+        SPYAmount       grossSalary;
+
+        if(expressionContext.endOfSettlement())
+        {
+            FromDate calcFromDate = expressionContext.calcFromDate();
+            select validtimestate(calcFromDate)  sum( Monthly )
+                from spyWorkerPositionPayroll
+                group by worker, LegalEntity
+                where spyWorkerPositionPayroll.Worker == worker
+                && spyWorkerPositionPayroll.LegalEntity == legalEntity;
+            grossSalary += spyWorkerPositionPayroll.Monthly;
+        }
+        else
+        {
+            ToDate calcToDate = expressionContext.calcToDate();
+            select validtimestate(calcToDate)  sum( Monthly )
+                from spyWorkerPositionPayroll
+                group by worker, LegalEntity
+                where spyWorkerPositionPayroll.Worker == worker
+                && spyWorkerPositionPayroll.LegalEntity == legalEntity;        
+            grossSalary += spyWorkerPositionPayroll.Monthly;
+        }
+        
+        return ( grossSalary );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EOS_REASON</Name>
+				<Source><![CDATA[
+    //return the last reason for seperation for a worker in a given legal entity
+    public str EOS_REASON()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+
+        HcmEmployment hcmEmployment;
+        HcmEmploymentDetail hcmEmploymentDetails;
+        HcmReasonCode   hcmReasonCode;
+        str lastReasonCode;
+        date dateFrom, dateTo;
+
+        dateFrom =dateNull();
+        dateTo = maxDate();
+
+        select  validtimestate(dateFrom, dateTo) hcmEmploymentDetails
+            join hcmReasonCode
+            where hcmReasonCode.RecId == hcmEmploymentDetails.TransitionReasonCode
+            join hcmEmployment
+            order by ValidFrom  desc
+            where hcmEmploymentDetails.employment == hcmEmployment.RecId
+            && hcmEmployment.Worker == worker
+            && hcmEmployment.LegalEntity == legalEntity;
+        
+        lastReasonCode = hcmreasoncode.ReasonCodeId;
+               
+        return ( lastReasonCode );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CONFIG_KEY_DOUBLE</Name>
+				<Source><![CDATA[
+    //return the value of a configuration key type casted as a double value
+    public SPYAmount CONFIG_KEY_DOUBLE()
+    {
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYExpressionConfigurationTable configurationKeys;
+        real retValue;
+
+        select firstonly configurationKeys
+            where configurationKeys.ConfigurationKey == expressionFunctionParameter1;
+
+        retValue = str2Num( ConfigurationKeys.Value );
+        return( retValue );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CONFIG_KEY_ASDOUBLE</Name>
+				<Source><![CDATA[
+    //a private fuction created to read the values from configuration
+    private SPYAmount CONFIG_KEY_ASDOUBLE(SPYExpressionFunctionParameter expressionFunctionParameter1 )
+    {
+        SPYExpressionConfigurationTable configurationKeys;
+        real retValue;
+
+        select firstonly configurationKeys
+            where configurationKeys.ConfigurationKey == expressionFunctionParameter1;
+
+        retValue = str2Num( ConfigurationKeys.Value );
+        return( retValue );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>NO_OF_DEPENDENTS</Name>
+				<Source><![CDATA[
+    //return the no of dependents for an employee
+    //If the dependents need to be between a age range the same should be set in configuration keys
+    //generally kids are considered dependent only until a certain age like between 3 to 21 year of age
+    //the configuration key values should be of the format <relationshipType>+<fromAge>
+    public int NO_OF_DEPENDENTS()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        TransDate transDate = expressionContext.transDate();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        HCMWorker hcmWorker ;
+        DIRPARTYRELATIONSHIP DirPartyRelationShip;
+        HCMPersonPrivateDetails hcmPersonPrivateDetails;
+        int dependentCount;
+        real    ageAsOfDate;
+        real    fromLimit, toLimit;
+
+        fromLimit = this.CONFIG_KEY_ASDOUBLE(expressionFunctionParameter1 +"fromAge");
+        toLimit= this.CONFIG_KEY_ASDOUBLE(expressionFunctionParameter1 +"toAge");
+
+        while select *
+            from hcmWorker
+            join DirPartyRelationShip
+                where DirPartyRelationShip.ParentParty == hcmWorker.Person
+                && DirPartyRelationShip.RelationshipTypeId == expressionFunctionParameter1
+                && hcmWorker.RecId == worker
+            join hcmPersonPrivateDetails
+            where hcmPersonPrivateDetails.Person == DirPartyRelationShip.ChildParty
+        {
+            //only if the age limits are defined and date of birth is defined
+            if ( hcmPersonPrivateDetails.BirthDate != dateNull() )
+            {
+                ageAsOfDate = round( ( transDate - hcmPersonPrivateDetails.BirthDate ) / 365, 0.01); //round up
+
+                if ( fromLimit && toLimit )
+                {
+                    if ((ageAsOfDate >= fromLimit) && (ageAsOfDate < toLimit ) )
+                    {
+                        dependentCount += 1;
+                        };
+                }
+                else 
+                {
+                    dependentCount += 1;
+                }
+            }
+        }
+        
+        return ( dependentCount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LOAN_DEDUCTION</Name>
+				<Source><![CDATA[
+    //return the total recovery amount against a given loan type code
+    //using the pay loan ledger
+    public SPYAmount LOAN_DEDUCTION()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        SPYAmount   ret;
+        SPYPayLoanLedger    ledger;
+        SPYLoanTypeTable    loanType;
+        container               loanLedgerRecId;
+        /*
+        select sum(AccountingCurrencyAmount) from ledger
+            where ledger.Worker == worker
+                    && ledger.PayrollPeriodLine == payrollPeriodLine
+                    && ledger.PayLoanTransType == SPYPayLoanTransType::Recovery
+            join loanType
+            where ledger.LoanType == loanType.RecId
+                && loanType.LoanTypeCode == expressionFunctionParameter1;
+        */
+        while select ledger
+            where ledger.Worker == worker
+                    && ledger.PayrollPeriodLine == payrollPeriodLine
+                    && ledger.PayLoanTransType == SPYPayLoanTransType::Recovery
+            join loanType
+            where ledger.LoanType == loanType.RecId
+                && loanType.LoanTypeCode == expressionFunctionParameter1
+        {
+            ret += ledger.AccountingCurrencyAmount;
+            loanLedgerRecId = conPoke(loanLedgerRecId,conLen(loanLedgerRecId) + 1, ledger.RecId);
+        }
+        expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn([tableNum(SPYPayLoanLedger),loanLedgerRecId]);
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LOAN_DEDUCTION_TRANSCUR</Name>
+				<Source><![CDATA[
+    //return the total recovery amount against a given loan type code
+    //using the pay loan ledger (Transaction currency)
+    public SPYAmount LOAN_DEDUCTION_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        SPYAmount   ret;
+        SPYPayLoanLedger    ledger;
+        SPYLoanTypeTable    loanType;
+        container               loanLedgerRecId;
+        /*
+        select sum(TransactionCurrencyAmount) from ledger
+            where ledger.Worker == worker
+                    && ledger.PayrollPeriodLine == payrollPeriodLine
+                    && ledger.PayLoanTransType == SPYPayLoanTransType::Recovery
+            join loanType
+            where ledger.LoanType == loanType.RecId
+                && loanType.LoanTypeCode == expressionFunctionParameter1;
+        */
+        while select ledger
+            where ledger.Worker == worker
+                    && ledger.PayrollPeriodLine == payrollPeriodLine
+                    && ledger.PayLoanTransType == SPYPayLoanTransType::Recovery
+            join loanType
+            where ledger.LoanType == loanType.RecId
+                && loanType.LoanTypeCode == expressionFunctionParameter1
+        {
+            ret += ledger.TransactionCurrencyAmount;
+            loanLedgerRecId = conPoke(loanLedgerRecId,conLen(loanLedgerRecId) + 1, ledger.RecId);
+        }
+        expressionContext.expressionReturnObject().parmLedgerUpdateSourceReturn([tableNum(SPYPayLoanLedger),loanLedgerRecId]);
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LOAN_DISBURSEMENT</Name>
+				<Source><![CDATA[
+    //this function returns the total amount to be disbursed to the employee
+    //against a given loan type
+    public SPYAmount LOAN_DISBURSEMENT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayLoanLedger    ledger;
+        SPYLoanTypeTable    loanType;
+        
+        select sum(AccountingCurrencyAmount)
+            from ledger
+            where ledger.Worker == worker
+                && ledger.PayrollPeriodLine == payrollPeriodLine
+                && ledger.PayLoanTransType == SPYPayLoanTransType::Disbursement
+            join loanType
+            where ledger.LoanType == loanType.RecId
+                && loanType.LoanTypeCode == expressionFunctionParameter1;
+        
+        return ledger.AccountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LOAN_DISBURSEMENT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //this function returns the total amount to be disbursed to the employee
+    //against a given loan type (Transaction currency)
+    public SPYAmount LOAN_DISBURSEMENT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayLoanLedger    ledger;
+        SPYLoanTypeTable    loanType;
+        
+        select sum(TransactionCurrencyAmount)
+            from ledger
+            where ledger.Worker == worker
+                && ledger.PayrollPeriodLine == payrollPeriodLine
+                && ledger.PayLoanTransType == SPYPayLoanTransType::Disbursement
+            join loanType
+            where ledger.LoanType == loanType.RecId
+                && loanType.LoanTypeCode == expressionFunctionParameter1;
+        
+        return ledger.TransactionCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LOAN_CASH_SETTLEMENT</Name>
+				<Source><![CDATA[
+    //this function returns the total amount to cash settled by the employee
+    //against a given loan type
+    public SPYAmount LOAN_CASH_SETTLEMENT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayLoanLedger    ledger;
+        SPYLoanTypeTable    loanType;
+        
+        select sum(AccountingCurrencyAmount)
+            from ledger
+            where ledger.Worker == worker
+                && ledger.PayrollPeriodLine == payrollPeriodLine
+            && ledger.PayLoanTransType == SPYPayLoanTransType::CashSettlement
+            join loanType
+            where ledger.LoanType == loanType.RecId
+                && loanType.LoanTypeCode == expressionFunctionParameter1;
+        
+        return ledger.AccountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LOAN_CASH_SETTLEMENT_TRANSCUR</Name>
+				<Source><![CDATA[
+    //this function returns the total amount to cash settled by the employee
+    //against a given loan type (Transaction currency)
+    public SPYAmount LOAN_CASH_SETTLEMENT_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        RecId payrollPeriodLine = expressionContext.payrollPeriodLine();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+
+        SPYPayLoanLedger    ledger;
+        SPYLoanTypeTable    loanType;
+        
+        select sum(TransactionCurrencyAmount)
+            from ledger
+            where ledger.Worker == worker
+                && ledger.PayrollPeriodLine == payrollPeriodLine
+            && ledger.PayLoanTransType == SPYPayLoanTransType::CashSettlement
+            join loanType
+            where ledger.LoanType == loanType.RecId
+                && loanType.LoanTypeCode == expressionFunctionParameter1;
+        
+        return ledger.TransactionCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LOAN_CNT</Name>
+				<Source><![CDATA[
+    //This function returns the total no of time a loan application of a given loan type has been applied in the system, in the current financial year
+    public SPYAmount LOAN_CNT()
+    {
+        SPYPayLoanLedger        loanLedger;
+        SPYLoanTypeTable        loanType;
+        SPYAmount               ret;        
+
+        SPYLoanTypeCode loanTypeCode = expressionContext.expressionFunctionParameter1();
+        HcmWorkerRecId  worker = expressionContext.worker();
+        SPYPayrollPeriodLineRecId payrollPeriodLineRecID = expressionContext.payrollPeriodLine();
+
+        SPYPayrollPeriodLine  payrollPeriodLine = SPYPayrollPeriodLine::find( payrollPeriodLineRecID);
+        TransDate   yearStartDate = mkDate(1,1, Year(payrollPeriodLine.PeriodStartDate) );
+
+        if ( loanTypeCode != "" ) 
+        {
+            select count( worker )
+            from loanLedger
+            join loanType
+            where loanLedger.Worker == worker &&
+                    loanLedger.PayrollPeriodLine != payrollPeriodLineRecID &&
+                    loanLedger.LoanType == loanType.RecId &&
+                    loanType.LoanTypeCode == loanTypeCode &&
+                    loanLedger.PayLoanTransType == SPYPayLoanTransType::Disbursement &&
+                    loanLedger.TransDate >= yearStartDate &&
+                    loanLedger.TransDate < payrollPeriodLine.PeriodStartDate ;
+        }
+        else
+        {
+            select count( worker )
+            from loanLedger
+            join loanType
+            where loanLedger.Worker == worker &&
+                    loanLedger.PayrollPeriodLine != payrollPeriodLineRecID &&
+                    loanLedger.LoanType == loanType.RecId &&
+                    //loanType.LoanTypeCode == loanTypeCode &&
+                    loanLedger.PayLoanTransType == SPYPayLoanTransType::Disbursement &&
+                    loanLedger.TransDate >= yearStartDate &&
+                    loanLedger.TransDate < payrollPeriodLine.PeriodStartDate ;
+        }
+
+        ret = any2Real( loanledger.Worker );
+        
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>LOAN_CNT_PERIODS</Name>
+				<Source><![CDATA[
+    //This function returns the total no of time a loan application of a given loan type has been applied in the system, in the past given no of periods
+    public SPYAmount LOAN_CNT_PERIODS()
+    {
+        SPYPayLoanLedger        loanLedger;
+        SPYLoanTypeTable        loanType;
+        SPYAmount                   ret;
+        int                             noOfPeriods;
+
+        SPYLoanTypeCode loanTypeCode = expressionContext.expressionFunctionParameter1();
+        noOfPeriods = any2Int( expressionContext.expressionFunctionParameter2() ) * -1;
+
+        HcmWorkerRecId  worker = expressionContext.worker();
+        SPYPayrollPeriodLineRecId payrollPeriodLineRecID = expressionContext.payrollPeriodLine();
+
+        SPYPayrollPeriodLine  payrollPeriodLine = SPYPayrollPeriodLine::find( payrollPeriodLineRecID);
+        TransDate   periodStartDate = datemthFwd( payrollPeriodLine.PeriodStartDate, noOfPeriods );
+
+        if ( loanTypeCode != "" )
+        {
+            select count( worker )
+            from loanLedger
+            join loanType
+            where loanLedger.Worker == worker &&            
+                    loanLedger.PayrollPeriodLine != payrollPeriodLineRecID &&
+                    loanLedger.LoanType == loanType.RecId &&
+                    loanType.LoanTypeCode == loanTypeCode &&
+                    loanLedger.PayLoanTransType == SPYPayLoanTransType::Disbursement &&
+                    loanLedger.TransDate >= periodStartDate &&
+                    loanLedger.TransDate < payrollPeriodLine.PeriodStartDate ;
+        }
+        else
+        {
+            select count( worker )
+            from loanLedger
+            join loanType
+            where loanLedger.Worker == worker &&
+                    loanLedger.PayrollPeriodLine != payrollPeriodLineRecID &&
+                    loanLedger.LoanType == loanType.RecId &&
+                    //loanType.LoanTypeCode == loanTypeCode &&
+                    loanLedger.PayLoanTransType == SPYPayLoanTransType::Disbursement &&
+                    loanLedger.TransDate >= periodStartDate &&
+                    loanLedger.TransDate < payrollPeriodLine.PeriodStartDate ;
+        }
+
+        ret = any2Real( loanledger.Worker );
+        
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_PERIODFROMDATE</Name>
+				<Source><![CDATA[
+    //this function returns the context parameter of PeriodFromDate
+    public FromDate CTX_PERIODFROMDATE()
+    {
+        return( expressionContext.periodFromDate() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_PERIODTODATE</Name>
+				<Source><![CDATA[
+    public EndDate CTX_PERIODTODATE()
+    {
+        return( expressionContext.periodToDate() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_TIMESHEETFROMDATE</Name>
+				<Source><![CDATA[
+    public FromDate CTX_TIMESHEETFROMDATE()
+    {
+        return( expressionContext.TimesheetFromDate() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_TIMESHEETTODATE</Name>
+				<Source><![CDATA[
+    public ToDate CTX_TIMESHEETTODATE()
+    {
+        return( expressionContext.timesheetToDate() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_TRANSDATE</Name>
+				<Source><![CDATA[
+    public TransDate CTX_TRANSDATE()
+    {
+        return( expressionContext.transDate() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_WORKERCALENDARID</Name>
+				<Source><![CDATA[
+    public CalendarId CTX_WORKERCALENDARID()
+    {
+        return( expressionContext.workerCalendarId() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_LEAVESETTLEMENT</Name>
+				<Source><![CDATA[
+    public boolean CTX_LEAVESETTLEMENT()
+    {
+        return( expressionContext.leaveSettlement() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_PAYARREAR</Name>
+				<Source><![CDATA[
+    public boolean CTX_PAYARREAR()
+    {
+        return( expressionContext.payArrear() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_ENDOFSETTLEMENT</Name>
+				<Source><![CDATA[
+    public boolean CTX_ENDOFSETTLEMENT()
+    {
+        return( expressionContext.endOfSettlement() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_CALCFROMDATE</Name>
+				<Source><![CDATA[
+    public FromDate CTX_CALCFROMDATE()
+    {
+        return( expressionContext.calcFromDate() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>CTX_CALCTODATE</Name>
+				<Source><![CDATA[
+    public ToDate CTX_CALCTODATE()
+    {
+        return( expressionContext.calcToDate() );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_JOB</Name>
+				<Source><![CDATA[
+    //this function returns the job description of the current employee
+    public Description EMP_JOB()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        date periodFrom = expressionContext.periodFromDate();
+        HcmPositionWorkerAssignment     positionWorkerAssignment;
+        HcmPositionDetail   positionDetail;
+        HcmJob   job;
+
+        select firstonly validtimestate(periodFrom) positionWorkerAssignment
+            where positionWorkerAssignment.Worker == worker
+            join positionDetail
+            where positionDetail.Position == positionWorkerAssignment.Position
+            join job
+            where job.RecId == positionDetail.Job;
+        
+        return( job.JobId );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_PAYELEMENTSTARTDATE</Name>
+				<Source><![CDATA[
+    //this function returns valid from date from worker payroll or worker benefit
+    public TransDate EMP_PAYELEMENTSTARTDATE()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId    legalEntity = expressionContext.legalEntity();
+        SPYWorkerPositionPayroll    workerPositionPayroll;
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYExpressionFunctionParameter payElementCode = expressionContext.expressionFunctionParameter1();
+        SPYPayElementTable  payElementTable = SPYPayElementTable::findByCode(payElementCode);
+        TransDate   validFrom = dateNull(), ValidTo = dateMax(), startDate;
+
+        if(payElementTable.PayElementType == SPYPayElementType::Payroll)
+        {
+            select firstonly validtimestate(validFrom, ValidTo) workerPositionPayroll order by ValidFrom desc
+                where workerPositionPayroll.Worker == worker &&
+                workerPositionPayroll.LegalEntity == legalEntity &&
+                workerPositionPayroll.Payroll == payElementTable.RecId;
+            startDate = workerPositionPayroll.ValidFrom;
+        }
+        else if(payElementTable.PayElementType == SPYPayElementType::Benefit)
+        {
+            select firstonly validtimestate(validFrom, ValidTo) workerPositionBenefit order by ValidFrom desc
+                where workerPositionBenefit.Worker == worker &&
+                workerPositionBenefit.LegalEntity == legalEntity &&
+                workerPositionBenefit.Benefit == payElementTable.RecId;
+            startDate = workerPositionBenefit.ValidFrom;
+        }
+        return startDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_SAL_DATERANGE</Name>
+				<Source><![CDATA[
+    //calculate the salary for an employee for a date range
+    //based on a pay element attribute
+    public SPYAmount EMP_ATTRIBUTE_SAL_DATERANGE()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        SPYExpressionFunctionParameter payElementAttribute = expressionContext.expressionFunctionParameter1();
+        SPYExpressionFunctionParameter fromDateStr = expressionContext.expressionFunctionParameter2();
+        SPYExpressionFunctionParameter toDateStr = expressionContext.expressionFunctionParameter3();
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYPayrollPeriodLine payrollPeriodLine;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYReferencePayElementLedger    referenceLedger;
+        SPYAmount       salAmount;
+        TransDate   fromDate, toDate;
+
+        fromDate = str2Date(fromDateStr, 123);
+        toDate = str2Date(toDateStr, 123);
+        select sum(AccountingCurrencyAmount)
+        from payrollLedger
+        join payElement
+        where payElement.RecId == payrollLedger.Payroll
+            && payrollLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= fromDate
+            && payrollPeriodLine.PeriodStartDate <= toDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == payElementAttribute;
+
+        salAmount = payrollLedger.AccountingCurrencyAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from benefitLedger
+        join payElement
+        where payElement.RecId == benefitLedger.Benefit
+            && benefitLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= fromDate
+            && payrollPeriodLine.PeriodStartDate <= toDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == payElementAttribute;
+
+        salAmount += benefitLedger.AccountingCurrencyAmount;
+
+        select sum(AccountingCurrencyAmount)
+        from referenceLedger
+        join payElement
+        where payElement.RecId == referenceLedger.PayElement
+            && referenceLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= fromDate
+            && payrollPeriodLine.PeriodStartDate <= toDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == payElementAttribute;
+
+        salAmount += referenceLedger.AccountingCurrencyAmount;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ATTRIBUTE_SAL_DATERANGE_TRANSCUR</Name>
+				<Source><![CDATA[
+    //calculate the salary for an employee for a date range
+    //based on a pay element attribute (Transaction currency)
+    public SPYAmount EMP_ATTRIBUTE_SAL_DATERANGE_TRANSCUR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        SPYExpressionFunctionParameter payElementAttribute = expressionContext.expressionFunctionParameter1();
+        SPYExpressionFunctionParameter fromDateStr = expressionContext.expressionFunctionParameter2();
+        SPYExpressionFunctionParameter toDateStr = expressionContext.expressionFunctionParameter3();
+        SPYPayElementTable  payElement;
+        SPYPayElementAttributes payElementAttr;
+        SPYPayElementAttributeTable attributes;
+        SPYPayrollPeriodLine payrollPeriodLine;
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYReferencePayElementLedger    referenceLedger;
+        SPYAmount       salAmount;
+        TransDate   fromDate, toDate;
+
+        fromDate = str2Date(fromDateStr, 123);
+        toDate = str2Date(toDateStr, 123);
+        select sum(TransactionCurrencyAmount)
+        from payrollLedger
+        join payElement
+        where payElement.RecId == payrollLedger.Payroll
+            && payrollLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= fromDate
+            && payrollPeriodLine.PeriodStartDate <= toDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == payElementAttribute;
+
+        salAmount = payrollLedger.TransactionCurrencyAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from benefitLedger
+        join payElement
+        where payElement.RecId == benefitLedger.Benefit
+            && benefitLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= fromDate
+            && payrollPeriodLine.PeriodStartDate <= toDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == payElementAttribute;
+
+        salAmount += benefitLedger.TransactionCurrencyAmount;
+
+        select sum(TransactionCurrencyAmount)
+        from referenceLedger
+        join payElement
+        where payElement.RecId == referenceLedger.PayElement
+            && referenceLedger.Worker == worker
+       join payrollPeriodLine
+       where payrollLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+            && payrollPeriodLine.PeriodStartDate >= fromDate
+            && payrollPeriodLine.PeriodStartDate <= toDate
+        join payElementAttr
+        where payElementAttr.PayElement == payElement.RecId
+        join attributes
+        where attributes.RecId == payElementAttr.PayElementAttribute
+            && attributes.PayElementAttribute == payElementAttribute;
+
+        salAmount += referenceLedger.TransactionCurrencyAmount;
+
+        return( salAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>PERIOD_WORKDAYS_WORKPROFILE</Name>
+				<Source><![CDATA[
+    //this function returns the no of working days in work profile
+    public int PERIOD_WORKDAYS_WORKPROFILE()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        ToDate calcToDate = expressionContext.calcToDate();
+        date  transDate = calcFromDate;
+        boolean     isOffDay;
+        int workingDay;      
+        SPYWorkingProfile   workingProfile = new SPYWorkingProfile(worker, legalEntity);
+
+        while(transDate <= calcToDate)
+        {
+            boolean isHoliday = workingProfile.IsHolidayFromProfile(transDate);
+            if(!isHoliday)
+            {
+                SPYAmount   workingHours = workingProfile.workingHoursFromProfile(transDate);
+                isOffDay = workingHours == 0 ? true : false;
+            }
+            else
+                isOffDay = true;
+            
+            if(!isOffDay)
+                workingDay++;
+            transDate++;
+        }
+
+        return workingDay;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ISCALENDAR</Name>
+				<Source><![CDATA[
+    //this function returns true if employee has calendar as planned working hours
+    public boolean EMP_ISCALENDAR()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        SPYWorkingProfile   workingProfile = new SPYWorkingProfile(worker, legalEntity);
+
+        return workingProfile.workerIsCalendar(calcFromDate);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

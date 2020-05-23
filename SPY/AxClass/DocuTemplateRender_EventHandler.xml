@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>DocuTemplateRender_EventHandler</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+using Microsoft.Dynamics.ApplicationPlatform.Services.Instrumentation;
+using Microsoft.DynamicsOnline.Infrastructure.Components.SharedServiceUnitStorage;
+using Microsoft.Dynamics.Platform.Integration.Office.FilterNode;
+using Microsoft.Dynamics.Platform.Integration.Office.FilterBinaryNode;
+class DocuTemplateRender_EventHandler
+{
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>DocuTemplateRender_Post_renderTemplateToStream</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="args"></param>
+    [PostHandlerFor(classStr(DocuTemplateRender), methodStr(DocuTemplateRender, renderTemplateToStream))]
+    public static void DocuTemplateRender_Post_renderTemplateToStream(XppPrePostArgs args)
+    {
+        DocuTemplate        template        = args.getArg('template');
+        Map                 filtersToApply  = args.getArg('filtersToApply');
+        System.IO.Stream    stream          = args.getArg('outputStream');
+
+        HcmWorker               worker;
+        System.Net.WebClient    webClient;
+        HcmPersonnelNumberId    personnelNumber;
+
+        System.DateTime     exportTime  = System.DateTime::UtcNow;
+        var                 tickString  = exportTime.get_Ticks().ToString();
+
+        str                 _filename   = strfmt("%1_%2.docx", template.DisplayName, tickString);
+        MapEnumerator       mapEnumerator = filtersToApply.getEnumerator();
+        
+        if (template.SPYAttachDocument)
+        {
+            while (mapEnumerator.moveNext())
+            {
+                Microsoft.Dynamics.Platform.Integration.Office.FilterBinaryNode mapValue   = mapEnumerator.currentValue();
+                personnelNumber   = mapValue.Right;
+            }
+        }
+
+        if (personnelNumber)
+        {
+            str exportUrls = DocuTemplateRender_EventHandler::saveToBlobStorages(stream, _filename);
+
+            InteropPermission perm = new InteropPermission(InteropKind::ClrInterop);
+            perm.assert();
+            
+            webClient = new System.Net.WebClient();
+            // BP Deviation Documented
+            stream = new System.IO.MemoryStream(webClient.DownloadData(exportUrls));
+               
+            select TableId, RecId, DataAreaId           // select record to which you want to attach
+                from worker 
+                where worker.PersonnelNumber == personnelNumber; 
+
+            DocuRef docuref = DocumentManagement::attachFile(worker.TableId, worker.RecId, worker.DataAreaId, DocuType::typeFile(), stream, _filename, template.FileName, template.DisplayName);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>saveToBlobStorages</Name>
+				<Source><![CDATA[
+    static str saveToBlobStorages(System.IO.Stream _stream, str fileName)
+    {
+        str url;
+
+        if (!strContains(fileName, '/'))
+        {
+            // Add a GUID to the filename so each file is unique if there is no folder name
+            var uniquenessGuid = System.Guid::NewGuid().ToString("D");
+            fileName = strFmt("%1/%2", uniquenessGuid, fileName);
+        }
+
+        var blobInfo = new SharedServiceUnitStorageData();
+        blobInfo.Id = System.Guid::NewGuid().ToString();
+        blobInfo.Category = "office-exports";
+        blobInfo.Name = fileName;
+        blobInfo.Accessibility = Accessibility::Private;
+        blobInfo.Retention = Retention::Temporary;
+        blobInfo.ExpirationDuration = System.TimeSpan::FromDays(1);
+
+        try
+        {
+            var blobStorageService = new SharedServiceUnitStorage(SharedServiceUnitStorage::GetDefaultStorageContext());
+            blobStorageService.UploadData(blobInfo, _stream);
+
+            // Fetch the read-only link
+            var uploadedBlobInfo = blobStorageService.GetData(blobInfo.Id, blobInfo.Category, BlobUrlPermission::Read, System.TimeSpan::FromMinutes(10));
+
+            url = uploadedBlobInfo.BlobLink;
+        }
+        catch (Exception::CLRError)
+        {
+            System.Exception interopException = CLRInterop::getLastException();
+            //ExportToExcelEventSource::EventWriteExportToExcelError(interopException.ToString());
+
+            str exceptionMessage;
+
+            if (interopException != null)
+            {
+                if (interopException is System.Reflection.TargetInvocationException)
+                {
+                    System.Exception innerException = interopException.InnerException;
+                    if (innerException != null)
+                    {
+                        exceptionMessage = innerException.Message;
+                    }
+                }
+                else
+                {
+                    exceptionMessage = interopException.Message;
+                }
+            }
+
+            error(strFmt("@ApplicationPlatform:ExportToExcel_UploadFailed", exceptionMessage));
+        }
+
+        return url;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

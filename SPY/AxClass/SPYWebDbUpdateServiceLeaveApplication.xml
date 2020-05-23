@@ -1,0 +1,1090 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebDbUpdateServiceLeaveApplication</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWebDbUpdateServiceLeaveApplication extends SPYWebDbUpdateService
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(SPYWebAPI.Service _apiService, str _token, URL  _portalAPIUrl, PageNo _messagePageSize)
+    {
+        apiService = _apiService;
+        token = _token;
+        portalAPIUrl = _portalAPIUrl;
+        messagePageSize = _messagePageSize;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postLeaveApplication</Name>
+				<Source><![CDATA[
+    public void postLeaveApplication()
+    {
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        SPYLeaveApplicationLine      leaveApplicationLine;
+        HcmWorker                        hcmWorker;
+        CLRObject                          leaveApplicationTableList   = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog         webDocumentLog;
+        TransDate               validFrom = dateNull(), validTo = dateMax();
+        int     pageNo = 1;
+        boolean     callPending;
+
+        while select leaveApplicationTable
+        join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYLeaveApplicationTable) &&
+            webDocumentLog.RefRecId == leaveApplicationTable.RecId
+            join hcmWorker
+            where hcmWorker.RecId == leaveApplicationTable.Worker
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.LeaveApplicationTable leaveApplicationTableModel  = new SPYWebAPI.Model.LeaveApplicationTable();
+                leaveApplicationTableModel.LeaveApplicationCode = leaveApplicationTable.LeaveApplicationCode;
+                leaveApplicationTableModel.Number = leaveApplicationTable.PortalNumber;
+                leaveApplicationTableModel.WorkerId = hcmWorker.PersonnelNumber;
+                leaveApplicationTableModel.Remarks = leaveApplicationTable.Remarks;
+                leaveapplicationTableModel.Resumed = leaveApplicationTable.ServiceResumed;
+                leaveApplicationTableModel.Status = enum2Str(leaveApplicationTable.WorkflowStatus);
+                leaveApplicationTableModel.ResumptionInitiated = leaveApplicationTable.ResumptionInitiated;
+                leaveApplicationTableModel.Approved = false;
+                leaveApplicationTableModel.Rejected = false;
+                leaveApplicationTableModel.DataArea = leaveApplicationTable.DataAreaId;
+                leaveApplicationTableModel.ERPRecId = leaveApplicationTable.RecId;
+                //leaveApplicationTableModel.WorkflowRemarks =
+                CLRObject  leaveApplicationLineList    = apiService.getBlankLeaveApplicationLineList();
+                while select validtimestate(validFrom, validTo) leaveApplicationLine where
+                    leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId
+                {
+                    SPYWebAPI.Model.LeaveApplicationLine leaveApplicationLineModel = new SPYWebAPI.Model.LeaveApplicationLine();
+                    leaveApplicationLineModel.LeaveApplicationCode =leaveApplicationTable.LeaveApplicationCode;
+                    leaveApplicationLineModel.TableNumber = leaveApplicationTable.PortalNumber;
+                    leaveApplicationLineModel.AbsenceCode =  leaveApplicationLine.HRMAbsenceCode;
+                    leaveApplicationLineModel.AbsenceCodeDescription = HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode).description;
+                    leaveApplicationLineModel.ActualEndDate = leaveApplicationLine.ActualEndDate;
+                    leaveApplicationLineModel.ActualStartDate = leaveApplicationLine.ActualStartDate;
+                    leaveApplicationLineModel.StartDate = leaveApplicationLine.ValidFrom;
+                    leaveApplicationLineModel.EndDate = leaveApplicationLine.ValidTo;
+                    leaveApplicationLineModel.LeaveApplied = leaveApplicationLine.LeaveApplied;
+                    leaveApplicationLineModel.Hours = leaveApplicationLine.Hours;
+                    leaveApplicationLineModel.Balance = leaveApplicationLine.LeaveBalance;
+                    leaveApplicationLineModel.Remarks = leaveApplicationLine.Remarks;
+                    leaveApplicationLineModel.DataArea = leaveApplicationLine.DataAreaId;
+                    leaveApplicationLineModel.ERPRecId = leaveApplicationLine.RecId;
+                    leaveApplicationLineList.Add(leaveApplicationLineModel);
+                }
+                leaveApplicationTableModel.LeaveApplicationLine = leaveApplicationLineList;
+                leaveApplicationTableList.Add(leaveApplicationTableModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callLeaveApplicationAPI(leaveApplicationTableList);
+                leaveApplicationTableList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callLeaveApplicationAPI(leaveApplicationTableList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callLeaveApplicationAPI</Name>
+				<Source><![CDATA[
+    private void callLeaveApplicationAPI(CLRObject _applicationList, boolean _callFromError = false)
+    {
+        str calldescription = "UpdateLeaveApplications";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_applicationList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        if(_callFromError)
+            return;
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("@SPY:LeaveApplicationSyncDoneSuccessfully");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _applicationList = apiService.convertToLeaveApplicationList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoApplicationList, errorApplicationList;
+        if(error)
+        {
+            error(errorStr);
+            Error("@SPY:ErrorOccurredSyncingLeaveApplication");
+        }
+        else
+        {
+            ClrObject applicationListEnumerator = _applicationList.GetEnumerator();
+            while (applicationListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.LeaveApplicationTable leaveApplicationTableModel = applicationListEnumerator.get_Current();
+                SPYLeaveApplicationTable       leaveApplicationTableUpdate = SPYLeaveApplicationTable::findByCode(leaveApplicationTableModel.LeaveApplicationCode, true);
+                if(leaveApplicationTableModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                
+                    infoApplicationList += strFmt("Leave application %1 synced to portal.\n", leaveApplicationTableUpdate.LeaveApplicationCode);
+                    if(leaveApplicationTableUpdate && !leaveApplicationTableUpdate.PortalNumber)
+                    {
+                        leaveApplicationTableUpdate.PortalNumber = leaveApplicationTableModel.Number;
+                        leaveApplicationTableUpdate.update();
+                    }
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == leaveApplicationTableUpdate.TableId &&
+                        webDocumentLogUpdate.RefRecId == leaveApplicationTableUpdate.RecId;
+                }
+                else
+                {
+                    errorApplicationList += strFmt("@SPY:ErrorLeaveApplication", leaveApplicationTableUpdate.LeaveApplicationCode,
+                        leaveApplicationTableModel.ErrorMessage);
+                }
+            }
+            if(infoApplicationList)
+                info(infoApplicationList);
+            if(errorApplicationList)
+                error(errorApplicationList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoApplicationList, errorApplicationList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getLeaveApplications</Name>
+				<Source><![CDATA[
+    public void getLeaveApplications()
+    {
+        str calldescription = "GetLeaveApplications";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+
+        ClrObject  responseList;
+        ClrObject responseListEnumerator;
+        //responseList = apiService.makeGet(url, token);
+        SPYWebAPI.Model.DataAreaModel   dataAreaModel  = new SPYWebAPI.Model.DataAreaModel();
+        dataAreaModel.DataArea = curExt();
+        str requestStr  = apiService.serializeObj(dataAreaModel);
+        responseList = apiService.makePost(url, requestStr, token);
+        responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Leave applications from portal are synced successfully.");
+                }
+                else
+                {
+                    error = true;
+                    error("Error occurred while fetching leave applications from portal.");
+                }
+            }
+            else
+            {
+                if(!error)
+                {
+                    this.updateLeaveApplications(responseStr);
+                }
+                this.updateLog(calldescription, callStatus, url, "", responseStr, "", "");
+            }
+            counter++;
+        }
+       
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLeaveApplications</Name>
+				<Source><![CDATA[
+    private void updateLeaveApplications(str _leaveApplications)
+    {
+        WorkflowWorkItemTable           workflowWorkItemTable;
+        WorkflowTrackingStatusTable     workflowTrackingStatusTable;
+        ClrObject leaveApplicationList = apiService.convertToLeaveApplicationList(_leaveApplications);
+        ClrObject leaveApplicationListEnumerator = leaveApplicationList.GetEnumerator();
+
+        while (leaveApplicationListEnumerator.MoveNext())
+        {
+            SPYWebAPI.Model.LeaveApplicationTable  leaveApplicationTableModel = leaveApplicationListEnumerator.get_Current();
+            HcmWorker  worker = HcmWorker::findByPersonnelNumber(leaveApplicationTableModel.WorkerId);
+            try
+            {
+                ttsbegin;
+                boolean   created;
+                ClrObject leaveApplicationLineList  = leaveApplicationTableModel.LeaveApplicationLine;
+                ClrObject leaveApplicationLineListEnumerator = leaveApplicationLineList.GetEnumerator();
+                SPYLeaveApplicationTable        leaveApplicationTable;
+                select firstonly forupdate leaveApplicationTable
+                    where leaveApplicationTable.PortalNumber == leaveApplicationTableModel.Number;
+                SPYWorkflowStatus  status;
+                status = str2Enum(status,leaveApplicationTableModel.Status);
+                if(leaveApplicationTable)
+                {
+                    if(leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created &&
+                        status == SPYWorkflowStatus::Submitted)
+                    {
+                        leaveApplicationTable.WorkflowStatus = status;
+                        Workflow::activateFromWorkflowType(workflowTypeStr(SPYLeaveApplication),leaveApplicationTable.RecId,"Submitted from portal",false);
+                    }
+                    else if(leaveApplicationTableModel.Approved)
+                    {
+                        HcmWorker   approver = HcmWorker::findByPersonnelNumber(leaveApplicationTableModel.ApproveWorker);
+                        DirPersonUser   dirPersonUser;
+                        UserId  approverUserId;
+                        if(approver)
+                        {
+                            select firstonly dirPersonUser
+                                where dirPersonUser.PersonParty == approver.Person;
+                            approverUserId = dirPersonUser.User;
+                        }
+                        else
+                            approverUserId = curUserId();
+                        select workflowWorkItemTable
+                            join workflowTrackingStatusTable
+                            where workflowTrackingStatusTable.CorrelationId == workflowWorkItemTable.CorrelationId &&
+                            workflowTrackingStatusTable.ContextRecId == leaveApplicationTable.RecId &&
+                            workflowTrackingStatusTable.ContextTableId == tableNum(SPYLeaveApplicationTable);
+                        if(workflowWorkItemTable)
+                        {
+                            leaveApplicationTable.WorkflowStatus = SPYWorkflowStatus::Started;
+                            WorkflowWorkItemActionManager::dispatchWorkItemAction(WorkflowWorkItemTable,
+                                                                                                                    leaveApplicationTableModel.WorkflowRemarks,
+                                                                                                                   approverUserId,
+                                                                                                                    WorkflowWorkItemActionType::Complete,
+                                                                                                                    "SPYLeaveApplicationApprove");
+                        }
+                    }
+                    else if(leaveApplicationTableModel.Rejected)
+                    {
+                        HcmWorker   approver = HcmWorker::findByPersonnelNumber(leaveApplicationTableModel.RejectWorker);
+                        DirPersonUser   dirPersonUser;
+                        UserId  approverUserId;
+                        if(approver)
+                        {
+                            select firstonly dirPersonUser
+                                where dirPersonUser.PersonParty == approver.Person;
+                            approverUserId = dirPersonUser.User;
+                        }
+                        else
+                            approverUserId = curUserId();
+                        select workflowWorkItemTable
+                            join workflowTrackingStatusTable
+                            where workflowTrackingStatusTable.CorrelationId == workflowWorkItemTable.CorrelationId &&
+                            workflowTrackingStatusTable.ContextRecId == leaveApplicationTable.RecId &&
+                            workflowTrackingStatusTable.ContextTableId == tableNum(SPYLeaveApplicationTable);
+                        if(workflowWorkItemTable)
+                        {
+                            leaveApplicationTable.WorkflowStatus = status;
+                            WorkflowWorkItemActionManager::dispatchWorkItemAction(WorkflowWorkItemTable,
+                                                                                                                leaveApplicationTableModel.WorkflowRemarks,
+                                                                                                                approverUserId,
+                                                                                                                WorkflowWorkItemActionType::Complete,
+                                                                                                                "SPYLeaveApplicationReject");
+                        }
+                    }
+                    if(!leaveApplicationTable.ResumptionInitiated && leaveApplicationTableModel.ResumptionInitiated)
+                    {
+                        SPYLeaveResumptionService       leaveResumptionService = new SPYLeaveResumptionService(leaveApplicationTable.RecId);
+                        leaveResumptionService.processResumption();
+                    }
+                    leaveApplicationTable.Remarks = leaveApplicationTableModel.Remarks;
+                    leaveApplicationTable.update();
+                    created = this.updateLeaveLine(leaveApplicationTable, leaveApplicationLineListEnumerator);
+                }
+                else
+                {
+                    //if(_contract.parmIsDeleted())
+                    //return _contract;
+                    leaveApplicationTable.initValue();
+                    leaveApplicationTable.LeaveApplicationCode = NumberSeq::newGetNum(SPYPayrollParameters::numRefLeaveApplicationCode()).num();
+                    leaveApplicationTable.Worker = worker.RecId;
+                    leaveApplicationTable.WorkflowStatus = status;
+                    leaveApplicationTable.PortalNumber = leaveApplicationTableModel.Number;
+                    leaveApplicationTable.insert();
+                    this.updateLeaveLine(leaveApplicationTable, leaveApplicationLineListEnumerator);
+                    if(status == SPYWorkflowStatus::Submitted)
+                    {
+                        Workflow::activateFromWorkflowType(workflowTypeStr(SPYLeaveApplication),leaveApplicationTable.RecId,"Submitted from portal",false);
+                    }
+                }
+                ttscommit;
+            }
+            catch(Exception::Error)
+            {
+                str errorMessage = infolog.text(infologLine());
+                error(strfmt("Error occurred while fetching leave applications from portal for worker %1 and application %2.", worker.PersonnelNumber, leaveApplicationTableModel.LeaveApplicationCode,
+                    errorMessage));
+                leaveApplicationTableModel.Error = true;
+                leaveApplicationTableModel.ErrorMessage = errorMessage;
+                CLRObject leaveApplicationTableList   = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                leaveApplicationTableList.Add(leaveApplicationTableModel);
+                this.callLeaveApplicationAPI(leaveApplicationTableList, true);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLeaveLine</Name>
+				<Source><![CDATA[
+    private boolean updateLeaveLine(SPYLeaveApplicationTable _leaveApplicationTable, ClrObject _lineListEnum)
+    {
+        SPYLeaveApplicationLine         leaveApplicationLine;
+        SPYAmount                       workingHours;
+        boolean                         created = true;
+
+        delete_from leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == _leaveApplicationTable.RecId;
+        while(_lineListEnum.moveNext())
+        {
+            SPYWebAPI.Model.LeaveApplicationLine  leaveApplicationLineModel  = _lineListEnum.get_Current();
+            leaveApplicationLine.validTimeStateUpdateMode(ValidTimeStateUpdate::CreateNewTimePeriod);
+            leaveApplicationLine.initValue();
+            leaveApplicationLine.LeaveApplication  = _leaveApplicationTable.RecId;
+            leaveApplicationLine.HRMAbsenceCode  = leaveApplicationLineModel.AbsenceCode;
+            leaveApplicationLine.ValidFrom  = leaveApplicationLineModel.StartDate;
+            leaveApplicationLine.ValidTo = leaveApplicationLineModel.EndDate;
+            leaveApplicationLine.Remarks = leaveApplicationLineModel.Remarks;
+            leaveApplicationLine.ActualStartDate  = leaveApplicationLineModel.ActualStartDate;
+            leaveApplicationLine.ActualEndDate  = leaveApplicationLineModel.ActualEndDate;
+            if(leaveApplicationLine.ValidFrom == leaveApplicationLine.ValidTo)
+            {
+                workingHours = this.workingHours(_leaveApplicationTable,leaveApplicationLine.ValidFrom);
+                if(leaveApplicationLineModel.Hours)
+                {
+                    leaveApplicationLine.Hours  = leaveApplicationLineModel.Hours;
+                    if(workingHours)
+                        leaveApplicationLine.LeaveApplied = leaveApplicationLine.Hours / workingHours;
+                    else
+                        leaveApplicationLine.LeaveApplied = 1;
+                }
+                else
+                {
+                    leaveApplicationLine.Hours  = workingHours;
+                    leaveApplicationLine.LeaveApplied = 1;
+                }
+            }
+            if(leaveApplicationLine.validateWrite())
+            {
+                leaveApplicationLine.insert();
+                //lineContract.parmError(false);
+            }
+            else
+            {
+                created = false;
+                //lineContract.parmError(true);
+            }
+        }
+        return created;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workingHours</Name>
+				<Source><![CDATA[
+    private SPYAmount workingHours(SPYLeaveApplicationTable _leaveApplicationTable,TransDate _date = dateNull())
+    {
+        CalendarId              calendarId;
+        Hours                   workingHours;
+        TransDateTime           transDateTime = DateTimeUtil::newDateTime(_date,00-00);
+        HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(_leaveApplicationTable.Worker,CompanyInfo::current(),transDateTime);
+        WorkCalendarEmployment  workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+    
+        calendarId = workCalendarEmployment.CalendarId;
+        if ( _date == dateNull() )
+            workingHours = WorkCalendarTable::find( calendarId ).StandardWorkDayHours;
+        else
+            workingHours = WorkCalendarDate::calcDefinedHours(calendarId,_date);
+    
+        return workingHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postWorkerAbsenceLedger</Name>
+				<Source><![CDATA[
+    public void postWorkerAbsenceLedger()
+    {
+        SPYAbsenceLedger    absenceLedger;
+        HcmWorker   hcmWorker;
+        HRMAbsenceCode hrmAbsenceCode;
+        CLRObject                 ledgerList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        TransDateTime               validFrom, validTo;
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+
+        validFrom   = DateTimeUtil::newDateTime(dateNull(), 0);
+        validTo     = DateTimeUtil::newDateTime(dateMax(), 0);
+        
+        while select absenceLedger
+         join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYAbsenceLedger) &&
+            webDocumentLog.RefRecId == absenceLedger.RecId &&
+            !webDocumentLog.IsDeleted
+            join hcmWorker
+            where hcmWorker.RecId == absenceLedger.Worker
+            join hrmAbsenceCode
+            where hrmAbsenceCode.hrmAbsenceCodeId == absenceLedger.HRMAbsenceCodeId
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.WorkerAbsenceLedger workerAbsenceLedgerModel = new SPYWebAPI.Model.WorkerAbsenceLedger();
+                workerAbsenceLedgerModel.ERPRecId = absenceLedger.RecId;
+                workerAbsenceLedgerModel.WorkerId = hcmWorker.PersonnelNumber;
+                workerAbsenceLedgerModel.AbsenceCode = hrmAbsenceCode.hrmAbsenceCodeId;
+                workerAbsenceLedgerModel.AbsenceCodeDescription = hrmAbsenceCode.description;
+                workerAbsenceLedgerModel.AbsenceDays = absenceLedger.AbsenceDays;
+                workerAbsenceLedgerModel.AbsenceDate = absenceLedger.AbsenceDate;
+                workerAbsenceLedgerModel.Isdeleted = false;
+                workerAbsenceLedgerModel.DataArea = absenceLedger.DataAreaId;
+                ledgerList.Add(workerAbsenceLedgerModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerAbsenceAPI(ledgerList);
+                ledgerList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerAbsenceAPI(ledgerList);
+            ttscommit;
+        }
+
+        //----------------Deleted-----------------
+        callPending = false;
+        pageNo = 1;
+        while select webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYAbsenceLedger) &&
+            webDocumentLog.IsDeleted
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.WorkerAbsenceLedger workerAbsenceLedgerModel = new SPYWebAPI.Model.WorkerAbsenceLedger();
+                workerAbsenceLedgerModel.ERPRecId = webDocumentLog.RefRecId;
+                workerAbsenceLedgerModel.Isdeleted = true;
+                ledgerList.Add(workerAbsenceLedgerModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callWorkerAbsenceDeleteAPI(ledgerList);
+                ledgerList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callWorkerAbsenceDeleteAPI(ledgerList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerAbsenceAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerAbsenceAPI(CLRObject _ledgerList)
+    {
+        str calldescription = "UpdateWorkerAbsenceBalance";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_ledgerList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("@SPY:WorkerAbsenceSyncDoneSuccessfully");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _ledgerList = apiService.convertToWorkerAbsenceList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoLedgerList, errorLedgerList;
+        if(error)
+        {
+            error(errorStr);
+            Error("@SPY:ErrorWhileSyncWorkerAbsence");
+        }
+        else
+        {
+            ClrObject ledgerListEnumerator = _ledgerList.GetEnumerator();
+            while (ledgerListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.WorkerAbsenceLedger workerAbsenceLedger = ledgerListEnumerator.get_Current();
+                SPYAbsenceLedger       absenceLedgerUpdate = SPYAbsenceLedger::find(workerAbsenceLedger.ERPRecId);
+                HcmWorker   hcmWorker = HcmWorker::find(absenceLedgerUpdate.Worker);
+                if(workerAbsenceLedger.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                
+                    infoLedgerList += strFmt("@SPY:AbsenceLedgerWithWorkerSyncedPortal", hcmWorker.PersonnelNumber,
+                        absenceLedgerUpdate.AbsenceDate);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == absenceLedgerUpdate.TableId &&
+                        webDocumentLogUpdate.RefRecId == absenceLedgerUpdate.RecId;
+                }
+                else
+                {
+                    errorLedgerList += strFmt("@SPY:ErrorForAbsenceLedgerWorker", hcmWorker.PersonnelNumber,
+                        absenceLedgerUpdate.AbsenceDate, workerAbsenceLedger.ErrorMessage);
+                }
+            }
+            if(infoLedgerList)
+                info(infoLedgerList);
+            if(errorLedgerList)
+                error(errorLedgerList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoLedgerList, errorLedgerList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callWorkerAbsenceDeleteAPI</Name>
+				<Source><![CDATA[
+    private void callWorkerAbsenceDeleteAPI(CLRObject _ledgerList)
+    {
+        str calldescription = "UpdateWorkerAbsenceBalance";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_ledgerList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Worker absence sync(deleting) is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _ledgerList = apiService.convertToWorkerAbsenceList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoLedgerList, errorLedgerList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing worker absence for deleting.");
+        }
+        else
+        {
+            ClrObject ledgerListEnumerator = _ledgerList.GetEnumerator();
+            while (ledgerListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.WorkerAbsenceLedger workerAbsenceLedger = ledgerListEnumerator.get_Current();
+                if(workerAbsenceLedger.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;                
+                    infoLedgerList += strFmt("Absence ledger %1(deleting) synced to portal. \n", workerAbsenceLedger.ERPRecId);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == tableNum(SPYAbsenceLedger) &&
+                        webDocumentLogUpdate.RefRecId == workerAbsenceLedger.ERPRecId;
+                }
+                else
+                {
+                    errorLedgerList += strFmt("Error in absence ledger %1(deleting). %2.\n", workerAbsenceLedger.ERPRecId, workerAbsenceLedger.ErrorMessage);
+                }
+            }
+            if(infoLedgerList)
+                info(infoLedgerList);
+            if(errorLedgerList)
+                error(errorLedgerList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoLedgerList, errorLedgerList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postLeaveApplicationApproval</Name>
+				<Source><![CDATA[
+    public void postLeaveApplicationApproval()
+    {
+        WorkflowWorkItemTable               workflowWorkItemTable;
+        WorkflowTrackingStatusTable         workflowTrackingStatusTable;
+        SPYLeaveApplicationTable        leaveApplicationTable;
+        DirPersonUser                       personUser;
+        HcmWorker                           worker;
+        CLRObject                   leaveApprovalList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select * from workflowTrackingStatusTable
+            where workflowTrackingStatusTable.ContextTableId == tableNum(SPYLeaveApplicationTable) &&
+            workflowTrackingStatusTable.TrackingStatus == WorkflowTrackingStatus::Pending
+        join workflowWorkItemTable
+            where workflowWorkItemTable.CorrelationId == workflowTrackingStatusTable.CorrelationId &&
+            workflowWorkItemTable.Status == WorkflowWorkItemStatus::Pending
+        join leaveApplicationTable
+             where leaveApplicationTable.RecId == workFlowTrackingStatusTable.ContextRecId &&
+                (leaveApplicationTable.WorkflowStatus != SPYWorkflowStatus::Approved ||
+                leaveApplicationTable.WorkflowStatus != SPYWorkflowStatus::Rejected)
+        join personUser
+            where personUser.User == workflowWorkItemTable.UserId
+        join worker
+            where worker.Person == personUser.PersonParty
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.LeaveApplicationApproval     leaveApprovalModel = new SPYWebAPI.Model.LeaveApplicationApproval();
+                leaveApprovalModel.ERPRecID = workflowWorkItemTable.RecId;
+                leaveApprovalModel.LeaveApplicationCode = leaveApplicationTable.LeaveApplicationCode;
+                leaveApprovalModel.ApprovalId = worker.PersonnelNumber;
+                
+                leaveApprovalList.Add(leaveApprovalModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callLeaveApplicationApprovalAPI(leaveApprovalList);
+                leaveApprovalList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callLeaveApplicationApprovalAPI(leaveApprovalList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callLeaveApplicationApprovalAPI</Name>
+				<Source><![CDATA[
+    private void callLeaveApplicationApprovalAPI(CLRObject _leaveApprovalList)
+    {
+        str calldescription = "UpdateLeaveApplicationApprovals";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_leaveApprovalList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Leave approval sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _leaveApprovalList = apiService.convertToLeaveApprovalList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoLeaveApprovalList, errorLeaveApprovalList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing leave approval.");
+        }
+        else
+        {
+            ClrObject leaveApprovalListEnumerator = _leaveApprovalList.GetEnumerator();
+            while (leaveApprovalListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.LeaveApplicationApproval leaveApplicationApprovalModel = leaveApprovalListEnumerator.get_Current();
+                /*
+                //HcmWorker       hcmWorkerUpdate = HcmWorker::findByPersonnelNumber(workerModel.WorkerId);
+                if(leaveApplicationApprovalModel.Error == false)
+                {
+                SPYWebDocumentLog       webDocumentLogUpdate;
+                infoLeaveApprovalList += strFmt("@SPY:WorkerSyncedToPortal", hcmWorkerUpdate.PersonnelNumber);
+                delete_from webDocumentLogUpdate
+                where webDocumentLogUpdate.RefTableId == hcmWorkerUpdate.TableId &&
+                webDocumentLogUpdate.RefRecId == hcmWorkerUpdate.RecId;
+                }
+                else
+                {
+                errorLeaveApprovalList += strFmt("@SPY:ErrorForWorker", hcmWorkerUpdate.PersonnelNumber, leaveApplicationApprovalModel.ErrorMessage);
+                }*/
+            }
+            if(infoLeaveApprovalList)
+                info(infoLeaveApprovalList);
+            if(errorLeaveApprovalList)
+                error(errorLeaveApprovalList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoLeaveApprovalList, errorLeaveApprovalList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postAbsenceMaster</Name>
+				<Source><![CDATA[
+    public void postAbsenceMaster()
+    {
+        HRMAbsenceCode      hrmAbsenceCode;
+        CLRObject                   absenceList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select hrmAbsenceCode
+         join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(HRMAbsenceCode) &&
+            webDocumentLog.RefRecId == hrmAbsenceCode.RecId &&
+            !webDocumentLog.IsDeleted
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.Absence     absenceModel = new SPYWebAPI.Model.Absence();
+                absenceModel.AbsenceCode = hrmAbsenceCode.hrmAbsenceCodeId;
+                absenceModel.AbsenceCodeDescription = hrmAbsenceCode.description;
+                absenceModel.IsUnpaid = hrmAbsenceCode.SPYIsUnpaid;
+                absenceModel.DataArea = hrmAbsenceCode.DataAreaId;
+                absenceModel.ERPRecId = hrmAbsenceCode.RecId;                
+                absenceList.Add(absenceModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callAbsenceMasterUpdateAPI(absenceList);
+                absenceList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callAbsenceMasterUpdateAPI(absenceList);
+            ttscommit;
+        }
+
+        //Deleted entries
+        pageNo = 0;
+        absenceList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        callPending = false;
+        while select webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(HRMAbsenceCode) &&
+            webDocumentLog.IsDeleted
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.Absence     absenceModel = new SPYWebAPI.Model.Absence();
+                absenceModel.ERPRecId = webDocumentLog.RefRecId;
+                absenceList.Add(absenceModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callAbsenceMasterDeleteAPI(absenceList);
+                absenceList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callAbsenceMasterDeleteAPI(absenceList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callAbsenceMasterUpdateAPI</Name>
+				<Source><![CDATA[
+    private void callAbsenceMasterUpdateAPI(CLRObject _absenceMasterList)
+    {
+        str calldescription = "UpdateAbsences";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_absenceMasterList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Absence code sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _absenceMasterList = apiService.convertToAbsenceList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoAbsenceList, errorAbsenceList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing absence code.");
+        }
+        else
+        {
+            ClrObject absenceMasterListEnumerator = _absenceMasterList.GetEnumerator();
+            while (absenceMasterListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.Absence absenceModel = absenceMasterListEnumerator.get_Current();                
+                HRMAbsenceCode      hrmAbsenceCode = HRMAbsenceCode::find(absenceModel.AbsenceCode);
+                if(absenceModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoAbsenceList += strFmt("Absence code %1 synced to portal. \n", absenceModel.AbsenceCode);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == hrmAbsenceCode.TableId &&
+                        webDocumentLogUpdate.RefRecId == hrmAbsenceCode.RecId &&
+                        !webDocumentLogUpdate.IsDeleted;
+                }
+                else
+                {
+                    errorAbsenceList += strFmt("Error for absence code %1. %2. \n", absenceModel.AbsenceCode, absenceModel.ErrorMessage);
+                }
+            }
+            if(infoAbsenceList)
+                info(infoAbsenceList);
+            if(errorAbsenceList)
+                error(errorAbsenceList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoAbsenceList, errorAbsenceList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callAbsenceMasterDeleteAPI</Name>
+				<Source><![CDATA[
+    private void callAbsenceMasterDeleteAPI(CLRObject _absenceMasterList)
+    {
+        str calldescription = "DeleteAbsences";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_absenceMasterList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("Absence code sync(deleting) is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _absenceMasterList = apiService.convertToAbsenceList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoAbsenceList, errorAbsenceList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing absence code for deleting.");
+        }
+        else
+        {
+            ClrObject absenceMasterListEnumerator = _absenceMasterList.GetEnumerator();
+            while (absenceMasterListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.Absence absenceModel = absenceMasterListEnumerator.get_Current();
+                if(absenceModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoAbsenceList += strFmt("Absence code %1 synced(deleting) to portal. \n", absenceModel.ERPRecId);
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == tableNum(HRMAbsenceCode) &&
+                        webDocumentLogUpdate.RefRecId == absenceModel.ERPRecId &&
+                        webDocumentLogUpdate.IsDeleted;
+                }
+                else
+                {
+                    errorAbsenceList += strFmt("Error for absence code %1(deleting). %2. \n", absenceModel.ERPRecId, absenceModel.ErrorMessage);
+                }
+            }
+            if(infoAbsenceList)
+                info(infoAbsenceList);
+            if(errorAbsenceList)
+                error(errorAbsenceList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoAbsenceList, errorAbsenceList);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

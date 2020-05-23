@@ -1,0 +1,329 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.SPYAbsenceLedger_ID(1)
+    
+    // Data source buffers
+    SPYAbsenceLedger m_SPYAbsenceLedger;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYAbsenceLedger'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [SPYAbsenceLedger]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYAbsenceLedger'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYAbsenceLedger');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // inserts/updates data source [SPYAbsenceLedger].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [SPYAbsenceLedger]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYAbsenceLedger'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYAbsenceLedger');
+            // deletes data source [SPYAbsenceLedger].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYAbsenceLedger _sPYAbsenceLedger, SPYAbsenceLedgerDataEntity _sPYAbsenceLedgerDataEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, hrmAbsenceCodeId), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, hrmAbsenceCodeId), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceDate), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceDate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceDays), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceDays), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceHours), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceHours), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceJournalTrans), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceJournalTrans), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, BenefitJournalTrans), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, BenefitJournalTrans), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, BenefitLedger), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, BenefitLedger), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, EntryType), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, EntryType), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, LeaveApplicationLine), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, LeaveApplicationLine), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, SourceDocument), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, SourceDocument), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, TransDate), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, TransDate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, Txt), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, Txt), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, UtilityUpload), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, UtilityUpload), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, Worker), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, Worker), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYAbsenceLedger, _sPYAbsenceLedgerDataEntity);
+            _sPYAbsenceLedger.trackFieldExternallySet(false);
+        }
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAbsenceLedger_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYAbsenceLedger _sPYAbsenceLedger, SPYAbsenceLedgerDataEntity _sPYAbsenceLedgerDataEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, hrmAbsenceCodeId), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, hrmAbsenceCodeId), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceDate), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceDate), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceDays), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceDays), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceHours), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceHours), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceJournalTrans), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceJournalTrans), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, BenefitJournalTrans), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, BenefitJournalTrans), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, BenefitLedger), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, BenefitLedger), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, EntryType), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, EntryType), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, LeaveApplicationLine), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, LeaveApplicationLine), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, SourceDocument), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, SourceDocument), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, TransDate), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, TransDate), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, Txt), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, Txt), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, UtilityUpload), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, UtilityUpload), false);
+        this.mapDataSourceFieldToEntityField(_sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, Worker), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, Worker), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYAbsenceLedger, _sPYAbsenceLedgerDataEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYAbsenceLedgerDataEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYAbsenceLedger);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAbsenceLedger_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAbsenceLedger_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(SPYAbsenceLedgerDataEntity _sPYAbsenceLedgerDataEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, hrmAbsenceCodeId)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, AbsenceDate)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, AbsenceDays)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, AbsenceHours)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, AbsenceJournalTrans)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, BenefitJournalTrans)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, BenefitLedger)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, EntryType)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, LeaveApplicationLine)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, SourceDocument)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, TransDate)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, Txt)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, UtilityUpload)))
+        {
+            return true;
+        }
+        if(_sPYAbsenceLedgerDataEntity.isFieldSet(fieldnum(SPYAbsenceLedgerDataEntity, Worker)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYAbsenceLedgerDataEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAbsenceLedger_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, SPYAbsenceLedgerDataEntity _sPYAbsenceLedgerDataEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYAbsenceLedger _sPYAbsenceLedger)
+    {
+        boolean rtrn = true;
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, hrmAbsenceCodeId), 'SPYAbsenceLedgerDataEntity.hrmAbsenceCodeId', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, hrmAbsenceCodeId), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceDate), 'SPYAbsenceLedgerDataEntity.AbsenceDate', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceDate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceDays), 'SPYAbsenceLedgerDataEntity.AbsenceDays', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceDays), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceHours), 'SPYAbsenceLedgerDataEntity.AbsenceHours', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceHours), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, AbsenceJournalTrans), 'SPYAbsenceLedgerDataEntity.AbsenceJournalTrans', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceJournalTrans), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, BenefitJournalTrans), 'SPYAbsenceLedgerDataEntity.BenefitJournalTrans', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, BenefitJournalTrans), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, BenefitLedger), 'SPYAbsenceLedgerDataEntity.BenefitLedger', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, BenefitLedger), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, EntryType), 'SPYAbsenceLedgerDataEntity.EntryType', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, EntryType), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, LeaveApplicationLine), 'SPYAbsenceLedgerDataEntity.LeaveApplicationLine', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, LeaveApplicationLine), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, SourceDocument), 'SPYAbsenceLedgerDataEntity.SourceDocument', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, SourceDocument), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, TransDate), 'SPYAbsenceLedgerDataEntity.TransDate', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, TransDate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, Txt), 'SPYAbsenceLedgerDataEntity.Txt', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, Txt), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, UtilityUpload), 'SPYAbsenceLedgerDataEntity.UtilityUpload', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, UtilityUpload), false/*disallowEditOnCreate*/, true/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYAbsenceLedgerDataEntity, fieldnum(SPYAbsenceLedgerDataEntity, Worker), 'SPYAbsenceLedgerDataEntity.Worker', _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, Worker), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYAbsenceLedgerDataEntity, _dataSourceCtx, _sPYAbsenceLedger) ? rtrn : false;
+        }
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAbsenceLedger_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYAbsenceLedger _sPYAbsenceLedger, SPYAbsenceLedger _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, hrmAbsenceCodeId), _matchingRecord, fieldnum(SPYAbsenceLedger, hrmAbsenceCodeId), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceDate), _matchingRecord, fieldnum(SPYAbsenceLedger, AbsenceDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceDays), _matchingRecord, fieldnum(SPYAbsenceLedger, AbsenceDays), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceHours), _matchingRecord, fieldnum(SPYAbsenceLedger, AbsenceHours), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, AbsenceJournalTrans), _matchingRecord, fieldnum(SPYAbsenceLedger, AbsenceJournalTrans), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, BenefitJournalTrans), _matchingRecord, fieldnum(SPYAbsenceLedger, BenefitJournalTrans), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, BenefitLedger), _matchingRecord, fieldnum(SPYAbsenceLedger, BenefitLedger), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, EntryType), _matchingRecord, fieldnum(SPYAbsenceLedger, EntryType), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, LeaveApplicationLine), _matchingRecord, fieldnum(SPYAbsenceLedger, LeaveApplicationLine), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, SourceDocument), _matchingRecord, fieldnum(SPYAbsenceLedger, SourceDocument), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, TransDate), _matchingRecord, fieldnum(SPYAbsenceLedger, TransDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, Txt), _matchingRecord, fieldnum(SPYAbsenceLedger, Txt), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, UtilityUpload), _matchingRecord, fieldnum(SPYAbsenceLedger, UtilityUpload), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYAbsenceLedger, fieldnum(SPYAbsenceLedger, Worker), _matchingRecord, fieldnum(SPYAbsenceLedger, Worker), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYAbsenceLedgerDataEntity), _sPYAbsenceLedger, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYAbsenceLedger_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            // Root data source configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'SPYAbsenceLedger','SPYPayroll'));
+        }
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'SPYAbsenceLedger', m_SPYAbsenceLedger, this.getDataSourceId('SPYAbsenceLedger'), this.getDataSourceId('SPYAbsenceLedger'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private SPYAbsenceLedger LookForUniqueKeyMatch_DS1(SPYAbsenceLedgerDataEntity _sPYAbsenceLedgerDataEntity, SPYAbsenceLedger _sPYAbsenceLedger)
+    {
+        SPYAbsenceLedger sPYAbsenceLedger_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                sPYAbsenceLedger_
+        where
+            sPYAbsenceLedger_.RecId == _sPYAbsenceLedger.RecId
+        ;
+        
+        if (sPYAbsenceLedger_)
+        {
+            return sPYAbsenceLedger_;
+        }
+        
+        return sPYAbsenceLedger_;
+    }
+
+}
+

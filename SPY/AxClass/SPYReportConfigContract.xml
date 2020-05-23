@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYReportConfigContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYReportConfigContract
+{
+    SPYReportConfigRecID    reportConfigRecId;
+    SPYPayrollPeriodLineRecId   payrollPeriodlineFrom;
+    SPYPayrollPeriodLineRecId   payrollPeriodlineTo;
+    str packedQuery;
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPackedQuery</Name>
+				<Source><![CDATA[
+    //>>******set the query for selection
+    [
+        DataMemberAttribute,
+        AifQueryTypeAttribute('_packedQuery', queryStr('SPYHcmWorkerLookup'))
+    ]
+    public str parmPackedQuery(str _packedQuery = packedQuery)
+    {
+        packedQuery = _packedQuery;
+
+        return packedQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getQuery</Name>
+				<Source><![CDATA[
+    public Query getQuery()
+    {
+        return ( new Query( SysOperationHelper::base64Decode(packedQuery)));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmReportConfigRecId</Name>
+				<Source><![CDATA[
+    //<<******set the query for selection
+
+    [
+        DataMemberAttribute('ReportId'),
+        SysOperationLabelAttribute(literalStr('@SPY:ReportID')),
+        SysOperationDisplayOrderAttribute('2')
+    ]
+
+    public SPYReportConfigRecID parmReportConfigRecId(SPYReportConfigRecID _reportConfigRecId = reportConfigRecId)
+    {
+        reportConfigRecId =_reportConfigRecId;
+    
+        return reportConfigRecId;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodlineFrom</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLineFrom'),
+        SysOperationLabelAttribute(literalStr('@SPY635')),
+        SysOperationHelpTextAttribute(literalStr('@SPY168'))
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodlineFrom(SPYPayrollPeriodLineRecId    _payrollPeriodlineFrom = payrollPeriodlineFrom)
+    {
+        payrollPeriodlineFrom = _payrollPeriodlineFrom;
+        return payrollPeriodlineFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodlineTo</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLineTo'),
+        SysOperationLabelAttribute(literalStr('@SPY636')),
+        SysOperationHelpTextAttribute(literalStr('@SPY168'))
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodlineTo(SPYPayrollPeriodLineRecId    _payrollPeriodlineTo = payrollPeriodlineTo)
+    {
+        payrollPeriodlineTo = _payrollPeriodlineTo;
+        return payrollPeriodlineTo;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

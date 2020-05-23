@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDisbursementJournalTemplateEventHandler</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// The SPYDisbursementJournalTemplateEventHandler workflow event handler.
+/// </summary>
+public class  SPYDisbursementJournalTemplateEventHandler implements WorkflowCanceledEventHandler,  
+	WorkflowCompletedEventHandler,
+	WorkflowStartedEventHandler
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>started</Name>
+				<Source><![CDATA[
+    public void started(WorkflowEventArgs _workflowEventArgs)
+	{
+		// TODO:  Write code to execute once the workflow is started.
+	}
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canceled</Name>
+				<Source><![CDATA[
+    public void canceled(WorkflowEventArgs _workflowEventArgs)
+	{
+        WorkflowContext                 wfContext       = _workflowEventArgs.parmWorkflowContext();
+        SPYDisbursementJournalTable     disbursementJournalTable   = SPYDisbursementJournalTable::find(wfContext.parmRecId());
+        UserId                          submitter       = disbursementJournalTable.SubmittedBy;
+        UserId                          currentUser;
+        WorkflowTrackingCommentTable    wfTrackingCommentTable;
+        WorkflowTrackingTable           wfTrackingTable;
+
+        if (disbursementJournalTable.IsWorkflowToBeResubmitted)
+        {
+            wfTrackingTable = Workflow::findLastWorkflowTrackingRecord(wfContext.parmWorkflowCorrelationId());
+
+            if (wfTrackingTable.RecId != 0)
+            {
+                wfTrackingCommentTable = WorkflowTrackingCommentTable::findTrackingRecId(wfTrackingTable.RecId);
+                currentUser            = wfTrackingTable.User;
+            }
+
+            if (currentUser && currentUser != curUserId()) // If currentUser is not Admin, call the method within runAs.
+            {
+                new RunAsPermission(currentUser).assert();
+
+                runAs(currentUser, classNum(SPYDisbursementJournalTemplateEventHandler), staticMethodStr(SPYDisbursementJournalTemplateEventHandler, activateFromWorkflowType),
+                    [workFlowTypeStr(SPYDisbursementJournalTemplate),
+                    disbursementJournalTable.RecId,
+                    wfTrackingCommentTable.RecId != 0 ? wfTrackingCommentTable.Comment : "",
+                    false,
+                    submitter]);
+
+                CodeAccessPermission::revertAssert();
+            }
+            else
+            {
+                Workflow::activateFromWorkflowType(workFlowTypeStr(SPYDisbursementJournalTemplate),
+                    disbursementJournalTable.RecId,
+                    wfTrackingCommentTable.RecId != 0 ? wfTrackingCommentTable.Comment : "",
+                    false,
+                    submitter);
+            }
+
+            SPYDisbursementJournalTable::updateWFStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(), SPYWorkflowStatus::Submitted);
+        }
+        else
+        {
+            SPYDisbursementJournalTable::updateWFStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(), SPYWorkflowStatus::Created);
+        }
+	}
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>completed</Name>
+				<Source><![CDATA[
+    public void completed(WorkflowEventArgs _workflowEventArgs)
+	{
+        SPYDisbursementJournalTable::updateWFStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(), SPYWorkflowStatus::Approved);
+	}
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>activateFromWorkflowType</Name>
+				<Source><![CDATA[
+    public static container activateFromWorkflowType(container _c)
+    {
+        WorkflowTypeName      workflowTemplateName;
+        RecId                 recId;
+        WorkflowComment       initialNote;
+        NoYes                 activatingFromWeb;
+        WorkflowUser          submittingUser;
+        WorkflowCorrelationId results;
+
+        [workflowTemplateName, recId, initialNote, activatingFromWeb, submittingUser] = _c;
+
+        results = Workflow::activateFromWorkflowType(workflowTemplateName, recId, initialNote, activatingFromWeb, submittingUser);
+
+        return [results];
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

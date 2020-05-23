@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveCalcService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLeaveCalcService
+{
+    HcmWorkerRecId      worker;
+    HRMAbsenceCodeId    absenceCode;
+    TransDate           asOnDate;
+    LegalEntityRecId    legalEntity;
+
+    SPYPayElementRecId  benefit;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>applicablePayrollPeriodForWorker</Name>
+				<Source><![CDATA[
+    private Set applicablePayrollPeriodForWorker()
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYPayrollPeriod            payrollPeriodTable;
+        Set                         payrollPeriodSet = new Set(Types::Int64);
+    
+        while select RecId from payrollPeriodTable exists join workerPositionBenefit
+            where workerPositionBenefit.PayrollPeriod == payrollPeriodTable.RecId &&
+                  workerPositionBenefit.Worker == worker &&
+                  workerPositionBenefit.LegalEntity == legalEntity &&
+                  workerPositionBenefit.Benefit == benefit
+        {
+            payrollPeriodSet.add(payrollPeriodTable.RecId);
+        }
+    
+        return payrollPeriodSet;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>leaveBalance</Name>
+				<Source><![CDATA[
+    public SPYAmount leaveBalance(TransDate _asOnDate)
+    {
+        SPYAmount       ret;
+    
+        asOnDate = _asOnDate;
+        ret = this.postedLedgerBalance() + this.unPostedLedgerBalance();
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(HcmWorkerRecId _worker,HRMAbsenceCodeId _absenceCode)
+    {
+        worker      = _worker;
+        absenceCode = _absenceCode;
+        asOnDate    = DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone());
+        legalEntity = CompanyInfo::current();
+        this.setBenefit();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAsOnDate</Name>
+				<Source><![CDATA[
+    public TransDate parmAsOnDate(TransDate _asOnDate = asOnDate)
+    {
+        asOnDate = _asOnDate;
+        return asOnDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLegalEntity</Name>
+				<Source><![CDATA[
+    public LegalEntityRecId parmLegalEntity(LegalEntityRecId _legalEntity = legalEntity)
+    {
+        legalEntity = _legalEntity;
+        return legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postedLedgerBalance</Name>
+				<Source><![CDATA[
+    private SPYAmount postedLedgerBalance()
+    {
+        SPYBenefitLedger            benefitLedger;
+        SPYPayrollJournalLine       payrollJournalLine;
+        SPYPayrollJournalTable      payrollJournalTable;
+        SPYPayrollPeriodLine        payrollPeriodLine;
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        SPYAmount                   ret;
+        SPYAbsenceLedger            absenceLedger;
+        SPYWorkerPositionBenefit    workerBenefit;
+        StartDate                   startDate,endDate;
+        TransDate                   minDate, toDate;
+        minDate                     = dateNull();
+        toDate                      = dateMax();
+    
+    
+        if(SPYPayrollParameters::find().LeaveBalanceBasis ==SPYLeaveBalanceBasis::OnAccruedQty)
+        {
+            select sum(quantity) from benefitLedger join payrollPeriodLine
+                where benefitLedger.Worker == worker &&
+                      benefitLedger.Benefit == benefit &&
+                      !benefitLedger.SourceDocument &&
+                      benefitLedger.PayrollPeriodLine == payrollPeriodLine.RecId &&
+                      payrollPeriodLine.PeriodEndDate <= asOnDate
+                 join payrollJournalLine
+                 where payrollJournalLine.RecId == benefitLedger.PayrollJournalLine
+                 join payrollJournalTable
+                 where payrollJournalTable.RecId == payrollJournalLine.PayrollJournal &&
+                      payrollJournalTable.Posted;
+            ret = benefitLedger.Quantity;
+        }
+        else
+        {
+            startDate = mkDate(1,1,year(asOnDate));
+            endDate = mkDate(31,12,year(asOnDate));
+            while select validTimeState(startDate,endDate) workerBenefit
+                where workerBenefit.Worker == worker &&
+                      workerBenefit.Benefit == benefit &&
+                      workerBenefit.LegalEntity == CompanyInfo::current()
+            {
+                ret += workerBenefit.QtyMonthly * 12 * (min(endDate,workerBenefit.ValidTo) - max(startDate,workerBenefit.ValidFrom) + 1) /
+                       (endDate - startDate + 1);
+            }
+        }
+    
+        //Balanace from benefit journal or absence ldegr(encashment)
+        select sum(quantity) from benefitLedger join payrollPeriodLine
+            where benefitLedger.Worker == worker &&
+                  benefitLedger.Benefit == benefit &&
+                  benefitLedger.SourceDocument &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine.RecId &&
+                  payrollPeriodLine.PeriodStartDate <= asOnDate;
+        ret += benefitLedger.Quantity;
+    
+        //leave application approved but not moved to benefit ledger at the time of timesheet process
+    
+        /*
+        //Commented for testing Saurabh
+        select sum(AbsenceDays) from absenceLedger join leaveApplicationTable join leaveApplicationLine
+            where leaveApplicationTable.Worker == worker &&
+                  leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved &&
+                  leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId &&
+                  leaveApplicationLine.HRMAbsenceCode == absenceCode &&
+                  absenceLedger.LeaveApplicationLine == leaveApplicationLine.RecId &&
+                  absenceLedger.AbsenceDate >= mkDate(1,1,year(asOnDate)) &&
+                  absenceLedger.AbsenceDate <= mkDate(31,12,year(asOnDate)) &&
+                  !absenceLedger.BenefitLedger;
+        ret = ret - absenceLedger.AbsenceDays;
+    
+        */
+    
+        select validTimeState( minDate, toDate ) sum(absenceDays) from absenceLedger
+         join  leaveApplicationLine
+            where   leaveApplicationLine.RecId == absenceLedger.LeaveApplicationLine
+             join LeaveApplicationCode from leaveApplicationTable
+               where
+                  leaveApplicationTable.RecId == leaveApplicationLine.LeaveApplication &&
+                  leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Approved &&
+                  absenceLedger.Worker == worker &&
+                  absenceLedger.HRMAbsenceCodeId == absenceCode &&
+                  !absenceLedger.BenefitLedger;
+        ret = ret + absenceLedger.AbsenceDays;
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setBenefit</Name>
+				<Source><![CDATA[
+    private void setBenefit()
+    {
+        HRMAbsenceCode      absenceCodeTable = HRMAbsenceCode::find(absenceCode);
+    
+        benefit = absenceCodeTable.SPYBenefit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>startPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    private TransDate startPayrollPeriodLine(SPYPayrollPeriodRecId _payrollPeriod)
+    {
+        SPYWorkerPayrollPeriodFinalize      workerPayrollPeriodFinalize;
+        SPYPayrollPeriodLine                payrollPeriodLineTable;
+        TransDateTime                       transDateTime = DateTimeUtil::newDateTime(asOnDate,00-00);
+        HcmEmployment                       hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker,legalEntity,transDateTime);
+    
+        select PeriodStartDate from payrollPeriodLineTable order by PeriodStartDate desc join workerPayrollPeriodFinalize
+            where workerPayrollPeriodFinalize.Worker == worker &&
+                  workerPayrollPeriodFinalize.LegalEntity == legalEntity &&
+                  payrollPeriodLineTable.RecId == workerPayrollPeriodFinalize.PayrollPeriodLine &&
+                  payrollPeriodLineTable.PayrollPeriod == _payrollPeriod;
+    
+        return max(payrollPeriodLineTable.PeriodStartDate,DateTimeUtil::date(hcmEmployment.ValidFrom));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unPostedLedgerBalance</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    private SPYAmount unPostedLedgerBalance()
+    {
+        SetEnumerator               payrollPeriodEnumerator;
+        SPYPayrollPeriodLine        payrollPeriodLineLoop;
+        SPYPayrollPeriodRecId       payrollPeriod;
+        SPYPayrollPeriod            payrollPeriodTable;
+        SPYPayService               payService = new SPYPayService();
+        SPYAmount                   accruedTransCurAmt,accruedAccCurAmt,accruedQty;
+        SPYAmount                   updateTransCurAmt,updateAccCurAmt,updateQty;
+        SPYAmount                   ret;
+        SPYWorkerPositionBenefit    workerBenefit;
+        date                        periodStartDate,periodEndDate;
+    
+        select firstOnly payrollPeriodTable
+            where payrollPeriodTable.PayrollFrequency == SPYPayrollFrequency::Monthly;
+        select firstOnly payrollPeriodLineLoop
+            where payrollPeriodLineLoop.PayrollPeriod == payrollPeriodTable.RecId &&
+                  payrollPeriodLineLoop.PeriodStartDate <= asOnDate &&
+                  payrollPeriodLineLoop.PeriodEndDate >= asOnDate;
+        if(asOnDate != payrollPeriodLineLoop.PeriodEndDate &&
+           SPYPayrollParameters::find().LeaveBalanceForecastMode == SPYLeaveBalanceForecastMode::CompletePeriod)
+            asOnDate = SPYPayrollPeriodLine::findPrevPeriodLine(payrollPeriodLineLoop.RecId).PeriodEndDate;
+        if(SPYPayrollParameters::find().LeaveBalanceBasis ==SPYLeaveBalanceBasis::OnAccruedQty)
+        {
+            if(SPYPayrollParameters::find().LeaveBalanceForecastCalculation == SPYLeaveBalanceForecastCalculation::CalculateFromEntitledQty)
+            {
+                payrollPeriodEnumerator = this.applicablePayrollPeriodForWorker().getEnumerator();
+                while(payrollPeriodEnumerator.moveNext())
+                {
+                    payrollPeriod = payrollPeriodEnumerator.current();
+                    while select payrollPeriodLineLoop
+                        where payrollPeriodLineLoop.PayrollPeriod == payrollPeriod &&
+                              payrollPeriodLineLoop.PeriodStartDate > this.startPayrollPeriodLine(payrollPeriod) &&
+                              payrollPeriodLineLoop.PeriodStartDate <= asOnDate
+                    {
+                        periodStartDate = payrollPeriodLineLoop.PeriodStartDate;
+                        periodEndDate = payrollPeriodLineLoop.PeriodEndDate;
+                        while select validTimeState(periodStartDate,periodEndDate) workerBenefit
+                            where workerBenefit.Worker == worker &&
+                                  workerBenefit.PayrollPeriod == payrollPeriod &&
+                                  workerBenefit.Benefit == benefit
+                        {
+                            ret += workerBenefit.QtyMonthly;
+                        }
+                    }
+                }
+            }
+            else if(SPYPayrollParameters::find().LeaveBalanceForecastCalculation == SPYLeaveBalanceForecastCalculation::CalculateFromExpression)
+            {
+                payService.setLegalEntity(legalEntity);
+                payService.setWorker(HcmWorker::find(worker));
+                payService.setTransDate(asOnDate);
+                payService.setPayElement(benefit);
+                payrollPeriodEnumerator = this.applicablePayrollPeriodForWorker().getEnumerator();
+                while(payrollPeriodEnumerator.moveNext())
+                {
+                    payrollPeriod = payrollPeriodEnumerator.current();
+                    while select payrollPeriodLineLoop
+                        where payrollPeriodLineLoop.PayrollPeriod == payrollPeriod &&
+                                payrollPeriodLineLoop.PeriodStartDate > this.startPayrollPeriodLine(payrollPeriod) &&
+                                payrollPeriodLineLoop.PeriodStartDate <= asOnDate
+                    {
+                        payService.setPayrollPeriodLine(payrollPeriodLineLoop.RecId);
+                        [accruedTransCurAmt,accruedAccCurAmt,accruedQty] = payService.processBenefitForPeriod(payrollPeriodLineLoop.PeriodStartDate,
+                                                                                      min(asOnDate,payrollPeriodLineLoop.PeriodEndDate));
+                        [updateTransCurAmt,updateAccCurAmt,updateQty] = payService.excludePostedBenefitAmtQty(benefit,
+                                                                                                              accruedTransCurAmt,
+                                                                                                              accruedAccCurAmt,
+                                                                                                              accruedQty,
+                                                                                                              Ledger::accountingCurrency());
+                        ret += updateQty;
+                    }
+                }
+            }
+    
+        }
+        return -ret; //return -ve as accrual qty
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

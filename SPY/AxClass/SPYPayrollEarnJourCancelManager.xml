@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollEarnJourCancelManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+///    The <c>SPYPayrollEarnJourCancelManager</c> class is used to cancel a payroll earnings journal workflow.
+/// </summary>
+/// <remarks>
+///    This class inherits from the <c>WorkflowCancelManager</c> class and handles the update of the
+///    payroll earnings journal record when the cancel button has been pressed. The default dialog and cancel
+///    functionality from the <c>WorkflowCancelManager</c> class is reused.
+/// </remarks>
+public class    SPYPayrollEarnJourCancelManager
+extends         WorkflowCancelManager
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    private void  new()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDocument</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    The <c>updateDocument</c> method executes the business logic when the workflow is canceled.
+    /// </summary>
+    /// <param name="_args">
+    ///    The arguments of the <c>SPYPayrollEarnJourCancelManager</c> class.
+    /// </param>
+    /// <remarks>
+    ///    If the change management flag on the pay adjustment has been switched to no, the payroll earnings
+    ///    are set to approved; otherwise, the user must submit the adjustment again.
+    /// </remarks>
+    public void updateDocument(Args _args)
+    {
+        if (_args.record()  &&  _args.record().TableId == tablenum(SPYPayrollEarningsJournalTable))
+            SPYPayrollEarningsJournalTable::updateWorkflowStatus(_args.record().RecId, SPYWorkflowStatus::Cancelled);
+    
+        super(_args);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static SPYPayrollEarnJourCancelManager  construct()
+    {
+        return new SPYPayrollEarnJourCancelManager();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void  main(Args _args)
+    {
+        SPYPayrollEarnJourCancelManager   payrollEarnJourCancelManager = SPYPayrollEarnJourCancelManager::construct();
+    
+        payrollEarnJourCancelManager.run(_args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

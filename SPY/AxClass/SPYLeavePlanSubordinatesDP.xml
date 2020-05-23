@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeavePlanSubordinatesDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[SRSReportParameterAttribute(classstr(SPYLeavePlanSubordinatesContract))]
+public class SPYLeavePlanSubordinatesDP extends SRSReportDataProviderPreProcess
+{
+    SPYLeavePlanTmp     leavePlanTmp;
+    List                subordinates;
+    HcmWorker           hcmWorker;
+    SPYAbsenceLedger    absenceLedger;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYLeavePlanTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tablestr(SPYLeavePlanTmp))]
+    public SPYLeavePlanTmp getSPYLeavePlanTmp()
+    {
+        select leavePlanTmp;
+        return leavePlanTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYLeavePlanSubordinatesContract    contract = this.parmDataContract() as SPYLeavePlanSubordinatesContract;
+        Query                               q = new Query();
+        QueryBuildDataSource                qbd, qbd2;
+        QueryRun                            qr;
+        Set                                 dates = new Set(Types::Date);
+        TransDate                           dateVal, fromDate, toDate;
+        boolean                             recordexists = false;
+        HRMAbsenceCode                      hrmAbsenceCode;
+        SPYMYSubordinate                    spySubordinate;
+        container                           userRoles = ["SPYPayrollManager", "-SYSADMIN-", "HcmHumanResourceManager", "HcmHumanResourceAssistant"];
+        boolean                             skipSubOrdinateFilter = false;
+    
+        this.setTableConnections();
+        if ( SPYLeavePlannerDP::isUserInRole(curUserId(), userRoles) )
+        {
+            skipSubOrdinateFilter = true;
+            qbd = q.addDataSource(tableNum(hcmWorker), "hcmWorker");
+            qbd2 = qbd.addDataSource( tableNum(HcmEmployment), "hcmEmployment" );
+            qbd2.relations(true);
+            qr = new QueryRun(q);
+        }
+        else
+        {
+            //Add SubOrdinates
+            qbd = q.addDataSource(tableNum(SPYMYSubordinate), "SPYMYSubordinate");
+            qr = new QueryRun(q);
+        }
+        fromDate = contract.parmFromDate();
+        toDate = contract.parmToDate();
+        dateVal = fromDate;
+        while(qr.next())
+        {
+            if ( skipSubOrdinateFilter )
+            {
+                hcmWorker = qr.get(tableNum(hcmWorker));
+    
+                select * from absenceLedger
+                where absenceLedger.AbsenceDate >= fromDate
+                    && absenceLedger.AbsenceDate <= toDate
+                    && absenceLedger.Worker == hcmWorker.RecId;
+            }
+            else
+            {
+                spySubordinate = qr.get(tableNum(SPYMYSubordinate));
+                hcmWorker = HcmWorker::find(spySubordinate.Worker);
+    
+                select * from absenceLedger
+                where absenceLedger.AbsenceDate >= fromDate
+                    && absenceLedger.AbsenceDate <= toDate
+                    && absenceLedger.Worker == spySubordinate.Worker;
+            }
+    
+    
+            if ( absenceLedger.RecId != 0 )
+            {
+                while ( absenceLedger.RecId != 0 )
+                {
+    
+                    hrmAbsenceCode = hrmAbsenceCode::find( absenceLedger.HRMAbsenceCodeId);
+    
+                    //>>2015-10-28_SNK
+                    //maintain a list of all the distinct dates so that a record can be created for all the missing dates
+                    //if there is no record for a given date the matrix would not display that date as a column
+                    dates.add(absenceLedger.AbsenceDate);
+    
+                    leavePlanTmp.clear();
+                    leavePlanTmp.Worker                 = hcmWorker.RECID;
+                    leavePlanTmp.WorkerName             = hcmWorker.name();
+                    leavePlanTmp.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+                    leavePlanTmp.AbsenceDate            = absenceLedger.AbsenceDate;
+                    leavePlanTmp.HRMAbsenceCodeId       = absenceLedger.HRMAbsenceCodeId;
+                    leavePlanTmp.AbsenceExists          = NoYes::Yes;
+                    leavePlanTmp.foreColor              = SPYLeavePlanSubordinatesDP::int2RGBhex( hrmAbsenceCode.foreColor );
+                    leavePlanTmp.backgroundColor        = SPYLeavePlanSubordinatesDP::int2RGBhex( hrmAbsenceCode.backgroundColor);
+                    leavePlanTmp.insert();
+    
+                    next absenceLedger;
+                }
+            }
+            else
+            {
+                //when there are no absences insert one dummy row
+                leavePlanTmp.clear();
+                leavePlanTmp.Worker                 = hcmWorker.RecID;
+                leavePlanTmp.WorkerName             = hcmWorker.name();
+                leavePlanTmp.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+                leavePlanTmp.AbsenceDate            = fromDate;
+                leavePlanTmp.HRMAbsenceCodeId       = "";
+                leavePlanTmp.AbsenceExists          = NoYes::No;
+                leavePlanTmp.foreColor              = "";
+                leavePlanTmp.backgroundColor        = "";
+                leavePlanTmp.insert();
+            }
+        }   //while loop
+    
+        //>>2015-10-28_SNK
+        //maintain a list of all the distinct dates so that a record can be created for all the missing dates
+        //if there is no record for a given date the matrix would not display that date
+        for ( dateVal = fromDate; dateVal <= toDate; dateVal ++ )
+        {
+            if ( ! dates.in( dateVal ) )
+            {
+                leavePlanTmp.clear();
+                leavePlanTmp.Worker                 = hcmWorker.RecID;
+                leavePlanTmp.WorkerName             = hcmWorker.name();
+                leavePlanTmp.WorkerPersonnelNumber  = hcmWorker.PersonnelNumber;
+                leavePlanTmp.AbsenceDate            = dateVal;
+                leavePlanTmp.HRMAbsenceCodeId       = "";
+                leavePlanTmp.AbsenceExists          = NoYes::No;
+                leavePlanTmp.foreColor              = "";
+                leavePlanTmp.backgroundColor        = "";
+                leavePlanTmp.insert();
+            }
+        }
+        //<<2015-10-28_SNK
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        leavePlanTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>int2RGBhex</Name>
+				<Source><![CDATA[
+    static str int2RGBhex(int color)
+    {
+        container colorcon;
+        str colorhex;
+    ;
+    
+    colorcon=WinApi::RGBint2Con(color);
+    colorhex=Global::int2Hex(conpeek(colorcon,1),2);
+    colorhex+=Global::int2Hex(conpeek(colorcon,2),2);
+    colorhex+=Global::int2Hex(conpeek(colorcon,3),2);
+    
+    return "#"+colorhex;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

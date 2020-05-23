@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPromotionProcessServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPromotionProcessServiceController extends SysOperationServiceController
+{
+    FormRun                             promotionProcessEdit;
+    SPYPromotionProcessContract         promotionProcessContract;
+    SPYPayrollParameterState            payrollParameterState;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!promotionProcessEdit)
+        {
+            promotionProcessEdit = classfactory.formRunClass(SPYPromotionProcessServiceController::newClientArgs(formStr(SPYPromotionProcessEdit), this));
+            promotionProcessEdit.init();
+        }
+
+        return promotionProcessEdit as IDialogable;
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog() ;
+
+        if (this.canGoBatch())
+       this.batchInfo().dialog(dlg);
+
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPromotionProcessContract</Name>
+				<Source><![CDATA[
+    public SPYPromotionProcessContract getPromotionProcessContract()
+    {
+        return promotionProcessContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollParameterState</Name>
+				<Source><![CDATA[
+    public SPYPayrollParameterState parmPayrollParameterState(SPYPayrollParameterState _payrollParameterState = payrollParameterState)
+    {
+        payrollParameterState = _payrollParameterState;
+
+        return payrollParameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYPromotionProcessContract parmServiceContract(SPYPromotionProcessContract _promotionProcessContract = promotionProcessContract)
+    {
+        promotionProcessContract = _promotionProcessContract;
+        return promotionProcessContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYPromotionProcessServiceController construct(IdentifierName _className  = '',
+                                                      IdentifierName _methodName = '',
+                                                      SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYPromotionProcessServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPromotionProcessServiceController    promotionProcessServiceController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        promotionProcessServiceController = SPYPromotionProcessServiceController::construct(className, methodName, mode);
+
+        if(args.caller() && args.caller().payrollParameterState())
+        promotionProcessServiceController.parmPayrollParameterState(args.caller().payrollParameterState());
+
+        if(promotionProcessServiceController.prompt())
+        promotionProcessServiceController.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYPromotionProcessServiceController               _promotionProcessServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_promotionProcessServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayAnnualPeriodCloseService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayAnnualPeriodCloseService extends SPYPayPeriodCloseService
+{
+    date     calendarPeriodStart,CalendarPeriodEnd,CalendarNextPeriodStart;
+    SPYWorkerPositionAbsenceConfigLine      workerPositionAbsenceConfigLine;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>deleteLedger</Name>
+				<Source><![CDATA[
+    protected void deleteLedger()
+    {
+        SPYAbsenceLedger        absenceLedger;
+    
+        delete_from absenceLedger
+            where absenceLedger.Worker == hcmWorker.RecId &&
+                  absenceLedger.HRMAbsenceCodeId == workerPositionAbsenceConfigLine.HRMAbsenceCodeId &&
+                  absenceLedger.EntryType != SPYAbsenceLedgerEntryType::Transaction &&
+                  absenceLedger.SourceDocument == tableNum(SPYPayrollPeriod) &&
+                  absenceLedger.TransDate > calendarPeriodStart &&
+                  absenceLedger.TransDate <= CalendarNextPeriodStart;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setAnnualPeriodDates</Name>
+				<Source><![CDATA[
+    private void setAnnualPeriodDates()
+    {
+        int     joiningDay,joiningMonth;
+        date    anniversaryJoiningDate;
+
+        periodStart = payrollPeriodLineTab.PeriodStartDate;
+        periodEnd = payrollPeriodLineTab.PeriodEndDate;
+        nextPayrollPeriodLineTab = SPYPayrollPeriodLine::findNextPeriodLine(payrollPeriodLineTab.RecId);
+        if(!nextPayrollPeriodLineTab)
+        {
+            throw error(strFmt("@SPY:AnnualPayrollPeriodNotSetup",periodStart,periodEnd));
+        }
+        nextPeriodStart = nextPayrollPeriodLineTab.PeriodStartDate;
+        nextPeriodEnd = nextPayrollPeriodLineTab.PeriodEndDate;
+        calendarPeriodStart = periodStart;
+        calendarPeriodEnd = periodEnd;
+        CalendarNextPeriodStart = nextPeriodStart;
+        if(workerPositionAbsenceConfigLine.AbsenceCycle == SPYAbsenceCycle::AnniversaryYear)
+        {
+            joiningDay = dayOfMth(workerJoiningDate);
+            joiningMonth = mthOfYr(workerJoiningDate);
+            anniversaryJoiningDate = mkDate(joiningDay,joiningMonth,year(periodEnd));
+            periodStart = mkDate(joiningDay,joiningMonth,year(periodStart) - 1);
+            periodEnd = anniversaryJoiningDate;
+            nextPeriodStart = periodEnd + 1;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAbsence</Name>
+				<Source><![CDATA[
+    protected void updateAbsence()
+    {
+        while select validtimestate(periodEnd) workerPositionAbsenceConfigLine
+            where workerPositionAbsenceConfigLine.Worker == hcmWorker.RecId &&
+            workerPositionAbsenceConfigLine.LegalEntity == legalEntity &&
+            !workerPositionAbsenceConfigLine.PeriodCloseNotApplicable
+        {
+            this.setAnnualPeriodDates();
+            this.deleteLedger();
+            this.updateLedger();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLedger</Name>
+				<Source><![CDATA[
+    protected void updateLedger()
+    {
+        SPYAbsenceLedger        absenceLedger,absenceLedgerTab;
+        Qty                     openingEntryQty;
+    
+        if(!this.validateAnniversaryDate())
+            return;
+        select sum(AbsenceDays),sum(AbsenceHours) from absenceLedgerTab
+            where absenceLedgerTab.Worker == hcmWorker.RecId &&
+                  absenceLedgerTab.HRMAbsenceCodeId == workerPositionAbsenceConfigLine.HRMAbsenceCodeId &&
+                  absenceLedgerTab.EntryType != SPYAbsenceLedgerEntryType::ClosingEntry &&
+                  absenceLedgerTab.TransDate >= periodStart &&
+                  absenceLedgerTab.TransDate <= periodEnd;
+        if(workerPositionAbsenceConfigLine.AllowFullBalanceCarryFwdInFirstYr && nextPeriodStart < nextYr(workerJoiningDate))
+            openingEntryQty = absenceLedgerTab.AbsenceDays;
+        else
+            openingEntryQty = min(absenceLedgerTab.AbsenceDays, workerPositionAbsenceConfigLine.CarryForward);
+        if(!workerPositionAbsenceConfigLine.AllowNegativeInCarryFwd)
+            openingEntryQty = max(openingEntryQty, 0);
+        
+        absenceLedger.initValue();
+        absenceLedger.Worker = hcmWorker.RecId;
+        absenceLedger.HRMAbsenceCodeId = workerPositionAbsenceConfigLine.HRMAbsenceCodeId;
+        absenceLedger.AbsenceDate = periodEnd;
+        if(workerPositionAbsenceConfigLine.LedgerTransDateCalcFromPeriodClose == SPYAbsenceLedgerTransDateCalcFromPeriodClose::AbsenceDate)
+            absenceLedger.TransDate = periodEnd;
+        else
+            absenceLedger.TransDate = nextPeriodStart;
+        absenceLedger.AbsenceDays = - absenceLedgerTab.AbsenceDays;
+        absenceLedger.AbsenceHours = - absenceLedgerTab.AbsenceHours;
+        absenceLedger.EntryType = SPYAbsenceLedgerEntryType::ClosingEntry;
+        absenceLedger.Txt = strFmt("@SPY1545");
+        absenceLedger.SourceDocument = tableNum(SPYPayrollPeriod);
+    
+        absenceLedgerList.add(absenceLedger);
+    
+        absenceLedger.initValue();
+        absenceLedger.Worker = hcmWorker.RecId;
+        absenceLedger.HRMAbsenceCodeId = workerPositionAbsenceConfigLine.HRMAbsenceCodeId;
+        absenceLedger.AbsenceDate = nextPeriodStart;
+        absenceLedger.TransDate = nextPeriodStart;
+        absenceLedger.AbsenceDays = openingEntryQty;
+        absenceLedger.AbsenceHours = openingEntryQty * workCalendarTable.StandardWorkDayHours;
+        absenceLedger.EntryType = SPYAbsenceLedgerEntryType::OpeningEntry;
+        absenceLedger.Txt = strFmt("@SPY1546");
+        absenceLedger.SourceDocument = tableNum(SPYPayrollPeriod);
+    
+        absenceLedgerList.add(absenceLedger);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateAnniversaryDate</Name>
+				<Source><![CDATA[
+    private boolean validateAnniversaryDate()
+    {
+        boolean     ret = true;
+    
+        if(workerPositionAbsenceConfigLine.AbsenceCycle == SPYAbsenceCycle::AnniversaryYear)
+        {
+            if(workerJoiningDate == periodEnd)
+                ret = false;
+        }    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

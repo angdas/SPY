@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollVarianceDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYPayrollVarianceContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerLookup))
+]
+public class SPYPayrollVarianceDP extends SrsReportDataProviderPreProcess
+{
+    SPYHeaderFooterTmp              headerFooterTmp;
+    SPYPayrollVarianceTmp           PayrollVarianceTmp;
+
+    HcmWorker                       hcmWorker;
+    SPYWorkerPositionPayroll        workerPositionPayroll;
+    SPYPayrollLedger                payrollledger;
+    SPYBenefitLedger                benefitLedger;
+
+    SPYPayrollPeriodLine            payrollPeriodLine;
+    CompanyInfo                     companyInfo;
+
+    SPYPayrollPeriodLineRecId       payrollPeriodLineRecId;
+    SPYPayrollBenefitBoth           payrollBenefitboth;
+    ForwardBackwardPrinting         direction;
+    PositiveDays                    interval;
+
+    PeriodStart                     periodStartDate;
+    PeriodEnd                       periodEndDate;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYHeaderFooterTmp))]
+    public SPYHeaderFooterTmp getSPYHeaderFooterTmp()
+    {
+        select headerFooterTmp;
+        return headerFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYPayrollVarianceTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYPayrollVarianceTmp))]
+    public SPYPayrollVarianceTmp getSPYPayrollVarianceTmp()
+    {
+        select payrollVarianceTmp;
+        return payrollVarianceTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPayrollVarianceTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoPayrollVarianceTmp(SPYPayElementType _payElementType)
+    {
+        SPYPayElementTable      payElementTable;
+    
+        PayrollVarianceTmp.clear();
+        PayrollVarianceTmp.Worker                    = hcmWorker.RecId;
+        PayrollVarianceTmp.WorkerName                = hcmWorker.name();
+        PayrollVarianceTmp.WorkerPersonnelNumber     = hcmWorker.PersonnelNumber;
+        PayrollVarianceTmp.PayrollPeriodLine         = payrollPeriodLineRecId;
+        PayrollVarianceTmp.PeriodCode                = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+        PayrollVarianceTmp.PeriodStartDate           = payrollPeriodLine.PeriodStartDate;
+        PayrollVarianceTmp.PeriodEndDate             = payrollPeriodLine.PeriodEndDate;
+        if(_payElementType == SPYPayElementType::Payroll)
+        {
+            payElementTable = SPYPayElementTable::find(payrollledger.Payroll);
+            PayrollVarianceTmp.PayElementCode            = payElementTable.PayElementCode;
+            PayrollVarianceTmp.PayElementDescription     = payElementTable.Description;
+            PayrollVarianceTmp.Currency                  = payrollledger.Currency;
+            PayrollVarianceTmp.TransactionCurrencyAmount = payrollledger.TransactionCurrencyAmount;
+            PayrollVarianceTmp.ExchRate                  = payrollledger.ExchRate;
+            PayrollVarianceTmp.AccountingCurrencyAmount  = payrollledger.AccountingCurrencyAmount;
+            PayrollVarianceTmp.PayElementType            = SPYPayElementType::Payroll;
+            if(PayrollVarianceTmp.TransactionCurrencyAmount > 0)
+                PayrollVarianceTmp.PayrollType           = SPYPayrollType::Earning;
+            else
+                PayrollVarianceTmp.PayrollType           = SPYPayrollType::Deduction;
+        }
+        else
+        {
+            payElementTable = SPYPayElementTable::find(benefitLedger.Benefit);
+            PayrollVarianceTmp.PayElementCode            = payElementTable.PayElementCode;
+            PayrollVarianceTmp.PayElementDescription     = payElementTable.Description;
+            PayrollVarianceTmp.Currency                  = benefitLedger.Currency;
+            PayrollVarianceTmp.TransactionCurrencyAmount = benefitLedger.TransactionCurrencyAmount;
+            PayrollVarianceTmp.ExchRate                  = benefitLedger.ExchRate;
+            PayrollVarianceTmp.AccountingCurrencyAmount  = benefitLedger.AccountingCurrencyAmount;
+            PayrollVarianceTmp.Quantity                  = benefitLedger.Quantity;
+            PayrollVarianceTmp.PayElementType            = SPYPayElementType::Benefit;
+        }
+        PayrollVarianceTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYHeaderFooterTmp()
+    {
+        headerFooterTmp.clear();
+        headerFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        headerFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        headerFooterTmp.CompanyName      = companyInfo.Name();
+        headerFooterTmp.CompanyEmail     = companyInfo.email();
+        headerFooterTmp.CompanyPhone     = companyInfo.phone();
+        headerFooterTmp.CompanyURL       = companyInfo.url();
+        headerFooterTmp.PeriodCode       = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+        headerFooterTmp.PeriodStartDate  = payrollPeriodLine.PeriodStartDate;
+        headerFooterTmp.PeriodEndDate    = payrollPeriodLine.PeriodEndDate;
+        headerFooterTmp.CompanyCurrency  = Ledger::accountingCurrency();
+        headerFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYPayrollVarianceContract      contract = this.parmDataContract() as SPYPayrollVarianceContract;
+        Query                           q, q1;
+        QueryRun                        qr;
+        QueryBuildDataSource            qbdHcmWorker, qbdPayrollLedger, qbdPayrollPeriodLine;
+    
+        this.setTableConnections();
+    
+        payrollPeriodLineRecId  = contract.parmPayrollPeriodline();
+        payrollBenefitboth      = contract.parmPayrollBenefitBoth();
+        direction               = contract.parmDirection();
+        interval                = contract.parmInterval();
+    
+        companyInfo         = CompanyInfo::find();
+    
+        payrollPeriodLine   = SPYPayrollPeriodLine::find(payrollPeriodLineRecId);
+        this.insertIntoSPYHeaderFooterTmp();
+    
+        this.setPeriodDates();
+    
+        q1 = new Query(this.parmQuery().pack(false));
+    
+        q = this.parmQuery();
+    
+        //data from payroll ledger
+        qbdHcmWorker = q.dataSourceTable(tableNum(HcmWorker));
+        qbdPayrollLedger = qbdHcmWorker.addDataSource(tableNum(SPYPayrollLedger), "SPYPayrollLedger");
+        qbdPayrollLedger.joinMode(JoinMode::InnerJoin);
+        qbdPayrollLedger.fetchMode(QueryFetchMode::One2One);
+        qbdPayrollLedger.Relations(true);
+        qbdPayrollPeriodLine = qbdPayrollLedger.addDataSource(tableNum(SPYPayrollPeriodLine), "SPYPayrollPeriodLine");
+        qbdPayrollPeriodLine.joinMode(JoinMode::InnerJoin);
+        qbdPayrollPeriodLine.fetchMode(QueryFetchMode::One2One);
+        //qbdPayrollPeriodLine.Relations(true);
+        qbdPayrollPeriodLine.addLink(fieldNum(SPYPayrollLedger,PayrollPeriodLine),fieldNum(SPYPayrollPeriodLine,RecId));
+        //qbdPayrollPeriodLine.sortField(fieldNum(SPYPayrollPeriodLine, PeriodStartDate));
+        qbdPayrollPeriodLine.addRange(fieldNum(SPYPayrollPeriodLine, PeriodStartDate)).value(strFmt('((PeriodStartDate >= %1) && (PeriodEndDate <= %2))', Date2StrXpp(periodStartDate), Date2StrXpp(periodEndDate)));
+    
+        qr = new QueryRun(q);
+    
+        while(qr.next())
+        {
+            hcmWorker           = qr.get(tableNum(HcmWorker));
+            payrollledger       = qr.get(tableNum(SPYPayrollLedger));
+            payrollPeriodLine   = qr.get(tableNum(SPYPayrollPeriodLine));
+    
+            this.insertIntoPayrollVarianceTmp(SPYPayElementType::Payroll);
+        }
+    
+        //data from benefit ledger
+        qbdHcmWorker = q1.dataSourceTable(tableNum(HcmWorker));
+        qbdPayrollLedger = qbdHcmWorker.addDataSource(tableNum(SPYBenefitLedger), "SPYBenefitLedger");
+        qbdPayrollLedger.joinMode(JoinMode::InnerJoin);
+        qbdPayrollLedger.fetchMode(QueryFetchMode::One2One);
+        qbdPayrollLedger.Relations(true);
+        qbdPayrollPeriodLine = qbdPayrollLedger.addDataSource(tableNum(SPYPayrollPeriodLine), "SPYPayrollPeriodLine");
+        qbdPayrollPeriodLine.joinMode(JoinMode::InnerJoin);
+        qbdPayrollPeriodLine.fetchMode(QueryFetchMode::One2One);
+        //qbdPayrollPeriodLine.Relations(true);
+        qbdPayrollPeriodLine.addLink(fieldNum(SPYBenefitLedger,PayrollPeriodLine),fieldNum(SPYPayrollPeriodLine,RecId));
+        //qbdPayrollPeriodLine.sortField(fieldNum(SPYPayrollPeriodLine, PeriodStartDate));
+        qbdPayrollPeriodLine.addRange(fieldNum(SPYPayrollPeriodLine, PeriodStartDate)).value(strFmt('((PeriodStartDate >= %1) && (PeriodEndDate <= %2))', Date2StrXpp(periodStartDate), Date2StrXpp(periodEndDate)));
+    
+        qr = new QueryRun(q1);
+    
+        while(qr.next())
+        {
+            hcmWorker           = qr.get(tableNum(HcmWorker));
+            benefitLedger       = qr.get(tableNum(SPYBenefitLedger));
+            payrollPeriodLine   = qr.get(tableNum(SPYPayrollPeriodLine));
+    
+            this.insertIntoPayrollVarianceTmp(SPYPayElementType::Benefit);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPeriodDates</Name>
+				<Source><![CDATA[
+    public void setPeriodDates()
+    {
+        int i;
+    
+        payrollPeriodLine   = SPYPayrollPeriodLine::find(payrollPeriodLineRecId);
+    
+        if(direction == ForwardBackwardPrinting::Forward)
+        {
+            periodStartDate = payrollPeriodLine.PeriodStartDate;
+            for(i = 1; i<= interval; i++)
+            {
+                payrollPeriodLine = payrollPeriodLine.nextPeriodLine();
+            }
+            periodEndDate = payrollPeriodLine.PeriodEndDate;
+        }
+        else
+        {
+            periodEndDate = payrollPeriodLine.PeriodEndDate;
+            for(i = 1; i<= interval; i++)
+            {
+                payrollPeriodLine = SPYPayrollPeriodLine::findPrevPeriodLine(payrollPeriodLine.RecId);
+            }
+            periodStartDate = payrollPeriodLine.PeriodStartDate;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        headerFooterTmp.setConnection(this.parmUserConnection());
+        PayrollVarianceTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

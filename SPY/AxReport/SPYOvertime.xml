@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxReport xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYOvertime</Name>
+	<DataMethods />
+	<DataSets>
+		<AxReportDataSet xmlns="">
+			<Name>OvertimeHeaderFooterDS</Name>
+			<DataSourceType>ReportDataProvider</DataSourceType>
+			<Query>SELECT * FROM SPYOvertimeLedgerDP.SPYOvertimeHeaderFooterTmp</Query>
+			<FieldGroups />
+			<Fields>
+				<AxReportDataSetField>
+					<Name>CompanyAddress</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.CompanyAddress</Alias>
+					<Caption>@SYS9362</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>CompanyCurrency</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.CompanyCurrency</Alias>
+					<Caption>@SYS7572</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>CompanyEmail</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.CompanyEmail</Alias>
+					<Caption>@SYS5845</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>CompanyLogo</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.CompanyLogo</Alias>
+					<Caption>@SYS86069</Caption>
+					<DataType>System.Byte[]</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>CompanyName</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.CompanyName</Alias>
+					<Caption>@SYS7399</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>CompanyPhone</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.CompanyPhone</Alias>
+					<Caption>@SYS7869</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>CompanyURL</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.CompanyURL</Alias>
+					<Caption>@SYS22221</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PeriodCode</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.PeriodCode</Alias>
+					<Caption>@SPY24</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PeriodEndDate</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.PeriodEndDate</Alias>
+					<Caption>@SYS50115</Caption>
+					<DataType>System.DateTime</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PeriodStartDate</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.PeriodStartDate</Alias>
+					<Caption>@SYS428</Caption>
+					<DataType>System.DateTime</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>createdTransactionId</Name>
+					<Alias>SPYOvertimeHeaderFooterTmp.1.createdTransactionId</Alias>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+			</Fields>
+			<Parameters>
+				<AxReportDataSetParameter>
+					<Name>AX_PartitionKey</Name>
+					<Alias>AX_PartitionKey</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_PartitionKey</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_CompanyName</Name>
+					<Alias>AX_CompanyName</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_CompanyName</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_UserContext</Name>
+					<Alias>AX_UserContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_UserContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RenderingCulture</Name>
+					<Alias>AX_RenderingCulture</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RenderingCulture</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_ReportContext</Name>
+					<Alias>AX_ReportContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_ReportContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RdpPreProcessedId</Name>
+					<Alias>AX_RdpPreProcessedId</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RdpPreProcessedId</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>PayrollPeriodLineFrom</Name>
+					<Alias>PayrollPeriodLineFrom</Alias>
+					<DataType>System.Int64</DataType>
+					<Parameter>PayrollPeriodLineFrom</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>PayrollPeriodLineTo</Name>
+					<Alias>PayrollPeriodLineTo</Alias>
+					<DataType>System.Int64</DataType>
+					<Parameter>PayrollPeriodLineTo</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>SPYOvertimeLedgerDP_DynamicParameter</Name>
+					<Alias>SPYOvertimeLedgerDP_DynamicParameter</Alias>
+					<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+					<Parameter>SPYOvertimeLedgerDP_DynamicParameter</Parameter>
+				</AxReportDataSetParameter>
+			</Parameters>
+		</AxReportDataSet>
+		<AxReportDataSet xmlns="">
+			<Name>OTDetails</Name>
+			<DataSourceType>ReportDataProvider</DataSourceType>
+			<Query>SELECT * FROM SPYOvertimeLedgerDP.SPYOvertimeLedgerTmp</Query>
+			<FieldGroups />
+			<Fields>
+				<AxReportDataSetField>
+					<Name>Basic</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.Basic</Alias>
+					<Caption>@SPY247</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Department</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.Department</Alias>
+					<Caption>@SYS7576</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Grade</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.Grade</Alias>
+					<Caption>@SYS7576</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>JobTitle</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.JobTitle</Alias>
+					<Caption>@SYS7576</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>OTAmount</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.OTAmount</Alias>
+					<Caption>@SPY247</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>OTHours</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.OTHours</Alias>
+					<Caption>@SPY220</Caption>
+					<DataType>System.Double</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>OvertimeTypeCode</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.OvertimeTypeCode</Alias>
+					<Caption>@SPY868</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>PayrollPeriodLine</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.PayrollPeriodLine</Alias>
+					<Caption>@SPY25</Caption>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Worker</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.Worker</Alias>
+					<Caption>@SYS305602</Caption>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>WorkerName</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.WorkerName</Alias>
+					<Caption>@SYS320666</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>WorkerPersonnelNumber</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.WorkerPersonnelNumber</Alias>
+					<Caption>@SYS303656</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>createdTransactionId</Name>
+					<Alias>SPYOvertimeLedgerTmp.1.createdTransactionId</Alias>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+			</Fields>
+			<Parameters>
+				<AxReportDataSetParameter>
+					<Name>AX_PartitionKey</Name>
+					<Alias>AX_PartitionKey</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_PartitionKey</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_CompanyName</Name>
+					<Alias>AX_CompanyName</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_CompanyName</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_UserContext</Name>
+					<Alias>AX_UserContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_UserContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RenderingCulture</Name>
+					<Alias>AX_RenderingCulture</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RenderingCulture</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_ReportContext</Name>
+					<Alias>AX_ReportContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_ReportContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RdpPreProcessedId</Name>
+					<Alias>AX_RdpPreProcessedId</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RdpPreProcessedId</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>PayrollPeriodLineFrom</Name>
+					<Alias>PayrollPeriodLineFrom</Alias>
+					<DataType>System.Int64</DataType>
+					<Parameter>PayrollPeriodLineFrom</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>PayrollPeriodLineTo</Name>
+					<Alias>PayrollPeriodLineTo</Alias>
+					<DataType>System.Int64</DataType>
+					<Parameter>PayrollPeriodLineTo</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>SPYOvertimeLedgerDP_DynamicParameter</Name>
+					<Alias>SPYOvertimeLedgerDP_DynamicParameter</Alias>
+					<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+					<Parameter>SPYOvertimeLedgerDP_DynamicParameter</Parameter>
+				</AxReportDataSetParameter>
+			</Parameters>
+		</AxReportDataSet>
+	</DataSets>
+	<DefaultParameterGroup>
+		<Name xmlns="">Parameters</Name>
+		<ReportParameterBases xmlns="">
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_PartitionKey</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_CompanyName</Name>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_UserContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RenderingCulture</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_ReportContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RdpPreProcessedId</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>PayrollPeriodLineFrom</Name>
+				<DataType>System.Int64</DataType>
+				<PromptString>@SPY635</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>PayrollPeriodLineTo</Name>
+				<DataType>System.Int64</DataType>
+				<PromptString>@SPY636</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>SPYOvertimeLedgerDP_DynamicParameter</Name>
+				<AOTQuery>SPYOvertimeLedger</AOTQuery>
+				<AllowBlank>true</AllowBlank>
+				<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+		</ReportParameterBases>
+	</DefaultParameterGroup>
+	<Designs>
+		<AxReportDesign xmlns=""
+			i:type="AxReportPrecisionDesign">
+			<Name>Report</Name>
+			<Text>&lt;?xml version="1.0" encoding="utf-8"?&gt;&lt;Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2008/01/reportdefinition"&gt;&lt;Body&gt;&lt;ReportItems&gt;&lt;Tablix Name="MatrixOT"&gt;&lt;TablixCorner&gt;&lt;TablixCornerRows&gt;&lt;TablixCornerRow&gt;&lt;TablixCornerCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox15"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Department&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox15&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;VerticalAlign&gt;Middle&lt;/VerticalAlign&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;RowSpan&gt;2&lt;/RowSpan&gt;&lt;/CellContents&gt;&lt;/TablixCornerCell&gt;&lt;TablixCornerCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox16"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;EmpNo&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox16&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;VerticalAlign&gt;Middle&lt;/VerticalAlign&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;RowSpan&gt;2&lt;/RowSpan&gt;&lt;/CellContents&gt;&lt;/TablixCornerCell&gt;&lt;TablixCornerCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox17"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Employee Name&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox17&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;VerticalAlign&gt;Middle&lt;/VerticalAlign&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;RowSpan&gt;2&lt;/RowSpan&gt;&lt;/CellContents&gt;&lt;/TablixCornerCell&gt;&lt;TablixCornerCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox18"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Job Title&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox18&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;VerticalAlign&gt;Middle&lt;/VerticalAlign&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;RowSpan&gt;2&lt;/RowSpan&gt;&lt;/CellContents&gt;&lt;/TablixCornerCell&gt;&lt;TablixCornerCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox19"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Grade&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox19&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;VerticalAlign&gt;Middle&lt;/VerticalAlign&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;RowSpan&gt;2&lt;/RowSpan&gt;&lt;/CellContents&gt;&lt;/TablixCornerCell&gt;&lt;TablixCornerCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox20"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Basic&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox20&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;VerticalAlign&gt;Middle&lt;/VerticalAlign&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;RowSpan&gt;2&lt;/RowSpan&gt;&lt;/CellContents&gt;&lt;/TablixCornerCell&gt;&lt;/TablixCornerRow&gt;&lt;TablixCornerRow&gt;&lt;TablixCornerCell /&gt;&lt;TablixCornerCell /&gt;&lt;TablixCornerCell /&gt;&lt;TablixCornerCell /&gt;&lt;TablixCornerCell /&gt;&lt;TablixCornerCell /&gt;&lt;/TablixCornerRow&gt;&lt;/TablixCornerRows&gt;&lt;/TablixCorner&gt;&lt;TablixBody&gt;&lt;TablixColumns&gt;&lt;TablixColumn&gt;&lt;Width&gt;1in&lt;/Width&gt;&lt;/TablixColumn&gt;&lt;TablixColumn&gt;&lt;Width&gt;1in&lt;/Width&gt;&lt;/TablixColumn&gt;&lt;TablixColumn&gt;&lt;Width&gt;1.13542in&lt;/Width&gt;&lt;/TablixColumn&gt;&lt;/TablixColumns&gt;&lt;TablixRows&gt;&lt;TablixRow&gt;&lt;Height&gt;0.25in&lt;/Height&gt;&lt;TablixCells&gt;&lt;TablixCell&gt;&lt;CellContents&gt;&lt;Textbox Name="OTHours"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Sum(Fields!OTHours.Value)&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;Format&gt;0.00;(0.00)&lt;/Format&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;OTHours&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixCell&gt;&lt;TablixCell&gt;&lt;CellContents&gt;&lt;Textbox Name="OTAmount"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Sum(Fields!OTAmount.Value)&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;Format&gt;0.00;(0.00)&lt;/Format&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;OTAmount&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixCell&gt;&lt;TablixCell&gt;&lt;CellContents&gt;&lt;Textbox Name="OTAmount1"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Sum(Fields!OTAmount.Value)&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;Format&gt;0.00;(0.00)&lt;/Format&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;OTAmount1&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixCell&gt;&lt;/TablixCells&gt;&lt;/TablixRow&gt;&lt;TablixRow&gt;&lt;Height&gt;0.25in&lt;/Height&gt;&lt;TablixCells&gt;&lt;TablixCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox11"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Sum(Fields!OTHours.Value)&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;Format&gt;0.00;(0.00)&lt;/Format&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox11&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixCell&gt;&lt;TablixCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox12"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Sum(Fields!OTAmount.Value)&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;Format&gt;0.00;(0.00)&lt;/Format&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox12&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixCell&gt;&lt;TablixCell&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox27"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Sum(Fields!OTAmount.Value)&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;Format&gt;0.00;(0.00)&lt;/Format&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox27&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixCell&gt;&lt;/TablixCells&gt;&lt;/TablixRow&gt;&lt;/TablixRows&gt;&lt;/TablixBody&gt;&lt;TablixColumnHierarchy&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;Group Name="OTType"&gt;&lt;GroupExpressions&gt;&lt;GroupExpression&gt;=Fields!OvertimeTypeCode.Value&lt;/GroupExpression&gt;&lt;/GroupExpressions&gt;&lt;/Group&gt;&lt;SortExpressions&gt;&lt;SortExpression&gt;&lt;Value&gt;=Fields!OvertimeTypeCode.Value&lt;/Value&gt;&lt;/SortExpression&gt;&lt;/SortExpressions&gt;&lt;TablixHeader&gt;&lt;Size&gt;0.25in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="OvertimeTypeCode"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Fields!OvertimeTypeCode.Value&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Center&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;OvertimeTypeCode&lt;/rd:DefaultName&gt;&lt;CustomProperties&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXDataType&lt;/Name&gt;&lt;Value&gt;String&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTFormat&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.OvertimeTypeCode&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.OvertimeTypeCode&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTDirection&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.OvertimeTypeCode&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;/CustomProperties&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;0.25in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox22"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Hours&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Center&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox22&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember /&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;0.25in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox23"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Amount&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Center&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox23&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember /&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;0.5in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox13"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Total Amount&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Center&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox13&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;VerticalAlign&gt;Middle&lt;/VerticalAlign&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember /&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixColumnHierarchy&gt;&lt;TablixRowHierarchy&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;Group Name="WorkerPersonnelNumber"&gt;&lt;GroupExpressions&gt;&lt;GroupExpression&gt;=Fields!WorkerPersonnelNumber.Value&lt;/GroupExpression&gt;&lt;/GroupExpressions&gt;&lt;/Group&gt;&lt;SortExpressions&gt;&lt;SortExpression&gt;&lt;Value&gt;=Fields!WorkerName.Value&lt;/Value&gt;&lt;/SortExpression&gt;&lt;/SortExpressions&gt;&lt;TablixHeader&gt;&lt;Size&gt;2in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Department"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Fields!Department.Value&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Department&lt;/rd:DefaultName&gt;&lt;CustomProperties&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXDataType&lt;/Name&gt;&lt;Value&gt;String&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTFormat&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.Department&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.Department&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTDirection&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.Department&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;/CustomProperties&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;rd:Selected&gt;true&lt;/rd:Selected&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;0.8875in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="WorkerPersonnelNumber"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Fields!WorkerPersonnelNumber.Value&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;WorkerPersonnelNumber&lt;/rd:DefaultName&gt;&lt;CustomProperties&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXDataType&lt;/Name&gt;&lt;Value&gt;String&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTFormat&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.WorkerPersonnelNumber&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.WorkerPersonnelNumber&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTDirection&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.WorkerPersonnelNumber&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;/CustomProperties&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;1.89583in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="WorkerName"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Fields!WorkerName.Value&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;WorkerName&lt;/rd:DefaultName&gt;&lt;CustomProperties&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXDataType&lt;/Name&gt;&lt;Value&gt;String&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTFormat&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.WorkerName&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.WorkerName&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTDirection&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.WorkerName&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;/CustomProperties&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;1.96875in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="JobTitle"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Fields!JobTitle.Value&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;JobTitle&lt;/rd:DefaultName&gt;&lt;CustomProperties&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXDataType&lt;/Name&gt;&lt;Value&gt;String&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTFormat&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.JobTitle&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.JobTitle&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTDirection&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.JobTitle&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;/CustomProperties&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;0.70208in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Grade"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=Fields!Grade.Value&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Grade&lt;/rd:DefaultName&gt;&lt;CustomProperties&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXDataType&lt;/Name&gt;&lt;Value&gt;String&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTFormat&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.Grade&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.Grade&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;CustomProperty&gt;&lt;Name&gt;AXEDTDirection&lt;/Name&gt;&lt;Value&gt;AFZOvertimeLedgerTmp.Grade&lt;/Value&gt;&lt;/CustomProperty&gt;&lt;/CustomProperties&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;1in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Basic"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=max(Fields!Basic.Value)&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;Format&gt;0.00;(0.00)&lt;/Format&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Basic&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;2in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox5"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Total&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox5&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;0.8875in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox6"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value /&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox6&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;1.89583in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox7"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value /&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox7&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;1.96875in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox8"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value /&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox8&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;0.70208in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox9"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value /&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox9&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;TablixMembers&gt;&lt;TablixMember&gt;&lt;TablixHeader&gt;&lt;Size&gt;1in&lt;/Size&gt;&lt;CellContents&gt;&lt;Textbox Name="Textbox10"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value /&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;9pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style /&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;rd:DefaultName&gt;Textbox10&lt;/rd:DefaultName&gt;&lt;Style&gt;&lt;Border&gt;&lt;Color&gt;LightGrey&lt;/Color&gt;&lt;Style&gt;Solid&lt;/Style&gt;&lt;/Border&gt;&lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;&lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;&lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;&lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/CellContents&gt;&lt;/TablixHeader&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;KeepWithGroup&gt;Before&lt;/KeepWithGroup&gt;&lt;/TablixMember&gt;&lt;/TablixMembers&gt;&lt;/TablixRowHierarchy&gt;&lt;RepeatColumnHeaders&gt;true&lt;/RepeatColumnHeaders&gt;&lt;DataSetName&gt;OTDetails&lt;/DataSetName&gt;&lt;Top&gt;0.06944in&lt;/Top&gt;&lt;Height&gt;1in&lt;/Height&gt;&lt;Width&gt;11.58958in&lt;/Width&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/Tablix&gt;&lt;/ReportItems&gt;&lt;Height&gt;1.06944in&lt;/Height&gt;&lt;Style /&gt;&lt;/Body&gt;&lt;Width&gt;11.58958in&lt;/Width&gt;&lt;Page&gt;&lt;PageHeader&gt;&lt;Height&gt;1.54625in&lt;/Height&gt;&lt;PrintOnFirstPage&gt;true&lt;/PrintOnFirstPage&gt;&lt;PrintOnLastPage&gt;true&lt;/PrintOnLastPage&gt;&lt;ReportItems&gt;&lt;Image Name="CompanyLogo"&gt;&lt;Source&gt;Database&lt;/Source&gt;&lt;Value&gt;=First(Fields!CompanyLogo.Value, "OvertimeHeaderFooterDS")&lt;/Value&gt;&lt;MIMEType&gt;image/bmp&lt;/MIMEType&gt;&lt;Sizing&gt;Fit&lt;/Sizing&gt;&lt;Top&gt;0.12056in&lt;/Top&gt;&lt;Height&gt;0.8in&lt;/Height&gt;&lt;Width&gt;2in&lt;/Width&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Image&gt;&lt;Textbox Name="CompanyName"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=First(Fields!CompanyName.Value, "OvertimeHeaderFooterDS")&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;0.125in&lt;/Top&gt;&lt;Left&gt;6.14166in&lt;/Left&gt;&lt;Height&gt;0.16in&lt;/Height&gt;&lt;Width&gt;3in&lt;/Width&gt;&lt;ZIndex&gt;1&lt;/ZIndex&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;Textbox Name="Textbox_20"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=First(Fields!CompanyAddress.Value, "OvertimeHeaderFooterDS")&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;0.32667in&lt;/Top&gt;&lt;Left&gt;6.14166in&lt;/Left&gt;&lt;Height&gt;0.5in&lt;/Height&gt;&lt;Width&gt;3in&lt;/Width&gt;&lt;ZIndex&gt;2&lt;/ZIndex&gt;&lt;Style&gt;&lt;TopBorder&gt;&lt;Color&gt;Black&lt;/Color&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;Width&gt;1pt&lt;/Width&gt;&lt;/TopBorder&gt;&lt;BottomBorder&gt;&lt;Color&gt;Black&lt;/Color&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;Width&gt;1pt&lt;/Width&gt;&lt;/BottomBorder&gt;&lt;LeftBorder&gt;&lt;Color&gt;Black&lt;/Color&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;Width&gt;1pt&lt;/Width&gt;&lt;/LeftBorder&gt;&lt;RightBorder&gt;&lt;Color&gt;Black&lt;/Color&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;Width&gt;1pt&lt;/Width&gt;&lt;/RightBorder&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;Textbox Name="CompanyPhoneLabel"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=labels!@SYS36310&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;0.85444in&lt;/Top&gt;&lt;Left&gt;6.14166in&lt;/Left&gt;&lt;Height&gt;0.16in&lt;/Height&gt;&lt;Width&gt;1in&lt;/Width&gt;&lt;ZIndex&gt;3&lt;/ZIndex&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;Textbox Name="CompanyEmailLabel"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=labels!@DMF908&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;1.04222in&lt;/Top&gt;&lt;Left&gt;6.14166in&lt;/Left&gt;&lt;Height&gt;0.16in&lt;/Height&gt;&lt;Width&gt;1in&lt;/Width&gt;&lt;ZIndex&gt;4&lt;/ZIndex&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;Textbox Name="CompanyURLLabel"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=labels!@SYS37016&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;1.23in&lt;/Top&gt;&lt;Left&gt;6.14166in&lt;/Left&gt;&lt;Height&gt;0.16in&lt;/Height&gt;&lt;Width&gt;1in&lt;/Width&gt;&lt;ZIndex&gt;5&lt;/ZIndex&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;Textbox Name="CompanyURL"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=First(Fields!CompanyURL.Value, "OvertimeHeaderFooterDS")&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;1.23in&lt;/Top&gt;&lt;Left&gt;7.18333in&lt;/Left&gt;&lt;Height&gt;0.16in&lt;/Height&gt;&lt;Width&gt;1.95833in&lt;/Width&gt;&lt;ZIndex&gt;6&lt;/ZIndex&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;Textbox Name="CompanyEmail"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=First(Fields!CompanyEmail.Value, "OvertimeHeaderFooterDS")&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;1.04222in&lt;/Top&gt;&lt;Left&gt;7.18333in&lt;/Left&gt;&lt;Height&gt;0.16in&lt;/Height&gt;&lt;Width&gt;1.95833in&lt;/Width&gt;&lt;ZIndex&gt;7&lt;/ZIndex&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;Textbox Name="CompanyPhone"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;=First(Fields!CompanyPhone.Value, "OvertimeHeaderFooterDS")&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;8pt&lt;/FontSize&gt;&lt;FontWeight&gt;Normal&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;0.85444in&lt;/Top&gt;&lt;Left&gt;7.18333in&lt;/Left&gt;&lt;Height&gt;0.16in&lt;/Height&gt;&lt;Width&gt;1.95833in&lt;/Width&gt;&lt;ZIndex&gt;8&lt;/ZIndex&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;Textbox Name="CompanyName2"&gt;&lt;CanGrow&gt;true&lt;/CanGrow&gt;&lt;CanShrink&gt;true&lt;/CanShrink&gt;&lt;KeepTogether&gt;true&lt;/KeepTogether&gt;&lt;Paragraphs&gt;&lt;Paragraph&gt;&lt;TextRuns&gt;&lt;TextRun&gt;&lt;Value&gt;Overtime Details&lt;/Value&gt;&lt;Style&gt;&lt;FontStyle&gt;Normal&lt;/FontStyle&gt;&lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;&lt;FontSize&gt;12pt&lt;/FontSize&gt;&lt;FontWeight&gt;Bold&lt;/FontWeight&gt;&lt;TextDecoration&gt;None&lt;/TextDecoration&gt;&lt;/Style&gt;&lt;/TextRun&gt;&lt;/TextRuns&gt;&lt;Style&gt;&lt;TextAlign&gt;Left&lt;/TextAlign&gt;&lt;/Style&gt;&lt;/Paragraph&gt;&lt;/Paragraphs&gt;&lt;Top&gt;1.19in&lt;/Top&gt;&lt;Height&gt;0.2in&lt;/Height&gt;&lt;Width&gt;4.575in&lt;/Width&gt;&lt;ZIndex&gt;9&lt;/ZIndex&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/Textbox&gt;&lt;/ReportItems&gt;&lt;Style&gt;&lt;Border&gt;&lt;Style&gt;None&lt;/Style&gt;&lt;/Border&gt;&lt;/Style&gt;&lt;/PageHeader&gt;&lt;InteractiveHeight&gt;11in&lt;/InteractiveHeight&gt;&lt;InteractiveWidth&gt;8.5in&lt;/InteractiveWidth&gt;&lt;LeftMargin&gt;1in&lt;/LeftMargin&gt;&lt;RightMargin&gt;1in&lt;/RightMargin&gt;&lt;TopMargin&gt;1in&lt;/TopMargin&gt;&lt;BottomMargin&gt;1in&lt;/BottomMargin&gt;&lt;Style /&gt;&lt;/Page&gt;&lt;Language&gt;en-US&lt;/Language&gt;&lt;rd:ReportID&gt;06b5b393-dd6d-4dc7-b433-eab8735f6a24&lt;/rd:ReportID&gt;&lt;rd:ReportUnitType&gt;Inch&lt;/rd:ReportUnitType&gt;&lt;rd:ExpressionDialog&gt;Microsoft.Dynamics.Framework.Design.Reports.ExpressionEditor.ExpressionEditorDialog, Microsoft.Dynamics.Framework.Design.Reports&lt;/rd:ExpressionDialog&gt;&lt;/Report&gt;</Text>
+			<DisableIndividualTransformation>
+				<Name>DisableIndividualTransformation</Name>
+			</DisableIndividualTransformation>
+		</AxReportDesign>
+	</Designs>
+	<EmbeddedImages />
+</AxReport>

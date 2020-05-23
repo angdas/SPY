@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYCompensationPlanDetailsUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYCompensationPlanDetailsUpload extends RunBaseBatch
+{
+    FileName                 fileNameOpen;
+    AsciiStreamIo           fileIO;
+    DialogField             dlgLeave;
+    Description             uploadDesc;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+    uploadDesc
+    #endmacro
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    // Specifies whether the functionality can run in a new session window
+    public boolean canRunInNewSession()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase           dialog;
+        FormBuildButtonControl  buttonControlUpload;
+        DialogGroup             dlgGroup;
+        FormBuildGroupControl   buttonGroup;
+
+        dialog = super();
+
+        dlgGroup            = dialog.addGroup('');
+        buttonGroup         = dialog.formBuildDesign().control(dlgGroup.formBuildGroup().id());
+        buttonControlUpload = buttonGroup.addControl(FormControlType::Button, "@SPY:UploadCompDetails");
+        buttonControlUpload.text("@SPY:UploadCompDetails");
+        buttonControlUpload.registerOverrideMethod(methodStr(FormButtonControl, clicked),
+                                        methodStr(SPYLeaveApplicationUpload, uploadClickedEvent),
+                                        this);
+
+        
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>uploadClickedEvent</Name>
+				<Source><![CDATA[
+    private void uploadClickedEvent(FormButtonControl _formButtonControl)
+    {
+        FileUploadTemporaryStorageResult result = File::GetFileFromUser() as FileUploadTemporaryStorageResult;
+        If (result && result.getUploadStatus())
+        {
+            fileIO = AsciiStreamIo::constructForRead(result.openResult());
+            if (fileIO)
+            {
+                if (fileIO.status())
+                {
+                    throw error("@SPY:ImportingProblem");
+                }
+                fileIO.inFieldDelimiter(',');
+                fileIO.inRecordDelimiter('\r\n');
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+        ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            this.readCSV(fileIO);
+        }
+        catch(Exception::Error)
+        {
+            ttsabort;
+            throw error("@SPY:ImportingException");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readCSV</Name>
+				<Source><![CDATA[
+    public void readCSV(AsciiStreamIo  file)
+    {
+        COMVariantType                      type;
+        HcmWorkerRecId                      worker;
+        boolean                             errorCompensation, errorPayelement, errorPayroll, errorCurrency;
+        container                           record;
+        int                                 cnt = 0, numberofUploadedRecords, cntUpdate = 0;
+        real                                monthlyMin, monthlyMax, monthlyAvg, annualMin, annualMax, annualAvg, annualQtyMin, annualQtyMax, annualQtyAvg, monthlyQtyMin, monthlyQtyAvg, monthlyQtyMax;
+        str                                 compensationPlan, payelement, payrollPeriodStr, currency;
+        SPYCompensationPlanTable            compensationTable;
+        SPYCompensationPlanPayroll          compensationPayroll;
+        SPYCompensationPlanBenefit          compensationBenefit;
+        SPYPayrollTable                     payrollTable;
+        SPYPayElementTable                  payelementTable;
+        SPYPayrollPeriod                    payrollPeriod;
+        Currency                            currencyTable;
+
+        
+        ttsbegin;
+        while (!file.status())
+        {
+            cnt++;
+            record = file.read();
+            
+            if( cnt > 1)
+            {
+                compensationPlan    = conpeek(record,1);
+                payelement          = conpeek(record,2);;
+                monthlyMin          = conpeek(record,3);
+                monthlyMax          = conpeek(record,4);
+                monthlyAvg          = conpeek(record,5);
+                annualMin           = conpeek(record,6);
+                annualMax           = conpeek(record,7);
+                annualAvg           = conpeek(record,8);
+                monthlyQtyMin       = conpeek(record,9);
+                monthlyQtyMax       = conpeek(record,10);
+                monthlyQtyAvg       = conpeek(record,11);
+                annualQtyMin        = conpeek(record,12);
+                annualQtyMax        = conpeek(record,13);
+                annualQtyAvg        = conpeek(record,14);
+                payrollPeriodStr    = conpeek(record,15);
+                currency            = conpeek(record,16);
+
+                errorCompensation   = false;
+                errorPayelement     = false;
+                errorPayroll        = false;
+                errorCurrency       = false;
+               
+
+                int i = conLen(record);
+                if (conLen(record))
+                {
+                    select RecId from compensationTable 
+                        where compensationTable.CompensationPlanCode == compensationPlan;
+                    if(compensationTable.RecId == 0)
+                    {
+                        warning(strfmt("@SPY:CompPlanNotValidinRow",cnt));
+                        errorCompensation = true;
+                    }
+
+                    payelementTable = SPYPayElementTable::findByCode(payelement);
+                    if(!payelementTable)
+                    {
+                        warning(strfmt("@SPY:PayelementNotValidinRow",cnt));
+                        errorPayelement = true;
+                    }
+
+                    payrollPeriod   = SPYPayrollPeriod::findByCode(payrollPeriodStr);
+                    if(!payrollPeriod)
+                    {
+                        warning(strfmt("@SPY:PayrollPeriodNotValidinRow",cnt));
+                        errorPayroll = true;
+                    }
+
+                    currencyTable   = Currency::find(currency);
+                    if(!currencyTable)
+                    {
+                        warning(strfmt("@SPY:CurNotValidinRow",cnt));
+                        errorCurrency = true;
+                    }
+                    
+                    if(errorCompensation == false && errorPayelement == false && errorPayroll == false && errorCurrency == false)
+                    {
+                        if(payelementTable.PayElementType == SPYPayElementType::Payroll)
+                        {
+                            cntUpdate++;
+                            compensationPayroll.CompensationPlan    = compensationTable.RecId;
+                            compensationPayroll.Payroll             = payelementTable.RecId;
+                            compensationPayroll.PayrollPeriod       = payrollPeriod.RecId;
+                            compensationPayroll.MonthlyMin          = monthlyMin;
+                            compensationPayroll.MonthlyMax          = monthlyMax;
+                            compensationPayroll.MonthlyMid          = monthlyAvg;
+                            compensationPayroll.AnnualMin           = annualMin;
+                            compensationPayroll.AnnualMid           = annualAvg;
+                            compensationPayroll.AnnualMax           = annualMax;
+                            compensationPayroll.Currency            = currency;
+                            compensationPayroll.insert();
+                        }
+                        else if(payelementTable.PayElementType == SPYPayElementType::Benefit)
+                        {
+                            cntUpdate++;
+                            compensationBenefit.CompensationPlan    = compensationTable.RecId;
+                            compensationBenefit.Benefit             = payelementTable.RecId;
+                            compensationBenefit.PayrollPeriod       = payrollPeriod.RecId;
+                            compensationBenefit.AmountMonthlyMin    = monthlyMin;
+                            compensationBenefit.AmountMonthlyMax    = monthlyMax;
+                            compensationBenefit.AmountMonthlyMid    = monthlyAvg;
+                            compensationBenefit.AmountAnnualMin     = annualMin;
+                            compensationBenefit.AmountAnnualMid     = annualAvg;
+                            compensationBenefit.AmountAnnualMax     = annualMax;
+                            compensationBenefit.QtyMonthlyMin       = monthlyQtyMin;
+                            compensationBenefit.QtyMonthlyMid       = monthlyQtyAvg;
+                            compensationBenefit.QtyMonthlyMax       = monthlyQtyMax;
+                            compensationBenefit.QtyAnnualMin        = annualQtyMin;
+                            compensationBenefit.QtyAnnualMid        = annualQtyAvg;
+                            compensationBenefit.QtyAnnualMax        = annualQtyMax;
+                            compensationBenefit.Currency            = currency;
+                            compensationBenefit.insert();
+                        }
+                        
+                    }
+                }
+            }
+        }
+        ttscommit;
+        info(strfmt("@SPY:UploadedRecords",cntUpdate));
+     
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    // Unpacking of parameters
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+        ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    // Validation
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYCompensationPlanDetailsUpload construct()
+    {
+        return new SPYCompensationPlanDetailsUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    static ClassDescription description()
+    {
+        return "@SPY:CompDetailsUpload";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYCompensationPlanDetailsUpload    compensationUpload;
+    
+        compensationUpload = SPYCompensationPlanDetailsUpload::construct();
+    
+        if (compensationUpload.prompt())
+            compensationUpload.runOperationNow();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

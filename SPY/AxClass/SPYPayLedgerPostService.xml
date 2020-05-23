@@ -1,0 +1,2396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLedgerPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class   SPYPayLedgerPostService extends SPYPayService
+{
+    SPYPayLedgerContract        contract;
+
+    RecordInsertList            payrollJournalLineList;
+    RecordInsertList            accountDistributionList;
+    LineNum                     lineNum;
+
+    SPYPayrollJournalLogTmp     payrollJournalLogTmp;
+    SPYTimesheetDimensionTmp    timesheetDimensionTmp;
+    SPYCostDistributionTmp      costDistributionTmp;
+    SPYAccountDistributionTmp   accountDistributionTmp;
+    SPYCostDistributionTmp      encashmentCostDistributionTmp;
+
+    SPYAmount                   employmentFactor;
+    Description                 journalDescription;
+
+    List                        leaveApplList;
+    SPYLeaveApplicationTable    leaveApplicationTable;
+    TransDate                   leaveSettlementStartDate,leaveSettlementEndDate;
+    SPYPayrollPeriodLine        payrollPeriodLineFinalize;
+
+    SPYPayLedgerTmp             payLedgerTmp;
+    boolean                     calledFromLeaveSettlement;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>checkJournalHeader</Name>
+				<Source><![CDATA[
+    private void checkJournalHeader(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYPayrollJournalTable      payrollJournalTable = SPYPayrollJournalTable::find(_payrollJournal,true);
+    
+        if(payrollJournalTable && payrollJournalTable.journalLineCount() == 0)
+        {
+            payrollJournalTable.doDelete();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>commitAccountDistribution</Name>
+				<Source><![CDATA[
+    private void commitAccountDistribution()
+    {
+        accountDistributionList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>commitJournal</Name>
+				<Source><![CDATA[
+    private void commitJournal()
+    {
+        payrollJournalLineList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createJournalHeader</Name>
+				<Source><![CDATA[
+    private SPYPayrollJournalRecId createJournalHeader()
+    {
+        SPYPayrollJournalTable      payrollJournalTable;
+    
+        payrollJournalTable.initValue();
+        payrollJournalTable.JournalId           = NumberSeq::newGetNum(SPYPayrollParameters::numRefPayrollJournalId()).num();
+        payrollJournalTable.Description         = journalDescription;
+        if(!calledFromLeaveSettlement)
+        {
+            payrollJournalTable.SourceDocument      = contract.parmPayrollParameterState().parmSourceDocument();
+            payrollJournalTable.SourceDocumentRef   = contract.parmPayrollParameterState().parmSourceDocumentRef();
+        }
+        payrollJournalTable.insert();
+    
+        return payrollJournalTable.RecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createJournalLine</Name>
+				<Source><![CDATA[
+    private void createJournalLine(SPYPayrollJournalRecId _payrollJournal)
+    {
+        StartDateTime           periodStartDateTime = DateTimeUtil::newDateTime(periodStart,00-00);
+        EndDateTime             periodEndDateTime = DateTimeUtil::newDateTime(periodEnd,00-00);
+        transDate               emplStartDate,emplEndDate;
+        int                     totalDays;
+        SPYAmount               totalPercent;
+        DefaultDimensionView    defaultDimensionView;
+        Name                    dimDisplayValue1,dimDisplayValue2,dimDisplayValue3,dimDisplayValue4,dimDisplayValue5,dimDisplayValue6,dimDisplayValue7,dimDisplayValue8;
+
+        //>>2015-11-18_SNK_START
+        //There could be adjustments processed for terminated employees to balance the benefit ledger
+        //and these could be done long after the employee has left. The system is expected to process
+        //any adjustments that are created for terminated employees.
+        StartDateTime           minValue = DateTimeUtil::minValue();
+        EndDateTime             maxValue = DateTimeUtil::maxValue();
+
+        if(SPYPayrollParameters::find().PayrollJourDimensionSource == SPYPayrollJourDimensionSource::Distribute)
+        {
+            delete_from costDistributionTmp;
+            //calculating total employment days for that payroll period
+            while select validTimeState(periodStartDateTime,periodEndDateTime) hcmEmploymentDetail
+            where hcmEmploymentDetail.Employment == hcmEmployment.RecId
+            {
+                emplStartDate = DateTimeUtil::date(max(hcmEmploymentDetail.ValidFrom,periodStartDateTime));
+                emplEndDate = DateTimeUtil::date(min(hcmEmploymentDetail.ValidTo,periodEndDateTime));
+                totalDays += emplEndDate - emplStartDate + 1;
+            }
+            //calculating employment factor
+            while select validTimeState(periodStartDateTime,periodEndDateTime) hcmEmploymentDetail
+                where hcmEmploymentDetail.Employment == hcmEmployment.RecId
+            {
+                emplStartDate = DateTimeUtil::date(max(hcmEmploymentDetail.ValidFrom,periodStartDateTime));
+                emplEndDate = DateTimeUtil::date(min(hcmEmploymentDetail.ValidTo,periodEndDateTime));
+                employmentFactor = (emplEndDate - emplStartDate + 1) / totalDays;
+                switch(hcmEmploymentDetail.SPYCostDistributionBasis)
+                {
+                    case SPYCostDistributionBasis::Timesheet :
+                        //Only for hour journal & in case of calendar non consideration
+                        if(!SPYPayrollParameters::find().ConsiderCalendar && SPYPayrollParameters::find().TimesheetProcessSource == SPYTimesheetProcessSource::HourJournal)
+                            this.setHourJournalDimesionTmp();
+                        else
+                            this.setTimesheetDimesionTmp();
+                        select sum(Percent) from costDistributionTmp;
+                        if(!costDistributionTmp.Percent)
+                        {
+                            warning(strFmt("@SPY:TimesheetNotFound",worker.name()));
+                            if(SPYPayrollParameters::find().CostDistributionDimension1)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension1).Name;
+                                dimDisplayValue1 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension2)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension2).Name;
+                                dimDisplayValue2 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension3)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension3).Name;
+                                dimDisplayValue3 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension4)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension4).Name;
+                                dimDisplayValue4 = defaultDimensionView.DisplayValue;
+                            }                            
+                            if(SPYPayrollParameters::find().CostDistributionDimension5)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension5).Name;
+                                dimDisplayValue5 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension6)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension6).Name;
+                                dimDisplayValue6 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension7)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension7).Name;
+                                dimDisplayValue7 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension8)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension8).Name;
+                                dimDisplayValue8 = defaultDimensionView.DisplayValue;
+                            }                           
+                            
+                            costDistributionTmp.DimensionValue1   = dimDisplayValue1;
+                            costDistributionTmp.DimensionValue2   = dimDisplayValue2;
+                            costDistributionTmp.DimensionValue3   = dimDisplayValue3;
+                            costDistributionTmp.DimensionValue4   = dimDisplayValue4;
+                            costDistributionTmp.DimensionValue5   = dimDisplayValue5;
+                            costDistributionTmp.DimensionValue6   = dimDisplayValue6;
+                            costDistributionTmp.DimensionValue7   = dimDisplayValue7;
+                            costDistributionTmp.DimensionValue8   = dimDisplayValue8;
+                            costDistributionTmp.Percent           = 100;
+                            costDistributionTmp.insert();
+
+                            if(!hcmEmployment.DefaultDimension)
+                                warning(strFmt("@SPY1097",worker.name()));
+                            /*
+                            if(dimDisplayValue1 || dimDisplayValue2 || dimDisplayValue3 || dimDisplayValue4
+                                || dimDisplayValue5 || dimDisplayValue6 || dimDisplayValue7 || dimDisplayValue8)
+                            {
+                                costDistributionTmp.DimensionValue1   = dimDisplayValue1;
+                                costDistributionTmp.DimensionValue2   = dimDisplayValue2;
+                                costDistributionTmp.DimensionValue3   = dimDisplayValue3;
+                                costDistributionTmp.DimensionValue4   = dimDisplayValue4;
+                                costDistributionTmp.DimensionValue5   = dimDisplayValue5;
+                                costDistributionTmp.DimensionValue6   = dimDisplayValue6;
+                                costDistributionTmp.DimensionValue7   = dimDisplayValue7;
+                                costDistributionTmp.DimensionValue8   = dimDisplayValue8;
+                                costDistributionTmp.Percent           = 100;
+                                costDistributionTmp.insert();
+                            }
+                            else
+                                warning(strFmt("@SPY1097",worker.name()));
+                            */
+                        }
+                        break;
+
+                    case SPYCostDistributionBasis::SplitByRevenue :
+                    case SPYCostDistributionBasis::SplitByDimension :
+                    case SPYCostDistributionBasis::SplitEqually :
+                        this.setCostDistributionTmp(hcmEmploymentDetail.SPYCostDistributionBasis);
+                        select sum(Percent) from costDistributionTmp;
+                        if(!costDistributionTmp.Percent)
+                        {
+                            warning(strFmt("@SPY:RevenueNotFound",worker.name()));
+                            if(SPYPayrollParameters::find().CostDistributionDimension1)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension1).Name;
+                                dimDisplayValue1 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension2)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension2).Name;
+                                dimDisplayValue2 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension3)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension3).Name;
+                                dimDisplayValue3 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension4)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension4).Name;
+                                dimDisplayValue4 = defaultDimensionView.DisplayValue;
+                            }
+                            // New code added Start by Lakshya for ProjectName "Cost Split" for enabling functionalities for other dimensions as well
+                            if(SPYPayrollParameters::find().CostDistributionDimension5)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension5).Name;
+                                dimDisplayValue5 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension6)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension6).Name;
+                                dimDisplayValue6 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension7)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension7).Name;
+                                dimDisplayValue7 = defaultDimensionView.DisplayValue;
+                            }
+                            if(SPYPayrollParameters::find().CostDistributionDimension8)
+                            {
+                                select firstonly DisplayValue from defaultDimensionView
+                                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                                    SPYPayrollParameters::find().CostDistributionDimension8).Name;
+                                dimDisplayValue8 = defaultDimensionView.DisplayValue;
+                            }
+                            // New code added Ended by Lakshya for ProjectName "Cost Split" for enabling functionalities for other dimensions as well
+                            
+                            if(dimDisplayValue1 || dimDisplayValue2 || dimDisplayValue3 || dimDisplayValue4 
+                                || dimDisplayValue5 || dimDisplayValue6 || dimDisplayValue7 || dimDisplayValue8)
+                            {
+                                costDistributionTmp.DimensionValue1   = dimDisplayValue1;
+                                costDistributionTmp.DimensionValue2   = dimDisplayValue2;
+                                costDistributionTmp.DimensionValue3   = dimDisplayValue3;
+                                costDistributionTmp.DimensionValue4   = dimDisplayValue4;
+                                costDistributionTmp.DimensionValue5   = dimDisplayValue5;
+                                costDistributionTmp.DimensionValue6   = dimDisplayValue6;
+                                costDistributionTmp.DimensionValue7   = dimDisplayValue7;
+                                costDistributionTmp.DimensionValue8   = dimDisplayValue8;
+                                costDistributionTmp.Percent           = 100;
+                                costDistributionTmp.insert();
+                            }
+                            else
+                                warning(strFmt("@SPY1097",worker.name()));
+                        }
+                        break;
+                }
+            }
+        }
+        /*
+        while select costDistributionTmp
+        {
+        info(strFmt('%1-%2-%3-%4',costDistributionTmp.DimensionValue1,costDistributionTmp.DimensionValue2,costDistributionTmp.DimensionValue3,costDistributionTmp.DimensionValue4));
+        }
+        */
+        if(!hcmEmploymentDetail)
+            hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId);
+        select sum(Percent) from costDistributionTmp;
+        totalPercent = costDistributionTmp.Percent;
+        while select forUpdate costDistributionTmp
+        {
+            costDistributionTmp.Percent = costDistributionTmp.Percent * 100 / totalPercent;
+            costDistributionTmp.update();
+        }
+        if(!calledFromLeaveSettlement && contract.parmPayrollParameterState().parmCalledFromJournal())
+        {
+            this.refreshPayLedgerTmpFromPayroll();
+            this.processPayrollLedgerFromJournal(_payrollJournal);
+            this.refreshPayLedgerTmpFromBenefit();
+            this.processBenefitLedgerFromJournal(_payrollJournal);
+        }
+        else
+        {
+            this.processPayrollLedger(_payrollJournal);
+            this.processBenefitLedger(_payrollJournal);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initialize</Name>
+				<Source><![CDATA[
+    public void initialize()
+    {
+        super();
+        payrollJournalLineList = new RecordInsertList(tableNum(SPYPayrollJournalLine));
+        accountDistributionList = new RecordInsertList(tableNum(AccountingDistribution));
+        leaveApplList = new List(Types::Int64);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeLeaveApplList</Name>
+				<Source><![CDATA[
+    protected void initializeLeaveApplList(boolean _calledFromSettlementProcess,container _leaveApplContainer)
+    {
+        int                         leaveApplContainerLenCount = 1;
+        SPYLeaveApplicationTable    leaveApplicationTab;
+        QueryRun                    leaveApplQueryRun;
+    
+        if(_calledFromSettlementProcess)
+        {
+            while(leaveApplContainerLenCount <= conLen(_leaveApplContainer))
+            {
+                leaveApplList.addEnd(conPeek(_leaveApplContainer,leaveApplContainerLenCount));
+                leaveApplContainerLenCount++;
+            }
+        }
+        else
+        {
+            if(_leaveApplContainer)
+                leaveApplQueryRun = new QueryRun(_leaveApplContainer);
+            else
+                leaveApplQueryRun = new QueryRun(new Query(queryStr(SPYLeaveApplicationSettlement)));
+    
+            while(leaveApplQueryRun.next())
+            {
+                leaveApplicationTab = leaveApplQueryRun.get(tableNum(SPYLeaveApplicationTable));
+                leaveApplList.addEnd(leaveApplicationTab.RecId);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initLineNum</Name>
+				<Source><![CDATA[
+    private void initLineNum(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYPayrollJournalLine       payrollJournalLine;
+    
+        select maxOf(LineNum) from payrollJournalLine
+            where payrollJournalLine.PayrollJournal == _payrollJournal;
+    
+        lineNum = payrollJournalLine.LineNum + 1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertPayrollJournalLine</Name>
+				<Source><![CDATA[
+    private void insertPayrollJournalLine(SPYPayrollJournalRecId                _payrollJournal,
+                                          HcmWorkerRecId                        _worker,
+                                          SPYPayrollPeriodLineRecId             _payrollPeriodLine,
+                                          SPYPayElementRecId                    _payElement,
+                                          TransDate                             _transDate,
+                                          SPYTransTxt                           _txt,
+                                          SPYAmount                             _transactionCurrencyAmount,
+                                          SPYAmount                             _accountingCurrencyAmount,
+                                          CurrencyCode                          _currency,
+                                          DimensionDefault                      _defaultDimension,
+                                          LedgerDimensionDefaultAccount         _ledgerDimensionDebit,
+                                          LedgerDimensionDefaultAccount         _ledgerDimensionCredit,
+                                          AccountingDistributionTemplateRecId   _accountingDistributionTemplate,
+                                          boolean   _distributeCost,
+                                          SPYBenefitJournalType                 _journalType = SPYBenefitJournalType::Accrual)
+    {
+        SPYPayrollJournalLine   payrollJournalLine;
+    
+        payrollJournalLine.clear();
+        payrollJournalLine.initValue();
+        payrollJournalLine.Worker                           = _worker;
+        payrollJournalLine.PayrollPeriodLine                = _payrollPeriodLine;
+        payrollJournalLine.PayElement                       = _payElement;
+        payrollJournalLine.PayrollJournal                   = _payrollJournal;
+        payrollJournalLine.LineNum                          = lineNum;
+        payrollJournalLine.TransDate                        = _transDate;
+        payrollJournalLine.Txt                              = _txt;
+        if(_transactionCurrencyAmount > 0)
+            payrollJournalLine.AmountCurDebit               = _transactionCurrencyAmount;
+        else
+            payrollJournalLine.AmountCurCredit              = -_transactionCurrencyAmount;
+        if(_accountingCurrencyAmount > 0)
+            payrollJournalLine.AmountMSTDebit               = _accountingCurrencyAmount;
+        else
+            payrollJournalLine.AmountMSTCredit              = -_accountingCurrencyAmount;
+        payrollJournalLine.Currency                         = _currency;
+        payrollJournalLine.DefaultDimension                 = _defaultDimension;
+        payrollJournalLine.LedgerDimension                  = _ledgerDimensionDebit;
+        payrollJournalLine.OffsetLedgerDimension            = _ledgerDimensionCredit;
+        payrollJournalLine.AccountingDistributionTemplate   = _accountingDistributionTemplate;
+        payrollJournalLine.DistributeCost = _distributeCost;
+        payrollJournalLineList.add(payrollJournalLine);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>nextLineNum</Name>
+				<Source><![CDATA[
+    private void nextLineNum()
+    {
+        lineNum++;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYPayLedgerContract _contract)
+    {
+        SPYPayrollJournalRecId  payrollJournal;
+        boolean                 payrollParameterState;
+        ListEnumerator          workerListEnumerator;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+    
+        contract = _contract;
+        this.setLegalEntity(CompanyInfo::current());
+        this.setPayrollPeriodLine(contract.parmPayrollPeriodLine());
+        this.setTransDate(contract.parmTransDate());
+        this.initialize();
+        if(contract.parmPayrollParameterState().parmCalledFromMasterProcess())
+        {
+            payrollParameterState = true;
+            this.initializeWorkerList(true,contract.parmPayrollParameterState().parmWorkerContainer());
+            this.initializePayElementMap(true,contract.parmPayrollParameterState().parmPayElementContainer());
+        }
+        else if(contract.parmPayrollParameterState().parmCalledFromArrearProcess())
+        {
+            payrollParameterState = true;
+            this.initializeWorkerList(true,contract.parmPayrollParameterState().parmWorkerContainer());
+            this.initializePayElementMap(false,contract.parmPayElementQuery());
+        }
+        else if(contract.parmPayrollParameterState().parmCalledFromJournal())
+        {
+            payrollParameterState = true;
+            this.initializeWorkerList(true,contract.parmPayrollParameterState().parmWorkerContainer());
+        }
+        else
+        {
+            this.initializeWorkerList(false,contract.parmWorkerQuery());
+            this.initializePayElementMap(false,contract.parmPayElementQuery());
+        }
+        workerListEnumerator = workerList.getEnumerator();
+        progress.setCaption("@SPY1098");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(workerList.elements());
+        progressCount = 1;
+        setPrefix("@SPY319");
+        
+        try
+        {
+            ttsBegin;
+            journalDescription = contract.parmJournalDescription();
+            payrollJournal = this.createJournalHeader();
+            lineNum = 1;
+            this.setPayrollTimesheetDate(SPYPayrollPeriodLine::find(contract.parmPayrollPeriodLine()));
+            while(workerListEnumerator.moveNext())
+            {
+                this.setWorker(HcmWorker::find(workerListEnumerator.current()));
+                progress.setText(strfmt("@SPY882", worker.name()));
+                progress.setCount(progressCount, 1);
+                this.createJournalLine(payrollJournal);
+                progressCount++;
+            }
+            this.commitJournal();
+            this.updateAccountDistribution(payrollJournal);
+            this.commitAccountDistribution();
+            this.checkJournalHeader(payrollJournal);
+            this.updatePayLedger();
+            this.updateSourceJournal(payrollJournal);
+            ttsCommit;
+            this.showInfo(payrollJournal);
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postFromLeaveSettlement</Name>
+				<Source><![CDATA[
+    public void postFromLeaveSettlement(SPYPayLedgerLeaveSettlementContract _contract)
+    {
+        SPYPayrollJournalRecId  payrollJournal;
+        ListEnumerator          workerListEnumerator;
+        ListEnumerator          leaveApplListEnumerator;
+        date                    minLeaveDate = dateNull(),maxLeaveDate = dateMax();
+        SPYLeaveApplicationLine leaveApplicationLine;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+    
+        contract = _contract;
+        calledFromLeaveSettlement = true;
+        this.setLegalEntity(CompanyInfo::current());
+        this.setPayrollPeriodLine(contract.parmPayrollPeriodLine());
+        this.setTransDate(contract.parmTransDate());
+        this.initialize();
+        if(_contract.parmParameterState().parmCalledFromSettlementProcess())
+            this.initializeLeaveApplList(true,_contract.parmParameterState().parmLeaveApplContainer());
+        else
+            this.initializeLeaveApplList(false,_contract.parmLeaveApplQuery());
+        leaveApplListEnumerator = leaveApplList.getEnumerator();
+        progress.setCaption("@SPY1098");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(leaveApplList.elements());
+        progressCount = 1;
+        setPrefix("@SPY319");
+        
+        try
+        {
+            ttsBegin;
+            journalDescription = contract.parmJournalDescription();
+            payrollJournal = this.createJournalHeader();
+            lineNum = 1;
+            this.setPayrollTimesheetDate(SPYPayrollPeriodLine::find(contract.parmPayrollPeriodLine()));
+            while(leaveApplListEnumerator.moveNext())
+            {
+                workerList.empty();
+                leaveApplicationTable = SPYLeaveApplicationTable::find(leaveApplListEnumerator.current());
+                select validTimeState(minLeaveDate,maxLeaveDate) minOf(ActualStartDate),maxOf(ActualEndDate) from leaveApplicationLine
+                    where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId;
+                leaveSettlementStartDate = leaveApplicationLine.ActualStartDate;
+                leaveSettlementEndDate = leaveApplicationLine.ActualEndDate;
+    
+                workerList.addEnd(leaveApplicationTable.Worker);
+                workerListEnumerator = workerList.getEnumerator();
+                while(workerListEnumerator.moveNext())
+                {
+                    this.setWorker(HcmWorker::find(workerListEnumerator.current()));
+                    this.setLeaveStartDate();
+                    progress.setText(strfmt("@SPY882", worker.name()));
+                    progress.setCount(progressCount, 1);
+                    this.createJournalLine(payrollJournal);
+                    progressCount++;
+                }
+                this.updateLeaveApplication();
+            }
+            this.commitJournal();
+            this.updateAccountDistribution(payrollJournal);
+            this.commitAccountDistribution();
+            this.checkJournalHeader(payrollJournal);
+            this.updatePayLedger();
+            ttsCommit;
+            this.showInfo(payrollJournal);
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefitLedger</Name>
+				<Source><![CDATA[
+    private void processBenefitLedger(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYBenefitLedger                        benefitLedger;
+        int                                             countLine;
+        boolean                                     distributeAsAccrued;
+
+        switch(SPYPayrollParameters::find().PayrollJourDimensionSource)
+        {
+            case SPYPayrollJourDimensionSource::Fixed :
+                while select benefitLedger
+                where benefitLedger.Worker == worker.RecId &&
+                          benefitLedger.PayrollPeriodLine == contract.parmPayrollPeriodLine() &&
+                          !benefitLedger.PayrollJournalLine &&
+                          !benefitLedger.PnLPayrollJournalLine &&
+                          benefitLedger.IsFinalised
+                {
+                    //>>2020-05-05_START_SNK
+                    //in case of payout the desired entry is Dr Liability and Cr Salary payable
+                    //this vouched should be posted using the payroll pay element hence a voucher for benefit ledger is not required
+                    //if club encashment voucher is marked in the setup the ledger journal would not be created for the encashment type
+                    //of benefit ledger entries. 
+                    if(benefitLedger.TransactionCurrencyAmount && ! (benefitLedger.EncashmentPayout && SPYPayrollParameters::find().ClubEncashmentVouchers))
+                    {
+                        this.insertPayrollJournalLine(_payrollJournal,
+                                                  worker.RecId,
+                                                  benefitLedger.PayrollPeriodLine,
+                                                  benefitLedger.Benefit,
+                                                  benefitLedger.TransDate,
+                                                  benefitLedger.Txt,
+                                                  benefitLedger.TransactionCurrencyAmount,
+                                                  benefitLedger.AccountingCurrencyAmount,
+                                                  benefitLedger.Currency,
+                                                  benefitLedger.DefaultDimension,
+                                                  benefitLedger.LedgerDimensionDebit,
+                                                  benefitLedger.LedgerDimensionCredit,
+                                                  benefitLedger.AccountingDistributionTemplate,
+                                                  benefitLedger.DistributeCost,
+                                                  benefitLedger.JournalType);
+                        this.updateJournalLogTmp(_payrollJournal,benefitLedger.RecId,SPYPayElementType::Benefit);
+                        this.nextLineNum();
+                    }
+
+                    if(benefitLedger.TransactionCurPnLAmount)
+                        this.processBenefitLedgerPnL(benefitLedger,_payrollJournal);
+                }
+                break;
+
+            case SPYPayrollJourDimensionSource::Distribute :
+                while select benefitLedger
+                where benefitLedger.Worker == worker.RecId &&
+                          benefitLedger.PayrollPeriodLine == contract.parmPayrollPeriodLine() &&
+                          !benefitLedger.PayrollJournalLine &&
+                          !benefitLedger.PnLPayrollJournalLine &&
+                          benefitLedger.IsFinalised
+                {
+                    if(benefitLedger.DistributeCost)
+                    {
+                        if(benefitLedger.JournalType == SPYBenefitJournalType::Accrual ||
+                       (benefitLedger.JournalType == SPYBenefitJournalType::Encashment &&
+                        SPYBenefitDetails::findByBenefit(benefitLedger.Benefit,CompanyInfo::current()).EncashmentCostDistribution
+                        == SPYBenefitEncashmentCostDistribution::DistributeAsFormula))
+                        {
+                            countLine = 1;
+                            while select costDistributionTmp
+                            where costDistributionTmp.Percent
+                            {                                
+                                //if amount presents, create journal
+                                //>>2020-05-05_START_SNK
+                                //in case of payout the desired entry is Dr Liability and Cr Salary payable
+                                //this vouched should be posted using the payroll pay element hence a voucher for benefit ledger is not required
+                                //if club encashment voucher is marked in the setup the ledger journal would not be created for the encashment type
+                                //of benefit ledger entries.
+                                if(benefitLedger.TransactionCurrencyAmount && ! (benefitLedger.EncashmentPayout && SPYPayrollParameters::find().ClubEncashmentVouchers ) )
+                                {
+                                    DimensionDefault    dimension = this.getDimensionFromCostDistTmp(benefitLedger.DefaultDimension);
+                                    if(countLine == 1)
+                                    {
+                                        this.insertPayrollJournalLine(_payrollJournal,
+                                                                    worker.RecId,
+                                                                    benefitLedger.PayrollPeriodLine,
+                                                                    benefitLedger.Benefit,
+                                                                    benefitLedger.TransDate,
+                                                                    benefitLedger.Txt,
+                                                                    benefitLedger.TransactionCurrencyAmount,
+                                                                    benefitLedger.AccountingCurrencyAmount,
+                                                                    benefitLedger.Currency,
+                                                                    dimension,
+                                                                    benefitLedger.LedgerDimensionDebit,
+                                                                    benefitLedger.LedgerDimensionCredit,
+                                                                    benefitLedger.AccountingDistributionTemplate,
+                                                                    benefitLedger.DistributeCost,
+                                                                    benefitLedger.JournalType);
+                                        this.updateJournalLogTmp(_payrollJournal,benefitLedger.RecId,SPYPayElementType::Benefit);
+                                        this.nextLineNum();
+                                    }
+                                    this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                               (benefitLedger.LedgerDimensionDebit, dimension),
+                                                               (benefitLedger.TransactionCurrencyAmount)
+                                                               * costDistributionTmp.Percent / 100,benefitLedger.JournalType);
+                                    /*
+                                    if(benefitLedger.JournalType == SPYBenefitJournalType::Accrual)
+                                        this.updateBenefitAccrualDistribution(benefitLedger, dimension,
+                                                                              benefitLedger.Quantity * costDistributionTmp.Percent / 100,
+                                                                              benefitLedger.AccountingCurrencyAmount* costDistributionTmp.Percent / 100);
+                                    */
+                                }                                
+                                countLine++;
+
+                            }
+                        }
+                        else
+                        {
+                            SPYBenefitLedgerBenefitAccrualMapping::updateBenefitAccrual(benefitLedger,benefitLedger.AccountingCurrencyAmount);
+                            //if amount presents, create journal
+                            //>>2020-05-05_START_SNK
+                            //in case of payout the desired entry is Dr Liability and Cr Salary payable
+                            //this vouched should be posted using the payroll pay element hence a voucher for benefit ledger is not required
+                            //if club encashment voucher is marked in the setup the ledger journal would not be created for the encashment type
+                            //of benefit ledger entries.
+
+                            if(benefitLedger.TransactionCurrencyAmount && !(benefitLedger.EncashmentPayout && SPYPayrollParameters::find().ClubEncashmentVouchers) )
+                            {
+                                this.setEncashmentCostDistributionTmp(benefitLedger);
+                                distributeAsAccrued = true;
+                                countLine = 1;
+                                while select encashmentCostDistributionTmp
+                                    where encashmentCostDistributionTmp.Percent
+                                {
+                                    DimensionDefault    dimension = this.getDimensionFromEncashmentCostDistTmp(benefitLedger.DefaultDimension);
+                                    if(countLine == 1)
+                                    {
+                                        this.insertPayrollJournalLine(_payrollJournal,
+                                                                  worker.RecId,
+                                                                  benefitLedger.PayrollPeriodLine,
+                                                                  benefitLedger.Benefit,
+                                                                  benefitLedger.TransDate,
+                                                                  benefitLedger.Txt,
+                                                                  benefitLedger.TransactionCurrencyAmount,
+                                                                  benefitLedger.AccountingCurrencyAmount,
+                                                                  benefitLedger.Currency,
+                                                                  dimension,
+                                                                  benefitLedger.LedgerDimensionDebit,
+                                                                  benefitLedger.LedgerDimensionCredit,
+                                                                  benefitLedger.AccountingDistributionTemplate,
+                                                                  benefitLedger.DistributeCost,
+                                                                  benefitLedger.JournalType);
+                                        this.updateJournalLogTmp(_payrollJournal,benefitLedger.RecId,SPYPayElementType::Benefit);
+                                        this.nextLineNum();
+                                    }
+                                    this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                              (benefitLedger.LedgerDimensionDebit,dimension),
+                                                               benefitLedger.TransactionCurrencyAmount * encashmentCostDistributionTmp.Percent / 100,
+                                                               benefitLedger.JournalType);
+                                    countLine++;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //>>2020-05-05_START_SNK
+                        //in case of payout the desired entry is Dr Liability and Cr Salary payable
+                        //this vouched should be posted using the payroll pay element hence a voucher for benefit ledger is not required
+                        //if club encashment voucher is marked in the setup the ledger journal would not be created for the encashment type
+                        //of benefit ledger entries.
+
+                        if(benefitLedger.TransactionCurrencyAmount && !( benefitLedger.EncashmentPayout && SPYPayrollParameters::find().ClubEncashmentVouchers) )
+                        {
+                            this.insertPayrollJournalLine(_payrollJournal,
+                                                  worker.RecId,
+                                                  benefitLedger.PayrollPeriodLine,
+                                                  benefitLedger.Benefit,
+                                                  benefitLedger.TransDate,
+                                                  benefitLedger.Txt,
+                                                  benefitLedger.TransactionCurrencyAmount,
+                                                  benefitLedger.AccountingCurrencyAmount,
+                                                  benefitLedger.Currency,
+                                                  benefitLedger.DefaultDimension,
+                                                  benefitLedger.LedgerDimensionDebit,
+                                                  benefitLedger.LedgerDimensionCredit,
+                                                  benefitLedger.AccountingDistributionTemplate,
+                                                  benefitLedger.DistributeCost,
+                                                  benefitLedger.JournalType);
+                            this.updateJournalLogTmp(_payrollJournal,benefitLedger.RecId,SPYPayElementType::Benefit);
+                            this.nextLineNum();
+                            this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                               (benefitLedger.LedgerDimensionDebit, benefitLedger.DefaultDimension),
+                                                               benefitLedger.TransactionCurrencyAmount,benefitLedger.JournalType);
+                        }
+                    }
+                    if(benefitLedger.TransactionCurPnLAmount)
+                        this.processBenefitLedgerPnL(benefitLedger,_payrollJournal,distributeAsAccrued);
+                }
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefitLedgerFromJournal</Name>
+				<Source><![CDATA[
+    private void processBenefitLedgerFromJournal(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYBenefitLedger                        benefitLedger;
+        int                                             countLine;
+        boolean                                     distributeAsAccrued;
+
+        switch(SPYPayrollParameters::find().PayrollJourDimensionSource)
+        {
+            case SPYPayrollJourDimensionSource::Fixed :
+                while select benefitLedger
+                where benefitLedger.Worker == worker.RecId &&
+                         !benefitLedger.PayrollJournalLine &&
+                         !benefitLedger.PnLPayrollJournalLine &&
+                         benefitLedger.IsFinalised
+                join payLedgerTmp
+                where payLedgerTmp.LedgerRecId == benefitLedger.RecId
+                {
+                    //>>2020-05-05_START_SNK
+                    //in case of payout the desired entry is Dr Liability and Cr Salary payable
+                    //this vouched should be posted using the payroll pay element hence a voucher for benefit ledger is not required
+                    //if club encashment voucher is marked in the setup the ledger journal would not be created for the encashment type
+                    //of benefit ledger entries.
+
+                    if(benefitLedger.TransactionCurrencyAmount && !(benefitLedger.EncashmentPayout && SPYPayrollParameters::find().ClubEncashmentVouchers) )
+                    {
+                        this.insertPayrollJournalLine(_payrollJournal,
+                                                  worker.RecId,
+                                                  benefitLedger.PayrollPeriodLine,
+                                                  benefitLedger.Benefit,
+                                                  benefitLedger.TransDate,
+                                                  benefitLedger.Txt,
+                                                  benefitLedger.TransactionCurrencyAmount,
+                                                  benefitLedger.AccountingCurrencyAmount,
+                                                  benefitLedger.Currency,
+                                                  benefitLedger.DefaultDimension,
+                                                  benefitLedger.LedgerDimensionDebit,
+                                                  benefitLedger.LedgerDimensionCredit,
+                                                  benefitLedger.AccountingDistributionTemplate,
+                                                  benefitLedger.DistributeCost,
+                                                  benefitLedger.JournalType);
+                        this.updateJournalLogTmp(_payrollJournal,benefitLedger.RecId,SPYPayElementType::Benefit);
+                        this.nextLineNum();
+                    }
+                    if(benefitLedger.TransactionCurPnLAmount)
+                        this.processBenefitLedgerPnL(benefitLedger,_payrollJournal);
+                }
+                break;
+
+            case SPYPayrollJourDimensionSource::Distribute :
+                while select benefitLedger
+                where benefitLedger.Worker == worker.RecId &&
+                         !benefitLedger.PayrollJournalLine &&
+                         !benefitLedger.PnLPayrollJournalLine &&
+                         benefitLedger.IsFinalised
+                join payLedgerTmp
+                where payLedgerTmp.LedgerRecId == benefitLedger.RecId
+                {
+                    if(benefitLedger.DistributeCost)
+                    {
+                        if(benefitLedger.JournalType == SPYBenefitJournalType::Accrual ||
+                       (benefitLedger.JournalType == SPYBenefitJournalType::Encashment &&
+                        SPYBenefitDetails::findByBenefit(benefitLedger.Benefit,CompanyInfo::current()).EncashmentCostDistribution
+                        == SPYBenefitEncashmentCostDistribution::DistributeAsFormula))
+                        {
+                            countLine = 1;
+                            while select costDistributionTmp
+                                where costDistributionTmp.Percent
+                            {                                
+                                //if amount presents, create journal
+                                //>>2020-05-05_START_SNK
+                                //in case of payout the desired entry is Dr Liability and Cr Salary payable
+                                //this vouched should be posted using the payroll pay element hence a voucher for benefit ledger is not required
+                                //if club encashment voucher is marked in the setup the ledger journal would not be created for the encashment type
+                                //of benefit ledger entries.
+
+                                if(benefitLedger.TransactionCurrencyAmount && !(benefitLedger.EncashmentPayout && SPYPayrollParameters::find().ClubEncashmentVouchers) )
+                                {
+                                    DimensionDefault    dimension = this.getDimensionFromCostDistTmp(benefitLedger.DefaultDimension);
+                                    if(countLine == 1)
+                                    {
+                                        this.insertPayrollJournalLine(_payrollJournal,
+                                                                    worker.RecId,
+                                                                    benefitLedger.PayrollPeriodLine,
+                                                                    benefitLedger.Benefit,
+                                                                    benefitLedger.TransDate,
+                                                                    benefitLedger.Txt,
+                                                                    benefitLedger.TransactionCurrencyAmount,
+                                                                    benefitLedger.AccountingCurrencyAmount,
+                                                                    benefitLedger.Currency,
+                                                                    dimension,
+                                                                    benefitLedger.LedgerDimensionDebit,
+                                                                    benefitLedger.LedgerDimensionCredit,
+                                                                    benefitLedger.AccountingDistributionTemplate,
+                                                                    benefitLedger.DistributeCost,
+                                                                    benefitLedger.JournalType);
+                                        this.updateJournalLogTmp(_payrollJournal,benefitLedger.RecId,SPYPayElementType::Benefit);
+                                        this.nextLineNum();
+                                    }
+                                    this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                               (benefitLedger.LedgerDimensionDebit, dimension),
+                                                               (benefitLedger.TransactionCurrencyAmount)
+                                                               * costDistributionTmp.Percent / 100,benefitLedger.JournalType);
+                                    /*
+                                    if(benefitLedger.JournalType == SPYBenefitJournalType::Accrual)
+                                        this.updateBenefitAccrualDistribution(benefitLedger, dimension,
+                                                                              benefitLedger.Quantity * costDistributionTmp.Percent / 100,
+                                                                              benefitLedger.AccountingCurrencyAmount* costDistributionTmp.Percent / 100);
+                                    */
+                                }                                
+                                countLine++;
+                            }
+                        }
+                        else
+                        {
+                            SPYBenefitLedgerBenefitAccrualMapping::updateBenefitAccrual(benefitLedger,benefitLedger.AccountingCurrencyAmount);
+                            //if amount presents, create journal
+                            //>>2020-05-05_START_SNK
+                            //in case of payout the desired entry is Dr Liability and Cr Salary payable
+                            //this vouched should be posted using the payroll pay element hence a voucher for benefit ledger is not required
+                            //if club encashment voucher is marked in the setup the ledger journal would not be created for the encashment type
+                            //of benefit ledger entries.
+
+                            if(benefitLedger.TransactionCurrencyAmount && !(benefitLedger.EncashmentPayout && SPYPayrollParameters::find().ClubEncashmentVouchers))
+                            {
+                                this.setEncashmentCostDistributionTmp(benefitLedger);
+                                distributeAsAccrued = true;
+                                countLine = 1;
+                                while select encashmentCostDistributionTmp
+                                    where encashmentCostDistributionTmp.Percent
+                                {
+                                    DimensionDefault    dimension = this.getDimensionFromEncashmentCostDistTmp(benefitLedger.DefaultDimension);
+                                    if(countLine == 1)
+                                    {
+                                        this.insertPayrollJournalLine(_payrollJournal,
+                                                                  worker.RecId,
+                                                                  benefitLedger.PayrollPeriodLine,
+                                                                  benefitLedger.Benefit,
+                                                                  benefitLedger.TransDate,
+                                                                  benefitLedger.Txt,
+                                                                  benefitLedger.TransactionCurrencyAmount,
+                                                                  benefitLedger.AccountingCurrencyAmount,
+                                                                  benefitLedger.Currency,
+                                                                  dimension,
+                                                                  benefitLedger.LedgerDimensionDebit,
+                                                                  benefitLedger.LedgerDimensionCredit,
+                                                                  benefitLedger.AccountingDistributionTemplate,
+                                                                  benefitLedger.DistributeCost,
+                                                                  benefitLedger.JournalType);
+                                        this.updateJournalLogTmp(_payrollJournal,benefitLedger.RecId,SPYPayElementType::Benefit);
+                                        this.nextLineNum();
+                                    }
+                                    this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                              (benefitLedger.LedgerDimensionDebit,dimension),
+                                                               benefitLedger.TransactionCurrencyAmount * encashmentCostDistributionTmp.Percent / 100,
+                                                               benefitLedger.JournalType);
+                                    countLine++;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //>>2020-05-05_START_SNK
+                        //in case of payout the desired entry is Dr Liability and Cr Salary payable
+                        //this vouched should be posted using the payroll pay element hence a voucher for benefit ledger is not required
+                        //if club encashment voucher is marked in the setup the ledger journal would not be created for the encashment type
+                        //of benefit ledger entries.
+
+                        if(benefitLedger.TransactionCurrencyAmount && !(benefitLedger.EncashmentPayout && SPYPayrollParameters::find().ClubEncashmentVouchers) )
+                        {
+                            this.insertPayrollJournalLine(_payrollJournal,
+                                                  worker.RecId,
+                                                  benefitLedger.PayrollPeriodLine,
+                                                  benefitLedger.Benefit,
+                                                  benefitLedger.TransDate,
+                                                  benefitLedger.Txt,
+                                                  benefitLedger.TransactionCurrencyAmount,
+                                                  benefitLedger.AccountingCurrencyAmount,
+                                                  benefitLedger.Currency,
+                                                  benefitLedger.DefaultDimension,
+                                                  benefitLedger.LedgerDimensionDebit,
+                                                  benefitLedger.LedgerDimensionCredit,
+                                                  benefitLedger.AccountingDistributionTemplate,
+                                                  benefitLedger.DistributeCost,
+                                                  benefitLedger.JournalType);
+                            this.updateJournalLogTmp(_payrollJournal,benefitLedger.RecId,SPYPayElementType::Benefit);
+                            this.nextLineNum();
+                            this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                               (benefitLedger.LedgerDimensionDebit, benefitLedger.DefaultDimension),
+                                                               benefitLedger.TransactionCurrencyAmount,benefitLedger.JournalType);
+                        }
+                    }
+                    if(benefitLedger.TransactionCurPnLAmount)
+                        this.processBenefitLedgerPnL(benefitLedger,_payrollJournal,distributeAsAccrued);
+                }
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processBenefitLedgerPnL</Name>
+				<Source><![CDATA[
+    private void processBenefitLedgerPnL(SPYBenefitLedger   _benefitLedger,SPYPayrollJournalRecId _payrollJournal,boolean _distributeAsAccrued = false)
+    {
+        DimensionAttributeValueSetStorage   valueSetStorage;
+        DimensionAttribute                  costDistDimensionAttribute1 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1);
+        DimensionAttribute                  costDistDimensionAttribute2 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension2);
+        DimensionAttribute                  costDistDimensionAttribute3 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension3);
+        DimensionAttribute                  costDistDimensionAttribute4 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension4);
+        // New code added start by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+        DimensionAttribute                  costDistDimensionAttribute5 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension5);
+        DimensionAttribute                  costDistDimensionAttribute6 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension6);
+        DimensionAttribute                  costDistDimensionAttribute7 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension7);
+        DimensionAttribute                  costDistDimensionAttribute8 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension8);
+        // New code added ended by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+
+        DimensionAttributeValue             costDistDimValue;
+        int                                 countLine;
+
+        switch(SPYPayrollParameters::find().PayrollJourDimensionSource)
+        {
+            case SPYPayrollJourDimensionSource::Fixed :
+                this.insertPayrollJournalLine(_payrollJournal,
+                                          _benefitLedger.Worker,
+                                          _benefitLedger.PayrollPeriodLine,
+                                          _benefitLedger.Benefit,
+                                          _benefitLedger.TransDate,
+                                          _benefitLedger.Txt,
+                                          _benefitLedger.TransactionCurPnLAmount,
+                                          _benefitLedger.AccountingCurPnLAmount,
+                                          _benefitLedger.Currency,
+                                          _benefitLedger.DefaultDimension,
+                                          _benefitLedger.LedgerDimensionPnL,
+                                          _benefitLedger.LedgerDimensionCredit,
+                                          _benefitLedger.AccountingDistributionTemplate,
+                                          _benefitLedger.DistributeCost);
+                this.updateJournalLogTmp(_payrollJournal,_benefitLedger.RecId,SPYPayElementType::Benefit,true);
+                this.nextLineNum();
+                break;
+
+            case SPYPayrollJourDimensionSource::Distribute :
+                if(_benefitLedger.DistributeCost)
+                {
+                    if(_distributeAsAccrued)
+                    {
+                        countLine = 1;
+                        while select encashmentCostDistributionTmp
+                            where encashmentCostDistributionTmp.Percent
+                        {
+                            DimensionDefault    dimension = this.getDimensionFromEncashmentCostDistTmp(_benefitLedger.DefaultDimension);                            
+                            if(countLine == 1)
+                            {
+                                this.insertPayrollJournalLine(_payrollJournal,
+                                                          _benefitLedger.Worker,
+                                                          _benefitLedger.PayrollPeriodLine,
+                                                          _benefitLedger.Benefit,
+                                                          _benefitLedger.TransDate,
+                                                          _benefitLedger.Txt,
+                                                          _benefitLedger.TransactionCurPnLAmount,
+                                                          _benefitLedger.AccountingCurPnLAmount,
+                                                          _benefitLedger.Currency,
+                                                          dimension,
+                                                          _benefitLedger.LedgerDimensionPnL,
+                                                          _benefitLedger.LedgerDimensionCredit,
+                                                          _benefitLedger.AccountingDistributionTemplate,
+                                                          _benefitLedger.DistributeCost);
+                                this.updateJournalLogTmp(_payrollJournal,_benefitLedger.RecId,SPYPayElementType::Benefit,true);
+                                this.nextLineNum();
+                            }
+                            this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                            (_benefitLedger.LedgerDimensionDebit, dimension),
+                                                            _benefitLedger.TransactionCurPnLAmount * encashmentCostDistributionTmp.Percent / 100);
+                            countLine++;
+                        }
+                    }
+                    else
+                    {
+                        countLine = 1;
+                        while select costDistributionTmp
+                            where costDistributionTmp.Percent
+                        {
+                            DimensionDefault    dimension = this.getDimensionFromCostDistTmp(_benefitLedger.DefaultDimension);                            
+                            if(countLine == 1)
+                            {
+                                this.insertPayrollJournalLine(_payrollJournal,
+                                                          _benefitLedger.Worker,
+                                                          _benefitLedger.PayrollPeriodLine,
+                                                          _benefitLedger.Benefit,
+                                                          _benefitLedger.TransDate,
+                                                          _benefitLedger.Txt,
+                                                          _benefitLedger.TransactionCurPnLAmount,
+                                                          _benefitLedger.AccountingCurPnLAmount,
+                                                          _benefitLedger.Currency,
+                                                          dimension,
+                                                          _benefitLedger.LedgerDimensionPnL,
+                                                          _benefitLedger.LedgerDimensionCredit,
+                                                          _benefitLedger.AccountingDistributionTemplate,
+                                                          _benefitLedger.DistributeCost);
+                                this.updateJournalLogTmp(_payrollJournal,_benefitLedger.RecId,SPYPayElementType::Benefit,true);
+                                this.nextLineNum();
+                            }
+                            this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                            (_benefitLedger.LedgerDimensionDebit, dimension),
+                                                            _benefitLedger.TransactionCurPnLAmount * costDistributionTmp.Percent / 100);
+                            countLine++;
+                        }
+                    }
+                }
+                else
+                {
+                    this.insertPayrollJournalLine(_payrollJournal,
+                                          _benefitLedger.Worker,
+                                          _benefitLedger.PayrollPeriodLine,
+                                          _benefitLedger.Benefit,
+                                          _benefitLedger.TransDate,
+                                          _benefitLedger.Txt,
+                                          _benefitLedger.TransactionCurPnLAmount,
+                                          _benefitLedger.AccountingCurPnLAmount,
+                                          _benefitLedger.Currency,
+                                          _benefitLedger.DefaultDimension,
+                                          _benefitLedger.LedgerDimensionPnL,
+                                          _benefitLedger.LedgerDimensionCredit,
+                                          _benefitLedger.AccountingDistributionTemplate,
+                                          _benefitLedger.DistributeCost);
+                    this.updateJournalLogTmp(_payrollJournal,_benefitLedger.RecId,SPYPayElementType::Benefit,true);
+                    this.nextLineNum();
+                    this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                            (_benefitLedger.LedgerDimensionDebit, _benefitLedger.DefaultDimension),
+                                                            _benefitLedger.TransactionCurPnLAmount);
+                }
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processPayrollLedger</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    private void processPayrollLedger(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYPayrollLedger                    payrollLedger;
+        int                                          countLine;
+
+        switch(SPYPayrollParameters::find().PayrollJourDimensionSource)
+        {
+            case SPYPayrollJourDimensionSource::Fixed :
+                while select payrollLedger
+                where payrollLedger.Worker == worker.RecId &&
+                        payrollLedger.PayrollPeriodLine == contract.parmPayrollPeriodLine() &&
+                        !payrollLedger.PayrollJournalLine &&
+                        payrollLedger.IsFinalised
+                {
+                    this.insertPayrollJournalLine(_payrollJournal,
+                                              worker.RecId,
+                                              payrollLedger.PayrollPeriodLine,
+                                              payrollLedger.Payroll,
+                                              payrollLedger.TransDate,
+                                              payrollLedger.Txt,
+                                              payrollLedger.TransactionCurrencyAmount,
+                                              payrollLedger.AccountingCurrencyAmount,
+                                              payrollLedger.Currency,
+                                              payrollLedger.DefaultDimension,
+                                              payrollLedger.LedgerDimensionDebit,
+                                              payrollLedger.LedgerDimensionCredit,
+                                              payrollLedger.AccountingDistributionTemplate,
+                                              payrollLedger.DistributeCost);
+                    this.updateJournalLogTmp(_payrollJournal,payrollLedger.RecId,SPYPayElementType::Payroll);
+                    this.nextLineNum();
+                }
+                break;
+
+            case SPYPayrollJourDimensionSource::Distribute :
+                while select payrollLedger
+                    where payrollLedger.Worker == worker.RecId &&
+                            payrollLedger.PayrollPeriodLine == contract.parmPayrollPeriodLine() &&
+                            !payrollLedger.PayrollJournalLine &&
+                            payrollLedger.IsFinalised
+                {
+                    if(payrollLedger.DistributeCost)
+                    {
+                        countLine = 1;
+                        while select costDistributionTmp
+                            where costDistributionTmp.Percent
+                        {
+                            DimensionDefault    dimension = this.getDimensionFromCostDistTmp(payrollLedger.DefaultDimension);
+                            if(countLine == 1)
+                            {
+                                this.insertPayrollJournalLine(_payrollJournal,
+                                                          worker.RecId,
+                                                          payrollLedger.PayrollPeriodLine,
+                                                          payrollLedger.Payroll,
+                                                          payrollLedger.TransDate,
+                                                          payrollLedger.Txt,
+                                                          payrollLedger.TransactionCurrencyAmount,
+                                                          payrollLedger.AccountingCurrencyAmount,
+                                                          payrollLedger.Currency,
+                                                          dimension,
+                                                          payrollLedger.LedgerDimensionDebit,
+                                                          payrollLedger.LedgerDimensionCredit,
+                                                          payrollLedger.AccountingDistributionTemplate,
+                                                          payrollLedger.DistributeCost);
+                                this.updateJournalLogTmp(_payrollJournal,payrollLedger.RecId,SPYPayElementType::Payroll);
+                                this.nextLineNum();
+                            }
+                            this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                        (payrollLedger.LedgerDimensionDebit, dimension),
+                                                        payrollLedger.TransactionCurrencyAmount * costDistributionTmp.Percent/100);
+                            countLine++;
+                        }
+                    }
+                    else
+                    {
+                        this.insertPayrollJournalLine(_payrollJournal,
+                                              worker.RecId,
+                                              payrollLedger.PayrollPeriodLine,
+                                              payrollLedger.Payroll,
+                                              payrollLedger.TransDate,
+                                              payrollLedger.Txt,
+                                              payrollLedger.TransactionCurrencyAmount,
+                                              payrollLedger.AccountingCurrencyAmount,
+                                              payrollLedger.Currency,
+                                              payrollLedger.DefaultDimension,
+                                              payrollLedger.LedgerDimensionDebit,
+                                              payrollLedger.LedgerDimensionCredit,
+                                              payrollLedger.AccountingDistributionTemplate,
+                                              payrollLedger.DistributeCost);
+                        this.updateJournalLogTmp(_payrollJournal,payrollLedger.RecId,SPYPayElementType::Payroll);
+                        this.nextLineNum();
+                        this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                        (payrollLedger.LedgerDimensionDebit, payrollLedger.DefaultDimension),
+                                                        payrollLedger.TransactionCurrencyAmount);
+                    }
+                }
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processPayrollLedgerFromJournal</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    private void processPayrollLedgerFromJournal(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYPayrollLedger                    payrollLedger;
+        int                                         countLine;
+
+        switch(SPYPayrollParameters::find().PayrollJourDimensionSource)
+        {
+            case SPYPayrollJourDimensionSource::Fixed :
+                while select payrollLedger
+                where payrollLedger.Worker == worker.RecId &&
+                      !payrollLedger.PayrollJournalLine &&
+                      payrollLedger.IsFinalised
+                join payLedgerTmp
+                where payLedgerTmp.LedgerRecId == payrollLedger.RecId
+                {
+                    this.insertPayrollJournalLine(_payrollJournal,
+                                              worker.RecId,
+                                              payrollLedger.PayrollPeriodLine,
+                                              payrollLedger.Payroll,
+                                              payrollLedger.TransDate,
+                                              payrollLedger.Txt,
+                                              payrollLedger.TransactionCurrencyAmount,
+                                              payrollLedger.AccountingCurrencyAmount,
+                                              payrollLedger.Currency,
+                                              payrollLedger.DefaultDimension,
+                                              payrollLedger.LedgerDimensionDebit,
+                                              payrollLedger.LedgerDimensionCredit,
+                                              payrollLedger.AccountingDistributionTemplate,
+                                              payrollLedger.DistributeCost);
+                    this.updateJournalLogTmp(_payrollJournal,payrollLedger.RecId,SPYPayElementType::Payroll);
+                    this.nextLineNum();
+                }
+                break;
+
+            case SPYPayrollJourDimensionSource::Distribute :
+                while select payrollLedger
+                where payrollLedger.Worker == worker.RecId &&
+                         !payrollLedger.PayrollJournalLine &&
+                         payrollLedger.IsFinalised
+                join payLedgerTmp
+                where payLedgerTmp.LedgerRecId == payrollLedger.RecId
+                {
+                    if(payrollLedger.DistributeCost)
+                    {
+                        countLine = 1;
+                        while select costDistributionTmp
+                            where costDistributionTmp.Percent
+                        {
+                            DimensionDefault    dimension = this.getDimensionFromCostDistTmp(payrollLedger.DefaultDimension);                        
+                            if(countLine == 1)
+                            {
+                                this.insertPayrollJournalLine(_payrollJournal,
+                                                          worker.RecId,
+                                                          payrollLedger.PayrollPeriodLine,
+                                                          payrollLedger.Payroll,
+                                                          payrollLedger.TransDate,
+                                                          payrollLedger.Txt,
+                                                          payrollLedger.TransactionCurrencyAmount,
+                                                          payrollLedger.AccountingCurrencyAmount,
+                                                          payrollLedger.Currency,
+                                                          dimension,
+                                                          payrollLedger.LedgerDimensionDebit,
+                                                          payrollLedger.LedgerDimensionCredit,
+                                                          payrollLedger.AccountingDistributionTemplate,
+                                                          payrollLedger.DistributeCost);
+                                this.updateJournalLogTmp(_payrollJournal,payrollLedger.RecId,SPYPayElementType::Payroll);
+                                this.nextLineNum();
+                            }
+                            this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                        (payrollLedger.LedgerDimensionDebit, dimension),
+                                                        payrollLedger.TransactionCurrencyAmount * costDistributionTmp.Percent/100);
+                            countLine++;
+                        }
+                    }
+                    else
+                    {
+                        this.insertPayrollJournalLine(_payrollJournal,
+                                              worker.RecId,
+                                              payrollLedger.PayrollPeriodLine,
+                                              payrollLedger.Payroll,
+                                              payrollLedger.TransDate,
+                                              payrollLedger.Txt,
+                                              payrollLedger.TransactionCurrencyAmount,
+                                              payrollLedger.AccountingCurrencyAmount,
+                                              payrollLedger.Currency,
+                                              payrollLedger.DefaultDimension,
+                                              payrollLedger.LedgerDimensionDebit,
+                                              payrollLedger.LedgerDimensionCredit,
+                                              payrollLedger.AccountingDistributionTemplate,
+                                              payrollLedger.DistributeCost);
+                        this.updateJournalLogTmp(_payrollJournal,payrollLedger.RecId,SPYPayElementType::Payroll);
+                        this.nextLineNum();
+                        this.setAccountDistributionTmp(LedgerDimensionFacade::serviceCreateLedgerDimension
+                                                        (payrollLedger.LedgerDimensionDebit, payrollLedger.DefaultDimension),
+                                                        payrollLedger.TransactionCurrencyAmount);
+                    }
+                }
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshPayLedgerTmpFromBenefit</Name>
+				<Source><![CDATA[
+    private void refreshPayLedgerTmpFromBenefit()
+    {
+        ListEnumerator  benefitLedgerListEnum = con2List(contract.parmPayrollParameterState().parmBenefitLedgerCon()).getEnumerator();
+    
+        delete_from payLedgerTmp;
+        while(benefitLedgerListEnum.moveNext())
+        {
+            payLedgerTmp.LedgerRecId = benefitLedgerListEnum.current();
+            payLedgerTmp.insert();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshPayLedgerTmpFromPayroll</Name>
+				<Source><![CDATA[
+    private void refreshPayLedgerTmpFromPayroll()
+    {
+        ListEnumerator  payrollLedgerListEnum = con2List(contract.parmPayrollParameterState().parmPayrollLedgerCon()).getEnumerator();
+    
+        delete_from payLedgerTmp;
+        while(payrollLedgerListEnum.moveNext())
+        {
+            payLedgerTmp.LedgerRecId = payrollLedgerListEnum.current();
+            payLedgerTmp.insert();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setAccountDistributionTmp</Name>
+				<Source><![CDATA[
+    private void setAccountDistributionTmp(LedgerDimensionBase      _ledgerDimension,
+                                           SPYAmount                _amount,
+                                           SPYBenefitJournalType    _journalType = SPYBenefitJournalType::Accrual,
+                                           boolean                  _benefit = false)
+    {
+        accountDistributionTmp.LineNum = lineNum - 1;
+        accountDistributionTmp.LedgerDimension = _ledgerDimension;
+        /*
+        if(_journalType == SPYBenefitJournalType::Encashment)
+            _amount = -_amount;
+        if(_journalType == SPYBenefitJournalType::Accrual && _benefit)
+            _amount = -_amount;*/
+        accountDistributionTmp.AmountCur = _amount;
+        accountDistributionTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setCostDistributionTmp</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    private void setCostDistributionTmp(SPYCostDistributionBasis _costDistributionBasis)
+    {
+        SPYCostDistributionRevenueAccount           costDistributionRevenueAccount;
+        GeneralJournalAccountEntry                  generalJournalAccountEntry;
+        GeneralJournalEntry                         generalJournalEntry;
+        DimensionAttributeValueCombination          dimensionAttributeValueCombination,dimensionAttributeValueCombination1;
+        DimensionAttributeValueGroupCombination     dimensionAttributeValueGroupCombination;
+        DimensionAttributeLevelValue                dimensionAttributeLevelValue;
+        SPYEmploymentCostDistribution               employmentCostDistribution;
+        DimensionAttributeValueTotallingCriteria    dimensionAttributeValueTotallingCriteria;
+        DimensionAttributeValue                     dimAttributeValue;
+        DimensionAttribute                          dimensionAttribute;
+        DictTable                                   dictTable;
+        Common                                      dimValue;
+        Amount                                      amountTotal;
+        SPYCostDistributionTmp                      costDistributionTmp1;
+        int                                         dimCount;
+        DimensionFinancialTag                       dimensionFinancialTag;
+        DimensionAttribute                          costDistDimensionAttribute1 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1);
+        DimensionAttribute                          costDistDimensionAttribute2 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension2);
+        DimensionAttribute                          costDistDimensionAttribute3 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension3);
+        DimensionAttribute                          costDistDimensionAttribute4 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension4);
+        // New code added start by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+        DimensionAttribute                          costDistDimensionAttribute5 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension5);
+        DimensionAttribute                          costDistDimensionAttribute6 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension6);
+        DimensionAttribute                          costDistDimensionAttribute7 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension7);
+        DimensionAttribute                          costDistDimensionAttribute8 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension8);
+        // New code added ended by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+        #define.FieldValue("Value")
+
+        switch(_costDistributionBasis)
+        {
+            case SPYCostDistributionBasis::SplitByRevenue :
+                dimensionAttribute = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1);
+                dictTable = new DictTable(dimensionAttribute.BackingEntityType);
+                dimValue = dictTable.makeRecord();
+                if (dimensionAttribute.Type == DimensionAttributeType::CustomList)
+                {
+                    while select sum(AccountingCurrencyAmount) from generalJournalAccountEntry join dimensionFinancialTag group by Value
+                    join DimensionAttributeValueTotallingCriteria join employmentCostDistribution group by DimensionValue1,Percent
+                    join RecId from generalJournalEntry join costDistributionRevenueAccount
+                    join RecId from dimensionAttributeValueCombination join dimensionAttributeValueCombination1
+                    join RecId from dimensionAttributeValueGroupCombination exists join dimensionAttributeLevelValue
+                    join RecId from dimAttributeValue
+                    where generalJournalAccountEntry.GeneralJournalEntry == generalJournalEntry.RecId &&
+                            generalJournalEntry.AccountingDate >= SPYPayrollPeriodLine::find(contract.parmPayrollPeriodLine()).PeriodStartDate &&
+                            generalJournalEntry.AccountingDate <= SPYPayrollPeriodLine::find(contract.parmPayrollPeriodLine()).PeriodEndDate &&
+                            generalJournalAccountEntry.LedgerDimension == dimensionAttributeValueCombination.RecId &&
+                            costDistributionRevenueAccount.LedgerDimension == dimensionAttributeValueCombination1.RecId &&
+                            dimensionAttributeValueCombination.MainAccount == dimensionAttributeValueCombination1.MainAccount &&
+                            dimensionAttributeValueGroupCombination.DimensionAttributeValueCombination == dimensionAttributeValueCombination.RecId &&
+                            dimensionAttributeLevelValue.DimensionAttributeValueGroup == dimensionAttributeValueGroupCombination.DimensionAttributeValueGroup &&
+                            dimensionAttributeLevelValue.DisplayValue == dimensionFinancialTag.Value &&
+                            dimensionFinancialTag.FinancialTagCategory == dimensionAttribute.financialTagCategory() &&
+                            dimensionFinancialTag.Value >= DimensionAttributeValueTotallingCriteria.FromValue &&
+                            dimensionFinancialTag.Value <= DimensionAttributeValueTotallingCriteria.ToValue &&
+                            employmentCostDistribution.EmploymentDetail == hcmEmploymentDetail.RecId &&
+                            DimensionAttributeValueTotallingCriteria.DimensionAttributeValue == employmentCostDistribution.DimensionAttributeValue1 &&
+                            dimAttributeValue.DimensionAttribute == dimensionAttribute.RecId &&
+                            dimAttributeValue.EntityInstance == dimensionFinancialTag.RecId &&
+                            dimAttributeValue.IsSuspended == false
+                    {
+                        costDistributionTmp.DimensionValue1         = dimensionFinancialTag.Value;
+                        costDistributionTmp.ParentDimensionValue    = employmentCostDistribution.DimensionValue1;
+                        costDistributionTmp.Amount                  = generalJournalAccountEntry.AccountingCurrencyAmount;
+                        costDistributionTmp.Percent                 = employmentCostDistribution.Percent;
+                        costDistributionTmp.insert();
+                        costDistributionTmp1.ParentDimensionValue = costDistributionTmp.ParentDimensionValue;
+                        costDistributionTmp1.Amount               = costDistributionTmp.Amount;
+                        costDistributionTmp1.insert();
+                    }
+                }
+                else
+                {
+                    while select DimensionAttributeValueTotallingCriteria join 
+                        DimensionValue1,DimensionValue2,DimensionValue3,DimensionValue4,
+                            DimensionValue5,DimensionValue6,DimensionValue7,DimensionValue8,Percent
+                                from employmentCostDistribution
+                                where employmentCostDistribution.EmploymentDetail == hcmEmploymentDetail.RecId &&
+                                    DimensionAttributeValueTotallingCriteria.DimensionAttributeValue == employmentCostDistribution.DimensionAttributeValue1
+                    {
+                        while select dimValue
+                        where dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,#FieldValue)) >= DimensionAttributeValueTotallingCriteria.FromValue &&
+                              dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,#FieldValue)) <= DimensionAttributeValueTotallingCriteria.ToValue
+                        {
+                            select sum(AccountingCurrencyAmount) from generalJournalAccountEntry join generalJournalEntry
+                            join RecId from costDistributionRevenueAccount join dimensionAttributeValueCombination join dimensionAttributeValueCombination1
+                            join RecId from dimensionAttributeValueGroupCombination exists join dimensionAttributeLevelValue
+                            where generalJournalAccountEntry.GeneralJournalEntry == generalJournalEntry.RecId &&
+                                    generalJournalEntry.AccountingDate >= SPYPayrollPeriodLine::find(contract.parmPayrollPeriodLine()).PeriodStartDate &&
+                                    generalJournalEntry.AccountingDate <= SPYPayrollPeriodLine::find(contract.parmPayrollPeriodLine()).PeriodEndDate &&
+                                    generalJournalAccountEntry.LedgerDimension == dimensionAttributeValueCombination.RecId &&
+                                    costDistributionRevenueAccount.LedgerDimension == dimensionAttributeValueCombination1.RecId &&
+                                    dimensionAttributeValueCombination.MainAccount == dimensionAttributeValueCombination1.MainAccount &&
+                                    dimensionAttributeValueGroupCombination.DimensionAttributeValueCombination == dimensionAttributeValueCombination.RecId &&
+                                    dimensionAttributeLevelValue.DimensionAttributeValueGroup == dimensionAttributeValueGroupCombination.DimensionAttributeValueGroup &&
+                                    dimensionAttributeLevelValue.DisplayValue == dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,#FieldValue));
+
+                            costDistributionTmp.DimensionValue1         = dimValue.(fieldName2id(dimensionAttribute.BackingEntityType,#FieldValue));
+                            costDistributionTmp.ParentDimensionValue    = employmentCostDistribution.DimensionValue1;
+                            costDistributionTmp.Amount                  = generalJournalAccountEntry.AccountingCurrencyAmount;
+                            costDistributionTmp.Percent                 = employmentCostDistribution.Percent;
+                            costDistributionTmp.insert();
+                            costDistributionTmp1.ParentDimensionValue = costDistributionTmp.ParentDimensionValue;
+                            costDistributionTmp1.Amount               = costDistributionTmp.Amount;
+                            costDistributionTmp1.insert();
+                        }
+                    }
+                }
+                while select sum(Amount) from costDistributionTmp1 group by ParentDimensionValue
+                {
+                    amountTotal = costDistributionTmp1.Amount ? costDistributionTmp1.Amount : 1;
+                    while select forupdate costDistributionTmp
+                    where costDistributionTmp.ParentDimensionValue == costDistributionTmp1.ParentDimensionValue
+                    {
+                        costDistributionTmp.Percent = (costDistributionTmp.Amount * costDistributionTmp.Percent * employmentFactor)/amountTotal;
+                        costDistributionTmp.update();
+                    }
+                }
+                break;
+
+            case SPYCostDistributionBasis::SplitByDimension :
+                while select employmentCostDistribution
+                where employmentCostDistribution.EmploymentDetail == hcmEmploymentDetail.RecId
+                {
+                    if(costDistDimensionAttribute1)
+                        costDistributionTmp.DimensionValue1         = employmentCostDistribution.DimensionValue1;
+                    if(costDistDimensionAttribute2)
+                        costDistributionTmp.DimensionValue2         = employmentCostDistribution.DimensionValue2;
+                    if(costDistDimensionAttribute3)
+                        costDistributionTmp.DimensionValue3         = employmentCostDistribution.DimensionValue3;
+                    if(costDistDimensionAttribute4)
+                        costDistributionTmp.DimensionValue4         = employmentCostDistribution.DimensionValue4;
+                    // New code added start by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+                    if(costDistDimensionAttribute5)
+                        costDistributionTmp.DimensionValue5         = employmentCostDistribution.DimensionValue5;
+                    if(costDistDimensionAttribute6)
+                        costDistributionTmp.DimensionValue6         = employmentCostDistribution.DimensionValue6;
+                    if(costDistDimensionAttribute7)
+                        costDistributionTmp.DimensionValue7         = employmentCostDistribution.DimensionValue7;
+                    if(costDistDimensionAttribute8)
+                        costDistributionTmp.DimensionValue8         = employmentCostDistribution.DimensionValue8;
+                    // New code added ended by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+
+                    costDistributionTmp.ParentDimensionValue    = "";
+                    costDistributionTmp.Amount                  = 0;
+                    costDistributionTmp.Percent                 = employmentCostDistribution.Percent * employmentFactor;
+                    costDistributionTmp.insert();
+                }
+                break;
+
+            case SPYCostDistributionBasis::SplitEqually :
+                dimCount = int642int((select count(RecId) from SPYEmploymentCostDistribution
+                                    where SPYEmploymentCostDistribution.EmploymentDetail == hcmEmploymentDetail.RecId).RecId);
+                while select DimensionValue1,DimensionValue2,DimensionValue3,DimensionValue4 from employmentCostDistribution
+                where employmentCostDistribution.EmploymentDetail == hcmEmploymentDetail.RecId
+                {
+                    if(costDistDimensionAttribute1)
+                        costDistributionTmp.DimensionValue1         = employmentCostDistribution.DimensionValue1;
+                    if(costDistDimensionAttribute2)
+                        costDistributionTmp.DimensionValue2         = employmentCostDistribution.DimensionValue2;
+                    if(costDistDimensionAttribute3)
+                        costDistributionTmp.DimensionValue3         = employmentCostDistribution.DimensionValue3;
+                    if(costDistDimensionAttribute4)
+                        costDistributionTmp.DimensionValue4         = employmentCostDistribution.DimensionValue4;
+                    // New code added start by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+                    if(costDistDimensionAttribute5)
+                        costDistributionTmp.DimensionValue5         = employmentCostDistribution.DimensionValue5;
+                    if(costDistDimensionAttribute6)
+                        costDistributionTmp.DimensionValue6         = employmentCostDistribution.DimensionValue6;
+                    if(costDistDimensionAttribute7)
+                        costDistributionTmp.DimensionValue7         = employmentCostDistribution.DimensionValue7;
+                    if(costDistDimensionAttribute8)
+                        costDistributionTmp.DimensionValue8         = employmentCostDistribution.DimensionValue8;
+                    // New code added ended by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+
+                    costDistributionTmp.ParentDimensionValue    = "";
+                    costDistributionTmp.Amount                  = 0;
+                    costDistributionTmp.Percent                 = (100/dimCount) * employmentFactor;
+                    costDistributionTmp.insert();
+                }
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEncashmentCostDistributionTmp</Name>
+				<Source><![CDATA[
+    private void setEncashmentCostDistributionTmp(SPYBenefitLedger _benefitLedger)
+    {
+        SPYCostDistributionTmp                  encashmentCostDistributionTmp1;
+        SPYBenefitLedgerBenefitAccrualMapping   benefitAccrualMapping;
+        SPYBenefitAccrualDistribution           benefitAccrualDistribution;
+        DefaultDimensionView                    defaultDimensionView;
+
+        delete_from encashmentCostDistributionTmp;
+        while select benefitAccrualMapping outer join DefaultDimension from benefitAccrualDistribution
+        where benefitAccrualMapping.BenefitLedger == _benefitLedger.RecId &&
+                benefitAccrualDistribution.RecId == benefitAccrualMapping.BenefitAccrualDistribution
+        {
+            if(benefitAccrualDistribution.DefaultDimension)
+            select firstonly defaultDimensionView
+                where defaultDimensionView.DefaultDimension == benefitAccrualDistribution.DefaultDimension &&
+                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                    SPYPayrollParameters::find().CostDistributionDimension1).Name;
+            else
+            select firstonly DisplayValue from defaultDimensionView
+                where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                        defaultDimensionView.Name == DimensionAttribute::find(
+                                                    SPYPayrollParameters::find().CostDistributionDimension1).Name;
+            encashmentCostDistributionTmp1.DimensionValue1         = defaultDimensionView.DisplayValue;
+            encashmentCostDistributionTmp1.ParentDimensionValue    = "";
+            encashmentCostDistributionTmp1.Amount                  = 0;
+            encashmentCostDistributionTmp1.Percent                 = benefitAccrualMapping.AllocationFactor * 100;
+            encashmentCostDistributionTmp1.insert();
+        }
+        while select sum(Percent) from encashmentCostDistributionTmp1 group by DimensionValue1
+        {
+            encashmentCostDistributionTmp.DimensionValue1  = encashmentCostDistributionTmp1.DimensionValue1;
+            encashmentCostDistributionTmp.Percent          = encashmentCostDistributionTmp1.Percent;
+            encashmentCostDistributionTmp.insert();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setHourJournalDimesionTmp</Name>
+				<Source><![CDATA[
+    private void setHourJournalDimesionTmp()
+    {
+        ProjJournalTable                    projJournalTable;
+        ProjJournalTrans                    projJournalTrans;
+        SPYTimesheetDimensionTmp            timesheetDimensionTmp1;
+        Hours                               totalHours;
+        DefaultDimensionView                defaultDimensionView1, defaultDimensionView2, defaultDimensionView3, defaultDimensionView4,defaultDimensionView5, defaultDimensionView6, defaultDimensionView7, defaultDimensionView8;
+        ResourceView                         resource;
+
+        delete_from timesheetDimensionTmp;
+
+        //Only for D365 as resource concept is added -SRB
+        select resource where resource.Worker == worker.RecId;
+
+        while select sum(Qty) from projJournalTrans group by DefaultDimension 
+        join RecId from projJournalTable
+        where projJournalTable.Posted &&
+               projJournalTable.JournalId == projJournalTrans.JournalId &&
+               projJournalTable.JournalType == ProjJournalType::Hour &&
+               projJournalTrans.Resource == resource.RecId &&
+               projJournalTrans.ProjTransDate >= timesheetStart &&
+               projJournalTrans.ProjTransDate <= timesheetEnd
+        {
+
+            timesheetDimensionTmp.DefaultDimension = projJournalTrans.DefaultDimension;
+            timesheetDimensionTmp.Hours            = projJournalTrans.Qty;
+            timesheetDimensionTmp.insert();
+        }
+
+        while select sum(Hours) from timesheetDimensionTmp group by DefaultDimension
+        {
+            timesheetDimensionTmp1.DefaultDimension = timesheetDimensionTmp.DefaultDimension;
+            timesheetDimensionTmp1.Hours            = timesheetDimensionTmp.Hours;
+            timesheetDimensionTmp1.insert();
+            totalHours += timesheetDimensionTmp.Hours;
+        }
+        totalHours = totalHours ? totalHours : 1;
+        delete_from timesheetDimensionTmp;
+        while select timesheetDimensionTmp1
+        {
+            timesheetDimensionTmp.DefaultDimension  = timesheetDimensionTmp1.DefaultDimension;
+            timesheetDimensionTmp.Hours             = timesheetDimensionTmp1.Hours;
+            timesheetDimensionTmp.Percent           = (timesheetDimensionTmp1.Hours * employmentFactor) / totalHours;
+            timesheetDimensionTmp.insert();
+
+            select firstonly DisplayValue from defaultDimensionView1
+            where defaultDimensionView1.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView1.Name == DimensionAttribute::find(
+                                               SPYPayrollParameters::find().CostDistributionDimension1).Name;
+
+            select firstonly DisplayValue from defaultDimensionView2
+            where defaultDimensionView2.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView2.Name == DimensionAttribute::find(
+                                               SPYPayrollParameters::find().CostDistributionDimension2).Name;
+
+            select firstonly DisplayValue from defaultDimensionView3
+            where defaultDimensionView3.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView3.Name == DimensionAttribute::find(
+                                               SPYPayrollParameters::find().CostDistributionDimension3).Name;
+
+            select firstonly DisplayValue from defaultDimensionView4
+            where defaultDimensionView4.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView4.Name == DimensionAttribute::find(
+                                               SPYPayrollParameters::find().CostDistributionDimension4).Name;
+
+            select firstonly DisplayValue from defaultDimensionView5
+            where defaultDimensionView5.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView5.Name == DimensionAttribute::find(
+                                               SPYPayrollParameters::find().CostDistributionDimension5).Name;
+
+            select firstonly DisplayValue from defaultDimensionView6
+            where defaultDimensionView6.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView6.Name == DimensionAttribute::find(
+                                               SPYPayrollParameters::find().CostDistributionDimension6).Name;
+
+            select firstonly DisplayValue from defaultDimensionView7
+            where defaultDimensionView7.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView7.Name == DimensionAttribute::find(
+                                               SPYPayrollParameters::find().CostDistributionDimension7).Name;
+
+            select firstonly DisplayValue from defaultDimensionView8
+            where defaultDimensionView8.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView8.Name == DimensionAttribute::find(
+                                               SPYPayrollParameters::find().CostDistributionDimension8).Name;
+
+
+            costDistributionTmp.DimensionValue1         = defaultDimensionView1.DisplayValue;
+            costDistributionTmp.DimensionValue2         = defaultDimensionView2.DisplayValue;
+            costDistributionTmp.DimensionValue3         = defaultDimensionView3.DisplayValue;
+            costDistributionTmp.DimensionValue4         = defaultDimensionView4.DisplayValue;
+            costDistributionTmp.DimensionValue5         = defaultDimensionView5.DisplayValue;
+            costDistributionTmp.DimensionValue6         = defaultDimensionView6.DisplayValue;
+            costDistributionTmp.DimensionValue7         = defaultDimensionView7.DisplayValue;
+            costDistributionTmp.DimensionValue8         = defaultDimensionView8.DisplayValue;
+            costDistributionTmp.ParentDimensionValue    = "";
+            costDistributionTmp.Amount                  = 0;
+            costDistributionTmp.Percent                 = (timesheetDimensionTmp1.Hours * employmentFactor * 100) / totalHours;
+            costDistributionTmp.insert();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setLeaveStartDate</Name>
+				<Source><![CDATA[
+    // New code added ended by Lakshya on 19/09/2017 for ProjectName "Cost Split" for calculating the values of extra newly Dimension values
+
+    private void setLeaveStartDate()
+    {
+        HcmEmployment   hcmEmploymentTab;
+    
+        if(!payrollPeriodLineFinalize)
+        {
+            if(!hcmEmployment)
+                hcmEmploymentTab = HcmEmployment::findByWorkerLegalEntity(worker.RecId,legalEntity,
+                                                DateTimeUtil::minValue(),DateTimeUtil::maxValue());
+            leaveSettlementStartDate = DateTimeUtil::date(hcmEmploymentTab.ValidFrom);
+            select firstOnly payrollPeriodLineFinalize
+                where payrollPeriodLineFinalize.PayrollPeriod == payrollPeriod &&
+                      payrollPeriodLineFinalize.PeriodStartDate <= leaveSettlementStartDate &&
+                      payrollPeriodLineFinalize.PeriodEndDate >= leaveSettlementStartDate;
+            //this.setPostedPeriodLine(payrollPeriodLineFinalize.RecId);
+        }
+        else
+        {
+            leaveSettlementStartDate = payrollPeriodLineFinalize.nextPeriodLine().PeriodStartDate;
+            //this.setPostedPeriodLine(payrollPeriodLineFinalize.nextPeriodLine().RecId);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setPayrollTimesheetDate</Name>
+				<Source><![CDATA[
+    public void setPayrollTimesheetDate(SPYPayrollPeriodLine _payrollPeriodLineTab)
+    {
+        SPYPayrollPeriodLine        payrollPeriodLineTable;
+        TransDate                   periodProcessDate = _payrollPeriodLineTab.PayrollDate;
+        TransDate                   prevPeriodProcessDate;
+    
+        select firstOnly PayrollDate from payrollPeriodLineTable order by PeriodEndDate desc
+            where payrollPeriodLineTable.PayrollPeriod == _payrollPeriodLineTab.PayrollPeriod &&
+                  payrollPeriodLineTable.PeriodEndDate < _payrollPeriodLineTab.PeriodStartDate;
+        prevPeriodProcessDate = payrollPeriodLineTable.PayrollDate;
+    
+        timesheetStart      = prevPeriodProcessDate + 1;
+        timesheetEnd        = periodProcessDate;
+        periodStart         = _payrollPeriodLineTab.PeriodStartDate;
+        periodEnd           = _payrollPeriodLineTab.PeriodEndDate;
+        payrollPeriodLine   = _payrollPeriodLineTab.RecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTimesheetDimesionTmp</Name>
+				<Source><![CDATA[
+    private void setTimesheetDimesionTmp()
+    {
+        TSTimesheetTable                    timesheetTable;
+        TSTimesheetLine                     timesheetLine;
+        TSTimesheetLineWeek                 timesheetLineWeek;
+        TSTimesheetTrans                    timesheetTrans;
+        boolean                             isTimesheetOrAbsence;
+        SPYTimesheetDimensionTmp            timesheetDimensionTmp1;
+        Hours                               totalHours;
+        DefaultDimensionView                defaultDimensionView;
+        ResourceWorkerView                  resourceWorkerView;
+
+        DimensionAttribute                  costDistDimensionAttribute1 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1);
+        DimensionAttribute                  costDistDimensionAttribute2 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension2);
+        DimensionAttribute                  costDistDimensionAttribute3 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension3);
+        DimensionAttribute                  costDistDimensionAttribute4 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension4);
+        DimensionAttribute                  costDistDimensionAttribute5 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension5);
+        DimensionAttribute                  costDistDimensionAttribute6 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension6);
+        DimensionAttribute                  costDistDimensionAttribute7 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension7);
+        DimensionAttribute                  costDistDimensionAttribute8 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension8);
+
+        delete_from timesheetDimensionTmp;
+        defaultDimensionView.clear();
+
+        ///<NS Commented by Rakesh></NS>
+        ///To select Timesheet based on Transaction date(Timesheet cutoff date) not from Period to and PeriodFrom
+        /*  while select sum(Hours) from timesheetLineWeek join timesheetLine group by defaultDimension join timesheetTable //group by TimesheetNbr
+        join resourceWorkerView
+            where timesheetLine.Resource == resourceWorkerView.RecId &&
+                  resourceWorkerView.Worker == worker.RecId &&        
+                (timesheetLine.ApprovalStatus == TSAppStatus::Approved ||
+                timesheetLine.ApprovalStatus == TSAppStatus::Ledger) &&
+                timesheetTable.TimesheetNbr == timesheetLine.TimesheetNbr &&
+                timesheetTable.PeriodTo >= timesheetStart &&
+                timesheetTable.PeriodFrom <= timesheetEnd &&
+                timesheetLineWeek.TSTimesheetLine == timesheetLine.RecId   */  
+        ///<NE Code commented by Rakesh>
+        ///<NS by Rakesh to select Timesheet records based on Transaction date(Timesheet cutoff date) not from Period to and PeriodFrom>
+        while select sum(Hours) from timesheetTrans
+            where timesheetTrans.TransDate >=  timesheetStart &&
+          timesheetTrans.TransDate <=  timesheetEnd
+        join timesheetLineWeek
+            where timesheetLineWeek.RecId == timesheetTrans.TSTimesheetLineWeek
+        join timesheetLine group by defaultDimension
+            where timesheetLine.RecId == timesheetLineWeek.TSTimesheetLine &&
+                  (timesheetLine.ApprovalStatus == TSAppStatus::Approved ||
+                  timesheetLine.ApprovalStatus == TSAppStatus::Ledger )
+            join resourceWorkerView
+        where timesheetLine.Resource == resourceWorkerView.RecId &&
+                    resourceWorkerView.Worker == worker.RecId
+          ///<NE by Rakesh to select Timesheet records based on Transaction date(Timesheet cutoff date) not from Period to and PeriodFrom></NE>
+        {
+            select firstonly defaultDimensionView
+                where defaultDimensionView.DefaultDimension == timesheetLine.DefaultDimension &&
+                    ( defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension1).Name ||
+                    defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension2).Name ||
+                    defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension3).Name ||
+                    defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension4).Name ||
+                    defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension5).Name ||
+                    defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension6).Name ||
+                    defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension7).Name ||
+                    defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension8).Name );
+            
+            if(defaultDimensionView.DisplayValue)
+            {
+                timesheetDimensionTmp.DefaultDimension = timesheetLine.DefaultDimension;
+                //timesheetDimensionTmp.Hours            = timesheetLineWeek.totalHours();  //Commented by Rakesh
+                timesheetDimensionTmp.Hours            = timesheetTrans.Hours;             //n Line by by Rakesh
+                timesheetDimensionTmp.insert();
+                if(timesheetDimensionTmp.Hours)
+                isTimesheetOrAbsence = true;
+            }
+        }
+
+
+       
+        if(isTimesheetOrAbsence == false)
+        {
+            /*
+            select firstonly defaultDimensionView
+            where defaultDimensionView.DefaultDimension == hcmEmployment.DefaultDimension &&
+                    defaultDimensionView.Name == DimensionAttribute::find(
+                                                SPYPayrollParameters::find().CostDistributionDimension1).Name;
+            if(defaultDimensionView.DisplayValue)
+            {
+                timesheetDimensionTmp.DefaultDimension = hcmEmployment.DefaultDimension;
+                timesheetDimensionTmp.Hours            = 1;
+                timesheetDimensionTmp.insert();
+            }
+            else
+            {
+                warning(strFmt("@SPY1097",DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1).Name,
+                worker.name()));
+                return;
+            }
+            */
+            timesheetDimensionTmp.DefaultDimension = hcmEmployment.DefaultDimension;
+            timesheetDimensionTmp.Hours            = 1;
+            timesheetDimensionTmp.insert();
+            if(!hcmEmployment.DefaultDimension)
+                warning(strFmt("@SPY1097",worker.name()));
+        }
+        
+        while select sum(Hours) from timesheetDimensionTmp group by DefaultDimension
+        {
+            timesheetDimensionTmp1.DefaultDimension = timesheetDimensionTmp.DefaultDimension;
+            timesheetDimensionTmp1.Hours            = timesheetDimensionTmp.Hours;
+            timesheetDimensionTmp1.insert();
+            totalHours += timesheetDimensionTmp.Hours;
+        }
+        totalHours = totalHours ? totalHours : 1;
+        delete_from timesheetDimensionTmp;
+        while select timesheetDimensionTmp1
+        {
+            timesheetDimensionTmp.DefaultDimension  = timesheetDimensionTmp1.DefaultDimension;
+            timesheetDimensionTmp.Hours             = timesheetDimensionTmp1.Hours;
+            timesheetDimensionTmp.Percent           = (timesheetDimensionTmp1.Hours * employmentFactor) / totalHours;
+            timesheetDimensionTmp.insert();
+
+            if(costDistDimensionAttribute1)
+            {
+                select firstonly DisplayValue from defaultDimensionView
+            where defaultDimensionView.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView.Name == costDistDimensionAttribute1.Name;
+                costDistributionTmp.DimensionValue1         = defaultDimensionView.DisplayValue;
+            }
+            if(costDistDimensionAttribute2)
+            {
+                select firstonly DisplayValue from defaultDimensionView
+            where defaultDimensionView.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView.Name == costDistDimensionAttribute2.Name;
+                costDistributionTmp.DimensionValue2         = defaultDimensionView.DisplayValue;
+            }
+            
+            if(costDistDimensionAttribute3)
+            {
+                select firstonly DisplayValue from defaultDimensionView
+            where defaultDimensionView.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView.Name == costDistDimensionAttribute3.Name;
+                costDistributionTmp.DimensionValue3         = defaultDimensionView.DisplayValue;
+            }
+            
+            if(costDistDimensionAttribute4)
+            {
+                select firstonly DisplayValue from defaultDimensionView
+            where defaultDimensionView.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView.Name == costDistDimensionAttribute4.Name;
+                costDistributionTmp.DimensionValue4         = defaultDimensionView.DisplayValue;
+            }
+
+            if(costDistDimensionAttribute5)
+            {
+                select firstonly DisplayValue from defaultDimensionView
+            where defaultDimensionView.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView.Name == costDistDimensionAttribute5.Name;
+                costDistributionTmp.DimensionValue5        = defaultDimensionView.DisplayValue;
+            }
+            
+            if(costDistDimensionAttribute6)
+            {
+                select firstonly DisplayValue from defaultDimensionView
+            where defaultDimensionView.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView.Name == costDistDimensionAttribute6.Name;
+                costDistributionTmp.DimensionValue6         = defaultDimensionView.DisplayValue;
+            }
+            if(costDistDimensionAttribute7)
+            {
+                select firstonly DisplayValue from defaultDimensionView
+            where defaultDimensionView.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView.Name == costDistDimensionAttribute7.Name;
+                costDistributionTmp.DimensionValue7       = defaultDimensionView.DisplayValue;
+            }
+            if(costDistDimensionAttribute8)
+            {
+                select firstonly DisplayValue from defaultDimensionView
+            where defaultDimensionView.DefaultDimension == timesheetDimensionTmp1.DefaultDimension &&
+                  defaultDimensionView.Name == costDistDimensionAttribute8.Name;
+                costDistributionTmp.DimensionValue8         = defaultDimensionView.DisplayValue;
+            }
+
+            costDistributionTmp.ParentDimensionValue    = "";
+            costDistributionTmp.Amount                  = 0;
+            costDistributionTmp.Percent                 = (timesheetDimensionTmp1.Hours * employmentFactor * 100) / totalHours;
+            costDistributionTmp.insert();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>showInfo</Name>
+				<Source><![CDATA[
+    private void showInfo(SPYPayrollJournalRecId _payrollJournal)
+    {
+        SPYPayrollJournalTable      payrollJournalTable = SPYPayrollJournalTable::find(_payrollJournal);
+    
+        if(payrollJournalTable)
+            info(strFmt("@SPY320",payrollJournalTable.JournalId),"",SysInfoAction_TableField::newBuffer(payrollJournalTable));
+        else
+            info("@SPY333");
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAccountDistribution</Name>
+				<Source><![CDATA[
+    private void updateAccountDistribution(SPYPayrollJournalRecId _payrollJournal)
+    {
+        AccountingDistribution              accountingDistribution;
+        SPYPayrollJournalTable              payrollJournalTable = SPYPayrollJournalTable::find(_payrollJournal);
+        SPYPayrollJournalLine               payrollJournalLine;
+        RefRecId                            sourceDocumentHeader = payrollJournalTable.SourceDocumentHeader;
+        RefRecId                            sourceDocumentLine;
+        lineNum                             distLineNum,tmpLineNum;
+        RefRecId                            refDistribution;
+        AccountRole                         accountRole;
+        amount                              totalAmount;
+        SourceDocumentLine                  sourceDocumentLineTab;
+    
+        while select accountDistributionTmp
+        {
+            if(accountDistributionTmp.LineNum == tmpLineNum)
+                distLineNum++;
+            else
+            {
+                distLineNum = 1;
+                payrollJournalLine = SPYPayrollJournalLine::findByIdLineNum(payrollJournalTable.JournalId,accountDistributionTmp.LineNum);
+                sourceDocumentLine = payrollJournalLine.SourceDocumentLine;
+                sourceDocumentLineTab = SourceDocumentLine::find(sourceDocumentLine,true);
+                if(sourceDocumentLineTab)
+                {
+                    sourceDocumentLineTab.AccountingStatus = SourceDocumentLineAccountingStatus::FullyDistributed;
+                    sourceDocumentLineTab.update();
+                }
+    
+            }
+            totalAmount = payrollJournalLine.AmountCurDebit ? payrollJournalLine.AmountCurDebit : - payrollJournalLine.AmountCurCredit;
+            if(totalAmount)
+            {
+                accountingDistribution.SourceDocumentHeader         = sourceDocumentHeader;
+                accountingDistribution.SourceDocumentLine           = sourceDocumentLine;
+                accountingDistribution.AccountingEvent              = 0;
+                accountingDistribution.TransactionCurrency          = payrollJournalLine.Currency;
+                accountingDistribution.TransactionCurrencyAmount    = accountDistributionTmp.AmountCur;
+                accountingDistribution.AllocationFactor             = accountDistributionTmp.AmountCur / totalAmount;
+                accountingDistribution.AccountingDate               = payrollJournalLine.TransDate;
+                accountingDistribution.AmountSource                 = DistributionAmountSource::PrimaryAmount;
+                accountingDistribution.MonetaryAmount               = MonetaryAmount::PayrollCost;
+                accountingDistribution.ParentDistribution           = 0;
+                accountingDistribution.ReferenceDistribution        = refDistribution;
+                accountingDistribution.Type                         = accountRole;
+                accountingDistribution.AccountingLegalEntity        = CompanyInfo::current();
+                accountingDistribution.LedgerDimension              = accountDistributionTmp.LedgerDimension;
+                accountingDistribution.Number                       = real2int(distLineNum);
+                accountDistributionList.add(accountingDistribution);
+            }
+            tmpLineNum = accountDistributionTmp.LineNum;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefitAccrualDistribution</Name>
+				<Source><![CDATA[
+    private void updateBenefitAccrualDistribution(SPYBenefitLedger _benefitLedger,
+                                                  DimensionDefault _defaultDimension,
+                                                  SPYAmount        _qty,
+                                                  SPYAmount       _amount)
+    {
+        SPYBenefitAccrualDistribution       benefitAccrualDistribution;
+    
+        benefitAccrualDistribution.Worker                   = _benefitLedger.Worker;
+        benefitAccrualDistribution.Benefit                  = _benefitLedger.Benefit;
+        benefitAccrualDistribution.BenefitLedger            = _benefitLedger.RecId;
+        benefitAccrualDistribution.AccruedQty               = _qty;
+        benefitAccrualDistribution.RemainingQty             = _qty;
+        benefitAccrualDistribution.AccruedAccCurAmount      = _amount;
+        benefitAccrualDistribution.RemainingAccCurAmount    = _amount;
+        benefitAccrualDistribution.DefaultDimension         = _defaultDimension;
+        benefitAccrualDistribution.TransDate                = _benefitLedger.TransDate;
+        benefitAccrualDistribution.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateJournalLogTmp</Name>
+				<Source><![CDATA[
+    private void updateJournalLogTmp(SPYPayrollJournalRecId _payrollJournal,RefRecId _payLedger,SPYPayElementType _payLedgerType,boolean _pnl = false)
+    {
+        payrollJournalLogTmp.PayrollJournal = _payrollJournal;
+        payrollJournalLogTmp.LineNum        = lineNum;
+        payrollJournalLogTmp.PayLedger      = _payLedger;
+        payrollJournalLogTmp.PayLedgerType  = _payLedgerType;
+        payrollJournalLogTmp.PnL            = _pnl;
+        payrollJournalLogTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updatePayLedger</Name>
+				<Source><![CDATA[
+    private void updatePayLedger()
+    {
+        SPYPayrollLedger        payrollLedger;
+        SPYBenefitLedger        benefitLedger;
+        SPYPayrollJournalLine   payrollJournalLine;
+    
+        while select payrollJournalLogTmp
+            where payrollJournalLogTmp.PayLedgerType == SPYPayElementType::Payroll
+        {
+            select firstOnly forUpdate payrollLedger
+                where payrollLedger.RecId == payrollJournalLogTmp.PayLedger;
+    
+            if(payrollLedger)
+            {
+                select firstOnly payrollJournalLine
+                    where payrollJournalLine.PayrollJournal == payrollJournalLogTmp.PayrollJournal &&
+                          payrollJournalLine.LineNum == payrollJournalLogTmp.LineNum;
+    
+                payrollLedger.PayrollJournalLine = payrollJournalLine.RecId;
+                payrollLedger.update();
+            }
+        }
+    
+        while select payrollJournalLogTmp
+            where payrollJournalLogTmp.PayLedgerType == SPYPayElementType::Benefit
+        {
+            select firstOnly forUpdate benefitLedger
+                where benefitLedger.RecId == payrollJournalLogTmp.PayLedger;
+    
+            if(benefitLedger)
+            {
+                select firstOnly RecId from payrollJournalLine
+                    where payrollJournalLine.PayrollJournal == payrollJournalLogTmp.PayrollJournal &&
+                          payrollJournalLine.LineNum == payrollJournalLogTmp.LineNum;
+    
+                if(!payrollJournalLogTmp.PnL)
+                    benefitLedger.PayrollJournalLine = payrollJournalLine.RecId;
+                else
+                    benefitLedger.PnLPayrollJournalLine = payrollJournalLine.RecId;
+                benefitLedger.update();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateSourceJournal</Name>
+				<Source><![CDATA[
+    private void updateSourceJournal(SPYPayrollJournalRecId  _payrollJournal)
+    {
+        SPYPayrollJournalTable              payrollJournalTable = SPYPayrollJournalTable::find(_payrollJournal);
+        SPYPayrollEarningsJournalTable      payrollEarningsJournalTable;
+        SPYBenefitJournalTable              benefitJournalTable;
+        SPYPayLoanTable                     payLoanTable;
+    
+        if(contract.parmPayrollParameterState().parmCalledFromJournal())
+        {
+            switch(payrollJournalTable.SourceDocument)
+            {
+                case tableNum(SPYPayrollEarningsJournalTable) :
+                    while select forUpdate payrollEarningsJournalTable
+                        where payrollEarningsJournalTable.RecId == payrollJournalTable.SourceDocumentRef
+                    {
+                        payrollEarningsJournalTable.PayrollJournal = _payrollJournal;
+                        payrollEarningsJournalTable.update();
+                    }
+                    break;
+    
+                case tableNum(SPYBenefitJournalTable) :
+                    while select forUpdate benefitJournalTable
+                        where benefitJournalTable.RecId == payrollJournalTable.SourceDocumentRef
+                    {
+                        benefitJournalTable.PayrollJournal = _payrollJournal;
+                        benefitJournalTable.update();
+                    }
+                    break;
+    
+                case tableNum(SPYPayLoanTable) :
+                    while select forUpdate payLoanTable
+                        where payLoanTable.RecId == payrollJournalTable.SourceDocumentRef
+                    {
+                        payLoanTable.PayrollJournal = _payrollJournal;
+                        payLoanTable.update();
+                    }
+                    break;
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLeaveApplication</Name>
+				<Source><![CDATA[
+    private void updateLeaveApplication()
+    {
+        if(leaveApplicationTable && !leaveApplicationTable.ApplicationSettled)
+        {
+            leaveApplicationTable.selectForUpdate(true);
+            leaveApplicationTable.ApplicationSettled = true;
+            leaveApplicationTable.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDimensionFromCostDistTmp</Name>
+				<Source><![CDATA[
+    private DimensionDefault getDimensionFromCostDistTmp(DimensionDefault _dimension)
+    {
+        DimensionAttributeValueSetStorage valueSetStorage = DimensionAttributeValueSetStorage::find(_dimension);
+        DimensionAttribute                  costDistDimensionAttribute1 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1);
+        DimensionAttribute                  costDistDimensionAttribute2 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension2);
+        DimensionAttribute                  costDistDimensionAttribute3 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension3);
+        DimensionAttribute                  costDistDimensionAttribute4 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension4);
+        DimensionAttribute                  costDistDimensionAttribute5 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension5);
+        DimensionAttribute                  costDistDimensionAttribute6 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension6);
+        DimensionAttribute                  costDistDimensionAttribute7 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension7);
+        DimensionAttribute                  costDistDimensionAttribute8 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension8);
+        DimensionAttributeValue          costDistDimValue1, costDistDimValue2, costDistDimValue3, costDistDimValue4, costDistDimValue5, costDistDimValue6, costDistDimValue7, costDistDimValue8;
+
+        if(costDistributionTmp.DimensionValue1)
+        {
+            costDistDimValue1 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute1,costDistributionTmp.DimensionValue1,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute1.RecId, costDistDimValue1.RecId, costDistDimValue1.HashKey);
+        }
+        if(costDistributionTmp.DimensionValue2)
+        {
+            costDistDimValue2 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute2,costDistributionTmp.DimensionValue2,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute2.RecId, costDistDimValue2.RecId, costDistDimValue2.HashKey);
+        }
+        if(costDistributionTmp.DimensionValue3)
+        {
+            costDistDimValue3 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute3,costDistributionTmp.DimensionValue3,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute3.RecId, costDistDimValue3.RecId, costDistDimValue3.HashKey);
+        }
+        if(costDistributionTmp.DimensionValue4)
+        {
+            costDistDimValue4 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute4,costDistributionTmp.DimensionValue4,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute4.RecId, costDistDimValue4.RecId, costDistDimValue4.HashKey);
+        }
+        if(costDistributionTmp.DimensionValue5)
+        {
+            costDistDimValue5 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute5,costDistributionTmp.DimensionValue5,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute5.RecId, costDistDimValue5.RecId, costDistDimValue5.HashKey);
+        }
+        if(costDistributionTmp.DimensionValue6)
+        {
+            costDistDimValue6 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute6,costDistributionTmp.DimensionValue6,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute6.RecId, costDistDimValue6.RecId, costDistDimValue6.HashKey);
+        }
+        if(costDistributionTmp.DimensionValue7)
+        {
+            costDistDimValue7 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute7,costDistributionTmp.DimensionValue7,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute7.RecId, costDistDimValue7.RecId, costDistDimValue7.HashKey);
+        }
+        if(costDistributionTmp.DimensionValue8)
+        {
+            costDistDimValue8 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute8,costDistributionTmp.DimensionValue8,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute8.RecId, costDistDimValue8.RecId, costDistDimValue8.HashKey);
+        }
+
+        return valueSetStorage.save();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDimensionFromEncashmentCostDistTmp</Name>
+				<Source><![CDATA[
+    private DimensionDefault getDimensionFromEncashmentCostDistTmp(DimensionDefault _dimension)
+    {
+        DimensionAttributeValueSetStorage valueSetStorage = DimensionAttributeValueSetStorage::find(_dimension);
+        DimensionAttribute                  costDistDimensionAttribute1 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension1);
+        DimensionAttribute                  costDistDimensionAttribute2 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension2);
+        DimensionAttribute                  costDistDimensionAttribute3 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension3);
+        DimensionAttribute                  costDistDimensionAttribute4 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension4);
+        DimensionAttribute                  costDistDimensionAttribute5 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension5);
+        DimensionAttribute                  costDistDimensionAttribute6 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension6);
+        DimensionAttribute                  costDistDimensionAttribute7 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension7);
+        DimensionAttribute                  costDistDimensionAttribute8 = DimensionAttribute::find(SPYPayrollParameters::find().CostDistributionDimension8);
+        DimensionAttributeValue          costDistDimValue1, costDistDimValue2, costDistDimValue3, costDistDimValue4, costDistDimValue5, costDistDimValue6, costDistDimValue7, costDistDimValue8;
+
+        if(encashmentCostDistributionTmp.DimensionValue1)
+        {
+            costDistDimValue1 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute1,encashmentCostDistributionTmp.DimensionValue1,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute1.RecId, costDistDimValue1.RecId, costDistDimValue1.HashKey);
+        }
+        if(encashmentCostDistributionTmp.DimensionValue2)
+        {
+            costDistDimValue2 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute2,encashmentCostDistributionTmp.DimensionValue2,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute2.RecId, costDistDimValue2.RecId, costDistDimValue2.HashKey);
+        }
+        if(encashmentCostDistributionTmp.DimensionValue3)
+        {
+            costDistDimValue3 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute3,encashmentCostDistributionTmp.DimensionValue3,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute3.RecId, costDistDimValue3.RecId, costDistDimValue3.HashKey);
+        }
+        if(encashmentCostDistributionTmp.DimensionValue4)
+        {
+            costDistDimValue4 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute4,encashmentCostDistributionTmp.DimensionValue4,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute4.RecId, costDistDimValue4.RecId, costDistDimValue4.HashKey);
+        }
+        if(encashmentCostDistributionTmp.DimensionValue5)
+        {
+            costDistDimValue5 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute5,encashmentCostDistributionTmp.DimensionValue5,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute5.RecId, costDistDimValue5.RecId, costDistDimValue5.HashKey);
+        }
+        if(encashmentCostDistributionTmp.DimensionValue6)
+        {
+            costDistDimValue6 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute6,encashmentCostDistributionTmp.DimensionValue6,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute6.RecId, costDistDimValue6.RecId, costDistDimValue6.HashKey);
+        }
+        if(encashmentCostDistributionTmp.DimensionValue7)
+        {
+            costDistDimValue7 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute7,encashmentCostDistributionTmp.DimensionValue7,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute7.RecId, costDistDimValue7.RecId, costDistDimValue7.HashKey);
+        }
+        if(encashmentCostDistributionTmp.DimensionValue8)
+        {
+            costDistDimValue8 = DimensionAttributeValue::findByDimensionAttributeAndValue(costDistDimensionAttribute8,encashmentCostDistributionTmp.DimensionValue8,false,true);
+            valueSetStorage.addItemValues(costDistDimensionAttribute8.RecId, costDistDimValue8.RecId, costDistDimValue8.HashKey);
+        }
+
+        return valueSetStorage.save();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

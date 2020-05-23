@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitJourSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYBenefitJourSubmitManager
+{
+    SPYBenefitJournalTable          benefitJournalTable;
+        
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmBenefitJournalTable</Name>
+				<Source><![CDATA[
+    private SPYBenefitJournalTable parmBenefitJournalTable(SPYBenefitJournalTable _benefitJournalTable = benefitJournalTable)
+    {
+        benefitJournalTable = _benefitJournalTable;
+    
+        return benefitJournalTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;    
+        
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            benefitJournalTable.submitToWorkflow(workFlowTypeStr(SPYBenefitJournal), workflowSubmitDialog.parmWorkflowComment(), false);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYBenefitJourSubmitManager         benefitJourSubmitManager = new SPYBenefitJourSubmitManager();
+        SPYBenefitJournalTable              benefitJournalTable = args.record();
+    
+        benefitJourSubmitManager.parmBenefitJournalTable(benefitJournalTable);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYBenefitJourSubmitMenuItem))
+            benefitJourSubmitManager.submit(args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

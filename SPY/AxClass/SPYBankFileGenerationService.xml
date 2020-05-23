@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBankFileGenerationService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYBankFileGenerationService
+{
+    SPYBankFileGenerationContract       contract;
+    LegalEntityRecId                    legalEntity;
+    SPYPayrollPeriodLineRecId           payrollPeriodLine;
+    CompanyBankAccountId                bankAccountId;
+    SPYWorkerSponsorRecId               workerSponsor;
+
+    HcmWorker                           hcmWorker;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///     timesheet process
+    /// </summary>
+    /// <param name="_contract">
+    ///     timesheet process contract
+    /// </param>
+    /// <remarks>
+    ///     Regular timesheet process of worker
+    /// </remarks>
+    public void process(SPYBankFileGenerationContract   _contract)
+    {
+        QueryRun                workerQueryRun;
+        Query                   workerQuery;
+        QueryBuildDataSource    workerDataSource,employmentDataSource,employmentDetailDataSource;
+    
+        contract            = _contract as SPYBankFileGenerationContract;
+        legalEntity         = contract.parmLegalEntity();
+        payrollPeriodLine   = contract.parmPayrollPeriodLine();
+        bankAccountId       = contract.parmBankAccountId();
+        workerSponsor       = contract.parmWorkerSponsor();
+        setPrefix("@SPY878");
+        try
+        {
+            if(contract.parmWorkerQuery())
+                workerQueryRun = new QueryRun(contract.parmWorkerQuery());
+            else
+                workerQueryRun = new QueryRun(new Query(queryStr(HcmWorkerLookup)));
+            /*
+            if(workerSponsor)
+            {
+                workerQuery = workerQueryRun.query();
+                workerDataSource = workerQuery.dataSourceTable(tableNum(HcmWorker));
+                employmentDataSource = workerDataSource.addDataSource(tableNum(HcmEmployment));
+                employmentDataSource.relations(true);
+                employmentDetailDataSource = employmentDataSource.addDataSource(tableNum(HcmEmploymentDetail));
+                employmentDetailDataSource.relations(true);
+                employmentDetailDataSource.addRange(fieldNum(HcmEmploymentDetail,SPYWorkerSponsor)).value(queryValue(workerSponsor));
+                workerQueryRun.query(workerQuery);
+            }*/
+            SPYBankFileGenerationService::generateText(legalEntity,payrollPeriodLine,workerQueryRun,WinAPIServer::getTempPath(),bankAccountId,workerSponsor);
+            info("@SPY379");
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>generateText</Name>
+				<Source><![CDATA[
+    private static client void generateText(LegalEntityRecId            _legalEntity,
+                                            SPYPayrollPeriodLineRecId   _payrollPeriodLine,
+                                            QueryRun                    _workerQueryRun,
+                                            FileName                    _filePath,
+                                            CompanyBankAccountId        _bankAccountId,
+                                            SPYWorkerSponsorRecId       _workerSponsor)
+    {
+        SPYPayrollPeriodLine                payrollPeriodLineTab = SPYPayrollPeriodLine::find(_payrollPeriodLine);
+        FileIOPermission                    fioPermission;
+        TextStreamIo                              txIoWrite;
+        str                                 sTempPath,sFileName;
+        TextBuffer                          textBuffer = new TextBuffer();
+        PayrollBankAccountDisbursement      payrollBankAccountDisbursement;
+        HcmWorkerBankAccount                hcmWorkerBankAccount;
+        HCMWorker                           hcmWorker;
+        HcmEmployment                       hcmEmployment;
+        HcmEmploymentDetail                 hcmEmploymentDetail;
+        TransDateTime                       transDateTime;
+        str                                 periodStartStr,periodEndStr,creationDateStr,salaryYrMth;
+        SPYPayrollLedger                    payrollLedger;
+        TransDate                           validFrom = dateNull();        
+        SPYPayElementTable                  payElementTable;
+        SPYPayrollTable                     payrollTable;
+        SPYAmount                           salaryAmount,basicAmount,deductionAmount,totalSalaryAmount;
+        str                                 seperator = ",";
+        FileName                            filePath = _filePath;
+        BankAccountTable                    employerBank = BankAccountTable::find(_bankAccountId);
+        int                                 hour = DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone())/3600;
+        int                                 mint = (DateTimeUtil::getTimeNow(DateTimeUtil::getUserPreferredTimeZone()) mod 3600)/60;
+        int                                 periodDays,workingDays;
+        SPYWorkerSponsorTable               workerSponsorTable = SPYWorkerSponsorTable::find(_workerSponsor);
+        SPYAbsenceLedger                    absenceLedger;
+        SPYOvertimeLedger                   overtimeLedger;
+        SPYAmount                           overtimeHours;
+        str                                 paymentType,comments,mintStr;
+        int                                 seqNo;
+        HcmPersonIdentificationNumber       personIdentificationNumber;
+        HcmIdentificationType               identificationType;
+        #File
+    
+        periodStartStr = date2Str(payrollPeriodLineTab.PeriodStartDate,321,DateDay::Digits2,DateSeparator::None,
+                                  DateMonth::Digits2,DateSeparator::None,DateYear::Digits4,DateFlags::None);
+        periodEndStr = date2Str(payrollPeriodLineTab.PeriodEndDate,321,DateDay::Digits2,DateSeparator::Hyphen,
+                                DateMonth::Digits2,DateSeparator::Hyphen,DateYear::Digits4,DateFlags::None);
+        creationDateStr = date2Str(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),321,DateDay::Digits2,DateSeparator::None,
+                                DateMonth::Digits2,DateSeparator::None,DateYear::Digits4,DateFlags::None);
+        if(mint < 10)
+            mintStr = "0" + int2str(mint);
+        sFileName = strFmt("@SPY1304",CompanyInfo::find().RegNum,employerBank.AccountID,creationDateStr,hour,mintStr,#csv);
+        salaryYrMth = subStr(periodStartStr,0,6);
+        if(!filePath)
+        {
+            if(xSession::isCLRSession())
+            {
+                sTempPath = System.IO.Path::GetTempPath();
+                info("@SPY1297" + sTempPath + sFileName);
+            }
+            else
+            {
+                sTempPath = WINAPI::getTempPath();
+                info("@SPY1298" + sTempPath + sFileName);
+            }
+            filePath = sTempPath + sFileName;
+        }
+        else
+        {
+            filePath = filePath + "\\" + sFileName;
+            info("@SPY1298" + filePath);
+        }
+    
+        fioPermission = new FileIOPermission(filePath ,#io_write);
+        fioPermission.assert();
+    
+        // If the test file already exists, delete it.
+        if (WINAPI::fileExists(filePath))
+        {
+            WINAPI::deleteFile(filePath);
+        }
+    
+        txIoWrite = TextStreamIo::constructForWrite();
+// TODO: Use the following code when the writing is complete and file is ready to be sent to the user:
+// File::SendFileToUser(ioVariable.getStream(), filePath);
+        txIoWrite.inRecordDelimiter("\n");
+    
+        //Header format
+        textBuffer = new TextBuffer();
+        textBuffer.appendText(strFmt("%1",workerSponsorTable.EmployerEID)); //1 Employer EID
+        textBuffer.appendText(strFmt("%1%2",seperator,creationDateStr)); //2 File creation date
+        textBuffer.appendText(strFmt("%1%2%3",seperator,hour,mintStr)); //3 File creation time
+        textBuffer.appendText(strFmt("%1%2",seperator,workerSponsorTable.PayerEID)); //4 Payer EID
+        textBuffer.appendText(strFmt("%1%2",seperator,workerSponsorTable.PayerQID)); //5 Payer QID
+        textBuffer.appendText(strFmt("%1%2",seperator,employerBank.AccountID)); //6 Bank short name
+        textBuffer.appendText(strFmt("%1%2",seperator,employerBank.IBAN)); //7 Bank IBAN
+        textBuffer.appendText(strFmt("%1%2",seperator,salaryYrMth)); //8 Salary year and month
+        textBuffer.appendText(strFmt("%1TotalSal",seperator)); //9 Total Salary
+        textBuffer.appendText(strFmt("%1TotalRec",seperator)); //10 Total records
+        txIoWrite.write(textBuffer.getText());
+        while(_workerQueryRun.next())
+        {
+            hcmWorker = _workerQueryRun.get(tableNum(HcmWorker));
+            transDateTime = DateTimeUtil::newDateTime(payrollPeriodLineTab.PeriodStartDate,00-00);
+            hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId,_legalEntity,transDateTime);
+            if(!hcmEmployment)
+            {
+                transDateTime = DateTimeUtil::newDateTime(payrollPeriodLineTab.PeriodEndDate,00-00);
+                hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId,_legalEntity,transDateTime);
+            }
+            hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId);
+            if(hcmEmployment && hcmEmploymentDetail.SPYWorkerSponsor == _workerSponsor &&
+               hcmEmploymentDetail.SPYPayrollDisbursementMode == SPYPayrollDisbursementMode::Bank)
+            {
+                changeCompany(CompanyInfo::findRecId(_legalEntity).DataArea)
+                {
+                    textBuffer = new TextBuffer();
+                    select sum(AccountingCurrencyAmount),sum(TransactionCurrencyAmount) from payrollLedger
+                        where payrollLedger.Worker == hcmWorker.RecId &&
+                              payrollLedger.PayrollPeriodLine == _payrollPeriodLine;
+                    salaryAmount = payrollLedger.AccountingCurrencyAmount;
+                    totalSalaryAmount += salaryAmount;
+                    if(salaryAmount)
+                    {
+                        seqNo++;
+                        select firstOnly IdentificationNumber from personIdentificationNumber order by IssuedDate desc
+                            join RecId from identificationType
+                            where personIdentificationNumber.Person == hcmWorker.Person &&
+                                  personIdentificationNumber.IdentificationType == identificationType.RecId &&
+                                  identificationType.IdentificationTypeId == "Visa";
+                        select RecId from payrollBankAccountDisbursement
+                            join name,AccountNum from hcmWorkerBankAccount
+                            where payrollBankAccountDisbursement.WorkerBankAccount == hcmWorkerBankAccount.RecId &&
+                                  hcmWorkerBankAccount.Worker == hcmWorker.RecId &&
+                                  payrollBankAccountDisbursement.IsRemainder &&
+                                  payrollBankAccountDisbursement.LegalEntity == _legalEntity;
+                        select sum(AbsenceDays) from absenceLedger
+                            where absenceLedger.Worker == hcmWorker.RecId &&
+                                  absenceLedger.AbsenceDate >= payrollPeriodLineTab.PeriodStartDate &&
+                                  absenceLedger.AbsenceDate <= payrollPeriodLineTab.PeriodEndDate;
+                        periodDays = min(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidTo,DateTimeUtil::getCompanyTimeZone()))
+                                         ,payrollPeriodLineTab.PeriodEndDate) -
+                                     max(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(hcmEmployment.ValidFrom,DateTimeUtil::getCompanyTimeZone()))
+                                         ,payrollPeriodLineTab.PeriodStartDate) +1;
+                        workingDays = periodDays - real2int(absenceLedger.AbsenceDays);
+                        select sum(AccountingCurrencyAmount),sum(TransactionCurrencyAmount) from payrollLedger join payElementTable
+                            where payrollLedger.Worker == hcmWorker.RecId &&
+                                  payrollLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                                  payElementTable.RecId == payrollLedger.Payroll &&
+                                  payElementTable.PayElementCode == 'Basic';
+                        basicAmount = payrollLedger.AccountingCurrencyAmount;
+                        select sum(OvertimeHours) from overtimeLedger
+                            where overtimeLedger.Worker == hcmWorker.RecId &&
+                                  overtimeLedger.OvertimeDate >= payrollPeriodLineTab.PeriodStartDate &&
+                                  overtimeLedger.OvertimeDate <= payrollPeriodLineTab.PeriodEndDate;
+                        overtimeHours = overtimeLedger.OvertimeHours;
+                        select sum(AccountingCurrencyAmount),sum(TransactionCurrencyAmount) from payrollLedger join payrollTable
+                            where payrollLedger.Worker == hcmWorker.RecId &&
+                                  payrollLedger.PayrollPeriodLine == _payrollPeriodLine &&
+                                  payrollTable.RecId == payrollLedger.Payroll &&
+                                  payrollTable.PayrollType == SPYPayrollType::Deduction;
+                        deductionAmount = payrollLedger.AccountingCurrencyAmount;
+                        paymentType = "Normal Payment";
+                        if(mthOfYr(payrollPeriodLineTab.PeriodStartDate) < 10)
+                            comments = strFmt("0%1-%2",mthOfYr(payrollPeriodLineTab.PeriodStartDate),year(payrollPeriodLineTab.PeriodStartDate));
+                        else
+                            comments = strFmt("%1-%2",mthOfYr(payrollPeriodLineTab.PeriodStartDate),year(payrollPeriodLineTab.PeriodStartDate));
+                        textBuffer.appendText(strFmt("%1",seqNo)); //1 RecordId
+                        textBuffer.appendText(strFmt("%1%2",seperator,hcmWorker.PersonnelNumber)); //2 Employee QId
+                        textBuffer.appendText(strFmt("%1%2",seperator,personIdentificationNumber.IdentificationNumber)); //3 Employee visa id
+                        textBuffer.appendText(strFmt("%1%2",seperator,hcmWorker.name())); //4 Emp name
+                        textBuffer.appendText(strFmt("%1%2",seperator,hcmWorkerBankAccount.name)); //5 Emp Bank name
+                        textBuffer.appendText(strFmt("%1%2",seperator,hcmWorkerBankAccount.AccountNum)); //6 Emp Account id
+                        textBuffer.appendText(strFmt("%1%2",seperator,
+                        SPYPayrollPeriod::find(SPYPayrollPeriodLine::find(_payrollPeriodLine).PayrollPeriod).PayrollFrequency)); //7 Payment freq
+                        textBuffer.appendText(strFmt("%1%2",seperator,workingDays)); //8 Emp working days
+                        textBuffer.appendText(strFmt("%1%2",seperator,num2str(salaryAmount,0,2,0,0))); //9 Net salary
+                        textBuffer.appendText(strFmt("%1%2",seperator,num2str(basicAmount,0,2,0,0))); //10 Basic salary
+                        textBuffer.appendText(strFmt("%1%2",seperator,num2str(overtimeHours,0,2,0,0))); //11 Overtime hours
+                        textBuffer.appendText(strFmt("%1%2",seperator,0)); //12 Extra wages
+                        textBuffer.appendText(strFmt("%1%2",seperator,num2str(deductionAmount,0,2,0,0))); //13 Deduction amount
+                        textBuffer.appendText(strFmt("%1%2",seperator,paymentType)); //14 Payment type
+                        textBuffer.appendText(strFmt("%1%2",seperator,comments)); //15 Comments
+                        txIoWrite.write(textBuffer.getText());
+                    }
+                }
+            }
+        }
+        /*
+        textBuffer = new TextBuffer();
+        textBuffer.fromFile(filePath);
+        textBuffer.replace("TotalSal",num2str(totalSalaryAmount,0,2,0,0));
+        textBuffer.replace("TotalRec",num2str(seqNo,0,2,0,0));
+        textBuffer.toFile(filePath);
+        */
+        System.IO.FileStream stream = System.IO.File::OpenRead(filePath);
+        File::SendFileToUser(stream, filePath);
+
+        CodeAccessPermission::revertAssert();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

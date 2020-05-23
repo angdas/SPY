@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYPayLoanRecovery</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYPayLoanRecovery extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYPayLoanLedger_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYPayLoanLedger</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYPayLedgerSourceLine_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYPayLedgerSourceLine</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>SPYPayrollLedger_1</Name>
+							<Table>SPYPayrollLedger</Table>
+							<DataSources>
+								<AxQuerySimpleEmbeddedDataSource>
+									<Name>SPYPayrollJournalLine_1</Name>
+									<Table>SPYPayrollJournalLine</Table>
+									<DataSources>
+										<AxQuerySimpleEmbeddedDataSource>
+											<Name>SPYPayrollJournalTable_1</Name>
+											<Table>SPYPayrollJournalTable</Table>
+											<DataSources />
+											<DerivedDataSources />
+											<Fields>
+												<AxQuerySimpleDataSourceField>
+													<Name>Posted</Name>
+													<DerivedTable>SPYPayrollJournalTable</DerivedTable>
+													<Field>Posted</Field>
+												</AxQuerySimpleDataSourceField>
+											</Fields>
+											<Ranges>
+												<AxQuerySimpleDataSourceRange>
+													<Name>Posted</Name>
+													<Field>Posted</Field>
+													<Value>Yes</Value>
+												</AxQuerySimpleDataSourceRange>
+											</Ranges>
+											<JoinMode>OuterJoin</JoinMode>
+											<UseRelations>Yes</UseRelations>
+											<Relations />
+										</AxQuerySimpleEmbeddedDataSource>
+									</DataSources>
+									<DerivedDataSources />
+									<Fields />
+									<Ranges />
+									<JoinMode>OuterJoin</JoinMode>
+									<UseRelations>Yes</UseRelations>
+									<Relations />
+								</AxQuerySimpleEmbeddedDataSource>
+							</DataSources>
+							<DerivedDataSources />
+							<Fields>
+								<AxQuerySimpleDataSourceField xmlns=""
+									i:type="AxQuerySimpleDataSourceFieldSum">
+									<Name>AccountingCurrencyAmount</Name>
+									<DerivedTable>SPYPayrollLedger</DerivedTable>
+									<Field>AccountingCurrencyAmount</Field>
+								</AxQuerySimpleDataSourceField>
+								<AxQuerySimpleDataSourceField xmlns=""
+									i:type="AxQuerySimpleDataSourceFieldSum">
+									<Name>TransactionCurrencyAmount</Name>
+									<DerivedTable>SPYPayrollLedger</DerivedTable>
+									<Field>TransactionCurrencyAmount</Field>
+								</AxQuerySimpleDataSourceField>
+							</Fields>
+							<Ranges />
+							<JoinMode>OuterJoin</JoinMode>
+							<Relations>
+								<AxQuerySimpleDataSourceRelation>
+									<Name>PayLedgerSource</Name>
+									<Field>PayLedgerSource</Field>
+									<JoinDataSource>SPYPayLedgerSourceLine_1</JoinDataSource>
+									<RelatedField>PayLedgerSource</RelatedField>
+								</AxQuerySimpleDataSourceRelation>
+							</Relations>
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges>
+						<AxQuerySimpleDataSourceRange>
+							<Name>TableReference</Name>
+							<Field>TableReference</Field>
+							<Value>103111</Value>
+						</AxQuerySimpleDataSourceRange>
+					</Ranges>
+					<JoinMode>OuterJoin</JoinMode>
+					<Relations>
+						<AxQuerySimpleDataSourceRelation>
+							<Name>RecId</Name>
+							<Field>RecId</Field>
+							<JoinDataSource>SPYPayLoanLedger_1</JoinDataSource>
+							<RelatedField>RecordReference</RelatedField>
+						</AxQuerySimpleDataSourceRelation>
+					</Relations>
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges />
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

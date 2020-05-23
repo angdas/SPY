@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxReport xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYLeavePlannerAll</Name>
+	<DataMethods />
+	<DataSets>
+		<AxReportDataSet xmlns="">
+			<Name>LeavePlanDS</Name>
+			<DataSourceType>ReportDataProvider</DataSourceType>
+			<Query>SELECT * FROM SPYLeavePlannerDP.SPYLeavePlanTmp</Query>
+			<FieldGroups />
+			<Fields>
+				<AxReportDataSetField>
+					<Name>AbsenceDate</Name>
+					<Alias>SPYLeavePlanTmp.1.AbsenceDate</Alias>
+					<Caption>@SYS32238</Caption>
+					<DataType>System.DateTime</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>AbsenceExists1</Name>
+					<Alias>SPYLeavePlanTmp.1.AbsenceExists:LABEL(NoYes)</Alias>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>AbsenceExists</Name>
+					<Alias>SPYLeavePlanTmp.1.AbsenceExists:NAME(NoYes)</Alias>
+					<DisableAutoCreateInDataRegion>true</DisableAutoCreateInDataRegion>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>HRMAbsenceCodeId</Name>
+					<Alias>SPYLeavePlanTmp.1.HRMAbsenceCodeId</Alias>
+					<Caption>@SYS32270</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>Worker</Name>
+					<Alias>SPYLeavePlanTmp.1.Worker</Alias>
+					<Caption>@SYS305602</Caption>
+					<DataType>System.Int64</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>WorkerName</Name>
+					<Alias>SPYLeavePlanTmp.1.WorkerName</Alias>
+					<Caption>@SYS320666</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>WorkerPersonnelNumber</Name>
+					<Alias>SPYLeavePlanTmp.1.WorkerPersonnelNumber</Alias>
+					<Caption>@SYS303656</Caption>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+			</Fields>
+			<Parameters>
+				<AxReportDataSetParameter>
+					<Name>AX_PartitionKey</Name>
+					<Alias>AX_PartitionKey</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_PartitionKey</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_CompanyName</Name>
+					<Alias>AX_CompanyName</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_CompanyName</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_UserContext</Name>
+					<Alias>AX_UserContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_UserContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RenderingCulture</Name>
+					<Alias>AX_RenderingCulture</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RenderingCulture</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_ReportContext</Name>
+					<Alias>AX_ReportContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_ReportContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RdpPreProcessedId</Name>
+					<Alias>AX_RdpPreProcessedId</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RdpPreProcessedId</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>FromDate</Name>
+					<Alias>FromDate</Alias>
+					<DataType>System.DateTime</DataType>
+					<Parameter>LeavePlanDS_FromDate</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>ToDate</Name>
+					<Alias>ToDate</Alias>
+					<DataType>System.DateTime</DataType>
+					<Parameter>LeavePlanDS_ToDate</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>SPYLeavePlannerDP_DynamicParameter</Name>
+					<Alias>SPYLeavePlannerDP_DynamicParameter</Alias>
+					<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+					<Parameter>SPYLeavePlannerDP_DynamicParameter</Parameter>
+				</AxReportDataSetParameter>
+			</Parameters>
+		</AxReportDataSet>
+	</DataSets>
+	<DefaultParameterGroup>
+		<Name xmlns="">Parameters</Name>
+		<ReportParameterBases xmlns="">
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_PartitionKey</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_CompanyName</Name>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_UserContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RenderingCulture</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_ReportContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RdpPreProcessedId</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>LeavePlanDS_FromDate</Name>
+				<DataType>System.DateTime</DataType>
+				<PromptString>@SYS5209</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>LeavePlanDS_ToDate</Name>
+				<DataType>System.DateTime</DataType>
+				<PromptString>@SYS35904</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>SPYLeavePlannerDP_DynamicParameter</Name>
+				<AOTQuery>SPYSubordinateLookup</AOTQuery>
+				<AllowBlank>true</AllowBlank>
+				<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+		</ReportParameterBases>
+	</DefaultParameterGroup>
+	<Designs>
+		<AxReportDesign xmlns=""
+			i:type="AxReportPrecisionDesign">
+			<Name>Report</Name>
+			<Text>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2008/01/reportdefinition"&gt;
+  &lt;DataSources&gt;
+    &lt;DataSource Name="AutoGen__ReportDataProvider"&gt;
+      &lt;ConnectionProperties&gt;
+        &lt;DataProvider&gt;AXREPORTDATAPROVIDER&lt;/DataProvider&gt;
+        &lt;ConnectString /&gt;
+        &lt;IntegratedSecurity&gt;true&lt;/IntegratedSecurity&gt;
+      &lt;/ConnectionProperties&gt;
+      &lt;rd:DataSourceID&gt;4da6c5d5-e425-4c8f-a210-78b3fa7b8f2c&lt;/rd:DataSourceID&gt;
+    &lt;/DataSource&gt;
+  &lt;/DataSources&gt;
+  &lt;DataSets&gt;
+    &lt;DataSet Name="LeavePlanDS"&gt;
+      &lt;Fields&gt;
+        &lt;Field Name="AbsenceDate"&gt;
+          &lt;DataField&gt;SPYLeavePlanTmp.1.AbsenceDate&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.DateTime&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="AbsenceExists1"&gt;
+          &lt;DataField&gt;SPYLeavePlanTmp.1.AbsenceExists:LABEL(NoYes)&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.String&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="AbsenceExists"&gt;
+          &lt;DataField&gt;SPYLeavePlanTmp.1.AbsenceExists:NAME(NoYes)&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.String&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="HRMAbsenceCodeId"&gt;
+          &lt;DataField&gt;SPYLeavePlanTmp.1.HRMAbsenceCodeId&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.String&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="Worker"&gt;
+          &lt;DataField&gt;SPYLeavePlanTmp.1.Worker&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.Int64&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="WorkerName"&gt;
+          &lt;DataField&gt;SPYLeavePlanTmp.1.WorkerName&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.String&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+        &lt;Field Name="WorkerPersonnelNumber"&gt;
+          &lt;DataField&gt;SPYLeavePlanTmp.1.WorkerPersonnelNumber&lt;/DataField&gt;
+          &lt;rd:TypeName&gt;System.String&lt;/rd:TypeName&gt;
+        &lt;/Field&gt;
+      &lt;/Fields&gt;
+      &lt;Query&gt;
+        &lt;DataSourceName&gt;AutoGen__ReportDataProvider&lt;/DataSourceName&gt;
+        &lt;CommandText&gt;SELECT * FROM SPYLeavePlannerDP.SPYLeavePlanTmp&lt;/CommandText&gt;
+        &lt;QueryParameters&gt;
+          &lt;QueryParameter Name="AX_PartitionKey"&gt;
+            &lt;Value&gt;=Parameters!AX_PartitionKey.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_CompanyName"&gt;
+            &lt;Value&gt;=Parameters!AX_CompanyName.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_UserContext"&gt;
+            &lt;Value&gt;=Parameters!AX_UserContext.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_RenderingCulture"&gt;
+            &lt;Value&gt;=Parameters!AX_RenderingCulture.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_ReportContext"&gt;
+            &lt;Value&gt;=Parameters!AX_ReportContext.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="AX_RdpPreProcessedId"&gt;
+            &lt;Value&gt;=Parameters!AX_RdpPreProcessedId.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="FromDate"&gt;
+            &lt;Value&gt;=Parameters!LeavePlanDS_FromDate.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="ToDate"&gt;
+            &lt;Value&gt;=Parameters!LeavePlanDS_ToDate.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+          &lt;QueryParameter Name="SPYLeavePlannerDP_DynamicParameter"&gt;
+            &lt;Value&gt;=Parameters!SPYLeavePlannerDP_DynamicParameter.Value&lt;/Value&gt;
+          &lt;/QueryParameter&gt;
+        &lt;/QueryParameters&gt;
+        &lt;rd:UseGenericDesigner&gt;true&lt;/rd:UseGenericDesigner&gt;
+      &lt;/Query&gt;
+      &lt;rd:DataSetInfo&gt;
+        &lt;rd:DataSetName&gt;LeavePlanDS&lt;/rd:DataSetName&gt;
+        &lt;rd:TableName&gt;Fields&lt;/rd:TableName&gt;
+        &lt;rd:TableAdapterFillMethod&gt;Fill&lt;/rd:TableAdapterFillMethod&gt;
+        &lt;rd:TableAdapterGetDataMethod&gt;GetData&lt;/rd:TableAdapterGetDataMethod&gt;
+        &lt;rd:TableAdapterName&gt;FieldsTableAdapter&lt;/rd:TableAdapterName&gt;
+      &lt;/rd:DataSetInfo&gt;
+    &lt;/DataSet&gt;
+  &lt;/DataSets&gt;
+  &lt;Body&gt;
+    &lt;ReportItems&gt;
+      &lt;Tablix Name="Tablix1"&gt;
+        &lt;TablixCorner&gt;
+          &lt;TablixCornerRows&gt;
+            &lt;TablixCornerRow&gt;
+              &lt;TablixCornerCell&gt;
+                &lt;CellContents&gt;
+                  &lt;Textbox Name="Textbox5"&gt;
+                    &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                    &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                    &lt;Paragraphs&gt;
+                      &lt;Paragraph&gt;
+                        &lt;TextRuns&gt;
+                          &lt;TextRun&gt;
+                            &lt;Value&gt;Employee Id&lt;/Value&gt;
+                            &lt;Style&gt;
+                              &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                              &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                            &lt;/Style&gt;
+                          &lt;/TextRun&gt;
+                        &lt;/TextRuns&gt;
+                        &lt;Style /&gt;
+                      &lt;/Paragraph&gt;
+                    &lt;/Paragraphs&gt;
+                    &lt;rd:DefaultName&gt;Textbox5&lt;/rd:DefaultName&gt;
+                    &lt;Style&gt;
+                      &lt;Border&gt;
+                        &lt;Style&gt;Solid&lt;/Style&gt;
+                      &lt;/Border&gt;
+                      &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                      &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                      &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                      &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                    &lt;/Style&gt;
+                  &lt;/Textbox&gt;
+                &lt;/CellContents&gt;
+              &lt;/TablixCornerCell&gt;
+              &lt;TablixCornerCell&gt;
+                &lt;CellContents&gt;
+                  &lt;Textbox Name="Textbox6"&gt;
+                    &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                    &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                    &lt;Paragraphs&gt;
+                      &lt;Paragraph&gt;
+                        &lt;TextRuns&gt;
+                          &lt;TextRun&gt;
+                            &lt;Value&gt;Employee Name&lt;/Value&gt;
+                            &lt;Style&gt;
+                              &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                              &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                            &lt;/Style&gt;
+                          &lt;/TextRun&gt;
+                        &lt;/TextRuns&gt;
+                        &lt;Style /&gt;
+                      &lt;/Paragraph&gt;
+                    &lt;/Paragraphs&gt;
+                    &lt;rd:DefaultName&gt;Textbox6&lt;/rd:DefaultName&gt;
+                    &lt;Style&gt;
+                      &lt;Border&gt;
+                        &lt;Style&gt;Solid&lt;/Style&gt;
+                      &lt;/Border&gt;
+                      &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                      &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                      &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                      &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                    &lt;/Style&gt;
+                  &lt;/Textbox&gt;
+                &lt;/CellContents&gt;
+              &lt;/TablixCornerCell&gt;
+            &lt;/TablixCornerRow&gt;
+          &lt;/TablixCornerRows&gt;
+        &lt;/TablixCorner&gt;
+        &lt;TablixBody&gt;
+          &lt;TablixColumns&gt;
+            &lt;TablixColumn&gt;
+              &lt;Width&gt;1in&lt;/Width&gt;
+            &lt;/TablixColumn&gt;
+          &lt;/TablixColumns&gt;
+          &lt;TablixRows&gt;
+            &lt;TablixRow&gt;
+              &lt;Height&gt;0.25in&lt;/Height&gt;
+              &lt;TablixCells&gt;
+                &lt;TablixCell&gt;
+                  &lt;CellContents&gt;
+                    &lt;Textbox Name="HRMAbsenceCodeId"&gt;
+                      &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                      &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                      &lt;Paragraphs&gt;
+                        &lt;Paragraph&gt;
+                          &lt;TextRuns&gt;
+                            &lt;TextRun&gt;
+                              &lt;Value&gt;=Fields!HRMAbsenceCodeId.Value&lt;/Value&gt;
+                              &lt;Style&gt;
+                                &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                              &lt;/Style&gt;
+                            &lt;/TextRun&gt;
+                          &lt;/TextRuns&gt;
+                          &lt;Style&gt;
+                            &lt;TextAlign&gt;Center&lt;/TextAlign&gt;
+                          &lt;/Style&gt;
+                        &lt;/Paragraph&gt;
+                      &lt;/Paragraphs&gt;
+                      &lt;rd:DefaultName&gt;HRMAbsenceCodeId&lt;/rd:DefaultName&gt;
+                      &lt;CustomProperties&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXDataType&lt;/Name&gt;
+                          &lt;Value&gt;String&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                          &lt;Value&gt;SPYLeavePlanTmp.HRMAbsenceCodeId&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                          &lt;Value&gt;SPYLeavePlanTmp.HRMAbsenceCodeId&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                        &lt;CustomProperty&gt;
+                          &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                          &lt;Value&gt;SPYLeavePlanTmp.HRMAbsenceCodeId&lt;/Value&gt;
+                        &lt;/CustomProperty&gt;
+                      &lt;/CustomProperties&gt;
+                      &lt;Style&gt;
+                        &lt;Border&gt;
+                          &lt;Style&gt;Solid&lt;/Style&gt;
+                        &lt;/Border&gt;
+                        &lt;BackgroundColor&gt;=iif(Fields!HRMAbsenceCodeId.Value &amp;lt;&amp;gt; "", "Red", "White")&lt;/BackgroundColor&gt;
+                        &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                        &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                        &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                        &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                      &lt;/Style&gt;
+                    &lt;/Textbox&gt;
+                  &lt;/CellContents&gt;
+                &lt;/TablixCell&gt;
+              &lt;/TablixCells&gt;
+            &lt;/TablixRow&gt;
+          &lt;/TablixRows&gt;
+        &lt;/TablixBody&gt;
+        &lt;TablixColumnHierarchy&gt;
+          &lt;TablixMembers&gt;
+            &lt;TablixMember&gt;
+              &lt;Group Name="AbsenceDateGroup"&gt;
+                &lt;GroupExpressions&gt;
+                  &lt;GroupExpression&gt;=Fields!AbsenceDate.Value&lt;/GroupExpression&gt;
+                &lt;/GroupExpressions&gt;
+              &lt;/Group&gt;
+              &lt;SortExpressions&gt;
+                &lt;SortExpression&gt;
+                  &lt;Value&gt;=Fields!AbsenceDate.Value&lt;/Value&gt;
+                &lt;/SortExpression&gt;
+              &lt;/SortExpressions&gt;
+              &lt;TablixHeader&gt;
+                &lt;Size&gt;0.25in&lt;/Size&gt;
+                &lt;CellContents&gt;
+                  &lt;Textbox Name="AbsenceDate"&gt;
+                    &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                    &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                    &lt;Paragraphs&gt;
+                      &lt;Paragraph&gt;
+                        &lt;TextRuns&gt;
+                          &lt;TextRun&gt;
+                            &lt;Value&gt;=Fields!AbsenceDate.Value&lt;/Value&gt;
+                            &lt;Style&gt;
+                              &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                              &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                              &lt;Format&gt;d&lt;/Format&gt;
+                            &lt;/Style&gt;
+                          &lt;/TextRun&gt;
+                        &lt;/TextRuns&gt;
+                        &lt;Style&gt;
+                          &lt;TextAlign&gt;Center&lt;/TextAlign&gt;
+                        &lt;/Style&gt;
+                      &lt;/Paragraph&gt;
+                    &lt;/Paragraphs&gt;
+                    &lt;rd:DefaultName&gt;AbsenceDate&lt;/rd:DefaultName&gt;
+                    &lt;CustomProperties&gt;
+                      &lt;CustomProperty&gt;
+                        &lt;Name&gt;AXDataType&lt;/Name&gt;
+                        &lt;Value&gt;DateTime&lt;/Value&gt;
+                      &lt;/CustomProperty&gt;
+                      &lt;CustomProperty&gt;
+                        &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                        &lt;Value&gt;SPYLeavePlanTmp.AbsenceDate&lt;/Value&gt;
+                      &lt;/CustomProperty&gt;
+                      &lt;CustomProperty&gt;
+                        &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                        &lt;Value&gt;SPYLeavePlanTmp.AbsenceDate&lt;/Value&gt;
+                      &lt;/CustomProperty&gt;
+                      &lt;CustomProperty&gt;
+                        &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                        &lt;Value&gt;SPYLeavePlanTmp.AbsenceDate&lt;/Value&gt;
+                      &lt;/CustomProperty&gt;
+                    &lt;/CustomProperties&gt;
+                    &lt;Style&gt;
+                      &lt;Border&gt;
+                        &lt;Style&gt;Solid&lt;/Style&gt;
+                      &lt;/Border&gt;
+                      &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                      &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                      &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                      &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                    &lt;/Style&gt;
+                  &lt;/Textbox&gt;
+                &lt;/CellContents&gt;
+              &lt;/TablixHeader&gt;
+            &lt;/TablixMember&gt;
+          &lt;/TablixMembers&gt;
+        &lt;/TablixColumnHierarchy&gt;
+        &lt;TablixRowHierarchy&gt;
+          &lt;TablixMembers&gt;
+            &lt;TablixMember&gt;
+              &lt;Group Name="WorkerGroup"&gt;
+                &lt;GroupExpressions&gt;
+                  &lt;GroupExpression&gt;=Fields!Worker.Value&lt;/GroupExpression&gt;
+                &lt;/GroupExpressions&gt;
+              &lt;/Group&gt;
+              &lt;TablixHeader&gt;
+                &lt;Size&gt;1.25in&lt;/Size&gt;
+                &lt;CellContents&gt;
+                  &lt;Textbox Name="WorkerPersonnelNumber"&gt;
+                    &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                    &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                    &lt;Paragraphs&gt;
+                      &lt;Paragraph&gt;
+                        &lt;TextRuns&gt;
+                          &lt;TextRun&gt;
+                            &lt;Value&gt;=Fields!WorkerPersonnelNumber.Value&lt;/Value&gt;
+                            &lt;Style&gt;
+                              &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                            &lt;/Style&gt;
+                          &lt;/TextRun&gt;
+                        &lt;/TextRuns&gt;
+                        &lt;Style /&gt;
+                      &lt;/Paragraph&gt;
+                    &lt;/Paragraphs&gt;
+                    &lt;rd:DefaultName&gt;WorkerPersonnelNumber&lt;/rd:DefaultName&gt;
+                    &lt;CustomProperties&gt;
+                      &lt;CustomProperty&gt;
+                        &lt;Name&gt;AXDataType&lt;/Name&gt;
+                        &lt;Value&gt;String&lt;/Value&gt;
+                      &lt;/CustomProperty&gt;
+                      &lt;CustomProperty&gt;
+                        &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                        &lt;Value&gt;SPYLeavePlanTmp.WorkerPersonnelNumber&lt;/Value&gt;
+                      &lt;/CustomProperty&gt;
+                      &lt;CustomProperty&gt;
+                        &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                        &lt;Value&gt;SPYLeavePlanTmp.WorkerPersonnelNumber&lt;/Value&gt;
+                      &lt;/CustomProperty&gt;
+                      &lt;CustomProperty&gt;
+                        &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                        &lt;Value&gt;SPYLeavePlanTmp.WorkerPersonnelNumber&lt;/Value&gt;
+                      &lt;/CustomProperty&gt;
+                    &lt;/CustomProperties&gt;
+                    &lt;Style&gt;
+                      &lt;Border&gt;
+                        &lt;Style&gt;Solid&lt;/Style&gt;
+                      &lt;/Border&gt;
+                      &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                      &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                      &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                      &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                    &lt;/Style&gt;
+                  &lt;/Textbox&gt;
+                &lt;/CellContents&gt;
+              &lt;/TablixHeader&gt;
+              &lt;TablixMembers&gt;
+                &lt;TablixMember&gt;
+                  &lt;TablixHeader&gt;
+                    &lt;Size&gt;2in&lt;/Size&gt;
+                    &lt;CellContents&gt;
+                      &lt;Textbox Name="WorkerName"&gt;
+                        &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                        &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                        &lt;Paragraphs&gt;
+                          &lt;Paragraph&gt;
+                            &lt;TextRuns&gt;
+                              &lt;TextRun&gt;
+                                &lt;Value&gt;=Fields!WorkerName.Value&lt;/Value&gt;
+                                &lt;Style&gt;
+                                  &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                                &lt;/Style&gt;
+                              &lt;/TextRun&gt;
+                            &lt;/TextRuns&gt;
+                            &lt;Style /&gt;
+                          &lt;/Paragraph&gt;
+                        &lt;/Paragraphs&gt;
+                        &lt;rd:DefaultName&gt;WorkerName&lt;/rd:DefaultName&gt;
+                        &lt;CustomProperties&gt;
+                          &lt;CustomProperty&gt;
+                            &lt;Name&gt;AXDataType&lt;/Name&gt;
+                            &lt;Value&gt;String&lt;/Value&gt;
+                          &lt;/CustomProperty&gt;
+                          &lt;CustomProperty&gt;
+                            &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                            &lt;Value&gt;SPYLeavePlanTmp.WorkerName&lt;/Value&gt;
+                          &lt;/CustomProperty&gt;
+                          &lt;CustomProperty&gt;
+                            &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                            &lt;Value&gt;SPYLeavePlanTmp.WorkerName&lt;/Value&gt;
+                          &lt;/CustomProperty&gt;
+                          &lt;CustomProperty&gt;
+                            &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                            &lt;Value&gt;SPYLeavePlanTmp.WorkerName&lt;/Value&gt;
+                          &lt;/CustomProperty&gt;
+                        &lt;/CustomProperties&gt;
+                        &lt;Style&gt;
+                          &lt;Border&gt;
+                            &lt;Style&gt;Solid&lt;/Style&gt;
+                          &lt;/Border&gt;
+                          &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+                          &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+                          &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+                          &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+                        &lt;/Style&gt;
+                      &lt;/Textbox&gt;
+                    &lt;/CellContents&gt;
+                  &lt;/TablixHeader&gt;
+                &lt;/TablixMember&gt;
+              &lt;/TablixMembers&gt;
+            &lt;/TablixMember&gt;
+          &lt;/TablixMembers&gt;
+        &lt;/TablixRowHierarchy&gt;
+        &lt;NoRowsMessage&gt;No data found&lt;/NoRowsMessage&gt;
+        &lt;DataSetName&gt;LeavePlanDS&lt;/DataSetName&gt;
+        &lt;Height&gt;0.5in&lt;/Height&gt;
+        &lt;Width&gt;4.25in&lt;/Width&gt;
+        &lt;Style&gt;
+          &lt;Border&gt;
+            &lt;Style&gt;None&lt;/Style&gt;
+          &lt;/Border&gt;
+        &lt;/Style&gt;
+      &lt;/Tablix&gt;
+    &lt;/ReportItems&gt;
+    &lt;Height&gt;0.59375in&lt;/Height&gt;
+    &lt;Style /&gt;
+  &lt;/Body&gt;
+  &lt;ReportParameters&gt;
+    &lt;ReportParameter Name="AX_PartitionKey"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_PartitionKey&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_UserContext"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_UserContext&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_CompanyName"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;DefaultValue&gt;
+        &lt;Values&gt;
+          &lt;Value&gt;=Microsoft.Dynamics.Framework.Reports.BuiltInMethods.GetUserCompany(Parameters!AX_UserContext.Value)&lt;/Value&gt;
+        &lt;/Values&gt;
+      &lt;/DefaultValue&gt;
+      &lt;Prompt&gt;AX_CompanyName&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_RenderingCulture"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_RenderingCulture&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_ReportContext"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_ReportContext&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+      &lt;UsedInQuery&gt;True&lt;/UsedInQuery&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="AX_RdpPreProcessedId"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;AX_RdpPreProcessedId&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="LeavePlanDS_FromDate"&gt;
+      &lt;DataType&gt;DateTime&lt;/DataType&gt;
+      &lt;Prompt&gt;@SYS5209&lt;/Prompt&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="LeavePlanDS_ToDate"&gt;
+      &lt;DataType&gt;DateTime&lt;/DataType&gt;
+      &lt;Prompt&gt;@SYS35904&lt;/Prompt&gt;
+    &lt;/ReportParameter&gt;
+    &lt;ReportParameter Name="SPYLeavePlannerDP_DynamicParameter"&gt;
+      &lt;DataType&gt;String&lt;/DataType&gt;
+      &lt;Nullable&gt;true&lt;/Nullable&gt;
+      &lt;AllowBlank&gt;true&lt;/AllowBlank&gt;
+      &lt;Prompt&gt;SPYLeavePlannerDP_DynamicParameter&lt;/Prompt&gt;
+      &lt;Hidden&gt;true&lt;/Hidden&gt;
+    &lt;/ReportParameter&gt;
+  &lt;/ReportParameters&gt;
+  &lt;Width&gt;6in&lt;/Width&gt;
+  &lt;Page&gt;
+    &lt;PageHeader&gt;
+      &lt;Height&gt;0.72917in&lt;/Height&gt;
+      &lt;PrintOnFirstPage&gt;true&lt;/PrintOnFirstPage&gt;
+      &lt;PrintOnLastPage&gt;true&lt;/PrintOnLastPage&gt;
+      &lt;ReportItems&gt;
+        &lt;Textbox Name="Textbox1"&gt;
+          &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+          &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+          &lt;Paragraphs&gt;
+            &lt;Paragraph&gt;
+              &lt;TextRuns&gt;
+                &lt;TextRun&gt;
+                  &lt;Value&gt;="Leave Planner "&lt;/Value&gt;
+                  &lt;Style&gt;
+                    &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                    &lt;FontSize&gt;14pt&lt;/FontSize&gt;
+                    &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                  &lt;/Style&gt;
+                &lt;/TextRun&gt;
+              &lt;/TextRuns&gt;
+              &lt;Style /&gt;
+            &lt;/Paragraph&gt;
+          &lt;/Paragraphs&gt;
+          &lt;rd:DefaultName&gt;Textbox1&lt;/rd:DefaultName&gt;
+          &lt;Top&gt;0.12917in&lt;/Top&gt;
+          &lt;Height&gt;0.25in&lt;/Height&gt;
+          &lt;Width&gt;4.91333in&lt;/Width&gt;
+          &lt;Style&gt;
+            &lt;Border&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+            &lt;/Border&gt;
+            &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+            &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+            &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+            &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+          &lt;/Style&gt;
+        &lt;/Textbox&gt;
+        &lt;Textbox Name="Textbox2"&gt;
+          &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+          &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+          &lt;Paragraphs&gt;
+            &lt;Paragraph&gt;
+              &lt;TextRuns&gt;
+                &lt;TextRun&gt;
+                  &lt;Value&gt;=format(Parameters!LeavePlanDS_FromDate.Value, "dd/MM/yyyy") + " - " + format(Parameters!LeavePlanDS_ToDate.Value, "dd/MM/yyyy")&lt;/Value&gt;
+                  &lt;Style&gt;
+                    &lt;FontFamily&gt;Segoe UI&lt;/FontFamily&gt;
+                    &lt;FontWeight&gt;Bold&lt;/FontWeight&gt;
+                  &lt;/Style&gt;
+                &lt;/TextRun&gt;
+              &lt;/TextRuns&gt;
+              &lt;Style /&gt;
+            &lt;/Paragraph&gt;
+          &lt;/Paragraphs&gt;
+          &lt;rd:DefaultName&gt;Textbox1&lt;/rd:DefaultName&gt;
+          &lt;Top&gt;0.37917in&lt;/Top&gt;
+          &lt;Height&gt;0.2in&lt;/Height&gt;
+          &lt;Width&gt;2.96541in&lt;/Width&gt;
+          &lt;ZIndex&gt;1&lt;/ZIndex&gt;
+          &lt;Style&gt;
+            &lt;Border&gt;
+              &lt;Style&gt;None&lt;/Style&gt;
+            &lt;/Border&gt;
+            &lt;PaddingLeft&gt;2pt&lt;/PaddingLeft&gt;
+            &lt;PaddingRight&gt;2pt&lt;/PaddingRight&gt;
+            &lt;PaddingTop&gt;2pt&lt;/PaddingTop&gt;
+            &lt;PaddingBottom&gt;2pt&lt;/PaddingBottom&gt;
+          &lt;/Style&gt;
+        &lt;/Textbox&gt;
+      &lt;/ReportItems&gt;
+      &lt;Style&gt;
+        &lt;Border&gt;
+          &lt;Style&gt;None&lt;/Style&gt;
+        &lt;/Border&gt;
+      &lt;/Style&gt;
+    &lt;/PageHeader&gt;
+    &lt;InteractiveHeight&gt;11in&lt;/InteractiveHeight&gt;
+    &lt;InteractiveWidth&gt;8.5in&lt;/InteractiveWidth&gt;
+    &lt;LeftMargin&gt;1in&lt;/LeftMargin&gt;
+    &lt;RightMargin&gt;1in&lt;/RightMargin&gt;
+    &lt;TopMargin&gt;1in&lt;/TopMargin&gt;
+    &lt;BottomMargin&gt;1in&lt;/BottomMargin&gt;
+    &lt;Style /&gt;
+  &lt;/Page&gt;
+  &lt;Language&gt;en-US&lt;/Language&gt;
+  &lt;rd:ReportID&gt;a972a75a-59ab-4ee8-9cab-e8ba03526dd6&lt;/rd:ReportID&gt;
+  &lt;rd:ReportUnitType&gt;Inch&lt;/rd:ReportUnitType&gt;
+  &lt;rd:ExpressionDialog&gt;Microsoft.Dynamics.Framework.Design.Reports.ExpressionEditor.ExpressionEditorDialog, Microsoft.Dynamics.Framework.Design.Reports&lt;/rd:ExpressionDialog&gt;
+&lt;/Report&gt;</Text>
+			<DisableIndividualTransformation>
+				<Name>DisableIndividualTransformation</Name>
+			</DisableIndividualTransformation>
+		</AxReportDesign>
+	</Designs>
+	<EmbeddedImages />
+</AxReport>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanJourEventHandler</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayLoanJourEventHandler implements    WorkflowCanceledEventHandler,  WorkflowCompletedEventHandler,
+                                               WorkflowStartedEventHandler
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canceled</Name>
+				<Source><![CDATA[
+    public void canceled(WorkflowEventArgs _workflowEventArgs)
+    {
+        SPYPayLoanTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Cancelled);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>completed</Name>
+				<Source><![CDATA[
+    public void completed(WorkflowEventArgs _workflowEventArgs)
+    {
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>started</Name>
+				<Source><![CDATA[
+    public void started(WorkflowEventArgs _workflowEventArgs)
+    {
+        SPYPayLoanTable::updateWorkflowStatus(_workflowEventArgs.parmWorkflowContext().parmRecId(),SPYWorkflowStatus::Started);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

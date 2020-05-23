@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanPostServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayLoanPostServiceController extends SysOperationServiceController
+{
+    FormRun                     payProcessEdit;
+    SPYPayLoanPostContract      payLoanPostContract;
+    SPYPayLoanCode              payLoanCode;
+    SPYPayLoanTransType         payLoanTransType;
+    container                                   testNumCon;
+    #define.CurrentVersion(1)
+    #localmacro.VersionList
+        testNumCon
+    #endmacro
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!payProcessEdit)
+        {
+            payProcessEdit = classfactory.formRunClass(SPYPayLoanPostServiceController::newClientArgs(formStr(SPYPayLoanPostEdit), this));
+            payProcessEdit.init();
+        }
+    
+        return payProcessEdit as IDialogable;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+    
+        if (this.canGoBatch())
+           this.batchInfo().dialog(dlg);
+    
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cleanupDialog</Name>
+				<Source><![CDATA[
+    protected void  cleanupDialog()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogRun</Name>
+				<Source><![CDATA[
+    protected SysOperationStartResult dialogRun()
+    {
+        SysOperationStartResult result;
+        CompanyId               companyId = curext();
+
+        result = super();
+
+        if (result == SysOperationStartResult::Canceled)
+        {
+            this.cleanupDialog();
+        }
+
+        if(companyId != curext())
+        {
+            appl.setDefaultCompany(companyId, false);
+        }
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPayLoanContract</Name>
+				<Source><![CDATA[
+    public SPYPayLoanPostContract getPayLoanContract()
+    {
+        return payLoanPostContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayLoanCode</Name>
+				<Source><![CDATA[
+    SPYPayLoanCode parmPayLoanCode(SPYPayAdjustmentCode _payLoanCode = payLoanCode)
+    {
+        payLoanCode = _payLoanCode;
+    
+        return payLoanCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayLoanTransType</Name>
+				<Source><![CDATA[
+    SPYPayLoanTransType parmPayLoanTransType(SPYPayLoanTransType _payLoanTransType = payLoanTransType)
+    {
+        payLoanTransType = _payLoanTransType;
+        return payLoanTransType;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYPayLoanPostContract parmServiceContract(SPYPayLoanPostContract _payLoanPostContract = payLoanPostContract)
+    {
+        payLoanPostContract = _payLoanPostContract;
+        return payLoanPostContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYPayLoanPostServiceController construct(IdentifierName _className  = '',
+                                                     IdentifierName _methodName = '',
+                                                     SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYPayLoanPostServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayLoanPostServiceController         payLoanPostServiceController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+        SPYPayLoanTable                         payLoanTable;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous; ///
+        payLoanPostServiceController = SPYPayLoanPostServiceController::construct(className, methodName, mode);
+    
+        if(args.record() is SPYPayLoanTable)
+            payLoanTable = args.record() as SPYPayLoanTable;
+        payLoanPostServiceController.parmPayLoanCode(payLoanTable.PayLoanCode);
+        payLoanPostServiceController.parmPayLoanTransType(args.parmEnum());
+        //payProcessServiceController.startOperation();
+        if(payLoanPostServiceController.prompt())
+            payLoanPostServiceController.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYPayLoanPostServiceController _payLoanPostServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_payLoanPostServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name = "packedState"></param>
+    /// <returns></returns>
+    public boolean unpack(container packedState)
+    {
+        container   packedSuper;
+        boolean     ret;
+        int         version;
+
+        version = SysOperationHelper::getVersion(packedState);
+
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version, #VersionList, packedSuper] = packedState;
+                ret = super(packedSuper);
+                break;
+
+            default:
+                ret = false;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

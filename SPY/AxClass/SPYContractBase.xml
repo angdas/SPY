@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYContractBase</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute,
+    SysOperationContractProcessingAttribute(classStr(SPYUIBuilderBase)),
+    SysOperationGroupAttribute('PayrollPeriod','Payroll period','1'),
+    SysOperationGroupAttribute('FinancialDimensions','Financial dimensions','2')
+]
+class SPYContractBase
+{
+    SPYPayrollPeriodLineRecId   payrollPeriodLine;
+    boolean                     showFinDim1;
+    boolean                     showFinDim2;
+    boolean                     showFinDim3;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayrollPeriodLine</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLine'),
+        SysOperationLabelAttribute(literalStr('@SPY25')),
+        SysOperationHelpTextAttribute(literalStr('@SPY168')),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodLine(SPYPayrollPeriodLineRecId _payrollperiodLine = payrollPeriodLine)
+    {
+        payrollPeriodLine =_payrollperiodLine;
+    
+        return payrollPeriodLine;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowFinDim1</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('showFinDim1'),
+        SysOperationLabelAttribute(literalStr('Dimension 1')),
+        SysOperationHelpTextAttribute(literalStr('Show details by Dimension 1')),
+        SysOperationGroupMemberAttribute('FinancialDimensions'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public boolean  parmShowFinDim1(boolean _showFinDim1 = showFinDim1)
+    {
+        showFinDim1 = _showFinDim1;
+    
+        return showFinDim1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowFinDim2</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('showFinDim2'),
+        SysOperationLabelAttribute(literalStr('Dimension 2')),
+        SysOperationHelpTextAttribute(literalStr('Show details by Dimension 2')),
+        SysOperationGroupMemberAttribute('FinancialDimensions'),
+        SysOperationDisplayOrderAttribute('2')
+    ]
+    public boolean  parmShowFinDim2(boolean _showFinDim2 = showFinDim2)
+    {
+        showFinDim2 = _showFinDim2;
+    
+        return showFinDim2;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowFinDim3</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('showFinDim3'),
+        SysOperationLabelAttribute(literalStr('Dimension 3')),
+        SysOperationHelpTextAttribute(literalStr('Show details by Dimension 3')),
+        SysOperationGroupMemberAttribute('FinancialDimensions'),
+        SysOperationDisplayOrderAttribute('3')
+    ]
+    public boolean  parmShowFinDim3(boolean _showFinDim3 = showFinDim3)
+    {
+        showFinDim3 = _showFinDim3;
+    
+        return showFinDim3;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,884 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.SPYPayrollTable_ID(1)
+    #define.ParentPayelement_ID(2)
+    #define.SPYPayrollDetails_ID(3)
+    #define.CompanyInfo_ID(4)
+    
+    // Data source buffers
+    SPYPayrollTable m_SPYPayrollTable;
+    SPYPayElementTable m_ParentPayelement;
+    SPYPayrollDetails m_SPYPayrollDetails;
+    CompanyInfo m_CompanyInfo;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollTable'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('ParentPayelement'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollDetails'));
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('CompanyInfo'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private boolean isAnyFieldSet_DS2(SPYPayElementTable _parentPayelement, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_parentPayelement.isFieldSet(fieldnum(SPYPayElementTable,PayElementCode)))
+        {
+            return true;
+        }
+        if(_parentPayelement IS SPYPayrollTable)
+        {
+            SPYPayrollTable _sPYPayrollTable1 = _parentPayelement AS SPYPayrollTable;
+        }
+        if(_parentPayelement IS SPYBenefitTable)
+        {
+            SPYBenefitTable _sPYBenefitTable = _parentPayelement AS SPYBenefitTable;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _parentPayelement) ? true : false;
+        return rtrn;
+    }
+    private void foreignKeyPropagation_DS1(DataEntityRuntimeContext _entityCtx, SPYPayrollTable _sPYPayrollTable)
+    {
+        SPYPayElementTable parentPayelement_ = _entityCtx.getRuntimeContextByName('ParentPayelement').getBuffer();
+        // FK propagation of references to an optional read-only PK data source will be done if
+        //   1. conflict detection has been invoked against the PK data source, or
+        //   2. the PK data source buffer is not null.
+        if(_entityCtx.getRuntimeContextByName('ParentPayelement').conflictDetectionInvoked() || parentPayelement_)
+        {
+            // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+            if(_sPYPayrollTable.ParentPayElement != parentPayelement_.RecId)
+            {
+                _sPYPayrollTable.ParentPayElement = parentPayelement_.RecId;
+            }
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('SPYPayrollTable').getDatabaseOperation();
+        SPYPayrollTableEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYPayrollTable'), _entityCtx.getRuntimeContextByName('ParentPayelement'), dataSourceDBOperation, 'SPYPayrollTable.ParentPayElement', _sPYPayrollTable, fieldnum(SPYPayrollTable, ParentPayElement), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+        {
+            validationFailed = true;
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private boolean isAnyFieldSet_DS4(CompanyInfo _companyInfo, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_companyInfo.isFieldSet(fieldnum(CompanyInfo,DataArea)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _companyInfo) ? true : false;
+        return rtrn;
+    }
+    private void foreignKeyPropagation_DS3(DataEntityRuntimeContext _entityCtx, SPYPayrollDetails _sPYPayrollDetails)
+    {
+        SPYPayrollTable sPYPayrollTable_ = _entityCtx.getRuntimeContextByName('SPYPayrollTable').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_sPYPayrollDetails.Payroll != sPYPayrollTable_.RecId)
+        {
+            _sPYPayrollDetails.Payroll = sPYPayrollTable_.RecId;
+        }
+        
+        CompanyInfo companyInfo_ = _entityCtx.getRuntimeContextByName('CompanyInfo').getBuffer();
+        // do not set foreign key values if they are same to make sure validation is not fired unless value changed
+        if(_sPYPayrollDetails.LegalEntity != companyInfo_.RecId)
+        {
+            _sPYPayrollDetails.LegalEntity = companyInfo_.RecId;
+        }
+        
+        // foreign key value validation
+        boolean validationFailed = false;
+        DataEntityDatabaseOperation dataSourceDBOperation = _entityCtx.getRuntimeContextByName('SPYPayrollDetails').getDatabaseOperation();
+        SPYPayrollTableEntity dataEntityRecord = _entityCtx.getEntityRecord();
+        
+        if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYPayrollDetails'), _entityCtx.getRuntimeContextByName('SPYPayrollTable'), dataSourceDBOperation, 'SPYPayrollDetails.Payroll', _sPYPayrollDetails, fieldnum(SPYPayrollDetails, Payroll), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+        {
+            validationFailed = true;
+        }
+        
+        if(!this.validateDataSourceFieldInCompanyContext(_entityCtx.getRuntimeContextByName('SPYPayrollDetails'), _entityCtx.getRuntimeContextByName('CompanyInfo'), dataSourceDBOperation, 'SPYPayrollDetails.LegalEntity', _sPYPayrollDetails, fieldnum(SPYPayrollDetails, LegalEntity), false/*disallowEditOnCreate*/, false/*disallowEdit*/, false/*callValidateField*/, 1))
+        {
+            validationFailed = true;
+        }
+        
+        if(validationFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    private boolean isAnyFieldSet_DS3(SPYPayrollDetails _sPYPayrollDetails, DataEntityDataSourceRuntimeContext _dataSourceCtx, DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollDetails.isFieldSet(fieldnum(SPYPayrollDetails,ValidFrom)))
+        {
+            return true;
+        }
+        if(_sPYPayrollDetails.isFieldSet(fieldnum(SPYPayrollDetails,ValidTo)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyFieldSet_Extensions(_entityCtx, _dataSourceCtx, _sPYPayrollDetails) ? true : false;
+        return rtrn;
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // save/update data sources referenced by [SPYPayrollTable].
+            {
+                // handle datasources which are part of extensions and need to be saved before [ParentPayelement]
+                if(!this.preSaveDataSource(_entityCtx, 'ParentPayelement'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('ParentPayelement');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                if(this.isAnyFieldSet_DS2(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // invoke conflict detection for read-only data source.
+                    Common resolvedRecord = this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    if(!resolvedRecord)
+                    {
+                        SPYPayElementTable parentPayelement_ = _dataSourceCtx.getBuffer();
+                        if((parentPayelement_.PayElementCode))
+                        {
+                            checkFailed(strfmt("@ApplicationPlatform:DataEntityReadonlyDataSourceNotFound", _dataSourceCtx.name()));
+                            throw Exception::ViewDataSourceValidation;
+                        }
+                    }
+                    // marks the read-only data source as 'saved' and skips actual insert/update operation.
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                // in case of update marks the read-only data source as 'saved' and skips actual insert/update operation.
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    _dataSourceCtx.setDataSaved(true);
+                }
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // inserts/updates data source [ParentPayelement].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+            // handle datasources which are part of extensions and need to be saved before [SPYPayrollTable]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollTable'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollTable');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // propagates foreign key values from referenced data sources.
+            this.foreignKeyPropagation_DS1(_entityCtx, _dataSourceCtx.getBuffer());
+            // invoke conflict detection for data source that's on the 1 side of 1:N or N:1 relationship.
+            this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+            // inserts/updates data source [SPYPayrollTable].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+            // insert/update data sources that reference [SPYPayrollTable].
+            {
+                // save/update data sources referenced by [SPYPayrollDetails].
+                {
+                    // handle datasources which are part of extensions and need to be saved before [CompanyInfo]
+                    if(!this.preSaveDataSource(_entityCtx, 'CompanyInfo'))
+                    {
+                        return false;
+                    }
+                    _dataSourceCtx = _entityCtx.getRuntimeContextByName('CompanyInfo');
+                    // propagates foreign key values from referenced data sources which are part of extensions.
+                    this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                    // invoke conflict detection for data source that's on the 1 side of 1:N or N:1 relationship.
+                    this.detectConflictForDataSource(_entityCtx, _dataSourceCtx);
+                    // checks if there is any field that has been set for outer joined data source buffer.
+                    if(!this.isAnyFieldSet_DS4(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                    {
+                        // insert/update operation is not applicable when there is no field that has been set.
+                        if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Insert || _dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                        {
+                            _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                        }
+                    }
+                    else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                    {
+                        if(_dataSourceCtx.getBuffer().RecId == 0)
+                        {
+                            // change to insert operation for the new record.
+                            _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::Insert);
+                        }
+                    }
+                    // inserts/updates data source [CompanyInfo].
+                    this.saveDataSource(_entityCtx, _dataSourceCtx);
+                    this.postSaveDataSource();
+                }
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollDetails]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollDetails'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollDetails');
+                // propagates foreign key values from referenced data sources which are part of extensions.
+                this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+                // propagates foreign key values from referenced data sources.
+                this.foreignKeyPropagation_DS3(_entityCtx, _dataSourceCtx.getBuffer());
+                // checks if there is any field that has been set for outer joined data source buffer.
+                if(!this.isAnyFieldSet_DS3(_dataSourceCtx.getBuffer(),_dataSourceCtx,_entityCtx))
+                {
+                    // insert/update operation is not applicable when there is no field that has been set.
+                    if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Insert || _dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                    {
+                        _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                    }
+                }
+                else if(_dataSourceCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Update)
+                {
+                    if(_dataSourceCtx.getBuffer().RecId == 0)
+                    {
+                        // change to insert operation for the new record.
+                        _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::Insert);
+                    }
+                }
+                // inserts/updates data source [SPYPayrollDetails].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // deletes data sources that reference [SPYPayrollTable].
+            {
+                // handle datasources which are part of extensions and need to be saved before [SPYPayrollDetails]
+                if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollDetails'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollDetails');
+                // deletes data source [SPYPayrollDetails].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+                // deletes data sources referenced by [SPYPayrollDetails].
+                {
+                    // handle datasources which are part of extensions and need to be saved before [CompanyInfo]
+                    if(!this.preSaveDataSource(_entityCtx, 'CompanyInfo'))
+                    {
+                        return false;
+                    }
+                    _dataSourceCtx = _entityCtx.getRuntimeContextByName('CompanyInfo');
+                    // skips delete operation against data source that's on the 1 side of 1:N or N:1 relationship.
+                    // marks the read-only data source as 'saved' and skips actual delete operation.
+                    _dataSourceCtx.setDataSaved(true);
+                    _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                    // deletes data source [CompanyInfo].
+                    this.saveDataSource(_entityCtx, _dataSourceCtx);
+                    this.postSaveDataSource();
+                }
+            }
+            // handle datasources which are part of extensions and need to be saved before [SPYPayrollTable]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollTable'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollTable');
+            // skips delete operation against data source that's on the 1 side of 1:N or N:1 relationship.
+            // marks the read-only data source as 'saved' and skips actual delete operation.
+            _dataSourceCtx.setDataSaved(true);
+            _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+            // deletes data source [SPYPayrollTable].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+            // deletes data sources referenced by [SPYPayrollTable].
+            {
+                // handle datasources which are part of extensions and need to be saved before [ParentPayelement]
+                if(!this.preSaveDataSource(_entityCtx, 'ParentPayelement'))
+                {
+                    return false;
+                }
+                _dataSourceCtx = _entityCtx.getRuntimeContextByName('ParentPayelement');
+                // skips delete operation against read-only data source.
+                // marks the read-only data source as 'saved' and skips actual delete operation.
+                _dataSourceCtx.setDataSaved(true);
+                _dataSourceCtx.setDatabaseOperation(DataEntityDatabaseOperation::None);
+                // deletes data source [ParentPayelement].
+                this.saveDataSource(_entityCtx, _dataSourceCtx);
+                this.postSaveDataSource();
+            }
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable, SPYPayrollTableEntity _sPYPayrollTableEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, Description), _sPYPayrollTable, fieldnum(SPYPayrollTable, Description), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayElementCode), _sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementCode), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayElementType), _sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementType), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayrollType), _sPYPayrollTable, fieldnum(SPYPayrollTable, PayrollType), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ReferencePayElement), _sPYPayrollTable, fieldnum(SPYPayrollTable, ReferencePayElement), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollTable, _sPYPayrollTableEntity);
+        _sPYPayrollTable.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS2(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayElementTable _parentPayelement, SPYPayrollTableEntity _sPYPayrollTableEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ParentPayelement_PayElementCode), _parentPayelement, fieldnum(SPYPayElementTable, PayElementCode), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _parentPayelement, _sPYPayrollTableEntity);
+        _parentPayelement.trackFieldExternallySet(false);
+        if(_parentPayelement IS SPYPayrollTable)
+        {
+            SPYPayrollTable _sPYPayrollTable1 = _parentPayelement AS SPYPayrollTable;
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollTable1, _sPYPayrollTableEntity);
+            _sPYPayrollTable1.trackFieldExternallySet(false);
+        }
+        if(_parentPayelement IS SPYBenefitTable)
+        {
+            SPYBenefitTable _sPYBenefitTable = _parentPayelement AS SPYBenefitTable;
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYBenefitTable, _sPYPayrollTableEntity);
+            _sPYBenefitTable.trackFieldExternallySet(false);
+        }
+    }
+    private void mapToDataSource_DS3(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollDetails _sPYPayrollDetails, SPYPayrollTableEntity _sPYPayrollTableEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ValidFrom), _sPYPayrollDetails, fieldnum(SPYPayrollDetails, ValidFrom), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ValidTo), _sPYPayrollDetails, fieldnum(SPYPayrollDetails, ValidTo), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollDetails, _sPYPayrollTableEntity);
+        _sPYPayrollDetails.trackFieldExternallySet(false);
+    }
+    private void mapToDataSource_DS4(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, CompanyInfo _companyInfo, SPYPayrollTableEntity _sPYPayrollTableEntity)
+    {
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, CompanyInfo_DataArea), _companyInfo, fieldnum(CompanyInfo, DataArea), 1);
+        
+        this.mapToDataSourceExtensions(_dataSourceCtx, _companyInfo, _sPYPayrollTableEntity);
+        _companyInfo.trackFieldExternallySet(false);
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollTable_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #ParentPayelement_ID:
+                this.mapToDataSource_DS2(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollDetails_ID:
+                this.mapToDataSource_DS3(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #CompanyInfo_ID:
+                this.mapToDataSource_DS4(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable, SPYPayrollTableEntity _sPYPayrollTableEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollTable, fieldnum(SPYPayrollTable, Description), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, Description), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementCode), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayElementCode), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementType), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayElementType), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollTable, fieldnum(SPYPayrollTable, PayrollType), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayrollType), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollTable, fieldnum(SPYPayrollTable, ReferencePayElement), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ReferencePayElement), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollTable, _sPYPayrollTableEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollTableEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollTable);
+    }
+    private void mapFromDataSource_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayElementTable _parentPayelement, SPYPayrollTableEntity _sPYPayrollTableEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_parentPayelement, fieldnum(SPYPayElementTable, PayElementCode), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ParentPayelement_PayElementCode), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _parentPayelement, _sPYPayrollTableEntity);
+        if(_parentPayelement IS SPYPayrollTable)
+        {
+            SPYPayrollTable _sPYPayrollTable1 = _parentPayelement AS SPYPayrollTable;
+            this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollTable1, _sPYPayrollTableEntity);
+        }
+        if(_parentPayelement IS SPYBenefitTable)
+        {
+            SPYBenefitTable _sPYBenefitTable = _parentPayelement AS SPYBenefitTable;
+            this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYBenefitTable, _sPYPayrollTableEntity);
+        }
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollTableEntity.fromViewDataSource(_dataSourceCtx.id(), _parentPayelement);
+    }
+    private void mapFromDataSource_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollDetails _sPYPayrollDetails, SPYPayrollTableEntity _sPYPayrollTableEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollDetails, fieldnum(SPYPayrollDetails, ValidFrom), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ValidFrom), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollDetails, fieldnum(SPYPayrollDetails, ValidTo), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ValidTo), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollDetails, _sPYPayrollTableEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollTableEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollDetails);
+    }
+    private void mapFromDataSource_DS4(DataEntityDataSourceRuntimeContext _dataSourceCtx, CompanyInfo _companyInfo, SPYPayrollTableEntity _sPYPayrollTableEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_companyInfo, fieldnum(CompanyInfo, DataArea), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, CompanyInfo_DataArea), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _companyInfo, _sPYPayrollTableEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollTableEntity.fromViewDataSource(_dataSourceCtx.id(), _companyInfo);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollTable_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #ParentPayelement_ID:
+                this.mapFromDataSource_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollDetails_ID:
+                this.mapFromDataSource_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            case #CompanyInfo_ID:
+                this.mapFromDataSource_DS4(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollTable_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #ParentPayelement_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS2(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #SPYPayrollDetails_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS3(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            case #CompanyInfo_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS4(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(SPYPayrollTableEntity _sPYPayrollTableEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, Description)))
+        {
+            return true;
+        }
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, PayElementCode)))
+        {
+            return true;
+        }
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, PayElementType)))
+        {
+            return true;
+        }
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, PayrollType)))
+        {
+            return true;
+        }
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, ReferencePayElement)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollTableEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS2(SPYPayrollTableEntity _sPYPayrollTableEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, ParentPayelement_PayElementCode)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollTableEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS3(SPYPayrollTableEntity _sPYPayrollTableEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, ValidFrom)))
+        {
+            return true;
+        }
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, ValidTo)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollTableEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS4(SPYPayrollTableEntity _sPYPayrollTableEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollTableEntity.isFieldSet(fieldnum(SPYPayrollTableEntity, CompanyInfo_DataArea)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollTableEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollTable_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            case #ParentPayelement_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS2(_entityCtx.getEntityRecord());
+                break;
+            case #SPYPayrollDetails_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS3(_entityCtx.getEntityRecord());
+                break;
+            case #CompanyInfo_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS4(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, SPYPayrollTableEntity _sPYPayrollTableEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, Description), 'SPYPayrollTableEntity.Description', _sPYPayrollTable, fieldnum(SPYPayrollTable, Description), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayElementCode), 'SPYPayrollTableEntity.PayElementCode', _sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementCode), false/*disallowEditOnCreate*/, true/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayElementType), 'SPYPayrollTableEntity.PayElementType', _sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementType), false/*disallowEditOnCreate*/, true/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, PayrollType), 'SPYPayrollTableEntity.PayrollType', _sPYPayrollTable, fieldnum(SPYPayrollTable, PayrollType), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ReferencePayElement), 'SPYPayrollTableEntity.ReferencePayElement', _sPYPayrollTable, fieldnum(SPYPayrollTable, ReferencePayElement), false/*disallowEditOnCreate*/, true/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYPayrollTableEntity, _dataSourceCtx, _sPYPayrollTable) ? rtrn : false;
+        return rtrn;
+    }
+    private boolean validateDataSource_DS3(DataEntityRuntimeContext _entityCtx, SPYPayrollTableEntity _sPYPayrollTableEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollDetails _sPYPayrollDetails)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ValidFrom), 'SPYPayrollTableEntity.ValidFrom', _sPYPayrollDetails, fieldnum(SPYPayrollDetails, ValidFrom), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, ValidTo), 'SPYPayrollTableEntity.ValidTo', _sPYPayrollDetails, fieldnum(SPYPayrollDetails, ValidTo), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYPayrollTableEntity, _dataSourceCtx, _sPYPayrollDetails) ? rtrn : false;
+        return rtrn;
+    }
+    private boolean validateDataSource_DS4(DataEntityRuntimeContext _entityCtx, SPYPayrollTableEntity _sPYPayrollTableEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, CompanyInfo _companyInfo)
+    {
+        boolean rtrn = true;
+        rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, _dataSourceCtx.getCompany(), '', conNull(), _sPYPayrollTableEntity, fieldnum(SPYPayrollTableEntity, CompanyInfo_DataArea), 'SPYPayrollTableEntity.CompanyInfo_DataArea', _companyInfo, fieldnum(CompanyInfo, DataArea), false/*disallowEditOnCreate*/, true/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+        rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYPayrollTableEntity, _dataSourceCtx, _companyInfo) ? rtrn : false;
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollTable_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            case #SPYPayrollDetails_ID:
+                rtrn = this.validateDataSource_DS3(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            case #CompanyInfo_ID:
+                rtrn = this.validateDataSource_DS4(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollTable _sPYPayrollTable, SPYPayrollTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTable, fieldnum(SPYPayrollTable, Description), _matchingRecord, fieldnum(SPYPayrollTable, Description), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementCode), _matchingRecord, fieldnum(SPYPayrollTable, PayElementCode), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTable, fieldnum(SPYPayrollTable, PayElementType), _matchingRecord, fieldnum(SPYPayrollTable, PayElementType), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTable, fieldnum(SPYPayrollTable, PayrollType), _matchingRecord, fieldnum(SPYPayrollTable, PayrollType), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTable, fieldnum(SPYPayrollTable, ReferencePayElement), _matchingRecord, fieldnum(SPYPayrollTable, ReferencePayElement), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollTableEntity), _sPYPayrollTable, _matchingRecord);
+        // map data changes in unbound FK fields
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollTable, fieldnum(SPYPayrollTable, ParentPayElement), _matchingRecord, fieldnum(SPYPayrollTable, ParentPayElement), 1);
+    }
+    private void mapToMatchingRecord_DS2(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayElementTable _parentPayelement, SPYPayElementTable _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _parentPayelement, fieldnum(SPYPayElementTable, PayElementCode), _matchingRecord, fieldnum(SPYPayElementTable, PayElementCode), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollTableEntity), _parentPayelement, _matchingRecord);
+        if(_parentPayelement IS SPYPayrollTable)
+        {
+            SPYPayrollTable _sPYPayrollTable1 = _parentPayelement AS SPYPayrollTable;
+            SPYPayrollTable _matchingRecord_sPYPayrollTable = _matchingRecord AS SPYPayrollTable;
+            // map data changes in bound fields.
+            this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollTableEntity), _sPYPayrollTable1, _matchingRecord_sPYPayrollTable);
+        }
+        if(_parentPayelement IS SPYBenefitTable)
+        {
+            SPYBenefitTable _sPYBenefitTable = _parentPayelement AS SPYBenefitTable;
+            SPYBenefitTable _matchingRecord_sPYBenefitTable = _matchingRecord AS SPYBenefitTable;
+            // map data changes in bound fields.
+            this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollTableEntity), _sPYBenefitTable, _matchingRecord_sPYBenefitTable);
+        }
+    }
+    private void mapToMatchingRecord_DS3(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollDetails _sPYPayrollDetails, SPYPayrollDetails _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollDetails, fieldnum(SPYPayrollDetails, ValidFrom), _matchingRecord, fieldnum(SPYPayrollDetails, ValidFrom), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollDetails, fieldnum(SPYPayrollDetails, ValidTo), _matchingRecord, fieldnum(SPYPayrollDetails, ValidTo), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollTableEntity), _sPYPayrollDetails, _matchingRecord);
+        // map data changes in unbound FK fields
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollDetails, fieldnum(SPYPayrollDetails, Payroll), _matchingRecord, fieldnum(SPYPayrollDetails, Payroll), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollDetails, fieldnum(SPYPayrollDetails, LegalEntity), _matchingRecord, fieldnum(SPYPayrollDetails, LegalEntity), 1);
+    }
+    private void mapToMatchingRecord_DS4(DataEntityDataSourceRuntimeContext _dataSourceCtx, CompanyInfo _companyInfo, CompanyInfo _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _companyInfo, fieldnum(CompanyInfo, DataArea), _matchingRecord, fieldnum(CompanyInfo, DataArea), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollTableEntity), _companyInfo, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollTable_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #ParentPayelement_ID:
+                this.mapToMatchingRecord_DS2(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #SPYPayrollDetails_ID:
+                this.mapToMatchingRecord_DS3(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            case #CompanyInfo_ID:
+                this.mapToMatchingRecord_DS4(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        // Ensure that the entity configuration key is enabled
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            // Entity configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityConfigKeyDisabled",'SPYPayroll'));
+        }
+    }
+    protected int getValidTimeStateUpdateModeForDataSource(DataEntityRuntimeContext _entityCtx, int _dataSourceId, str _dataSourceName)
+    {
+        int validTimeStateUpdate_ = ValidTimeStateUpdate::CreateNewTimePeriod;
+        
+        // returns ValidTimeStateUpdate value for date effective data sources.
+        
+        switch (_dataSourceId)
+        {
+            case #SPYPayrollDetails_ID:
+                validTimeStateUpdate_ = ValidTimeStateUpdate::CreateNewTimePeriod;
+                break;
+            default : validTimeStateUpdate_ = super(_entityCtx,_dataSourceId,_dataSourceName);
+        }
+        return validTimeStateUpdate_;
+    }
+    protected boolean hasDataSourceRecordChanged(int _dataSourceId, common _originalRecord, common _updatedRecord)
+    {
+        boolean hasDataSourceRecordChanged_ = true;
+        
+        // The method is called for OCC validation and only upon data sources that have One-to-Many relationships.
+        
+        switch (_dataSourceId)
+        {
+            case #SPYPayrollTable_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS1(_originalRecord, _updatedRecord);
+                break;
+            case #ParentPayelement_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS2(_originalRecord, _updatedRecord);
+                break;
+            case #CompanyInfo_ID:
+                hasDataSourceRecordChanged_ = this.hasDataSourceRecordChanged_DS4(_originalRecord, _updatedRecord);
+                break;
+        }
+        return hasDataSourceRecordChanged_;
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'SPYPayrollTable', m_SPYPayrollTable, this.getDataSourceId('SPYPayrollTable'), this.getDataSourceId('SPYPayrollTable'), false/* optional */, false/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'ParentPayelement', m_ParentPayelement, this.getDataSourceId('ParentPayelement'), this.getDataSourceId('ParentPayelement'), true/* optional */, true/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'SPYPayrollDetails', m_SPYPayrollDetails, this.getDataSourceId('SPYPayrollDetails'), this.getDataSourceId('SPYPayrollDetails'), true/* optional */, false/* readonly */, false/* oneToMany */, true/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSource(_entityCtx, 'CompanyInfo', m_CompanyInfo, this.getDataSourceId('CompanyInfo'), this.getDataSourceId('CompanyInfo'), true/* optional */, false/* readonly */, true/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private boolean hasDataSourceRecordChanged_DS1(SPYPayrollTable _originalRecord, SPYPayrollTable _updatedRecord)
+    {
+        if (_originalRecord.Description != _updatedRecord.Description)
+        {
+            return true;
+        }
+        if (_originalRecord.PayElementCode != _updatedRecord.PayElementCode)
+        {
+            return true;
+        }
+        if (_originalRecord.PayElementType != _updatedRecord.PayElementType)
+        {
+            return true;
+        }
+        if (_originalRecord.PayrollType != _updatedRecord.PayrollType)
+        {
+            return true;
+        }
+        if (_originalRecord.ReferencePayElement != _updatedRecord.ReferencePayElement)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS2(SPYPayElementTable _originalRecord, SPYPayElementTable _updatedRecord)
+    {
+        if (_originalRecord.PayElementCode != _updatedRecord.PayElementCode)
+        {
+            return true;
+        }
+        return false;
+    }
+    private boolean hasDataSourceRecordChanged_DS4(CompanyInfo _originalRecord, CompanyInfo _updatedRecord)
+    {
+        if (_originalRecord.DataArea != _updatedRecord.DataArea)
+        {
+            return true;
+        }
+        return false;
+    }
+    private SPYPayrollTable LookForUniqueKeyMatch_DS1(SPYPayrollTableEntity _sPYPayrollTableEntity, SPYPayrollTable _sPYPayrollTable)
+    {
+        SPYPayrollTable sPYPayrollTable_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                sPYPayrollTable_
+        where
+            sPYPayrollTable_.PayElementCode == _sPYPayrollTable.PayElementCode
+        ;
+        
+        if (sPYPayrollTable_)
+        {
+            return sPYPayrollTable_;
+        }
+        
+        return sPYPayrollTable_;
+    }
+    private SPYPayElementTable LookForUniqueKeyMatch_DS2(SPYPayrollTableEntity _sPYPayrollTableEntity, SPYPayElementTable _parentPayelement)
+    {
+        SPYPayElementTable sPYPayElementTable_ = null;
+        
+        // Ensuring only fields in the selection list should be accessed for read-only data source.
+        sPYPayElementTable_.checkInvalidFieldAccess(true);
+        
+        select
+            firstOnly
+                // Specify explicit field selection for read-only data source.
+                PayElementCode, RecId
+            from
+                sPYPayElementTable_
+        where
+            sPYPayElementTable_.PayElementCode == _parentPayelement.PayElementCode
+        ;
+        
+        if (sPYPayElementTable_)
+        {
+            return sPYPayElementTable_;
+        }
+        
+        return sPYPayElementTable_;
+    }
+    private SPYPayrollDetails LookForUniqueKeyMatch_DS3(SPYPayrollTableEntity _sPYPayrollTableEntity, SPYPayrollDetails _sPYPayrollDetails)
+    {
+        SPYPayrollDetails sPYPayrollDetails_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+            // Applying min/max date range since ApplyDateFilter is No for date effective data source.
+            validTimeState(minimumDateTime, maximumDateTime)
+                sPYPayrollDetails_
+        where
+            sPYPayrollDetails_.Payroll == _sPYPayrollDetails.Payroll && sPYPayrollDetails_.LegalEntity == _sPYPayrollDetails.LegalEntity && sPYPayrollDetails_.ValidFrom == _sPYPayrollDetails.ValidFrom && sPYPayrollDetails_.ValidTo == _sPYPayrollDetails.ValidTo
+        ;
+        
+        if (sPYPayrollDetails_)
+        {
+            return sPYPayrollDetails_;
+        }
+        
+        return sPYPayrollDetails_;
+    }
+    private CompanyInfo LookForUniqueKeyMatch_DS4(SPYPayrollTableEntity _sPYPayrollTableEntity, CompanyInfo _companyInfo)
+    {
+        CompanyInfo companyInfo_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                companyInfo_
+        where
+            companyInfo_.DataArea == _companyInfo.DataArea
+        ;
+        
+        if (companyInfo_)
+        {
+            return companyInfo_;
+        }
+        
+        select
+            forUpdate
+            firstOnly
+                companyInfo_
+        where
+            companyInfo_.PartyNumber == _companyInfo.PartyNumber
+        ;
+        
+        if (companyInfo_)
+        {
+            return companyInfo_;
+        }
+        
+        return companyInfo_;
+    }
+
+}
+

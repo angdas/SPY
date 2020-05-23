@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollEarnJourPostServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayrollEarnJourPostServiceController extends SysOperationServiceController
+{
+    FormRun                         payrollEarningsJournalPostEdit;
+    SPYPayrollEarnJourPostContract  payrollEarnJourPostContract;
+    SPYPayrollEarningsJournalCode   payrollEarningsJournalCode;
+    container                                   testNumCon;
+    #define.CurrentVersion(1)
+    #localmacro.VersionList
+        testNumCon
+    #endmacro
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!payrollEarningsJournalPostEdit)
+        {
+            payrollEarningsJournalPostEdit = classfactory.formRunClass(SPYPayrollEarnJourPostServiceController::newClientArgs(formStr(SPYPayrollEarningsJournalPostEdit), this));
+            payrollEarningsJournalPostEdit.init();
+        }
+    
+        return payrollEarningsJournalPostEdit as IDialogable;    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+
+        if (this.canGoBatch())
+        {
+            this.batchInfo().dialog(dlg);
+        }
+
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cleanupDialog</Name>
+				<Source><![CDATA[
+    protected void  cleanupDialog()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogRun</Name>
+				<Source><![CDATA[
+    protected SysOperationStartResult dialogRun()
+    {
+        SysOperationStartResult result;
+        CompanyId               companyId = curext();
+
+        result = super();
+
+        if (result == SysOperationStartResult::Canceled)
+        {
+            this.cleanupDialog();
+        }
+
+        if(companyId != curext())
+        {
+            appl.setDefaultCompany(companyId, false);
+        }
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getPayrollEarnJourPostContract</Name>
+				<Source><![CDATA[
+    public SPYPayrollEarnJourPostContract getPayrollEarnJourPostContract()
+    {
+        return payrollEarnJourPostContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollEarningsJournalCode</Name>
+				<Source><![CDATA[
+    SPYPayrollEarningsJournalCode parmPayrollEarningsJournalCode(SPYPayrollEarningsJournalCode _payrollEarningsJournalCode = payrollEarningsJournalCode)
+    {
+        payrollEarningsJournalCode = _payrollEarningsJournalCode;
+    
+        return payrollEarningsJournalCode;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYPayrollEarnJourPostContract parmServiceContract(SPYPayrollEarnJourPostContract _payrollEarnJourPostContract = payrollEarnJourPostContract)
+    {
+        payrollEarnJourPostContract = _payrollEarnJourPostContract;
+        return payrollEarnJourPostContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYPayrollEarnJourPostServiceController construct(IdentifierName _className  = '',
+                                                           IdentifierName _methodName = '',
+                                                           SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYPayrollEarnJourPostServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayrollEarnJourPostServiceController payrollEarnJourPostServiceController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+        SPYPayrollEarningsJournalTable          payrollEarningsJournalTable;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous; ///
+        payrollEarnJourPostServiceController = SPYPayrollEarnJourPostServiceController::construct(className, methodName, mode);
+    
+        if(args.record() is SPYPayrollEarningsJournalTable)
+            payrollEarningsJournalTable = args.record() as SPYPayrollEarningsJournalTable;
+        payrollEarnJourPostServiceController.parmPayrollEarningsJournalCode(payrollEarningsJournalTable.JournalCode);
+        //payProcessServiceController.startOperation();
+        if(payrollEarnJourPostServiceController.prompt())
+            payrollEarnJourPostServiceController.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYPayrollEarnJourPostServiceController _payrollEarnJourPostServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_payrollEarnJourPostServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name = "packedState"></param>
+    /// <returns></returns>
+    public boolean unpack(container packedState)
+    {
+        container   packedSuper;
+        boolean     ret;
+        int         version;
+
+        version = SysOperationHelper::getVersion(packedState);
+
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version, #VersionList, packedSuper] = packedState;
+                ret = super(packedSuper);
+                break;
+
+            default:
+                ret = false;
+        }
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

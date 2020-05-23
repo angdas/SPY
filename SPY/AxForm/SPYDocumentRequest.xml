@@ -1,0 +1,1902 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYDocumentRequest</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYDocumentRequest extends FormRun
+{
+    SPYDocumentRequestTable                 documentRequestTableCaller;
+    NumberSeqFormHandler                    numberSeqFormHandler;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow()
+    {
+        boolean ret;
+    
+        ret = SPYDocumentRequestTable.canSubmitToWorkflow();
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        if(element.args().record() is SPYDocumentRequestTable)
+            documentRequestTableCaller = element.args().record() as SPYDocumentRequestTable;
+    
+        super();
+    
+        element.setEnable();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>numberSeqFormHandler</Name>
+				<Source><![CDATA[
+    NumberSeqFormHandler numberSeqFormHandler()
+    {
+        if (!numberSeqFormHandler)
+        {
+            numberSeqFormHandler = NumberSeqFormHandler::newForm(SPYPayrollParameters::numRefDocumentRequestCode().NumberSequenceId,
+                                                                 element,
+                                                                 SPYDocumentRequestTable_ds,
+                                                                 fieldNum(SPYDocumentRequestTable,DocumentRequestCode)
+                                                                );
+        }
+        return numberSeqFormHandler;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshDataSource</Name>
+				<Source><![CDATA[
+    void refreshDataSource()
+    {
+        SPYDocumentRequestTable_ds.research(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEnable</Name>
+				<Source><![CDATA[
+    void setEnable()
+    {
+
+        boolean     isWorkflowEnabled = WorkflowTable::findActiveTemplate(workflowtypestr(SPYDocumentRequest)) ? true : false;
+        boolean     checkEditable = ((SPYDocumentRequestTable.WorkflowStatus == SPYWorkflowStatus::Created ||
+                                SPYDocumentRequestTable.WorkflowStatus == SPYWorkflowStatus::RequestChange) || !isWorkflowEnabled) ?
+                                true : false;
+
+        SPYDocumentRequestTable_ds.allowEdit(checkEditable);
+        SPYDocumentRequestTable_ds.allowDelete(SPYDocumentRequestTable.WorkflowStatus == SPYWorkflowStatus::Created);
+        //SPYDocumentRequestTable_ds.allowCreate(checkEditable);
+        SPYDocumentRequestLine_ds.allowEdit(checkEditable);
+        SPYDocumentRequestLine_ds.allowDelete(checkEditable);
+        SPYDocumentRequestLine_ds.allowCreate(checkEditable);
+        
+        this.enableDocRequestGroup();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTitleText</Name>
+				<Source><![CDATA[
+    public void setTitleText()
+    {
+        headerTitle.text(strFmt('%1 : %2', SPYDocumentRequestTable.DocumentRequestCode,
+                                           SPYDocumentRequestTable.Description));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>enableDocRequestGroup</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Enables Line fields based on the document request type on Header
+    /// </summary>
+    private void enableDocRequestGroup()
+    {
+        SPYDocumentRequestType  documentRequestType = SPYDocumentRequestType::find(SPYDocumentRequestTable.DocumentRequestType);
+
+        switch(documentRequestType.DocRequestType)
+        {
+            case SPYDocRequestType::EmployeeDisciplinary:
+                EmpRequisitionRequest.visible(false);
+                EmpTrainingRequest.visible(false);
+                EmpDisciplinaryRequest.visible(true);
+                EmpDismissalRequest.visible(false);
+                break;
+
+            case SPYDocRequestType::EmployeeDismissal:
+                EmpRequisitionRequest.visible(false);
+                EmpTrainingRequest.visible(false);
+                EmpDisciplinaryRequest.visible(false);
+                EmpDismissalRequest.visible(true);
+                break;
+
+            case SPYDocRequestType::EmployeeRequisition:
+                EmpRequisitionRequest.visible(true);
+                EmpTrainingRequest.visible(false);
+                EmpDisciplinaryRequest.visible(false);
+                EmpDismissalRequest.visible(false);
+                break;
+
+            case SPYDocRequestType::TrainingRequest:
+                EmpRequisitionRequest.visible(false);
+                EmpTrainingRequest.visible(true);
+                EmpDisciplinaryRequest.visible(false);
+                EmpDismissalRequest.visible(false);
+                break;
+
+            case SPYDocRequestType::Others:
+            case SPYDocRequestType::Blank:
+                EmpRequisitionRequest.visible(false);
+                EmpTrainingRequest.visible(false);
+                EmpDisciplinaryRequest.visible(false);
+                EmpDismissalRequest.visible(false);
+                break;
+            
+            default:
+                break;
+        }
+
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYDocumentRequestTable</Name>
+				<Methods>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+        
+            if(documentRequestTableCaller)
+            {
+                this.query().dataSourceTable(tableNum(SPYDocumentRequestTable)).addRange(fieldNum(SPYDocumentRequestTable,DocumentRequestCode))
+                .value(queryValue(documentRequestTableCaller.DocumentRequestCode));
+            }
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret;
+        
+            ret = super();
+        
+            element.setTitleText();
+            element.setEnable();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>linkActive</Name>
+						<Source><![CDATA[
+        public void linkActive()
+        {
+            element.numberSeqFormHandler().formMethodDataSourceLinkActive();
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>validateWrite</Name>
+						<Source><![CDATA[
+        public boolean validateWrite()
+        {
+            boolean         ret;
+        
+            ret = super();
+            ret = element.numberSeqFormHandler().formMethodDataSourceValidateWrite(ret) && ret;
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>write</Name>
+						<Source><![CDATA[
+        public void write()
+        {
+            super();
+            element.numberSeqFormHandler().formMethodDataSourceWrite();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>delete</Name>
+						<Source><![CDATA[
+        public void delete()
+        {
+            element.numberSeqFormHandler().formMethodDataSourceDelete();
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>create</Name>
+						<Source><![CDATA[
+        public void create(boolean _append = false)
+        {
+            element.numberSeqFormHandler().formMethodDataSourceCreatePre();
+        
+            super(_append);
+        
+            element.numberSeqFormHandler().formMethodDataSourceCreate(true);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>SPYDocumentRequestLine</Name>
+				<Methods>
+					<Method>
+						<Name>initValue</Name>
+						<Source><![CDATA[
+        public void initValue()
+        {
+            super();
+        
+            SPYDocumentRequestLine.LineNum = SPYDocumentRequestLine.nextLineNum(SPYDocumentRequestLine.DocumentRequest);
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>Tab</Name>
+				<Type>Tab</Type>
+				<Methods>
+					<Method>
+						<Name>tabChanged</Name>
+						<Source><![CDATA[
+        public void tabChanged(int _FromTab, int _ToTab)
+        {
+            super(_FromTab, _ToTab);
+        
+        
+            // Buttons to show in Grid View
+            /* TODO: (Code Upgrade) [Action Pane Rule] Please consider moving all references to the form task override method and remove the control: ListGroup */
+            ListGroup.visible(TabPageGrid.isActivePage());
+        
+            // Buttons to show in Details View
+            /* TODO: (Code Upgrade) [Action Pane Rule] Please consider moving all references to the form task override method and remove the control: EditRecordButton */
+            //EditRecordButton.visible(!TabPageGrid.isActivePage());
+            //ShowGroup.visible(!TabPageGrid.isActivePage());
+        
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<AllowPreLoading>No</AllowPreLoading>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYDocumentRequestTable</Name>
+			<Table>SPYDocumentRequestTable</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DocumentRequestCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>WorkflowStatus</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>SPYDocumentRequestLine</Name>
+			<Table>SPYDocumentRequestLine</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>CertificateType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ConsulateType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DocumentLanguage</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DocumentRequest</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DocumentRequestAddress</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DocumentRequestType</DataField>
+					<Visible>No</Visible>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>IncludeSalary</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LineNum</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Purpose</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Remarks</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>SPYDocumentRequestTable</JoinSource>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY:HRRequest</Caption>
+		<DataSource xmlns="">SPYDocumentRequestTable</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">DetailsTransaction</Pattern>
+		<PatternVersion xmlns="">1.4</PatternVersion>
+		<Style xmlns="">DetailsFormTransaction</Style>
+		<TitleDataSource xmlns="">SPYDocumentRequestTable</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<WorkflowDataSource xmlns="">SPYDocumentRequestTable</WorkflowDataSource>
+		<WorkflowEnabled xmlns="">Yes</WorkflowEnabled>
+		<WorkflowType xmlns="">SPYDocumentRequest</WorkflowType>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPaneHeader</Name>
+				<ElementPosition>715827882</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderHomeTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>ListGroup</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1533916890</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SYS118440</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SPY:HRRequest</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>NavigationList</Name>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<Visible>No</Visible>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl>
+						<Name>NavigationListFilter</Name>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension>
+							<Name>QuickFilterControl</Name>
+							<ExtensionComponents />
+							<ExtensionProperties>
+								<AxFormControlExtensionProperty>
+									<Name>targetControlName</Name>
+									<Type>String</Type>
+									<Value>NavigationListGrid</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>defaultColumnName</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>placeholderText</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+							</ExtensionProperties>
+						</FormControlExtension>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGridControl">
+						<Name>NavigationListGrid</Name>
+						<AllowEdit>No</AllowEdit>
+						<Type>Grid</Type>
+						<WidthMode>SizeToContent</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormStringControl">
+								<Name>SPYDocumentRequestTable_DocumentRequestCode1</Name>
+								<Type>String</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>DocumentRequestCode</DataField>
+								<DataSource>SPYDocumentRequestTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYDocumentRequestTable_Worker1</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYDocumentRequestTable</DataSource>
+								<ReferenceField>Worker</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormComboBoxControl">
+								<Name>SPYDocumentRequestTable_WorkflowStatus1</Name>
+								<Type>ComboBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>WorkflowStatus</DataField>
+								<DataSource>SPYDocumentRequestTable</DataSource>
+								<Items />
+							</AxFormControl>
+						</Controls>
+						<MultiSelect>No</MultiSelect>
+						<ShowRowLabels>No</ShowRowLabels>
+						<Style>List</Style>
+					</AxFormControl>
+				</Controls>
+				<FrameType>None</FrameType>
+				<Style>SidePanel</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1431655764</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageDetails</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>HeaderInfo</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>HeaderTitle</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Skip>Yes</Skip>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Label>@SPY0</Label>
+										<ShowLabel>No</ShowLabel>
+										<Style>TitleField</Style>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormGroupControl">
+										<Name>StatusGroup</Name>
+										<AllowEdit>No</AllowEdit>
+										<ExtendedStyle>entityStatus</ExtendedStyle>
+										<Type>Group</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormComboBoxControl">
+												<Name>WorkflowStatus</Name>
+												<ElementPosition>1610612734</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<LeftMode>RightEdge</LeftMode>
+												<Skip>Yes</Skip>
+												<Type>ComboBox</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>WorkflowStatus</DataField>
+												<DataSource>SPYDocumentRequestTable</DataSource>
+												<ShowLabel>No</ShowLabel>
+												<ViewEditMode>View</ViewEditMode>
+												<Items />
+											</AxFormControl>
+										</Controls>
+										<ArrangeMethod>HorizontalRight</ArrangeMethod>
+										<Breakable>No</Breakable>
+										<FrameType>None</FrameType>
+										<ViewEditMode>View</ViewEditMode>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+								<FrameType>None</FrameType>
+								<Style>DetailTitleContainer</Style>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormTabControl">
+								<Name>DetailsTab</Name>
+								<AlignControl>No</AlignControl>
+								<ElementPosition>1610612733</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Tab</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>LineView</Name>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>LineViewTab</Name>
+												<AlignControl>No</AlignControl>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Type>Tab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewHeader</Name>
+														<ElementPosition>858993458</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupDetails</Name>
+																<ElementPosition>858993458</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupDetails_DocumentRequestCode</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>DocumentRequestCode</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupDetails_Description</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Description</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Details</DataGroup>
+																<DataSource>SPYDocumentRequestTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorker1</Name>
+																<ElementPosition>1288490187</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>GroupPosted_Worker</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																		<ReferenceField>Worker</ReferenceField>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Worker</DataGroup>
+																<DataSource>SPYDocumentRequestTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorkflowStatus</Name>
+																<ElementPosition>1717986916</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>GroupWorkflowStatus_WorkflowStatus</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>WorkflowStatus</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Workflow</DataGroup>
+																<DataSource>SPYDocumentRequestTable</DataSource>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<Caption>@SPY640</Caption>
+														<DataSource>SPYDocumentRequestTable</DataSource>
+														<FastTabExpanded>No</FastTabExpanded>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewLines</Name>
+														<ElementPosition>1288490187</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>SizeToAvailable</HeightMode>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormActionPaneControl">
+																<Name>LinesActionPaneStrip</Name>
+																<ElementPosition>1073741822</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>ActionPane</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormActionPaneTabControl">
+																		<Name>LinesActionPaneTab</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ActionPaneTab</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormButtonGroupControl">
+																				<Name>LinesRecordActions</Name>
+																				<ElementPosition>1431655764</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<HeightMode>Auto</HeightMode>
+																				<Type>ButtonGroup</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<WidthMode>Auto</WidthMode>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCommandButtonControl">
+																						<Name>AddLine</Name>
+																						<ElementPosition>1073741822</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Type>CommandButton</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																						<Command>New</Command>
+																						<MultiSelect>Yes</MultiSelect>
+																						<NormalImage>Add</NormalImage>
+																						<Text>@SYS319116</Text>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCommandButtonControl">
+																						<Name>RemoveLine</Name>
+																						<ElementPosition>1610612733</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Type>CommandButton</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																						<Command>DeleteRecord</Command>
+																						<MultiSelect>Yes</MultiSelect>
+																						<NormalImage>Delete</NormalImage>
+																						<SaveRecord>No</SaveRecord>
+																						<Text>@SYS135131</Text>
+																					</AxFormControl>
+																				</Controls>
+																				<ArrangeMethod>Vertical</ArrangeMethod>
+																			</AxFormControl>
+																		</Controls>
+																		<AlignChild>No</AlignChild>
+																		<AlignChildren>No</AlignChildren>
+																		<ArrangeMethod>Vertical</ArrangeMethod>
+																		<DataSource>SPYDocumentRequestLine</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<AlignChild>No</AlignChild>
+																<AlignChildren>No</AlignChildren>
+																<ArrangeMethod>Vertical</ArrangeMethod>
+																<Style>Strip</Style>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGridControl">
+																<Name>LinesGrid</Name>
+																<ElementPosition>1610612734</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Grid</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormRealControl">
+																		<Name>SPYDocumentRequestLine_LineNum</Name>
+																		<ElementPosition>536870910</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>Real</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>LineNum</DataField>
+																		<DataSource>SPYDocumentRequestLine</DataSource>
+																		<NoOfDecimals>-1</NoOfDecimals>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>SPYDocumentRequestLine_DocumentRequestAddress</Name>
+																		<ElementPosition>805306365</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYDocumentRequestLine</DataSource>
+																		<ReferenceField>DocumentRequestAddress</ReferenceField>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>SPYDocumentRequestLine_DocumentRequestType</Name>
+																		<ElementPosition>1073741820</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYDocumentRequestLine</DataSource>
+																		<ReferenceField>DocumentRequestType</ReferenceField>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>SPYDocumentRequestLine_CertificateType</Name>
+																		<ElementPosition>1342177275</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>CertificateType</DataField>
+																		<DataSource>SPYDocumentRequestLine</DataSource>
+																		<Items />
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>SPYDocumentRequestLine_ConsulateType</Name>
+																		<ElementPosition>1610612730</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>ConsulateType</DataField>
+																		<DataSource>SPYDocumentRequestLine</DataSource>
+																		<Items />
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>SPYDocumentRequestLine_IncludeSalary</Name>
+																		<ElementPosition>1879048185</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<BackgroundColor>WindowBackground</BackgroundColor>
+																		<DataField>IncludeSalary</DataField>
+																		<DataSource>SPYDocumentRequestLine</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataSource>SPYDocumentRequestLine</DataSource>
+																<Style>Tabular</Style>
+																<VisibleRows>5</VisibleRows>
+																<VisibleRowsMode>Fixed</VisibleRowsMode>
+															</AxFormControl>
+														</Controls>
+														<Caption>@SPY631</Caption>
+														<DataSource>SPYDocumentRequestLine</DataSource>
+														<FastTabExpanded>Always</FastTabExpanded>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewLineDetails</Name>
+														<ElementPosition>1717986916</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormTabControl">
+																<Name>LineDetailsTabs</Name>
+																<AlignControl>No</AlignControl>
+																<ElementPosition>1431655764</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Tab</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormTabPageControl">
+																		<Name>LineGeneral</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Pattern>FieldsFieldGroups</Pattern>
+																		<PatternVersion>1.1</PatternVersion>
+																		<Type>TabPage</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupDetails2</Name>
+																				<ElementPosition>477218588</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormReferenceGroupControl">
+																						<Name>GroupDetails2_DocumentRequest</Name>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>ReferenceGroup</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls />
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<ReferenceField>DocumentRequest</ReferenceField>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>GroupDetails2_LineNum</Name>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>Real</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>LineNum</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<NoOfDecimals>-1</NoOfDecimals>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Details</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupDocument</Name>
+																				<ElementPosition>715827882</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormComboBoxControl">
+																						<Name>GroupWorker_CertificateType</Name>
+																						<ElementPosition>715827882</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>ComboBox</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>CertificateType</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<Items />
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormComboBoxControl">
+																						<Name>GroupWorker_ConsulateType</Name>
+																						<ElementPosition>1073741823</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>ComboBox</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>ConsulateType</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<Items />
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>GroupWorker_DocumentLanguage</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>String</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>DocumentLanguage</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCheckBoxControl">
+																						<Name>GroupWorker_IncludeSalary</Name>
+																						<ElementPosition>1789569705</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>CheckBox</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>IncludeSalary</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Document</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupDocumentRequestAddress</Name>
+																				<ElementPosition>954437176</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormReferenceGroupControl">
+																						<Name>GroupPeriod_DocumentRequestAddress</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>ReferenceGroup</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls />
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<ReferenceField>DocumentRequestAddress</ReferenceField>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>DocumentRequestAddress</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupDocumentRequestType</Name>
+																				<ElementPosition>1193046470</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormReferenceGroupControl">
+																						<Name>GroupTransaction_DocumentRequestType</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>ReferenceGroup</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls />
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<ReferenceField>DocumentRequestType</ReferenceField>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>DocumentRequestType</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupPurpose</Name>
+																				<ElementPosition>1431655764</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>GroupAmount_Purpose</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>String</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>Purpose</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Purpose</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupRemarks</Name>
+																				<ElementPosition>1670265058</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>Group_Remarks</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>String</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>Remarks</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Remarks</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>GroupLog1</Name>
+																				<ElementPosition>1908874352</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<Type>Group</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>Group_createdBy</Name>
+																						<ElementPosition>715827882</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>String</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>createdBy</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<Label>@SPY:CreatedBy</Label>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateTimeControl">
+																						<Name>Group_createdDateTime</Name>
+																						<ElementPosition>1073741823</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>DateTime</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>createdDateTime</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>Group_modifiedBy</Name>
+																						<ElementPosition>1431655764</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>String</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>modifiedBy</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<Label>@SPY:ModifiedBy</Label>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateTimeControl">
+																						<Name>Group_modifiedDateTime</Name>
+																						<ElementPosition>1789569705</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<Type>DateTime</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>modifiedDateTime</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>Log</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>EmpRequisitionRequest</Name>
+																				<AutoDeclaration>Yes</AutoDeclaration>
+																				<Type>Group</Type>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormReferenceGroupControl">
+																						<Name>EmpRequisitionRequest_HcmJob</Name>
+																						<Type>ReferenceGroup</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls />
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<ReferenceField>HcmJob</ReferenceField>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>EmpRequisitionRequest_JobDescription</Name>
+																						<Type>String</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>JobDescription</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormIntegerControl">
+																						<Name>EmpRequisitionRequest_NoOfOpenings</Name>
+																						<Type>Integer</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>NoOfOpenings</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>EmpRequisitionRequest</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>EmpTrainingRequest</Name>
+																				<AutoDeclaration>Yes</AutoDeclaration>
+																				<Type>Group</Type>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormReferenceGroupControl">
+																						<Name>EmpTrainingRequest_CourseId</Name>
+																						<Type>ReferenceGroup</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls />
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<ReferenceField>CourseId</ReferenceField>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>EmpTrainingRequest_CourseDescription</Name>
+																						<Type>String</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>CourseDescription</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormRealControl">
+																						<Name>EmpTrainingRequest_TrainingDays</Name>
+																						<Type>Real</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>TrainingDays</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormIntegerControl">
+																						<Name>EmpTrainingRequest_NoOfParticipants</Name>
+																						<Type>Integer</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>NoOfParticipants</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>EmpTrainingRequest</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>EmpDisciplinaryRequest</Name>
+																				<AutoDeclaration>Yes</AutoDeclaration>
+																				<Type>Group</Type>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormReferenceGroupControl">
+																						<Name>EmpDisciplinaryRequest_ReportedBy</Name>
+																						<Type>ReferenceGroup</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls />
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<ReferenceField>ReportedBy</ReferenceField>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateControl">
+																						<Name>EmpDisciplinaryRequest_ReportedDate</Name>
+																						<Type>Date</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>ReportedDate</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormComboBoxControl">
+																						<Name>EmpDisciplinaryRequest_ActionTaken</Name>
+																						<Type>ComboBox</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>ActionTaken</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																						<Items />
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>EmpDisciplinaryRequest</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormGroupControl">
+																				<Name>EmpDismissalRequest</Name>
+																				<AutoDeclaration>Yes</AutoDeclaration>
+																				<Type>Group</Type>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormStringControl">
+																						<Name>EmpDismissalRequest_ReasonCodeId</Name>
+																						<Type>String</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>ReasonCodeId</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormDateControl">
+																						<Name>EmpDismissalRequest_TerminationDate</Name>
+																						<Type>Date</Type>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<DataField>TerminationDate</DataField>
+																						<DataSource>SPYDocumentRequestLine</DataSource>
+																					</AxFormControl>
+																				</Controls>
+																				<DataGroup>EmpDismissalRequest</DataGroup>
+																				<DataSource>SPYDocumentRequestLine</DataSource>
+																			</AxFormControl>
+																		</Controls>
+																		<ColumnsMode>Fill</ColumnsMode>
+																		<Caption>@SYS2952</Caption>
+																		<Scrollbars>Auto</Scrollbars>
+																	</AxFormControl>
+																</Controls>
+																<AlignChild>No</AlignChild>
+																<ArrangeMethod>Vertical</ArrangeMethod>
+															</AxFormControl>
+														</Controls>
+														<BottomMargin>0</BottomMargin>
+														<BottomMarginMode>Fixed</BottomMarginMode>
+														<LeftMargin>0</LeftMargin>
+														<LeftMarginMode>Fixed</LeftMarginMode>
+														<RightMargin>0</RightMargin>
+														<RightMarginMode>Fixed</RightMarginMode>
+														<TopMargin>0</TopMargin>
+														<TopMarginMode>Fixed</TopMarginMode>
+														<Caption>@SYS23823</Caption>
+														<DataSource>SPYDocumentRequestLine</DataSource>
+														<FastTabExpanded>No</FastTabExpanded>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>FastTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<LeftMargin>0</LeftMargin>
+										<LeftMarginMode>Fixed</LeftMarginMode>
+										<RightMargin>0</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<PanelStyle>DetailsLine</PanelStyle>
+										<Scrollbars>Auto</Scrollbars>
+										<Style>DetailsFormDetails</Style>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>HeaderView</Name>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>HeaderDetailsTab</Name>
+												<AlignControl>No</AlignControl>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Type>Tab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>HeaderGeneral</Name>
+														<ElementPosition>1119628224</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupDetails1</Name>
+																<ElementPosition>715827882</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupDetails1_DocumentRequestCode</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>DocumentRequestCode</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupDetails1_Description</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Description</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>GroupDetails1_DocumentRequestType</Name>
+																		<Type>ReferenceGroup</Type>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																		<ReferenceField>DocumentRequestType</ReferenceField>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Details</DataGroup>
+																<DataSource>SPYDocumentRequestTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorkflowStatus1</Name>
+																<ElementPosition>1073741823</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>GroupWorkflowStatus1_WorkflowStatus</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>WorkflowStatus</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Workflow</DataGroup>
+																<DataSource>SPYDocumentRequestTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorker2</Name>
+																<ElementPosition>1431655764</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>GroupPosted1_Worker</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																		<ReferenceField>Worker</ReferenceField>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Worker</DataGroup>
+																<DataSource>SPYDocumentRequestTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupLog</Name>
+																<ElementPosition>1789569705</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupLog_createdBy</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>createdBy</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																		<Label>@SPY:CreatedBy</Label>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateTimeControl">
+																		<Name>GroupLog_createdDateTime</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>DateTime</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>createdDateTime</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>GroupLog_modifiedBy</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>modifiedBy</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																		<Label>@SPY:ModifiedBy</Label>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateTimeControl">
+																		<Name>GroupLog_modifiedDateTime</Name>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>DateTime</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>modifiedDateTime</DataField>
+																		<DataSource>SPYDocumentRequestTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Log</DataGroup>
+																<DataSource>SPYDocumentRequestTable</DataSource>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<Caption>@SYS2952</Caption>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>FastTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<LeftMargin>0</LeftMargin>
+										<LeftMarginMode>Fixed</LeftMarginMode>
+										<RightMargin>0</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<PanelStyle>DetailsHeader</PanelStyle>
+										<Scrollbars>Auto</Scrollbars>
+										<Style>DetailsFormDetails</Style>
+									</AxFormControl>
+								</Controls>
+								<AlignChild>No</AlignChild>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<ShowTabs>No</ShowTabs>
+							</AxFormControl>
+						</Controls>
+						<PanelStyle>Details</PanelStyle>
+						<Scrollbars>Auto</Scrollbars>
+						<Style>DetailsFormDetails</Style>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageGrid</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1610612734</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GridGroupCopy1</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Pattern>CustomAndQuickFilters</Pattern>
+								<PatternVersion>1.1</PatternVersion>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl>
+										<Name>GridFilter</Name>
+										<FormControlExtension>
+											<Name>QuickFilterControl</Name>
+											<ExtensionComponents />
+											<ExtensionProperties>
+												<AxFormControlExtensionProperty>
+													<Name>targetControlName</Name>
+													<Type>String</Type>
+													<Value>Grid</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>defaultColumnName</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>placeholderText</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+											</ExtensionProperties>
+										</FormControlExtension>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+								<FrameType>None</FrameType>
+								<Style>CustomFilter</Style>
+								<ViewEditMode>Edit</ViewEditMode>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>HeaderGrid</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYDocumentRequestTable_DocumentRequestCode</Name>
+										<ElementPosition>715827882</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DocumentRequestCode</DataField>
+										<DataSource>SPYDocumentRequestTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYDocumentRequestTable_Description</Name>
+										<ElementPosition>1073741823</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Description</DataField>
+										<DataSource>SPYDocumentRequestTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYDocumentRequestTable_Worker</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYDocumentRequestTable</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>SPYDocumentRequestTable_WorkflowStatus</Name>
+										<ElementPosition>1789569705</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ComboBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>WorkflowStatus</DataField>
+										<DataSource>SPYDocumentRequestTable</DataSource>
+										<Items />
+									</AxFormControl>
+								</Controls>
+								<DataSource>SPYDocumentRequestTable</DataSource>
+								<DefaultAction>MainGridDefaultAction</DefaultAction>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCommandButtonControl">
+								<Name>MainGridDefaultAction</Name>
+								<Type>CommandButton</Type>
+								<Visible>No</Visible>
+								<FormControlExtension
+									i:nil="true" />
+								<Command>DetailsView</Command>
+							</AxFormControl>
+						</Controls>
+						<DataSource>SPYDocumentRequestTable</DataSource>
+						<PanelStyle>Grid</PanelStyle>
+						<Scrollbars>Auto</Scrollbars>
+						<Style>DetailsFormGrid</Style>
+						<ViewEditMode>Edit</ViewEditMode>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<ShowTabs>No</ShowTabs>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

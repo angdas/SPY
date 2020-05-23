@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute
+]
+class SPYPayLoanContract
+{
+    boolean     showInstallments;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmShowInstallments</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('ShowInstallments'),
+        SysOperationLabelAttribute('Show installments'),
+        SysOperationHelpTextAttribute('Show installments')
+    ]
+    public boolean parmShowInstallments(boolean _showInstallments = showInstallments)
+    {
+        showInstallments = _showInstallments;
+    
+        return showInstallments;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

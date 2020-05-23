@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveSettlementServiceController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLeaveSettlementServiceController extends SysOperationServiceController
+{
+    FormRun                             leaveSettlementEdit;
+    SPYLeaveSettlementContract          leaveSettlementContract;
+    SPYLeaveSettlementParameterState    parameterState;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    public IDialogable dialog()
+    {
+        if (!leaveSettlementEdit)
+        {
+            leaveSettlementEdit = classfactory.formRunClass(SPYLeaveSettlementServiceController::newClientArgs(formStr(SPYLeaveSettlementEdit), this));
+            leaveSettlementEdit.init();
+        }
+    
+        return leaveSettlementEdit as IDialogable;
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogMake</Name>
+				<Source><![CDATA[
+    protected IDialogable dialogMake()
+    {
+        IDialogable dlg = this.dialog();
+    
+        if (this.canGoBatch())
+           this.batchInfo().dialog(dlg);
+    
+        return dlg;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    protected void dialogPostRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>cleanupDialog</Name>
+				<Source><![CDATA[
+    protected void  cleanupDialog()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogRun</Name>
+				<Source><![CDATA[
+    protected SysOperationStartResult dialogRun()
+    {
+        SysOperationStartResult result;
+        CompanyId               companyId = curext();
+
+        result = super();
+
+        if (result == SysOperationStartResult::Canceled)
+        {
+            this.cleanupDialog();
+        }
+
+        if(companyId != curext())
+        {
+            appl.setDefaultCompany(companyId, false);
+        }
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getLeaveSettlementContract</Name>
+				<Source><![CDATA[
+    public SPYLeaveSettlementContract getLeaveSettlementContract()
+    {
+        return leaveSettlementContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmParameterState</Name>
+				<Source><![CDATA[
+    public SPYLeaveSettlementParameterState parmParameterState(SPYLeaveSettlementParameterState _parameterState = parameterState)
+    {
+        parameterState = _parameterState;
+    
+        return parameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmServiceContract</Name>
+				<Source><![CDATA[
+    public SPYLeaveSettlementContract parmServiceContract(SPYLeaveSettlementContract _leaveSettlementContract = leaveSettlementContract)
+    {
+        leaveSettlementContract = _leaveSettlementContract;
+        return leaveSettlementContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYLeaveSettlementServiceController construct(IdentifierName _className  = '',
+                                                         IdentifierName _methodName = '',
+                                                         SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYLeaveSettlementServiceController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYLeaveSettlementServiceController     leaveSettlementServiceController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        leaveSettlementServiceController = SPYLeaveSettlementServiceController::construct(className, methodName, mode);
+    
+        if(args.caller() && args.caller().parameterState())
+            leaveSettlementServiceController.parmParameterState(args.caller().parameterState());
+    
+        if(leaveSettlementServiceController.prompt())
+            leaveSettlementServiceController.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newClientArgs</Name>
+				<Source><![CDATA[
+    client static Args  newClientArgs(str _formName, SPYLeaveSettlementServiceController _leaveSettlementServiceController)
+    {
+        Args  args = new  Args();
+        args.name(_formName);
+        args.caller(_leaveSettlementServiceController);
+        return args;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

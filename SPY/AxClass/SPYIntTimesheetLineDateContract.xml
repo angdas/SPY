@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntTimesheetLineDateContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntTimesheetLineDateContract
+{
+    date                    lineDate;
+    Qty                     hours;
+    TSComment               internalComments;
+    TSComment               externalComments;
+    Qty                     workingHours;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmLineDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("LineDate")]
+    public date parmLineDate(date _lineDate = lineDate)
+    {
+        lineDate = _lineDate;
+
+        return lineDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmHours</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Hours")]
+    public Qty parmHours(Qty _hours = hours)
+    {
+        hours = _hours;
+
+        return hours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmInternalComments</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("InternalComments")]
+    public TSComment parmInternalComments(TSComment _internalComments = internalComments)
+    {
+        internalComments = _internalComments;
+
+        return internalComments;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmExternalComments</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ExternalComments")]
+    public TSComment parmExternalComments(TSComment _externalComments = externalComments)
+    {
+        externalComments = _externalComments;
+
+        return externalComments;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkingHours</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("WorkingHours")]
+    public Qty parmWorkingHours(Qty _workingHours = workingHours)
+    {
+        workingHours = _workingHours;
+
+        return workingHours;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

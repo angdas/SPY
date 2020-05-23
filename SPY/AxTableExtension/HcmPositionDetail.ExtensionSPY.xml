@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTableExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>HcmPositionDetail.ExtensionSPY</Name>
+	<FieldGroupExtensions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>SPYCompensationlevel</Name>
+			<Label>@SYS302272</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>SPYCompensationLevelGrade</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYCompensationLevelBand</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYCompensationLevelStep</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<FieldModifications />
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYCompensationLevelGrade</Name>
+			<ExtendedDataType>HcmCompensationLevelRecId</ExtendedDataType>
+			<HelpText>@SPY1423</HelpText>
+			<Label>@SYS116553</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYCompensationLevelStep</Name>
+			<ExtendedDataType>HcmCompensationLevelRecId</ExtendedDataType>
+			<HelpText>@SPY1424</HelpText>
+			<Label>@SYS40178</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYCompensationLevelBand</Name>
+			<ExtendedDataType>HcmCompensationLevelRecId</ExtendedDataType>
+			<Label>@SYS116554</Label>
+		</AxTableField>
+	</Fields>
+	<Indexes />
+	<Mappings />
+	<PropertyModifications />
+	<Relations>
+		<AxTableRelation>
+			<Name>SPYCompensationLevelGrade</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<RelatedTable>HcmCompensationLevel</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Grade</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintRelatedFixed">
+					<Name>Type</Name>
+					<RelatedField>Type</RelatedField>
+					<Value>1</Value>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYCompensationLevelGrade</Name>
+					<Field>SPYCompensationLevelGrade</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYCompensationLevelBand</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<RelatedTable>HcmCompensationLevel</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Band</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintRelatedFixed">
+					<Name>Type</Name>
+					<RelatedField>Type</RelatedField>
+					<Value>2</Value>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYCompensationLevelBand</Name>
+					<Field>SPYCompensationLevelBand</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYCompensationLevelStep</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<RelatedTable>HcmCompensationLevel</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Step</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintRelatedFixed">
+					<Name>Type</Name>
+					<RelatedField>Type</RelatedField>
+					<Value>3</Value>
+				</AxTableRelationConstraint>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYCompensationLevelStep</Name>
+					<Field>SPYCompensationLevelStep</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+</AxTableExtension>

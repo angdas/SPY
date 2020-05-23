@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntTimesheetProjectContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntTimesheetProjectContract
+{
+    ProjId              projId;
+    ProjName         projName ;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmProjId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ProjId")]
+    public ProjId parmProjId(ProjId _projId = projId)
+    {
+        projId = _projId;
+
+        return projId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Name")]
+    public ProjName parmName(ProjName _projName = projName )
+    {
+        projName  = _projName ;
+
+        return projName ;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitLiabilityMonthlyDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SRSReportParameterAttribute(classStr(SPYBenefitLiabilityMonthlyContract)),
+SRSReportQueryAttribute(queryStr(SPYHcmWorkerLookup))
+]
+public class SPYBenefitLiabilityMonthlyDP extends SrsReportDataProviderPreProcess
+{
+
+    HcmWorker                       hcmWorker, hcmWorkerName;
+    SPYBenefitLiabilityMonthlyTmp   benefitLiabilityMonthlyTmp;
+    SPYBenefitLedger                benefitLedger, benefitLedgerOp, benefitLedgerTk, benefitLedgerEn;
+    SPYBenefitTable                 benefitTable, benefitTableDes;
+    HRMAbsenceCode                  hrmAbsenceCode;
+
+
+    SPYPayrollPeriodLine            payrollPeriodFrom, payrollPeriodTmp;
+    SPYPayrollPeriodLineRecId       payrollPeriodLineFrom;
+    SPYPayrollPeriod                payrollPeriod;
+    SPYBenefitTypeRecId             benefitType;
+    SPYPayElementRecId              benefitCode;
+    SPYPayElementCode               benefitPayElementCode;
+
+
+    real                            openBal, leaveTaken, entitlement, closeBal;
+    real                            openBalAmt, leaveTakenAmt, entitlementAmt, closeBalAmt;
+    String50                        payrollPeriodString;
+    RecId                           hcmWorkerRecId;
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYBenefitLiabilityMonthlyTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYBenefitLiabilityMonthlyTmp))]
+    public SPYBenefitLiabilityMonthlyTmp getSPYBenefitLiabilityMonthlyTmp()
+    {
+        select benefitLiabilityMonthlyTmp;
+        return benefitLiabilityMonthlyTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYBenefitLiabilityMonthlyContract  contract = this.parmDataContract() as SPYBenefitLiabilityMonthlyContract;
+        Query                          q;
+        QueryRun                       qr;
+        QueryBuildDataSource           qbdHcmWorker, qbdPayrollPeriodLine;
+        HcmWorkerRecId                 curWorker;
+        ListIterator                   benefitListIterator;
+        RecordInsertList               benefitLiabilityMonthlyTmpList;
+
+        payrollPeriodLineFrom          = contract.parmPayrollPeriodLineFrom();
+        payrollPeriodFrom              = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        payrollPeriod                  = SPYPayrollPeriod::find(payrollPeriodFrom.PayrollPeriod);
+        payrollPeriodString            = strFmt("%1 - %2 - %3", payrollPeriod.Description, payrollPeriodFrom.PeriodStartDate, payrollPeriodFrom.PeriodEndDate);
+
+        benefitLiabilityMonthlyTmpList = new RecordInsertList(tableNum(SPYBenefitLiabilityMonthlyTmp));
+
+        q = this.parmQuery();
+
+        qr = new QueryRun(q);
+
+        while(qr.next())
+        {
+            hcmWorker                        = qr.get(tableNum(HcmWorker));
+            hcmWorkerRecId                   = hcmWorker.RecId;
+            hcmWorkerName                    = HcmWorker::find(hcmWorkerRecId);
+            benefitListIterator              = new ListIterator(contract.parmBenefitCodeList());
+
+
+            while(benefitListIterator.more())
+            {
+                benefitPayElementCode        = benefitListIterator.value();
+
+                select RecId from benefitTableDes where benefitTableDes.PayElementCode == benefitPayElementCode;
+                benefitCode                  = benefitTableDes.RecId;
+
+                benefitLiabilityMonthlyTmp.clear();
+
+                select sum(Quantity), sum(TransactionCurrencyAmount), sum(TransactionCurPnLAmount) from benefitLedgerOp join payrollPeriodTmp  where
+            payrollPeriodTmp.RecId == benefitLedgerOp.PayrollPeriodLine && payrollperiodTmp.PeriodEndDate < payrollPeriodFrom.PeriodStartDate
+            && benefitLedgerOp.Worker == hcmWorker.RecId && benefitLedgerOp.Benefit == benefitCode;
+
+                openBal                       = benefitLedgerOp.Quantity;// * -1;
+                openBalAmt                    = benefitLedgerOp.TransactionCurrencyAmount + benefitLedgerOp.TransactionCurPnLAmount;// * -1;
+
+                select Quantity, TransactionCurrencyAmount,TransactionCurPnLAmount from benefitLedgerEn where
+            benefitLedgerEn.Worker == hcmWorker.RecId && benefitLedgerEn.Benefit == benefitCode
+            && benefitLedgerEn.PayrollPeriodLine == payrollPeriodFrom.RecId && benefitLedgerEn.JournalType == SPYBenefitJournalType::Accrual;
+
+                entitlement                   = benefitLedgerEn.Quantity;// * -1;
+                entitlementAmt                = benefitLedgerEn.TransactionCurrencyAmount + benefitLedgerEn.TransactionCurPnLAmount;// * -1;
+
+                select Quantity, TransactionCurrencyAmount,TransactionCurPnLAmount from benefitLedgerTk where
+            benefitLedgerTk.Worker == hcmWorker.RecId && benefitLedgerTk.Benefit == benefitCode
+            && benefitLedgerTk.PayrollPeriodLine == payrollPeriodFrom.RecId && benefitLedgerTk.JournalType == SPYBenefitJournalType::Encashment;
+
+                leaveTaken                    = benefitLedgerTk.Quantity;// * -1;
+                leaveTakenAmt                 = benefitLedgerTk.TransactionCurrencyAmount + benefitLedgerTk.TransactionCurPnLAmount;// * -1;
+
+                benefitLiabilityMonthlyTmp.OpeningBalance               = openBal;
+                benefitLiabilityMonthlyTmp.Entitlement                  = entitlement;
+                benefitLiabilityMonthlyTmp.DaysTaken                    = leaveTaken;
+                closeBal                                                = (openBal + entitlement) + leaveTaken;//(leaveTaken * -1);
+                closeBalAmt                                             = (openBalAmt + entitlementAmt) + leaveTakenAmt;//(leaveTakenAmt * -1);
+                benefitLiabilityMonthlyTmp.ClosingBalance               = closeBal;
+                benefitLiabilityMonthlyTmp.Liabiility                   = closeBalAmt;
+                benefitLiabilityMonthlyTmp.PayrollPeriod                = payrollPeriodString;
+                benefitLiabilityMonthlyTmp.EmployeeName                 = hcmWorkerName.PersonnelNumber + " - "+hcmWorkerName.name();
+                benefitLiabilityMonthlyTmp.Description                  = benefitTableDes.Description;
+
+                benefitLiabilityMonthlyTmpList.add(benefitLiabilityMonthlyTmp);
+               // benefitLiabilityMonthlyTmp.insert();
+
+                benefitListIterator.next();
+            }
+
+
+        }
+        benefitLiabilityMonthlyTmpList.insertDatabase();
+
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

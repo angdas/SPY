@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxReport xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYReportConfigurable</Name>
+	<DataMethods />
+	<DataSets>
+		<AxReportDataSet xmlns="">
+			<Name>ConfigDS</Name>
+			<DataSourceType>ReportDataProvider</DataSourceType>
+			<Query>SELECT * FROM SPYReportConfigDP.SPYReportConfigTmp </Query>
+			<FieldGroups />
+			<Fields>
+				<AxReportDataSetField>
+					<Name>BodyImage</Name>
+					<Alias>SPYReportConfigTmp.1.BodyImage</Alias>
+					<Caption>@SYS86069</Caption>
+					<DataType>System.Byte[]</DataType>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+				<AxReportDataSetField>
+					<Name>ReportDesign</Name>
+					<Alias>SPYReportConfigTmp.1.ReportDesign</Alias>
+					<DisplayWidth>Auto</DisplayWidth>
+					<UserDefined>false</UserDefined>
+				</AxReportDataSetField>
+			</Fields>
+			<Parameters>
+				<AxReportDataSetParameter>
+					<Name>AX_PartitionKey</Name>
+					<Alias>AX_PartitionKey</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_PartitionKey</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_CompanyName</Name>
+					<Alias>AX_CompanyName</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_CompanyName</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_UserContext</Name>
+					<Alias>AX_UserContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_UserContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RenderingCulture</Name>
+					<Alias>AX_RenderingCulture</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RenderingCulture</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_ReportContext</Name>
+					<Alias>AX_ReportContext</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_ReportContext</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>AX_RdpPreProcessedId</Name>
+					<Alias>AX_RdpPreProcessedId</Alias>
+					<DataType>System.String</DataType>
+					<Parameter>AX_RdpPreProcessedId</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>ReportId</Name>
+					<Alias>ReportId</Alias>
+					<DataType>System.Int64</DataType>
+					<Parameter>ConfigDS_ReportId</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>PayrollPeriodLineFrom</Name>
+					<Alias>PayrollPeriodLineFrom</Alias>
+					<DataType>System.Int64</DataType>
+					<Parameter>ConfigDS_PayrollPeriodLineFrom</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>PayrollPeriodLineTo</Name>
+					<Alias>PayrollPeriodLineTo</Alias>
+					<DataType>System.Int64</DataType>
+					<Parameter>ConfigDS_PayrollPeriodLineTo</Parameter>
+				</AxReportDataSetParameter>
+				<AxReportDataSetParameter>
+					<Name>SPYREPORTCONFIGDP_DynamicParameter</Name>
+					<Alias>SPYREPORTCONFIGDP_DynamicParameter</Alias>
+					<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+					<Parameter>SPYREPORTCONFIGDP_DynamicParameter</Parameter>
+				</AxReportDataSetParameter>
+			</Parameters>
+		</AxReportDataSet>
+	</DataSets>
+	<DefaultParameterGroup>
+		<Name xmlns="">Parameters</Name>
+		<ReportParameterBases xmlns="">
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_PartitionKey</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_CompanyName</Name>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_UserContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RenderingCulture</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_ReportContext</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>AX_RdpPreProcessedId</Name>
+				<AllowBlank>true</AllowBlank>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>ConfigDS_PayrollPeriodLineFrom</Name>
+				<DataType>System.Int64</DataType>
+				<PromptString>@SPY635</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>ConfigDS_PayrollPeriodLineTo</Name>
+				<DataType>System.Int64</DataType>
+				<PromptString>@SPY636</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>SPYREPORTCONFIGDP_DynamicParameter</Name>
+				<AOTQuery>SPYHcmWorkerNoPosition</AOTQuery>
+				<AllowBlank>true</AllowBlank>
+				<DataType>Microsoft.Dynamics.AX.Framework.Services.Client.QueryMetadata</DataType>
+				<Nullable>true</Nullable>
+				<UserVisibility>Hidden</UserVisibility>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+			<AxReportParameterBase xmlns=""
+				i:type="AxReportParameter">
+				<Name>ConfigDS_ReportId</Name>
+				<DataType>System.Int64</DataType>
+				<PromptString>@SPY:ReportID</PromptString>
+				<DefaultValue />
+				<Values />
+			</AxReportParameterBase>
+		</ReportParameterBases>
+	</DefaultParameterGroup>
+	<Designs>
+		<AxReportDesign xmlns=""
+			i:type="AxReportPrecisionDesign">
+			<Name>Report</Name>
+			<Text>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition"&gt;
+  &lt;AutoRefresh&gt;0&lt;/AutoRefresh&gt;
+  
+  
+  &lt;ReportSections&gt;
+    &lt;ReportSection&gt;
+      &lt;Body&gt;
+        &lt;ReportItems&gt;
+          &lt;Tablix Name="Tablix1"&gt;
+            &lt;TablixBody&gt;
+              &lt;TablixColumns&gt;
+                &lt;TablixColumn&gt;
+                  &lt;Width&gt;7.11458in&lt;/Width&gt;
+                &lt;/TablixColumn&gt;
+              &lt;/TablixColumns&gt;
+              &lt;TablixRows&gt;
+                &lt;TablixRow&gt;
+                  &lt;Height&gt;0.25in&lt;/Height&gt;
+                  &lt;TablixCells&gt;
+                    &lt;TablixCell&gt;
+                      &lt;CellContents&gt;
+                        &lt;Textbox Name="ReportDesign"&gt;
+                          &lt;CanGrow&gt;true&lt;/CanGrow&gt;
+                          &lt;KeepTogether&gt;true&lt;/KeepTogether&gt;
+                          &lt;Paragraphs&gt;
+                            &lt;Paragraph&gt;
+                              &lt;TextRuns&gt;
+                                &lt;TextRun&gt;
+                                  &lt;Value&gt;=Fields!ReportDesign.Value&lt;/Value&gt;
+                                  &lt;MarkupType&gt;HTML&lt;/MarkupType&gt;
+                                  &lt;Style /&gt;
+                                &lt;/TextRun&gt;
+                              &lt;/TextRuns&gt;
+                              &lt;Style /&gt;
+                            &lt;/Paragraph&gt;
+                          &lt;/Paragraphs&gt;
+                          &lt;rd:DefaultName&gt;ReportDesign&lt;/rd:DefaultName&gt;
+                          &lt;CustomProperties&gt;
+                            &lt;CustomProperty&gt;
+                              &lt;Name&gt;AXDataType&lt;/Name&gt;
+                              &lt;Value&gt;String&lt;/Value&gt;
+                            &lt;/CustomProperty&gt;
+                            &lt;CustomProperty&gt;
+                              &lt;Name&gt;AXEDTFormat&lt;/Name&gt;
+                              &lt;Value&gt;SPYReportConfigTmp.ReportDesign&lt;/Value&gt;
+                            &lt;/CustomProperty&gt;
+                            &lt;CustomProperty&gt;
+                              &lt;Name&gt;AXEDTTextAlign&lt;/Name&gt;
+                              &lt;Value&gt;SPYReportConfigTmp.ReportDesign&lt;/Value&gt;
+                            &lt;/CustomProperty&gt;
+                            &lt;CustomProperty&gt;
+                              &lt;Name&gt;AXEDTDirection&lt;/Name&gt;
+                              &lt;Value&gt;SPYReportConfigTmp.ReportDesign&lt;/Value&gt;
+                            &lt;/CustomProperty&gt;
+                          &lt;/CustomProperties&gt;
+                          &lt;Style&gt;
+                            &lt;Border&gt;
+                              &lt;Color&gt;LightGrey&lt;/Color&gt;
+                              &lt;Style&gt;Solid&lt;/Style&gt;
+                            &lt;/Border&gt;
+                            &lt;BackgroundImage&gt;
+                              &lt;Source&gt;Database&lt;/Source&gt;
+                              &lt;Value&gt;=First(Fields!BodyImage.Value, "ConfigDS")&lt;/Value&gt;
+                              &lt;MIMEType&gt;image/jpeg&lt;/MIMEType&gt;
+                            &lt;/BackgroundImage&gt;
+                          &lt;/Style&gt;
+                        &lt;/Textbox&gt;
+                      &lt;/CellContents&gt;
+                    &lt;/TablixCell&gt;
+                  &lt;/TablixCells&gt;
+                &lt;/TablixRow&gt;
+              &lt;/TablixRows&gt;
+            &lt;/TablixBody&gt;
+            &lt;TablixColumnHierarchy&gt;
+              &lt;TablixMembers&gt;
+                &lt;TablixMember /&gt;
+              &lt;/TablixMembers&gt;
+            &lt;/TablixColumnHierarchy&gt;
+            &lt;TablixRowHierarchy&gt;
+              &lt;TablixMembers&gt;
+                &lt;TablixMember&gt;
+                  &lt;Group Name="Details" /&gt;
+                &lt;/TablixMember&gt;
+              &lt;/TablixMembers&gt;
+            &lt;/TablixRowHierarchy&gt;
+            &lt;DataSetName&gt;ConfigDS&lt;/DataSetName&gt;
+            &lt;Height&gt;0.25in&lt;/Height&gt;
+            &lt;Width&gt;7.11458in&lt;/Width&gt;
+            &lt;Style&gt;
+              &lt;Border&gt;
+                &lt;Style&gt;None&lt;/Style&gt;
+              &lt;/Border&gt;
+            &lt;/Style&gt;
+          &lt;/Tablix&gt;
+        &lt;/ReportItems&gt;
+        &lt;Height&gt;3in&lt;/Height&gt;
+        &lt;Style /&gt;
+      &lt;/Body&gt;
+      &lt;Width&gt;7.11458in&lt;/Width&gt;
+      &lt;Page&gt;
+        &lt;PageHeight&gt;11.69in&lt;/PageHeight&gt;
+        &lt;PageWidth&gt;8.27in&lt;/PageWidth&gt;
+        &lt;InteractiveHeight&gt;11in&lt;/InteractiveHeight&gt;
+        &lt;InteractiveWidth&gt;8.5in&lt;/InteractiveWidth&gt;
+        &lt;Style /&gt;
+      &lt;/Page&gt;
+    &lt;/ReportSection&gt;
+  &lt;/ReportSections&gt;
+  
+  &lt;Language&gt;en-US&lt;/Language&gt;
+  &lt;rd:ReportUnitType&gt;Inch&lt;/rd:ReportUnitType&gt;
+  &lt;rd:ExpressionDialog&gt;Microsoft.Dynamics.Framework.Design.Reports.ExpressionEditor.ExpressionEditorDialog, Microsoft.Dynamics.Framework.Design.Reports&lt;/rd:ExpressionDialog&gt;
+  &lt;rd:ReportID&gt;6abde331-5e7c-4a74-942a-52e154ec35e0&lt;/rd:ReportID&gt;
+&lt;/Report&gt;</Text>
+			<DisableIndividualTransformation />
+		</AxReportDesign>
+	</Designs>
+	<EmbeddedImages />
+</AxReport>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYPayArrearQuery</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYPayArrearQuery extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>HcmWorker_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>HcmWorker</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYWorkerPayrollPeriodFinalize_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYWorkerPayrollPeriodFinalize</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>SPYPayrollPeriodLine_1</Name>
+							<DynamicFields>Yes</DynamicFields>
+							<Table>SPYPayrollPeriodLine</Table>
+							<DataSources />
+							<DerivedDataSources />
+							<Fields />
+							<Ranges>
+								<AxQuerySimpleDataSourceRange>
+									<Name>PeriodStartDate</Name>
+									<Field>PeriodStartDate</Field>
+									<Value>(PeriodStartDate &lt;= currentDate())</Value>
+								</AxQuerySimpleDataSourceRange>
+								<AxQuerySimpleDataSourceRange>
+									<Name>PeriodEndDate</Name>
+									<Field>PeriodEndDate</Field>
+									<Value>(PeriodEndDate &gt;= currentDate())</Value>
+								</AxQuerySimpleDataSourceRange>
+							</Ranges>
+							<UseRelations>Yes</UseRelations>
+							<Relations />
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<JoinMode>NoExistsJoin</JoinMode>
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>HcmEmployment_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>HcmEmployment</Table>
+					<DataSources />
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<JoinMode>ExistsJoin</JoinMode>
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges />
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceWorkerService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYAbsenceWorkerService
+{
+    HcmWorker                          hcmWorker;    
+    HcmEmployment                  hcmEmployment;
+    HcmEmploymentDetail         hcmEmploymentDetail;
+    CalendarId                          calendarId;
+    JmgProfileId                        profileId;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>balanceDays</Name>
+				<Source><![CDATA[
+    public SPYAmount balanceDays(TransDate _asOnDate, HRMAbsenceCodeId _absenceCode)
+    {
+        SPYAbsenceLedger        absenceLedger;
+        TransDate               startDate = this.openingEntryDate(_asOnDate, _absenceCode);
+        SPYAmount               balance;
+
+        select sum(AbsenceDays) from absenceLedger
+        where absenceLedger.Worker == hcmWorker.RecId &&
+              absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+              absenceLedger.TransDate >= startDate &&
+              absenceLedger.TransDate <= _asOnDate;
+        balance = absenceLedger.AbsenceDays;
+    
+        select sum(AbsenceDays) from absenceLedger
+        where absenceLedger.Worker == hcmWorker.RecId &&
+              absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+              absenceLedger.LeaveApplicationLine &&
+              absenceLedger.TransDate > _asOnDate;
+        balance += absenceLedger.AbsenceDays;
+
+        return balance;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>carryBackwardDays</Name>
+				<Source><![CDATA[
+    public SPYAmount carryBackwardDays(TransDate _asOnDate, HRMAbsenceCodeId _absenceCode)
+    {
+        SPYAbsenceConfigRecId       absenceConfig;
+    
+        this.setEmployment(_asOnDate);
+        absenceConfig = hcmEmploymentDetail.SPYAbsenceConfig;
+    
+        return SPYAbsenceConfigLine::findByAbsenceCode(absenceConfig, _absenceCode).CarryBackward;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(HcmWorkerRecId _worker)
+    {
+        hcmWorker = HcmWorker::find(_worker);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>openingEntryDate</Name>
+				<Source><![CDATA[
+    private date openingEntryDate(TransDate _asOnDate, HRMAbsenceCodeId _absenceCode)
+    {
+        SPYAbsenceLedger        absenceLedger;
+    
+        select maxof(AbsenceDate) from absenceLedger
+            where absenceLedger.Worker == hcmWorker.RecId &&
+                  absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+                  absenceLedger.TransDate <= _asOnDate &&
+                  absenceLedger.EntryType == SPYAbsenceLedgerEntryType::OpeningEntry;
+    
+        return absenceLedger.TransDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEmployment</Name>
+				<Source><![CDATA[
+    private void setEmployment(TransDate _asOnDate)
+    {
+        _asOnDate = _asOnDate ? _asOnDate : systemDateGet();
+        TransDateTime  transDateTime = DateTimeUtil::newDateTime(_asOnDate,00-00);
+        TransDateTime  startDateTime = DateTimeUtil::minValue(), EndDateTime = DateTimeUtil::maxValue();
+
+        hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::current(), transDateTime);
+        if(!hcmEmployment)
+        {
+            select firstonly validtimestate(startDateTime, EndDateTime) hcmEmployment order by ValidFrom desc
+                where hcmEmployment.Worker == hcmWorker.RecId &&
+                hcmEmployment.LegalEntity == CompanyInfo::current();
+        }
+        hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId,transDateTime);
+        if(!hcmEmploymentDetail)
+        {
+            select firstonly validtimestate(startDateTime, EndDateTime) hcmEmploymentDetail order by ValidFrom desc
+                where hcmEmploymentDetail.Employment == hcmEmployment.RecId;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>probationCheck</Name>
+				<Source><![CDATA[
+    private boolean probationCheck(SPYAbsenceConfigRecId _absenceConfig,TransDateTime _transDateTime, 
+        HcmEmploymentEmployee _employmentEmployee, HRMAbsenceCodeId _absenceCode)
+    {
+        if(SPYAbsenceConfigLine::findByAbsenceCode(_absenceConfig,  _absenceCode).RestrictInProbation &&
+    _employmentEmployee.ProbationEndDate && _employmentEmployee.ProbationEndDate >= _transDateTime)
+            return false;
+        else
+            return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>probationNNoticeCheck</Name>
+				<Source><![CDATA[
+    public container probationNNoticeCheck(TransDate _asOnDate, HRMAbsenceCodeId _absenceCode)
+    {
+        SPYAbsenceConfigRecId       absenceConfig;
+        HcmEmploymentEmployee       employmentEmployee;
+        TransDateTime               transDateTime = DateTimeUtil::newDateTime(_asOnDate,00-00);
+        container                   ret;
+
+        this.setEmployment(_asOnDate);
+        employmentEmployee = HcmEmploymentEmployee::findByEmployment(hcmEmployment.RecId, transDateTime);
+        absenceConfig = hcmEmploymentDetail.SPYAbsenceConfig;
+
+        return [this.probationCheck(absenceConfig ,transDateTime ,employmentEmployee, _absenceCode),
+            this.noticePeriodCheck(absenceConfig, transDateTime, employmentEmployee, _absenceCode)];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>noticePeriodCheck</Name>
+				<Source><![CDATA[
+    private boolean noticePeriodCheck(SPYAbsenceConfigRecId _absenceConfig,TransDateTime _transDateTime,
+         HcmEmploymentEmployee _employmentEmployee, HRMAbsenceCodeId _absenceCode)
+    {
+        TransDateTime    noticeStartDate;
+        if(SPYAbsenceConfigLine::findByAbsenceCode(_absenceConfig, _absenceCode).RestrictInNotice && hcmEmploymentDetail.LastDateWorked)
+        {
+            switch(hcmEmploymentDetail.WorkerUnitOfNotice)
+            {
+                case HcmUnitOfNotice::Month :
+                    noticeStartDate = DateTimeUtil::addMonths(hcmEmploymentDetail.LastDateWorked, -hcmEmploymentDetail.WorkerNoticeAmount);
+                    break;
+                case HcmUnitOfNotice::Week :
+                    noticeStartDate = DateTimeUtil::addDays(hcmEmploymentDetail.LastDateWorked, - hcmEmploymentDetail.WorkerNoticeAmount * 7);
+                    break;
+            }
+            if(_transDateTime > noticeStartDate)
+                return false;
+            else
+                return true;
+        }
+        else
+            return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unapprovedLeaveDays</Name>
+				<Source><![CDATA[
+    public SPYAmount unapprovedLeaveDays(TransDate _asOnDate, RefRecId _curLine, HRMAbsenceCodeId _absenceCode)
+    {
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        TransDate                   startDate = this.openingEntryDate(_asOnDate, _absenceCode), endDate = dateMax();
+        SPYAmount                   balance;
+
+        select validTimeState(startDate,endDate) sum(LeaveApplied) from leaveApplicationLine
+        join leaveApplicationTable
+        where leaveApplicationTable.RecId == leaveApplicationLine.LeaveApplication &&
+              leaveApplicationLine.HRMAbsenceCode == _absenceCode &&
+              leaveApplicationLine.RecId != _curLine &&
+              leaveApplicationTable.Worker == hcmWorker.RecId &&
+              (leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created ||
+              leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::RequestChange ||
+              leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Started ||
+              leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Submitted);
+
+        balance = leaveApplicationLine.LeaveApplied;
+        return balance;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>absenceLedgerDaysForLeaveApplLine</Name>
+				<Source><![CDATA[
+    public SPYAmount absenceLedgerDaysForLeaveApplLine(SPYLeaveApplicationLineRecId _laveApplicationLineRecId)
+    {
+        SPYAmount       ret;
+        SPYAbsenceLedger        absenceLedger;
+
+        if(_laveApplicationLineRecId)
+            select sum(AbsenceDays) from absenceLedger
+                where absenceLedger.LeaveApplicationLine == _laveApplicationLineRecId;
+        ret = absenceLedger.AbsenceDays;
+        return -ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workingHours</Name>
+				<Source><![CDATA[
+    public SPYAmount workingHours(TransDate _date = dateNull())
+    {
+        Hours                       workingHours;
+        SPYProfileHoliday           profileHoliday;
+        WorkCalendarDate            workCalendarDate;
+        CalendarId                  calendarLoc;
+
+        this.setEmployment(_date);
+        this.setCalendar();
+        if(hcmEmploymentDetail.SPYPlannedWorkingHourSource == SPYPlannedWorkingHourSource::Calendar)
+        {
+            if ( _date == dateNull() )
+                workingHours = WorkCalendarTable::find( calendarId ).StandardWorkDayHours;
+            else
+            {
+                workCalendarDate = WorkCalendarDate::find(calendarId,_date);
+                if(workCalendarDate.SPYHoliday)
+                    workingHours = 0;
+                else
+                    workingHours = WorkCalendarDate::calcDefinedHours(calendarId,_date);
+            }
+        }
+        else
+        {
+            if ( _date == dateNull() )
+            {
+                calendarLoc = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId).CalendarId;
+                workingHours = WorkCalendarTable::find( calendarLoc ).StandardWorkDayHours;
+            }
+            else
+            {
+                profileId = JmgProfileCalendar::find(JmgEmployee::find(hcmWorker.RecId),_date).ProfileId;
+                if(!profileId)
+                    warning(strFmt("@SPY:WorkerDoesnotHaveProfile", hcmWorker.PersonnelNumber, _date));
+                else
+                {
+                    select firstonly profileHoliday
+                    where profileHoliday.ProfileId == profileId &&
+                    profileHoliday.Holiday == _date;
+                    if(profileHoliday)
+                        workingHours = 0;
+                    else
+                        workingHours = this.workingHoursFromProfileCalendar(_date);
+                }
+            }
+        }
+        return workingHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setCalendar</Name>
+				<Source><![CDATA[
+    private void setCalendar()
+    {
+        WorkCalendarEmployment      workCalendarEmployment;
+        JmgStampJournalTable        jmgStampJournalTable;
+
+        if(hcmEmploymentDetail.SPYPlannedWorkingHourSource == SPYPlannedWorkingHourSource::Calendar)
+        {
+            workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+            calendarId = workCalendarEmployment.CalendarId;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workingHoursFromProfileCalendar</Name>
+				<Source><![CDATA[
+    private Hours workingHoursFromProfileCalendar(Date _workDate)
+    {
+        /*
+        JmgProfiles jmgProfiles;
+        JmgStampJournalTable stampJournalTable;
+    
+        jmgProfiles = new JmgProfiles(false);
+        jmgProfiles.getProfile(profileId, dayOfWk(_workDate)-1);
+        jmgProfiles.initStampJournalTable(stampJournalTable);
+    
+        return stampJournalTable.ProfileSeconds / 3600;
+        */
+        JmgProfileDay   JmgProfileDay = JmgProfileDay::find(profileId, dayOfWk(_workDate)-1);
+        SPYAmount ret = JmgProfileDay.standardTimeSecondsDay();
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

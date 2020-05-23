@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEmployeeBioDataDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SRSReportParameterAttribute(classStr(SPYEmployeeBioDataContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerNoPosition))]
+class SPYEmployeeBioDataDP extends SRSReportDataProviderBase
+{
+    SPYEmployeeBioDataTmp   employeeBioDataTmp;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYTimesheetReportTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tablestr(SPYEmployeeBioDataTmp))]
+    public SPYEmployeeBioDataTmp getSPYTimesheetReportTmp()
+    {
+        select employeeBioDataTmp;
+
+        return employeeBioDataTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        NoYes   isProfile;
+        NoYes   isIdentification;
+        NoYes   isSalary;
+        NoYes   isProject;
+        NoYes   isLeave;
+        NoYes   isIncrement;
+        NoYes   isPosition;
+        HcmPersonPrivateDetails     personPrivateDetails;
+        HcmPositionDetail           positionDetails;
+        HcmPositionWorkerAssignment positionWorkerAssignment;
+
+        Query query = this.parmQuery();
+        HcmWorker   hcmWorker;
+        SPYEmployeeBioDataContract  contract = this.parmDataContract() as SPYEmployeeBioDataContract;
+
+        isProfile = contract.parmProfile();
+        isIdentification = contract.parmIdentification();
+        isSalary = contract.parmSalary();
+        isProject = contract.parmProject();
+        isLeave = contract.parmLeave();
+        isIncrement = contract.parmIncrement();
+        isPosition = contract.parmPosition();
+
+        QueryRun    qr = new QueryRun(query);
+
+        if (qr.next())
+        {
+            hcmworker = qr.get(tableNum(HcmWorker));
+            select personPrivateDetails where personPrivateDetails.Person == hcmworker.Person;
+            positionWorkerAssignment = HcmPositionWorkerAssignment::getActivePositionWorkerAssignment(hcmworker.RecId);
+            positionDetails = HcmPositionDetail::findByPosition(positionWorkerAssignment.Position);
+            HcmEmployment       hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmworker.RecId,curCompanyId());
+            HcmEmploymentDetail hcmEmploymentDetails = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId);
+            HcmPersonDetails hcmPersonDetails = HcmPersonDetails::findByPerson(HcmWorker.Person);
+            
+            if (isProfile)
+            {
+                employeeBioDataTmp.clear();
+                employeeBioDataTmp.BioDataCategory = SPYEmplBioDataCategory::Profile;
+                employeeBioDataTmp.PersonnelNumberId = hcmworker.PersonnelNumber;
+                employeeBioDataTmp.Name = hcmworker.name();
+                employeeBioDataTmp.DOB = personPrivateDetails.BirthDate;
+                employeeBioDataTmp.NationalityCountryRegion = personPrivateDetails.NationalityCountryRegion;
+                employeeBioDataTmp.Qualification = personPrivateDetails.Education;
+                employeeBioDataTmp.Description = positionDetails.Description;
+                employeeBioDataTmp.PayrollPeriodCode = SPYPayrollPeriod::find(hcmEmploymentDetails.SPYDefaultPayrollPeriod).PayrollPeriodCode;
+                employeeBioDataTmp.Address = hcmworker.primaryAddress();
+                employeeBioDataTmp.TotalSalary = this.totalSalary(hcmworker.RecId);
+                employeeBioDataTmp.MaritalStatus = hcmPersonDetails.MaritalStatus;
+                employeeBioDataTmp.JoinDate = DateTimeUtil::date(HcmWorkerTitle::findByWorker(hcmworker.RecId).OriginalHireDateTime);
+                employeeBioDataTmp.WorkerSponser =  SPYWorkerSponsorTable::find(hcmEmploymentDetails.SPYWorkerSponsor).SponsorCode;
+                employeeBioDataTmp.WorkExp = intvNo(systemDateGet(), employeeBioDataTmp.JoinDate, IntvScale::YearMonth);
+                employeeBioDataTmp.TitleId = HcmTitle::find(HcmWorkerTitle::findByWorker(hcmworker.RecId).Title).TitleId;
+                
+                DirPartyRelationship partyRelationship;
+                HcmPersonPrivateDetails personPrivateDetailsFather;
+
+                select firstonly  partyRelationship where partyRelationship.ChildParty == HcmWorker.Person
+                    && partyRelationship.RelationshipTypeId == 'Parent'
+                    join personPrivateDetailsFather where personPrivateDetailsFather.Person == partyRelationship.ParentParty
+                    && personPrivateDetailsFather.Gender == HcmPersonGender::Male;
+                employeeBioDataTmp.FatherName = DirPartyTable::findRec(partyRelationship.ParentParty).Name;
+
+                employeeBioDataTmp.insert();
+
+            }
+            if (isIdentification)
+            {
+                HcmPersonIdentificationNumber personIdentificationNumber;
+                while select personIdentificationNumber where personIdentificationNumber.Person == hcmworker.Person
+                {
+                    employeeBioDataTmp.clear();
+                    employeeBioDataTmp.BioDataCategory = SPYEmplBioDataCategory::Identification;
+                    employeeBioDataTmp.PersonnelNumberId = hcmworker.PersonnelNumber;
+                    employeeBioDataTmp.Name = hcmworker.name();
+                    employeeBioDataTmp.IdentificationType = personIdentificationNumber.IdentificationType;
+                    employeeBioDataTmp.IdentificationNumber = personIdentificationNumber.IdentificationNumber;
+                    employeeBioDataTmp.IdentificationDescription = personIdentificationNumber.Description;
+                    employeeBioDataTmp.IssuedDate = personIdentificationNumber.IssuedDate;
+                    employeeBioDataTmp.IssuingAgency = personIdentificationNumber.IssuingAgency;
+                    employeeBioDataTmp.ExpirationDate = personIdentificationNumber.ExpirationDate;
+
+                    employeeBioDataTmp.insert();
+                }
+                
+            }
+            if (isSalary)
+            {
+                SPYWorkerPositionPayroll        workerPayroll;
+                SPYPayrollTable                 payrollTable;
+
+                while select workerPayroll join payrollTable
+                where workerPayroll.Worker == HcmWorker.RecId
+                    && workerPayroll.Payroll == payrollTable.RecId
+                {
+                    employeeBioDataTmp.clear();
+                    employeeBioDataTmp.BioDataCategory = SPYEmplBioDataCategory::Salary;
+                    employeeBioDataTmp.PersonnelNumberId = hcmworker.PersonnelNumber;
+                    employeeBioDataTmp.Name = hcmworker.name();
+                    employeeBioDataTmp.PayElementCode = SPYPayrollTable::find(workerPayroll.Payroll).PayElementCode;
+                    employeeBioDataTmp.MonthlyAmt = workerPayroll.Monthly;
+                    
+                    employeeBioDataTmp.insert();
+                }
+            }
+            if (isProject)
+            {
+                SPYTSTimesheetFavorites timesheetFavorites;
+                while select timesheetFavorites where timesheetFavorites.Worker == hcmWorker.RecId
+                {
+                    employeeBioDataTmp.clear();
+                    employeeBioDataTmp.BioDataCategory = SPYEmplBioDataCategory::Project;
+                    employeeBioDataTmp.PersonnelNumberId = hcmworker.PersonnelNumber;
+                    employeeBioDataTmp.Name = hcmworker.name();
+                    employeeBioDataTmp.Project = timesheetFavorites.ProjName;
+                    //employeeBioDataTmp.ProjStartDate = timesheetFavorites.StartDate;
+                    employeeBioDataTmp.ProjStartDate = timesheetFavorites.ValidFrom;
+                    //employeeBioDataTmp.ProjEndDate = timesheetFavorites.EndDate;
+                    employeeBioDataTmp.ProjEndDate = timesheetFavorites.ValidTo;
+                    
+                    employeeBioDataTmp.insert();
+                }
+            }
+            if (isLeave)
+            {
+                SPYLeaveApplicationLine leaveApplicationLine;
+                SPYLeaveApplicationTable     leaveApplication;
+                while select leaveApplicationLine join leaveApplication
+                    where leaveApplicationLine.LeaveApplication == leaveApplication.RecId
+                        && leaveApplication.Worker == hcmWorker.RecId
+                {
+                    employeeBioDataTmp.clear();
+                    employeeBioDataTmp.BioDataCategory = SPYEmplBioDataCategory::Leave;
+                    employeeBioDataTmp.PersonnelNumberId = hcmworker.PersonnelNumber;
+                    employeeBioDataTmp.Name = hcmworker.name();
+                    employeeBioDataTmp.LeaveId = leaveApplication.LeaveApplicationCode;
+                    employeeBioDataTmp.LeaveType = leaveApplicationLine.HRMAbsenceCode;
+                    employeeBioDataTmp.LeaveStartDate = leaveApplicationLine.ActualStartDate;
+                    employeeBioDataTmp.LeaveEndDate = leaveApplicationLine.ActualEndDate;
+                    employeeBioDataTmp.LeaveDays = leaveApplicationLine.LeaveApplied;
+                    employeeBioDataTmp.insert();
+                }
+            }
+            if (isIncrement)
+            {
+                SPYWorkerPositionPayroll        workerPayrollPayElement;
+                SPYPayrollTable                 payrollTablePay;
+    
+                TransDate validFrom = DateTimeUtil::date(DateTimeUtil::minValue());
+                TransDate validTo   = DateTimeUtil::date(DateTimeUtil::maxValue());
+
+                while select ValidTimeState(validFrom, validTo)
+                     workerPayrollPayElement join payrollTablePay
+                        where workerPayrollPayElement.Worker == HcmWorker.RecId
+                            && workerPayrollPayElement.Payroll == payrollTablePay.RecId
+                {
+                    employeeBioDataTmp.clear();
+                    employeeBioDataTmp.BioDataCategory = SPYEmplBioDataCategory::Increment;
+                    employeeBioDataTmp.PersonnelNumberId = hcmworker.PersonnelNumber;
+                    employeeBioDataTmp.Name = hcmworker.name();
+                    employeeBioDataTmp.IncrementPayElementCode = SPYPayrollTable::find(workerPayrollPayElement.Payroll).PayElementCode;
+                    employeeBioDataTmp.IncrementDate = workerPayrollPayElement.ValidFrom;
+                    employeeBioDataTmp.PayElementAmt = workerPayrollPayElement.Monthly;
+                    //TODO:Implement bonus logic
+                    //employeeBioDataTmp.BonusAmt
+                    employeeBioDataTmp.insert();
+                }
+            }
+            if (isPosition)
+            {
+                HcmPositionWorkerAssignment positionAssignment;
+                HcmPositionDetail   workerPositionDetails;
+                while select positionAssignment where positionAssignment.Worker == HcmWorker.RecId
+                {
+                    workerPositionDetails = HcmPositionDetail::findByPosition(positionAssignment.Position);
+                    
+                    employeeBioDataTmp.clear();
+                    employeeBioDataTmp.BioDataCategory = SPYEmplBioDataCategory::Position;
+                    employeeBioDataTmp.PersonnelNumberId = hcmworker.PersonnelNumber;
+                    employeeBioDataTmp.Name = hcmworker.name();
+                    employeeBioDataTmp.PositionId = HCMPosition::find(positionAssignment.Position).PositionId;
+                    employeeBioDataTmp.PositionStartDate = DateTimeUtil::date(workerPositionDetails.ValidFrom);
+                    employeeBioDataTmp.PositionEndDate = DateTimeUtil::date(workerPositionDetails.ValidTo);
+                    employeeBioDataTmp.ReasonCode = workerPositionDetails.Description;
+                    employeeBioDataTmp.insert();
+                }
+            }
+
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>totalSalary</Name>
+				<Source><![CDATA[
+    public SPYAmount totalSalary(HcmWorkerRecId worker)
+    {
+        SPYWorkerPositionPayroll        workerPayroll, workerPayrollDed;
+        SPYPayrollTable                 payrollTable, payrollTableDed;
+        SPYAmount                       cashSalary;
+
+        while select Monthly, currency
+            from workerPayroll join payrollTable
+            where workerPayroll.Worker == Worker
+                && workerPayroll.Payroll == payrollTable.RecId
+                && payrollTable.PayrollType == SPYPayrollType::Earning
+        {
+            cashSalary += CurrencyExchangeHelper::amountCur2MST(workerPayroll.Monthly, workerPayroll.Currency);
+        }
+
+        while select Monthly, currency
+        from workerPayrollDed join payrollTableDed
+        where workerPayrollDed.Worker == Worker
+        && workerPayrollDed.Payroll == payrollTableDed.RecId
+        && payrollTableDed.PayrollType == SPYPayrollType::Deduction
+        {
+            cashSalary -= CurrencyExchangeHelper::amountCur2MST(workerPayrollDed.Monthly, workerPayrollDed.Currency);
+        }
+        return cashSalary;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

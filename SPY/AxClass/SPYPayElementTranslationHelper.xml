@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayElementTranslationHelper</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayElementTranslationHelper
+{
+    SPYPayElementRecId  payElement;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>launchTranslationDetailForm</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Launches the system translation form.
+    /// </summary>
+    /// <param name="_helper">
+    ///    An instance of the <c>SysTranslationHelper</c> class.
+    /// </param>
+    public void launchTranslationDetailForm(SysTranslationHelper _helper)
+    {        
+        _helper.launchTranslationDetailForm(payElement);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayElement</Name>
+				<Source><![CDATA[
+    public SPYPayElementRecId parmPayElement(SPYPayElementRecId _payElement = payElement)
+    {
+        payElement = _payElement;
+    
+        return payElement;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>constructSysTranslationHelper</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Initializes a new instance of the <c>SysTranslationHelper</c> class, which is dedicated for product
+    ///    translation purpose.
+    /// </summary>
+    /// <returns>
+    ///    A new instance of the <c>SysTranslationHelper</c> class.
+    /// </returns>
+    public static client SysTranslationHelper constructSysTranslationHelper()
+    {
+        SysTranslationHelper helper;
+    
+        helper = new SysTranslationHelper(
+            tableNum(SPYPayElementTable),
+            tableNum(SPYPayElementTranslation)
+            );
+    
+        return helper;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static client void main(Args args)
+    {
+        SPYPayElementTranslationHelper  payElementTranslationHelper;
+    
+        payElementTranslationHelper = SPYPayElementTranslationHelper::newFromArgs(args);
+    
+        payElementTranslationHelper.launchTranslationDetailForm(SPYPayElementTranslationHelper::constructSysTranslationHelper());
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>newFromArgs</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Initializes a new instance of the <c>SPYPayElementTranslationHelper</c> class.
+    /// </summary>
+    /// <param name="_args">
+    ///    Input arguments.
+    /// </param>
+    /// <returns>
+    ///    A new instance of the <c>SPYPayElementTranslationHelper</c> class.
+    /// </returns>
+    /// <exception cref="M:Exception::Error">
+    ///    An <c>SPYPayElementTable</c> table buffer was not specified.
+    /// </exception>
+    public static client SPYPayElementTranslationHelper newFromArgs(Args _args)
+    {
+        SPYPayElementTranslationHelper      payElementTranslationHelper;
+        SPYPayElementTable                  payElementTable;
+    
+        if ( !(_args && _args.record() is SPYPayElementTable))
+        {
+            throw error(strFmt("@SYS134996", tableStr(SPYPayElementTable)));
+        }
+    
+        payElementTable = _args.record() as SPYPayElementTable;
+    
+        payElementTranslationHelper = new SPYPayElementTranslationHelper();
+        payElementTranslationHelper.parmPayElement(payElementTable.RecId);
+        return payElementTranslationHelper;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveBalanceMonthlyContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    DataContractAttribute,
+    SysOperationGroupAttribute('PayrollPeriod','Payroll period','1')
+]
+class SPYLeaveBalanceMonthlyContract implements SysOperationValidatable
+{
+    SPYPayrollPeriodLineRecId_Report    payrollPeriodLineFrom;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayrollPeriodLineFrom</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('PayrollPeriodLineFrom'),
+        SysOperationLabelAttribute('Payroll Period Line :'),
+        SysOperationHelpTextAttribute(literalStr('@SPY168')),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId_Report parmPayrollPeriodLineFrom(SPYPayrollPeriodLineRecId_Report _payrollperiodLineFrom = payrollPeriodLineFrom)
+    {
+        payrollPeriodLineFrom =_payrollperiodLineFrom;
+    
+        return payrollPeriodLineFrom;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate()
+    {
+        SPYPayrollPeriodLine    payrollPeriodFrom = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        boolean                 ret = true;
+    
+        if(payrollPeriodLineFrom == 0)
+            ret = checkFailed("Payroll Period Line must be specified");
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

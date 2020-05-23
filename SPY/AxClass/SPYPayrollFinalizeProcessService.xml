@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollFinalizeProcessService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayrollFinalizeProcessService
+{
+    SPYPayrollFinalizeProcessContract    contract;
+    LegalEntityRecId                             legalEntity;
+    SPYPayrollPeriodLineRecId              payrollPeriodLine;
+    HcmWorker                                   hcmWorker;
+    date    timesheetStartDate, timesheetEndDate;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    public void process(SPYPayrollFinalizeProcessContract   _contract)
+    {
+        QueryRun               workerQueryRun;
+        boolean                 payrollParameterState;
+        container               workerContainer;
+        List                        workerList = new List(Types::Int64);
+        ListEnumerator       workerListEnumerator;
+        int                         workerContainerLenCount;
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                                 progressCount;
+    
+        contract                        = _contract as SPYPayrollFinalizeProcessContract;
+        legalEntity                     = contract.parmLegalEntity();
+        payrollPeriodLine           = contract.parmPayrollPeriodLine();        
+    
+        if(contract.parmPayrollParameterState().parmWorkerContainer())
+        {
+            payrollParameterState = true;
+            workerContainer = contract.parmPayrollParameterState().parmWorkerContainer();
+            workerContainerLenCount = 1;
+            while(workerContainerLenCount <= conLen(workerContainer))
+            {
+                workerList.addEnd(conPeek(workerContainer,workerContainerLenCount));
+                workerContainerLenCount++;
+            }
+        }
+        else
+        {
+            if(contract.parmWorkerQuery())
+                workerQueryRun = new QueryRun(contract.parmWorkerQuery());
+            else
+                workerQueryRun = new QueryRun(new Query(queryStr(HcmWorkerLookup)));
+    
+            while(workerQueryRun.next())
+            {
+                hcmWorker = workerQueryRun.get(tableNum(HcmWorker));
+                workerList.addEnd(hcmWorker.RecId);
+            }
+        }
+        workerListEnumerator = workerList.getEnumerator();
+        setPrefix("@SPY:FinalizingPayroll");
+        progress.setCaption("@SPY:PayrollFinalizing");
+        progress.setAnimation(#AviUpdate);
+        progress.setTotal(workerList.elements());
+        progressCount = 1;
+        
+        try
+        {
+            ttsBegin;
+            while(workerListEnumerator.moveNext())
+            {
+                hcmWorker = HcmWorker::find(workerListEnumerator.current());
+                progress.setText(strfmt("@SPY882", hcmWorker.name()));
+                progress.setCount(progressCount, 1);
+                changeCompany(CompanyInfo::findRecId(legalEntity).DataArea)
+                {
+                    this.updateWebDocumentLog();
+                    this.updateAbsenceLedgerFromBenefitLegder();
+                    this.finalizePayroll();                    
+                }
+                progressCount++;
+            }
+            ttsCommit;
+            info("@SPY379");
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>finalizePayroll</Name>
+				<Source><![CDATA[
+    private void finalizePayroll()
+    {
+        SPYPayrollLedger                            payrollLedger;
+        SPYBenefitLedger                            benefitLedger;
+        SPYReferencePayElementLedger       referencePayElementLedger;
+
+        update_recordset payrollLedger
+            setting IsFinalised = true
+            where payrollLedger.Worker == hcmWorker.RecId &&
+            payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+            !payrollLedger.IsFinalised;
+
+        update_recordset benefitLedger
+            setting IsFinalised = true
+            where benefitLedger.Worker == hcmWorker.RecId &&
+            benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+            !benefitLedger.IsFinalised;
+
+        update_recordset referencePayElementLedger
+            setting IsFinalised = true
+            where referencePayElementLedger.Worker == hcmWorker.RecId &&
+            referencePayElementLedger.PayrollPeriodLine == payrollPeriodLine &&
+            !referencePayElementLedger.IsFinalised;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWebDocumentLog</Name>
+				<Source><![CDATA[
+    private void updateWebDocumentLog()
+    {
+        SPYPayrollLedger                            payrollLedger;
+        select firstonly payrollLedger
+            where payrollLedger.Worker == hcmWorker.RecId &&
+            payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+            !payrollLedger.IsFinalised;
+        SPYWebDocumentLog::updateLog(payrollLedger.TableId, payrollLedger.RecId);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAbsenceLedgerFromBenefitLegder</Name>
+				<Source><![CDATA[
+    private void updateAbsenceLedgerFromBenefitLegder()
+    {
+        SPYBenefitLedger          benefitLedger;
+        HRMAbsenceCode        absenceCode;
+        SPYAbsenceLedger        absenceLedger;
+
+        timesheetStartDate = SPYPayrollPeriodLine::findPrevPeriodLine(payrollPeriodLine).PayrollDate+1;
+        timesheetEndDate = SPYPayrollPeriodLine::find(payrollPeriodLine).PayrollDate;
+
+        while select sum(Quantity) from benefitLedger group by Benefit
+            where benefitLedger.Worker == hcmWorker.RecId &&
+            benefitLedger.PayrollPeriodLine == payrollPeriodLine
+            join absenceCode
+            where absenceCode.SPYBenefit == benefitLedger.Benefit
+        {
+            select sum(AbsenceDays) from absenceLedger
+                where absenceLedger.Worker == hcmWorker.RecId &&
+                absenceLedger.HRMAbsenceCodeId == absenceCode.hrmAbsenceCodeId &&
+                absenceLedger.TransDate >= timesheetStartDate &&
+                absenceLedger.TransDate <= timesheetEndDate;
+
+            if(absenceLedger.AbsenceDays != benefitLedger.Quantity)
+            {
+                this.insert2AbsenceLedger(absenceCode.hrmAbsenceCodeId, benefitLedger.Quantity);
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2AbsenceLedger</Name>
+				<Source><![CDATA[
+    private void insert2AbsenceLedger(HrmAbsenceCodeId  _absenceCodeId, SPYAmount  _benefitLedgerQty)
+    {
+        SPYAbsenceLedger        absenceLedger;
+        SPYAbsenceWorkerService     absenceWorkerService = new SPYAbsenceWorkerService(hcmWorker.RecId);
+
+        delete_from absenceLedger
+            where absenceLedger.Worker == hcmWorker.RecId &&
+            absenceLedger.HRMAbsenceCodeId == _absenceCodeId &&
+            absenceLedger.SourceDocument == tableNum(SPYBenefitLedger) &&
+            absenceLedger.TransDate >= timesheetStartDate &&
+            absenceLedger.TransDate <= timesheetEndDate; 
+
+        select sum(AbsenceDays) from absenceLedger
+            where absenceLedger.Worker == hcmWorker.RecId &&
+            absenceLedger.HRMAbsenceCodeId == _absenceCodeId &&
+            absenceLedger.TransDate >= timesheetStartDate &&
+            absenceLedger.TransDate <= timesheetEndDate;
+        SPYAmount   diffQty = _benefitLedgerQty - absenceLedger.AbsenceDays;
+
+        absenceLedger.clear();
+        absenceLedger.initValue();
+        absenceLedger.Worker = hcmWorker.RecId;
+        absenceLedger.EntryType  = SPYAbsenceLedgerEntryType::Transaction;
+        absenceLedger.HRMAbsenceCodeId = _absenceCodeId;
+        absenceLedger.AbsenceDate = timesheetEndDate;
+        absenceLedger.TransDate = timesheetEndDate;
+        absenceLedger.AbsenceDays = diffQty;
+        absenceLedger.AbsenceHours = absenceWorkerService.workingHours(timesheetEndDate) *  diffQty;
+        absenceLedger.Txt = "@SPY:AdjustedQtyFromBenefitLedger";
+        absenceLedger.SourceDocument  = tableNum(SPYBenefitLedger);
+        absenceLedger.insert();
+
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

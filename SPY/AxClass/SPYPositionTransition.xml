@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPositionTransition</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPositionTransition
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>HcmPositionTransition_Post_newCreateHcmPositionWorkerAssignment</Name>
+				<Source><![CDATA[
+    //method called when employee is hired first and then position assignment is added
+    //cases where employee religion and gender is important should be done in this format
+    //employee should be hired and the details like gender and religion should be added followed by
+    //position assignment
+    [PostHandlerFor(classStr(HcmPositionTransition), staticMethodStr(HcmPositionTransition, newCreateHcmPositionWorkerAssignment))]
+    public static void HcmPositionTransition_Post_newCreateHcmPositionWorkerAssignment(XppPrePostArgs args)
+    {
+        HcmWorkerRecId              worker;
+        HcmWorker                   workerTable;
+        LegalEntityRecId            legalEntity = CompanyInfo::find().RecId;
+        HcmPositionRecId            position;
+        TransDateTime               employmentStartDate;
+        TransDateTime               employmentEndDate;
+        SPYWorkerCompensationPlan   workerCompensationPlan;
+        HcmPositionWorkerAssignment workerAssignment;
+        HcmPersonnelNumberId        personnelNumber;
+        HcmPersonPrivateDetailsRecId    person;
+        HCMPersonPrivateDetails         personPrivateDetails;
+        NoYesId         abortDefaulting;
+        worker = args.getArg(identifierStr(_hcmWorkerRecId));
+        workerTable = hcmWorker::find(worker);
+        person = workerTable.Person;
+        personnelNumber = workerTable.PersonnelNumber;
+
+        hcmemployment hcmEmployment = hcmEmployment::findByWorkerLegalEntity(worker, legalEntity);
+        personPrivateDetails = HcmPersonPrivateDetails::findByPerson( person );
+
+        select workerAssignment
+            where workerAssignment.Worker == hcmEmployment.Worker;
+
+        worker = hcmemployment.Worker;
+        position = workerAssignment.Position;
+        employmentStartDate = workerAssignment.ValidFrom; //this should be from transition date
+        employmentEndDate = hcmEmployment.validto;
+
+        if(worker)
+        {
+            abortDefaulting = NoYes::No;
+
+            try
+            {
+                if(SPYPayrollParameters::find().DefaultingPayWarning == SPYWarningOrNone::Warning)
+                {
+                    if(Box::yesNo("@SPY557",DialogButton::Ok) == DialogButton::No)
+                    {
+                        abortDefaulting = NoYes::Yes;
+                    }
+                }    
+
+                if ( abortDefaulting == NoYes::No ) 
+                {
+                    ttsBegin;
+                    workerCompensationPlan = new SPYWorkerCompensationPlan(worker,legalEntity,position);
+                    workerCompensationPlan.parmPayStartDateTime(employmentStartDate);
+                    workerCompensationPlan.parmPayEndDateTime(employmentEndDate);
+                    workerCompensationPlan.parmPayStartDate(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(employmentStartDate,DateTimeUtil::getClientMachineTimeZone())));
+
+                    if(employmentEndDate == DateTimeUtil::maxValue())
+                        workerCompensationPlan.parmPayEndDate(dateMax());
+                    else
+                        workerCompensationPlan.parmPayEndDate(DateTimeUtil::date(DateTimeUtil::applyTimeZoneOffset(employmentEndDate,DateTimeUtil::getClientMachineTimeZone())));
+
+                    workerCompensationPlan.paramGender( personPrivateDetails.gender );
+                    workerCompensationPlan.paramEthnicOriginRecId( personPrivateDetails.EthnicOrigin );
+                    workerCompensationPlan.updateCompensation();
+                    ttsCommit;
+                }
+            }
+            catch(Exception::Error)
+            {
+                ttsAbort;
+                error("@SPY552");
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanPostService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayLoanPostService extends SysOperationServiceBase
+{
+    SPYPayAdjustmentPostContract        contract;
+    RecordInsertList                    loanLedgerList,payrollLedgerList;
+    boolean                             callFromPost;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>commitLedger</Name>
+				<Source><![CDATA[
+    private void commitLedger()
+    {
+        loanLedgerList.insertDatabase();
+        if(payrollLedgerList)
+            payrollLedgerList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createInstallmentHistory</Name>
+				<Source><![CDATA[
+    private void createInstallmentHistory()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createInstallments</Name>
+				<Source><![CDATA[
+    public void createInstallments(SPYPayLoanPostContract _contract)
+    {
+        QueryRun                loanQueryRun;
+        SPYPayLoanTable         payLoanTable;
+        SPYPayLoanLine          payLoanLine;
+    
+        loanQueryRun = new QueryRun(_contract.parmLoanTableQuery());
+        loanLedgerList = new RecordInsertList(tableNum(SPYPayLoanLedger));
+    
+        try
+        {
+            setPrefix("@SPY369");
+            ttsBegin;
+            callFromPost = true;
+            if(this.validateInstallment(_contract))
+            {
+                while(LoanQueryRun.next())
+                {
+                    payLoanTable = LoanQueryRun.get(tableNum(SPYPayLoanTable));
+                    if(payLoanTable.Posted)
+                    {
+                        while select RecId from payLoanLine
+                            where payLoanLine.PayLoan == payLoanTable.RecId
+                        {
+                            this.installmentLines(_contract,payLoanLine.RecId);
+                            this.updateLine(_contract,payLoanLine.RecId);
+                        }
+                    }
+                }
+                this.commitLedger();
+            }
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createInstallmentsLedger</Name>
+				<Source><![CDATA[
+    private void createInstallmentsLedger(SPYPayLoanLineRecId _payLoanLine,
+                                          SPYPayrollPeriodLineRecId _payrollPeriodLine,
+                                          SPYAmount _installmentAmount)
+    {
+        SPYPayLoanLedger            payLoanLedger;
+        ExchangeRateHelper          exchangeRateHelper;
+        SPYPayLoanLine              payLoanLine = SPYPayLoanLine::find(_payLoanLine);
+    
+        exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::current(),payLoanLine.Currency);
+        exchangeRateHelper.parmExchangeDate(payLoanLine.TransDate);
+    
+        payLoanLedger.PayLoanLine               = payLoanLine.RecId;
+        payLoanLedger.Worker                    = payLoanLine.payLoanTable().Worker;
+        payLoanLedger.LoanType                  = payLoanLine.LoanType;
+        payLoanLedger.PayrollPeriodLine         = _payrollPeriodLine;
+        payLoanLedger.TransDate                 = payLoanLine.TransDate;
+        payLoanLedger.Txt                       = payLoanLine.Txt;
+        payLoanLedger.DefaultDimension          = payLoanLine.DefaultDimension;
+        payLoanLedger.TransactionCurrencyAmount = _installmentAmount;
+        payLoanLedger.Currency                  = payLoanLine.Currency;
+        payLoanLedger.ExchRate                  = exchangeRateHelper.getExchangeRate1();
+        payLoanLedger.AccountingCurrencyAmount  = _installmentAmount * payLoanLedger.ExchRate / 100;
+        payLoanLedger.PayLoanTransType          = SPYPayLoanTransType::Recovery;
+        loanLedgerList.add(payLoanLedger);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createPayLoanHistory</Name>
+				<Source><![CDATA[
+    private void createPayLoanHistory()
+    {
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createPayLoanHistoryInstallments</Name>
+				<Source><![CDATA[
+    private void createPayLoanHistoryInstallments()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteUnRecoveredInstallment</Name>
+				<Source><![CDATA[
+    private void deleteUnRecoveredInstallment(SPYPayLoanLineRecId _payLoanLine)
+    {
+        SPYPayLoanLedger        payLoanLedger;
+    
+        while select forUpdate payLoanLedger
+            where payLoanLedger.PayLoanLine == _payLoanLine &&
+                  payLoanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+        {
+            if(!payLoanLedger.amountRecoveredTransCur())
+                payLoanLedger.delete();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2Ledger</Name>
+				<Source><![CDATA[
+    private void insert2Ledger(SPYPayLoanTable _payLoanTable)
+    {
+        SPYPayLoanLine              payLoanLine;
+        SPYPayLoanLedger            payLoanLedger;
+        ExchangeRateHelper          exchangeRateHelper;
+    
+        while select payLoanLine
+            where payLoanLine.PayLoan == _payLoanTable.RecId
+        {
+            exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::current(),payLoanLine.Currency);
+            exchangeRateHelper.parmExchangeDate(payLoanLine.TransDate);
+    
+            payLoanLedger.PayLoanLine               = payLoanLine.RecId;
+            payLoanLedger.Worker                    = payLoanLine.payLoanTable().Worker;
+            payLoanLedger.LoanType                  = payLoanLine.LoanType;
+            payLoanLedger.PayrollPeriodLine         = payLoanLine.PayrollPeriodlLine;
+            payLoanLedger.TransDate                 = payLoanLine.TransDate;
+            payLoanLedger.Txt                       = payLoanLine.Txt;
+            payLoanLedger.DefaultDimension          = payLoanLine.DefaultDimension;
+            payLoanLedger.TransactionCurrencyAmount = payLoanLine.Amount;
+            payLoanLedger.Currency                  = payLoanLine.Currency;
+            payLoanLedger.ExchRate                  = exchangeRateHelper.getExchangeRate1();
+            payLoanLedger.AccountingCurrencyAmount  = payLoanLine.Amount * payLoanLedger.ExchRate / 100;
+            payLoanLedger.PayLoanTransType          = SPYPayLoanTransType::Disbursement;
+            loanLedgerList.add(payLoanLedger);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2PayrollLedger</Name>
+				<Source><![CDATA[
+    private void insert2PayrollLedger(SPYPayLoanTable _payLoanTable)
+    {
+        SPYPayrollLedger                    payrollLedger;
+        ExchangeRateHelper                  exchangeRateHelper;
+        SPYPayLoanLine                      payLoanLine;
+        SPYPayrollRecId                     disbursementPayroll;
+    
+        while select payLoanLine
+            where payLoanLine.PayLoan == _payLoanTable.RecId
+        {
+            disbursementPayroll = SPYLoanTypeTable::find(payLoanLine.LoanType).DisbursementPayroll;
+            exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::current(),payLoanLine.Currency);
+            exchangeRateHelper.parmExchangeDate(payLoanLine.TransDate);
+            payrollLedger.clear();
+            payrollLedger.initValue();
+            payrollLedger.PayLoanLine                 = payLoanLine.RecId;
+            payrollLedger.Worker                      = _payLoanTable.Worker;
+            payrollLedger.Payroll                     = disbursementPayroll;
+            payrollLedger.PayrollPeriodLine           = payLoanLine.PayrollPeriodlLine;
+            payrollLedger.TransDate                   = payLoanLine.TransDate;
+            payrollLedger.Txt                         = payLoanLine.Txt ? payLoanLine.Txt :
+                                                        strFmt("@SPY1690",
+                                                        SPYPayElementTable::find(disbursementPayroll).PayElementCode,
+                                                        HcmWorker::find(_payLoanTable.Worker).name(),
+                                                        SPYPayrollPeriodLine::find(payLoanLine.PayrollPeriodlLine).PeriodStartDate,
+                                                        SPYPayrollPeriodLine::find(payLoanLine.PayrollPeriodlLine).PeriodEndDate,
+                                                        _payLoanTable.PayLoanCode);
+            payrollLedger.DefaultDimension            = payLoanLine.DefaultDimension;
+            payrollLedger.TransactionCurrencyAmount   = payLoanLine.Amount;
+            payrollLedger.Currency                    = payLoanLine.Currency;
+            payrollLedger.ExchRate                    = exchangeRateHelper.getExchangeRate1();
+            payrollLedger.AccountingCurrencyAmount    = payLoanLine.Amount * payrollLedger.ExchRate / 100;
+            payrollLedger.ImmediateDisbursement       = _payLoanTable.ImmediateDisbursement;
+            payrollLedger.setAccount(payrollLedger.TransDate,CompanyInfo::current(),payLoanLine.PayrollPeriodlLine);
+            payrollLedger.SourceDocument              = tableNum(SPYPayLoanTable);
+            payrollLedgerList.add(payrollLedger);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>installmentLines</Name>
+				<Source><![CDATA[
+    private void installmentLines(SPYPayLoanPostContract _contract,SPYPayLoanLineRecId _payLoanLine)
+    {
+        TransDate               startDate = _contract.parmStartDate();
+        TransDate               endDate = _contract.parmEndDate();
+        SPYPayrollPeriodRecId   installmentPeriod = _contract.parmInstallmentPeriod();
+        int                     noOfInstallments = _contract.parmNoOfInstallments();
+        SPYPayrollPeriodLine    payrollPeriodLine;
+        int                     counter = 1;
+        SPYAmount               installmentAmount, amountRecovered, balanceAmount;
+        SPYPayLoanLine          payLoanLine = SPYPayLoanLine::find(_payLoanLine);
+        SPYPayLoanLedger        payLoanLedger;        
+    
+        if(!noOfInstallments)
+        {
+            while select RecId from payrollPeriodLine                    where payrollPeriodLine.PayrollPeriod == installmentPeriod &&
+                          payrollPeriodLine.PeriodStartDate <= startDate &&
+                          payrollPeriodLine.PeriodEndDate >= endDate
+            {
+                noOfInstallments++;
+            }
+        }
+        select firstOnly payrollPeriodLine
+                    where payrollPeriodLine.PayrollPeriod == installmentPeriod &&
+                          payrollPeriodLine.PeriodStartDate <= startDate &&
+                          payrollPeriodLine.PeriodEndDate >= startDate;
+    
+        while select payLoanLedger
+            where payLoanLedger.PayLoanLine == _payLoanLine &&
+                  //payLoanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+                  (payLoanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery ||
+                    payLoanLedger.PayLoanTransType == SPYPayLoanTransType::CashSettlement)
+        {
+            amountRecovered += payLoanLedger.amountRecoveredTransCur();
+        }
+        balanceAmount = payLoanLine.Amount - amountRecovered;
+        if(_contract.parmProposedAmount())
+            installmentAmount = _contract.parmProposedAmount();
+        else
+        {
+            installmentAmount = balanceAmount / noOfInstallments;
+        }
+        if(amountRecovered)
+            SPYPayLoanHistory::createHistory(_payLoanLine);
+        this.deleteUnRecoveredInstallment(_payLoanLine);
+        while(counter <= noOfInstallments)
+        {
+            if(!payrollPeriodLine)
+                throw error("@SPY792");
+            if(balanceAmount <= 0)
+                break;
+            if(balanceAmount < installmentAmount)
+                installmentAmount = balanceAmount;
+            if(counter == noOfInstallments)
+                installmentAmount = balanceAmount;
+            this.createInstallmentsLedger(_payLoanLine,payrollPeriodLine.RecId, installmentAmount);
+            counter++;
+            balanceAmount -= installmentAmount;            
+            payrollPeriodLine = payrollPeriodLine.nextPeriodLine();
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYPayLoanPostContract _contract)
+    {
+        QueryRun                loanQueryRun;
+        SPYPayLoanTable         payLoanTable;
+    
+        loanQueryRun = new QueryRun(_contract.parmLoanTableQuery());
+        loanLedgerList = new RecordInsertList(tableNum(SPYPayLoanLedger));
+        payrollLedgerList = new RecordInsertList(tableNum(SPYPayrollLedger));
+    
+        try
+        {
+            setPrefix("@SPY367");
+            ttsBegin;
+            callFromPost = true;
+            if(this.validate(_contract))
+            {
+                while(LoanQueryRun.next())
+                {
+                    payLoanTable = LoanQueryRun.get(tableNum(SPYPayLoanTable));
+                    if(!payLoanTable.Posted)
+                    {
+                        this.insert2Ledger(payLoanTable);
+                        this.updateLoanHeader(payLoanTable);
+                        if(payLoanTable.ImmediateDisbursement)
+                            this.runDisbursement(payLoanTable);
+                        info(strFmt("@SPY368",payLoanTable.PayLoanCode));
+                    }
+                }
+                this.commitLedger();
+            }
+            else
+                error("@SPY293");
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runDisbursement</Name>
+				<Source><![CDATA[
+    private void runDisbursement(SPYPayLoanTable _payLoanTable)
+    {
+        this.insert2PayrollLedger(_payLoanTable);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLine</Name>
+				<Source><![CDATA[
+    private void updateLine(SPYPayLoanPostContract _contract,SPYPayLoanLineRecId _payLoanLine)
+    {
+        SPYPayLoanLine     payLoanLine = SPYPayLoanLine::find(_payLoanLine,true);
+    
+        if(payLoanLine)
+        {
+            payLoanLine.InstallmentStartDate    = _contract.parmStartDate();
+            payLoanLine.InstallmentEndDate      = _contract.parmEndDate();
+            payLoanLine.InstallmentPeriod       = _contract.parmInstallmentPeriod();
+            payLoanLine.NoOfInstallment         = _contract.parmNoOfInstallments();
+            payLoanLine.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLoanHeader</Name>
+				<Source><![CDATA[
+    private void updateLoanHeader(SPYPayLoanTable _payLoanTable)
+    {
+        SPYPayLoanTable   payLoanTableUpdate = SPYPayLoanTable::find(_payLoanTable.RecId,true);
+    
+        if(payLoanTableUpdate)
+        {
+            payLoanTableUpdate.Posted = true;
+            payLoanTableUpdate.update();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(SPYPayLoanPostContract _contract)
+    {
+        boolean                 ret = true;
+        QueryRun                loanQueryRun;
+        SPYPayLoanTable         payLoanTable;
+    
+        loanQueryRun = new QueryRun(_contract.parmLoanTableQuery());
+        if(!callFromPost)
+            setPrefix("@SPY358");
+        while(loanQueryRun.next())
+        {
+            payLoanTable = loanQueryRun.get(tableNum(SPYPayLoanTable));
+            if(!payLoanTable.Posted)
+            {
+                if(!this.validateLoan(payLoanTable))
+                    ret = checkFailed(strFmt("@SPY359",payLoanTable.PayLoanCode));
+                else
+                {
+                    if(!callFromPost)
+                        info(strFmt("@SPY360",payLoanTable.PayLoanCode));
+                }
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateInstallment</Name>
+				<Source><![CDATA[
+    private boolean validateInstallment(SPYPayLoanPostContract _contract)
+    {
+        boolean                     ret = true;
+    
+        if(_contract.parmStartDate() == dateNull())
+            ret = checkFailed("@SPY371");
+        if(_contract.parmEndDate() == dateNull() && _contract.parmNoOfInstallments() == 0)
+            ret = checkFailed("@SPY372");
+        if(_contract.parmInstallmentPeriod() == 0)
+            ret = checkFailed("@SPY373");
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateLoan</Name>
+				<Source><![CDATA[
+    private boolean validateLoan(SPYPayLoanTable _payLoanTable)
+    {
+        boolean                     ret = true;
+        SPYPayLoanLine              payLoanLine;
+        SPYPayrollPeriodLine        payrollPeriodLine;
+        SPYLoanTypeTable            loanTypeTable;
+    
+        if(_payLoanTable.WorkflowStatus != SPYWorkFlowStatus::Approved)
+            ret = checkFailed(strFmt("@SPY427",_payLoanTable.PayLoanCode));
+        while select PayrollPeriodlLine,TransDate,Amount,Currency,LineNum,LoanType from payLoanLine
+            where payLoanLine.PayLoan == _payLoanTable.RecId
+        {
+            if(!payLoanLine.PayrollPeriodlLine)
+                ret = checkFailed(strFmt("@SPY287",payLoanLine.LineNum));
+            if(!payLoanLine.TransDate)
+                ret = checkFailed(strFmt("@SPY288",payLoanLine.LineNum));
+            if(!payLoanLine.Amount)
+                ret = checkFailed(strFmt("@SPY289",payLoanLine.LineNum));
+            if(!payLoanLine.Currency)
+                ret = checkFailed(strFmt("@SPY291",payLoanLine.LineNum));
+            payrollPeriodLine = SPYPayrollPeriodLine::find(payLoanLine.PayrollPeriodlLine);
+            if(payrollPeriodLine.PeriodStatus == SPYPayrollPeriodStatus::Closed)
+                ret = checkFailed(strFmt("@SPY1147",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,payLoanLine.LineNum));
+            if(payrollPeriodLine.PeriodStatus == SPYPayrollPeriodStatus::Stopped)
+                ret = checkFailed(strFmt("@SPY1148",
+                payrollPeriodLine.PeriodStartDate,payrollPeriodLine.PeriodEndDate,payLoanLine.LineNum));
+            if(_payLoanTable.ImmediateDisbursement)
+            {
+                loanTypeTable = SPYLoanTypeTable::find(payLoanLine.LoanType);
+                if(!loanTypeTable.DisbursementPayroll)
+                    ret = checkFailed(strFmt("@SPY1689",
+                    loanTypeTable.LoanTypeCode,payLoanLine.LineNum));
+            }
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

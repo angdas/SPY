@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollSummaryDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYPayrollSummaryContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerLookup))
+]
+public class SPYPayrollSummaryDP extends SrsReportDataProviderPreProcess
+{
+    SPYHeaderFooterTmp              headerFooterTmp;
+    SPYPayrollSummaryTmp            payrollSummaryTmp;
+
+    HcmWorker                       hcmWorker;
+    SPYWorkerPositionPayroll        workerPositionPayroll;
+    SPYPayrollLedger                payrollledger;
+    SPYBenefitLedger                benefitLedger;
+
+    SPYPayrollPeriodLineRecId       payrollPeriodLineRecId;
+    SPYPayrollPeriodLine            payrollPeriodLine;
+    CompanyInfo                     companyInfo;
+
+    Array                           DimArray;
+    DefaultDimensionView            dimensionView;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>financialDimensions</Name>
+				<Source><![CDATA[
+    public void financialDimensions()
+    {
+        DimensionAttribute              dimAttr;
+        DimensionAttributeSetItem       dimAttrSetItem;
+        DimensionAttributeSetItem       dimAttrSetItemEditable;
+        DimensionEnumeration            dimensionSetId;
+        int                             dimCount;
+    
+        dimensionSetId = DimensionCache::getDimensionAttributeSetForLedger();
+    
+        while select dimAttr
+            order by Name
+                where dimAttr.Type != DimensionAttributeType::MainAccount
+            join RecId from dimAttrSetItem
+                where dimAttrSetItem.DimensionAttribute == dimAttr.RecId &&
+                    dimAttrSetItem.DimensionAttributeSet == dimensionSetId
+        {
+            dimCount++;
+            DimArray.value(dimCount, dimAttr.Name);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYHeaderFooterTmp))]
+    public SPYHeaderFooterTmp getSPYHeaderFooterTmp()
+    {
+        select headerFooterTmp;
+        return headerFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYPayrollSummaryTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYPayrollSummaryTmp))]
+    public SPYPayrollSummaryTmp getSPYPayrollSummaryTmp()
+    {
+        select payrollSummaryTmp;
+        return payrollSummaryTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPayrollSummaryTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoPayrollSummaryTmp()
+    {
+        SPYPayElementTable      payElementTable;
+    
+        payElementTable = SPYPayElementTable::find(payrollledger.Payroll);
+    
+        payrollSummaryTmp.clear();
+        payrollSummaryTmp.Worker                    = payrollledger.Worker;
+        payrollSummaryTmp.WorkerName                = hcmWorker.name();
+        payrollSummaryTmp.WorkerPersonnelNumber     = hcmWorker.PersonnelNumber;
+        payrollSummaryTmp.PayrollPeriodLine         = payrollPeriodLineRecId;
+        payrollSummaryTmp.PeriodCode                = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+        payrollSummaryTmp.PeriodStartDate           = payrollPeriodLine.PeriodStartDate;
+        payrollSummaryTmp.PeriodEndDate             = payrollPeriodLine.PeriodEndDate;
+        payrollSummaryTmp.PayElementCode            = payElementTable.PayElementCode;
+        payrollSummaryTmp.PayElementDescription     = payElementTable.Description;
+        payrollSummaryTmp.CalcStartDate             = payrollledger.CalcStartDate;
+        payrollSummaryTmp.CalcEndDate               = payrollledger.CalcEndDate;
+        payrollSummaryTmp.Currency                  = payrollledger.Currency;
+        payrollSummaryTmp.TransactionCurrencyAmount = payrollledger.TransactionCurrencyAmount;
+        payrollSummaryTmp.ExchRate                  = payrollledger.ExchRate;
+        payrollSummaryTmp.AccountingCurrencyAmount  = payrollledger.AccountingCurrencyAmount;
+    
+        if(payrollSummaryTmp.TransactionCurrencyAmount > 0)
+            payrollSummaryTmp.PayrollType = SPYPayrollType::Earning;
+        else
+            payrollSummaryTmp.PayrollType = SPYPayrollType::Deduction;
+        
+        if(DimArray.exists(1))
+            select dimensionView where dimensionView.DefaultDimension == payrollledger.DefaultDimension && dimensionView.Name == DimArray.value(1);
+        if(dimensionView)
+            payrollSummaryTmp.FinDimension1 = dimensionView.dimensionDiscription();
+
+        if(DimArray.exists(2))
+            select dimensionView where dimensionView.DefaultDimension == payrollledger.DefaultDimension && dimensionView.Name == DimArray.value(2);
+        if(dimensionView)
+            payrollSummaryTmp.FinDimension2 = dimensionView.dimensionDiscription();
+
+        if(DimArray.exists(3))
+            select dimensionView where dimensionView.DefaultDimension == payrollledger.DefaultDimension && dimensionView.Name == DimArray.value(3);
+        if(dimensionView)
+            payrollSummaryTmp.FinDimension3 = dimensionView.dimensionDiscription();
+    
+        payrollSummaryTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYHeaderFooterTmp()
+    {
+        headerFooterTmp.clear();
+        headerFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        headerFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        headerFooterTmp.CompanyName      = companyInfo.Name();
+        headerFooterTmp.CompanyEmail     = companyInfo.email();
+        headerFooterTmp.CompanyPhone     = companyInfo.phone();
+        headerFooterTmp.CompanyURL       = companyInfo.url();
+        headerFooterTmp.PeriodCode       = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+        headerFooterTmp.PeriodStartDate  = payrollPeriodLine.PeriodStartDate;
+        headerFooterTmp.PeriodEndDate    = payrollPeriodLine.PeriodEndDate;
+        headerFooterTmp.CompanyCurrency  = Ledger::accountingCurrency();
+        if(DimArray.exists(1))
+            headerFooterTmp.FinDim1          = DimArray.value(1);
+        if(DimArray.exists(2))
+            headerFooterTmp.FinDim2          = DimArray.value(2);
+        if(DimArray.exists(3))
+            headerFooterTmp.FinDim3          = DimArray.value(3);
+        headerFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertRemainingPayElements</Name>
+				<Source><![CDATA[
+    public void insertRemainingPayElements(HcmWorkerRecId _worker)
+    {
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYPayrollSummaryContract   contract = this.parmDataContract() as SPYPayrollSummaryContract;
+        Query                       q;
+        QueryRun                    qr;
+        QueryBuildDataSource        qbdHcmWorker, qbdPayrollLedger;
+        HcmWorkerRecId              curWorker;
+        SPYContractBase             contractBase;
+    
+        DimArray = new Array(Types::String);
+    
+        this.setTableConnections();
+    
+        contractBase = contract.parmContractBase();
+        payrollPeriodLineRecId = contractBase.parmPayrollPeriodline();
+    
+        companyInfo         = CompanyInfo::find();
+        payrollPeriodLine   = SPYPayrollPeriodLine::find(payrollPeriodLineRecId);
+    
+        this.financialDimensions();
+    
+        this.insertIntoSPYHeaderFooterTmp();
+    
+        q = this.parmQuery();
+        qbdHcmWorker = q.dataSourceTable(tableNum(HcmWorker));
+        qbdPayrollLedger = qbdHcmWorker.addDataSource(tableNum(SPYPayrollLedger), "SPYPayrollLedger");
+        qbdPayrollLedger.joinMode(JoinMode::InnerJoin);
+        qbdPayrollLedger.fetchMode(QueryFetchMode::One2One);
+        qbdPayrollLedger.Relations(true);
+        qbdPayrollLedger.addRange(fieldNum(SPYPayrollLedger, PayrollPeriodLine)).value(queryValue(payrollPeriodLineRecId));
+    
+        qr = new QueryRun(q);
+    
+        while(qr.next())
+        {
+            hcmWorker       = qr.get(tableNum(HcmWorker));
+            payrollledger   = qr.get(tableNum(SPYPayrollLedger));
+            this.insertIntoPayrollSummaryTmp();
+    
+            if(!curWorker)
+            {
+                curWorker = hcmWorker.RecId;
+            }
+            else if(curWorker != hcmWorker.RecId)
+            {
+                //Insert effective pay elements which were not considered in payroll process
+                //These are required for gross pay calculation
+                this.insertRemainingPayElements(curWorker);
+            }
+        }
+        //Insert effective pay elements for last worker processed which were not considered in payroll process
+        //These are required for gross pay calculation
+        this.insertRemainingPayElements(curWorker);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        headerFooterTmp.setConnection(this.parmUserConnection());
+        payrollSummaryTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

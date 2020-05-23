@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLedgerLeaveSettlementContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayLedgerLeaveSettlementContract extends SPYPayLedgerContract
+{
+    container                           leaveApplQuery;
+    SPYLeaveSettlementParameterState    parameterState;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmLeaveApplQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmLeaveApplQuery(container _leaveApplQuery = leaveApplQuery)
+    {
+        leaveApplQuery = _leaveApplQuery;
+        return leaveApplQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmParameterState</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYLeaveSettlementParameterState parmParameterState(SPYLeaveSettlementParameterState _parameterState = parameterState)
+    {
+        parameterState = _parameterState;
+    
+        return parameterState;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

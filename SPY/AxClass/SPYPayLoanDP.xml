@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYPayLoanContract)),
+    SRSReportQueryAttribute(queryStr(SPYPayLoanSRS))
+]
+class SPYPayLoanDP extends SrsReportDataProviderPreProcess
+{
+    SPYPayLoanTmp               payLoanTmp;
+    SPYHeaderFooterTmp          headerFooterTmp;
+
+    CompanyInfo                 companyInfo;
+
+    Array                       DimArray;
+    DefaultDimensionView        dimensionView;
+    boolean                     showInstallments;
+
+    SPYPayLoanTable             payLoanTable;
+    SPYPayLoanLine              payLoanLine;
+    SPYPayLoanLedger            payLoanLedger;
+    HcmWorker                   hcmWorker;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>financialDimensions</Name>
+				<Source><![CDATA[
+    public void financialDimensions()
+    {
+        DimensionAttribute              dimAttr;
+        DimensionAttributeSetItem       dimAttrSetItem;
+        DimensionAttributeSetItem       dimAttrSetItemEditable;
+        DimensionEnumeration            dimensionSetId;
+        int                             dimCount;
+    
+        dimensionSetId = DimensionCache::getDimensionAttributeSetForLedger();
+    
+        while select dimAttr
+            order by Name
+                where dimAttr.Type != DimensionAttributeType::MainAccount
+            join RecId from dimAttrSetItem
+                where dimAttrSetItem.DimensionAttribute == dimAttr.RecId &&
+                    dimAttrSetItem.DimensionAttributeSet == dimensionSetId
+        {
+            dimCount++;
+            DimArray.value(dimCount, dimAttr.Name);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYHeaderFooterTmp))]
+    public SPYHeaderFooterTmp getSPYHeaderFooterTmp()
+    {
+        select headerFooterTmp;
+        return headerFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYPayLoanTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayLoanTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayLoanTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYPayLoanTmp))]
+    public SPYPayLoanTmp getSPYPayLoanTmp()
+    {
+        select payLoanTmp;
+        return payLoanTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYHeaderFooterTmp()
+    {
+        headerFooterTmp.clear();
+        headerFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        headerFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        headerFooterTmp.CompanyName      = companyInfo.Name();
+        headerFooterTmp.CompanyEmail     = companyInfo.email();
+        headerFooterTmp.CompanyPhone     = companyInfo.phone();
+        headerFooterTmp.CompanyURL       = companyInfo.url();
+        headerFooterTmp.CompanyCurrency  = Ledger::accountingCurrency();
+        if(DimArray.exists(1))
+            headerFooterTmp.FinDim1          = DimArray.value(1);
+        if(DimArray.exists(2))
+            headerFooterTmp.FinDim2          = DimArray.value(2);
+        if(DimArray.exists(3))
+            headerFooterTmp.FinDim3          = DimArray.value(3);
+        headerFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYPayLoanTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYPayLoanTmp()
+    {
+        SPYPayrollPeriodLine    payrollPeriodLine;
+        SPYPayrollPeriod        payrollPeriod;
+        SPYLoanTypeTable        payLoanTypeTable = SPYLoanTypeTable::find(payLoanLine.LoanType);
+        SPYPayrollLedger        payrollLedger;
+        SPYPayrollJournalLine   payrollJournalLine;
+        SPYPayrollJournalTable  PayrollJournalTable;
+        RecordInsertList        payLoanTmpList = new RecordInsertList(tableNum(SPYPayLoanTmp));
+    
+        payLoanTmp.clear();
+        //HcmWorker
+        payLoanTmp.Worker                   = hcmWorker.RecId;
+        payLoanTmp.WorkerPersonnelNumber    = hcmWorker.PersonnelNumber;
+        payLoanTmp.WorkerName               = hcmWorker.name();
+        //SPYPayLoanTable
+        payLoanTmp.PayLoanCode              = payLoanTable.PayLoanCode;
+        payLoanTmp.Description              = payLoanTable.Description;
+        payLoanTmp.Posted                   = payLoanTable.Posted;
+        payLoanTmp.WorkflowStatus           = payLoanTable.WorkflowStatus;
+        //SPYPayLoanLine
+        payLoanTmp.LineNum                  = payLoanLine.LineNum;
+        payLoanTmp.LoanType                 = payLoanTypeTable.LoanTypeCode;
+        payLoanTmp.LoanTypeDescription      = payLoanTypeTable.Description;
+        payLoanTmp.NoOfInstallment          = payLoanLine.NoOfInstallment;
+        payLoanTmp.TransDate                = payLoanLine.TransDate;
+        payLoanTmp.Txt                      = payLoanLine.Txt;
+        payLoanTmp.InstallmentStartDate     = payLoanLine.InstallmentStartDate;
+        payLoanTmp.InstallmentEndDate       = payLoanLine.InstallmentEndDate;
+        payLoanTmp.PayLoanLine              = payLoanLine.RecId;
+        payLoanTmp.Currency                 = payLoanLine.Currency;
+        payLoanTmp.Amount                   = payLoanLine.Amount;
+        payLoanTmp.AmountRecovered          = payLoanLine.amountRecovered();
+        payLoanTmp.CurrentInstallmentAmount = payLoanLine.currentInstallment();
+        //Installments from SPYPayLoanLedger
+        if(payLoanTable.Posted)
+        {
+            while select payLoanLedger join payrollPeriodLine join payrollPeriod
+                where payLoanLedger.PayLoanLine     == payLoanLine.RecId
+                &&  payLoanLedger.PayrollPeriodLine == payrollPeriodLine.RecId
+                &&  payrollPeriodLine.PayrollPeriod == payrollPeriod.RecId
+                &&  (payLoanLedger.PayLoanTransType  == SPYPayLoanTransType::Recovery
+                // Code Added start by Lakshya on 29/08/2017 for Project Area "AFZ_LXS_2082017_PayLoanReportMod" displaying CashSettlement record for the Report.
+                || payLoanLedger.PayLoanTransType  == SPYPayLoanTransType::CashSettlement)
+                // Code Added Ended by Lakshya on 29/08/2017 for Project Area "AFZ_LXS_2082017_PayLoanReportMod" displaying CashSettlement record for the Report.
+            {
+                payLoanTmp.PayrollPeriod                = payrollPeriod.PayrollPeriodCode;
+                payLoanTmp.PeriodStartDate              = payrollPeriodLine.PeriodStartDate;
+                payLoanTmp.PeriodEndDate                = payrollPeriodLine.PeriodEndDate;
+                payLoanTmp.TransactionCurrencyAmount    = payLoanLedger.TransactionCurrencyAmount;
+                payLoanTmp.ExchRate                     = payLoanLedger.ExchRate;
+                payLoanTmp.AccountingCurrencyAmount     = payLoanLedger.AccountingCurrencyAmount;
+                // Code Added start by Lakshya on 29/08/2017 for Project Area "AFZ_LXS_2082017_PayLoanReportMod" displaying CashSettlement record for the Report.
+                payloantmp.SPYPayLoanTransType             = payLoanLedger.PayLoanTransType;
+                if(payLoanTmp.SPYPayLoanTransType == SPYPayLoanTransType::CashSettlement)
+                {
+                    payLoanTmp.TransDate = payLoanLedger.TransDate;
+                }
+                // Code Added Ended by Lakshya on 29/08/2017 for Project Area "AFZ_LXS_2082017_PayLoanReportMod" displaying CashSettlement record for the Report.
+    
+                select payrollLedger join payrollJournalLine join PayrollJournalTable
+                    where payrollLedger.Worker == payLoanLedger.Worker
+                    && payrollLedger.PayrollPeriodLine == payLoanLedger.PayrollPeriodLine
+                    && payrollLedger.PayrollJournalLine == payrollJournalLine.RecId
+                    && payrollJournalLine.PayrollJournal == PayrollJournalTable.RecId
+                    && PayrollJournalTable.Posted;
+                if(payrollLedger || payLoanLedger.PayLoanTransType  == SPYPayLoanTransType::CashSettlement)
+                    payLoanTmp.PayLoanTransType = "Recovered";
+                else
+                    payLoanTmp.PayLoanTransType = "Not Recovered";
+                //payLoanTmp.insert();
+                payLoanTmpList.add(payLoanTmp);
+            }
+            payLoanTmpList.insertDatabase();
+        }
+        else
+            payLoanTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYPayLoanContract          contract = this.parmDataContract() as SPYPayLoanContract;
+        Query                       q;
+        QueryRun                    qr;
+        QueryBuildDataSource        qbdPayLoanLine, qbdPayLoanLedger;
+    
+        DimArray = new Array(Types::String);
+    
+        this.setTableConnections();
+    
+        showInstallments = contract.parmShowInstallments();
+    
+        companyInfo = CompanyInfo::find();
+    
+        this.financialDimensions();
+    
+        this.insertIntoSPYHeaderFooterTmp();
+    
+        q = this.parmQuery();
+        //qbdPayLoanLine = q.dataSourceTable(tableNum(SPYPayLoanLine));
+        //qbdPayLoanLedger = qbdPayLoanLine.addDataSource(tableNum(SPYPayLoanLedger), "SPYPayLoanLedger");
+        //qbdPayLoanLedger.joinMode(JoinMode::OuterJoin);
+        //qbdPayLoanLedger.fetchMode(QueryFetchMode::One2One);
+        //qbdPayLoanLedger.Relations(true);
+    
+        qr = new QueryRun(q);
+    
+        while(qr.next())
+        {
+            payLoanTable    = qr.get(tableNum(SPYPayLoanTable));
+            payLoanLine     = qr.get(tableNum(SPYPayLoanLine));
+            hcmWorker       = qr.get(tableNum(HcmWorker));
+    
+            this.insertIntoSPYPayLoanTmp();
+    
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        headerFooterTmp.setConnection(this.parmUserConnection());
+        payLoanTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

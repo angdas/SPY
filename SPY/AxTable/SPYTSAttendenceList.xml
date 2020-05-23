@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYTSAttendenceList</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYTSAttendenceList extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>AbsenceCode</Name>
+				<Source><![CDATA[
+    display HRMAbsenceCodeId AbsenceCode()
+    {
+        return SPYAbsenceLedger::findAbsenceDetail(this.Worker, this.TransDate).HRMAbsenceCodeId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>AbsenceHours</Name>
+				<Source><![CDATA[
+    display Hours AbsenceHours()
+    {
+        return SPYAbsenceLedger::findAbsenceDetail(this.Worker, this.TransDate).AbsenceHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Employee</Name>
+				<Source><![CDATA[
+    //BP deviation documented
+    display HcmWorkerName Employee()
+    {
+        return HcmWorker::find(this.Worker).name();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>Supervisor</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Displays the name of the delegated worker.
+    /// </summary>
+    /// <returns>
+    /// Name of the delegated worker
+    /// </returns>
+    display EmplName Supervisor()
+    {
+        return HcmWorker::find(this.AppWorker).name();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY1327</DeveloperDocumentation>
+	<Label>@SPY1326</Label>
+	<TableGroup>Transaction</TableGroup>
+	<TitleField1>Worker</TitleField1>
+	<TitleField2>TransDate</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Appworker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>IsPresent</Name>
+			<Label>Present</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>PersonnelNumber</Name>
+			<ExtendedDataType>HcmPersonnelNumberId</ExtendedDataType>
+			<Label>Employee Id</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>TransDate</Name>
+			<ExtendedDataType>TransDate</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>WorkerDateIdx</Name>
+			<AllowDuplicates>Yes</AllowDuplicates>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>Worker</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>TransDate</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+		<AxTableIndex>
+			<Name>AppworkerDateIdx</Name>
+			<AllowDuplicates>Yes</AllowDuplicates>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>Appworker</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>TransDate</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>Employee</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Employee</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>Employee</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>Supervisor</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Supervisor</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<Role>Supervisor</Role>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Appworker</Name>
+					<Field>Appworker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

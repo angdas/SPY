@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceConfigLine</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYAbsenceConfigLine extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>IsAccruedAbsence</Name>
+				<Source><![CDATA[
+    display SPYIsAccruedAbsenceCode IsAccruedAbsence()
+    {
+        return HRMAbsenceCode::find(this.HRMAbsenceCodeId).SPYBenefit ? SPYIsAccruedAbsenceCode::Yes : SPYIsAccruedAbsenceCode::No;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>modifiedField</Name>
+				<Source><![CDATA[
+    public void modifiedField(FieldId _fieldId)
+    {
+        super(_fieldId);
+    
+        switch(_fieldId)
+        {
+            case fieldNum(SPYAbsenceConfigLine,FetchBenefitQty) :
+                this.Qty = 0;
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>findByAbsenceCode</Name>
+				<Source><![CDATA[
+    public static SPYAbsenceConfigLine findByAbsenceCode(SPYAbsenceConfigRecId    _absenceConfig,
+                                                         HRMAbsenceCodeId         _absenceCodeId,
+                                                         boolean                  _forUpdate = false,
+                                                         ConcurrencyModel         _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYAbsenceConfigLine    absenceConfigLine;
+    
+        absenceConfigLine.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            absenceConfigLine.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly absenceConfigLine
+             where absenceConfigLine.AbsenceConfig == _absenceConfig &&
+                   absenceConfigLine.HRMAbsenceCodeId == _absenceCodeId;
+    
+        return absenceConfigLine;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY1509</DeveloperDocumentation>
+	<Label>@SPY1508</Label>
+	<TableGroup>WorksheetLine</TableGroup>
+	<TitleField1>AbsenceConfig</TitleField1>
+	<TitleField2>HRMAbsenceCodeId</TitleField2>
+	<CacheLookup>FoundAndEmpty</CacheLookup>
+	<ReplacementKey>Code_Indx</ReplacementKey>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>AbsenceConfig</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>HRMAbsenceCodeId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Sequence</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>EffectiveDate</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Absence</Name>
+			<Label>@SYS3414</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>HRMAbsenceCodeId</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>IsAccruedAbsence</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>EntitlementPayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>FetchBenefitQty</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>Qty</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>AccruedQty</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>AccruedDate</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CarryForward</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>CarryBackward</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>AllowNegativeInCarryFwd</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>AbsenceCycle</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>RestrictInProbation</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>RestrictInNotice</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>PeriodCloseNotApplicable</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>AllowFullBalanceCarryFwdInFirstYr</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>General</Name>
+			<Label>@SYS35893</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>AbsenceConfig</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Period</Name>
+			<Label>@SYS40</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>EntitlementPayrollPeriod</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>BenefitLedger</Name>
+			<Label>@SPY:BenefitLedgerUpdate</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LedgerTransDateCalcFromLeave</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LedgerTransDateCalcFromPeriodClose</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>AbsenceConfig</Name>
+			<ExtendedDataType>SPYAbsenceConfigRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AbsenceCycle</Name>
+			<EnumType>SPYAbsenceCycle</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AccruedDate</Name>
+			<EnumType>SPYAbsenceAccruedDate</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AccruedQty</Name>
+			<Label>@SPY1101</Label>
+			<EnumType>SPYAbsenceAccruedQty</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>CarryBackward</Name>
+			<ExtendedDataType>Qty</ExtendedDataType>
+			<HelpText>@SPY1525</HelpText>
+			<Label>@SPY1524</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>CarryForward</Name>
+			<ExtendedDataType>Qty</ExtendedDataType>
+			<HelpText>@SPY1523</HelpText>
+			<Label>@SPY1522</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>EntitlementPayrollPeriod</Name>
+			<ExtendedDataType>SPYPayrollPeriodRecId</ExtendedDataType>
+			<HelpText>@SPY1513</HelpText>
+			<Label>@SPY1512</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>FetchBenefitQty</Name>
+			<HelpText>@SPY1569</HelpText>
+			<Label>@SPY1568</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>HRMAbsenceCodeId</Name>
+			<ExtendedDataType>HRMAbsenceCodeId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldReal">
+			<Name>Qty</Name>
+			<ExtendedDataType>Qty</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>RestrictInNotice</Name>
+			<HelpText>@SPY1571</HelpText>
+			<Label>@SPY1570</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>RestrictInProbation</Name>
+			<HelpText>@SPY1573</HelpText>
+			<Label>@SPY1572</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AllowNegativeInCarryFwd</Name>
+			<Label>@SPY:AllowNegativeInCarryFwd</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>PeriodCloseNotApplicable</Name>
+			<Label>@SPY:PeriodCloseNotApplicable</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>AllowFullBalanceCarryFwdInFirstYr</Name>
+			<Label>@SPY:AllowFullBalanceCarryFwdInFirstYr</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>LedgerTransDateCalcFromLeave</Name>
+			<EnumType>SPYAbsenceLedgerTransDateCalcFromLeave</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>Sequence</Name>
+			<ExtendedDataType>DocumentLineNumber</ExtendedDataType>
+			<Label>@SYS499</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldString">
+			<Name>EffectiveDate</Name>
+			<ExtendedDataType>DateInterval</ExtendedDataType>
+			<Label>@SPY:EffectiveDate</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Gender</Name>
+			<EnumType>HcmPersonGender</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>EthnicOrigin</Name>
+			<ExtendedDataType>HcmEthnicOriginRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>LedgerTransDateCalcFromPeriodClose</Name>
+			<EnumType>SPYAbsenceLedgerTransDateCalcFromPeriodClose</EnumType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>Code_Indx</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>AbsenceConfig</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>HRMAbsenceCodeId</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Sequence</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>EffectiveDate</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HRMAbsenceCode</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HRMAbsenceCode</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>HRMAbsenceCodeId</Name>
+					<Field>HRMAbsenceCodeId</Field>
+					<RelatedField>hrmAbsenceCodeId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>IdIdx</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYAbsenceConfigTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYAbsenceConfigTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>AbsenceConfig</Name>
+					<Field>AbsenceConfig</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollPeriod</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollPeriod</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>EntitlementPayrollPeriod</Name>
+					<Field>EntitlementPayrollPeriod</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>LedgerPeriodCode</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>LedgerPeriodCode</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>EffectiveDate</Name>
+					<Field>EffectiveDate</Field>
+					<RelatedField>Code</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmEthnicOrigin</Name>
+			<RelatedTable>HcmEthnicOrigin</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>EthnicOrigin</Name>
+					<Field>EthnicOrigin</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

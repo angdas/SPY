@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayAdjustmentJourSubmitManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayAdjustmentJourSubmitManager
+{
+    SPYPayAdjustmentTable           payAdjustmentTable;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPayAdjustmentTable</Name>
+				<Source><![CDATA[
+    private SPYPayAdjustmentTable parmPayAdjustmentTable(SPYPayAdjustmentTable _payAdjustmentTable = payAdjustmentTable)
+    {
+        payAdjustmentTable = _payAdjustmentTable;
+    
+        return payAdjustmentTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submit</Name>
+				<Source><![CDATA[
+    private void submit(Args _args)
+    {
+        WorkflowSubmitDialog            workflowSubmitDialog;
+        Object                          formRun;    
+        
+        workflowSubmitDialog = WorkflowSubmitDialog::construct(_args.caller().getActiveWorkflowConfiguration());
+        if (this.submitDialog(workflowSubmitDialog))
+        {
+            payAdjustmentTable.submitToWorkflow(workFlowTypeStr(SPYPayAdjustmentJour), workflowSubmitDialog.parmWorkflowComment(), false);
+        }
+    
+        formRun = _args.caller();
+        formRun.refreshDataSource();        
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitDialog</Name>
+				<Source><![CDATA[
+    protected boolean  submitDialog(WorkflowSubmitDialog  _workflowSubmitDialog)
+    {
+        _workflowSubmitDialog.run();
+        return _workflowSubmitDialog.parmIsClosedOK();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYPayAdjustmentJourSubmitManager   payAdjustmentJourSubmit = new SPYPayAdjustmentJourSubmitManager();
+        SPYPayAdjustmentTable               payAdjustmentTable = args.record();
+    
+        payAdjustmentJourSubmit.parmPayAdjustmentTable(payAdjustmentTable);
+    
+        if(args.menuItemName() == menuitemActionStr(SPYPayAdjustmentJourSubmitMenuItem))
+            payAdjustmentJourSubmit.submit(args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

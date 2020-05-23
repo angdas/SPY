@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSUnpostController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYEOSUnpostController extends SysOperationServiceController
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    static SPYEOSUnpostController construct(IdentifierName _className  = '',
+                                                         IdentifierName _methodName = '',
+                                                         SysOperationExecutionMode _executionMode = SysOperationExecutionMode::Synchronous)
+    {
+        return new SPYEOSUnpostController(_className,_methodName,_executionMode);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYEOSUnpostController      eosUnpostController;
+        str                                     className, methodName;
+        SysOperationExecutionMode               mode;
+        FormRun                                 formRun;
+    
+        [className, methodName, mode] = SysOperationServiceController::parseServiceInfo(args);
+        mode = SysOperationExecutionMode::Synchronous;
+        eosUnpostController = SPYEOSUnpostController::construct(className, methodName, mode);
+    
+        if(eosUnpostController.prompt())
+            eosUnpostController.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>defaultCaption</Name>
+				<Source><![CDATA[
+    protected ClassDescription defaultCaption()
+    {
+        // This will be the dialog's caption
+        return '@SPY:UnpostEOS';
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

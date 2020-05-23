@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYPayrollRateConversionSetup</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYPayrollRateConversionSetup extends FormRun
+{
+    QueryBuildRange                         rangeLegalEntity;
+
+
+    RefRecId                                selectedDataAreaRecId;
+    SelectableDataArea                      selectedLegalEntityDataAreaId;
+
+    boolean                                 isRecordSaved;
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        super();
+    
+        //formSplitterHorizontal   = new SysFormSplitter_X(ctrlSplitHorizontal, gridContainer, this);
+    
+        legalEntity.text(curext());
+        selectedDataAreaRecId = CompanyInfo::findDataArea(legalEntity.text()).RecId;
+        selectedLegalEntityDataAreaId = CompanyInfo::findRecId(selectedDataAreaRecId).DataArea;
+        element.setControlersContext();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshDatasource</Name>
+				<Source><![CDATA[
+    public void refreshDatasource()
+    {
+        SPYPayrollRateConversionSetup_ds.research(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setControlersContext</Name>
+				<Source><![CDATA[
+    public void setControlersContext()
+    {
+        if(!selectedDataAreaRecId)
+        {
+            selectedDataAreaRecId = CompanyInfo::findDataArea(curext()).RecId;
+            selectedLegalEntityDataAreaId = CompanyInfo::findRecId(selectedDataAreaRecId).DataArea;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYPayrollRateConversionSetup</Name>
+				<Methods>
+					<Method>
+						<Name>initValue</Name>
+						<Source><![CDATA[
+        public void initValue()
+        {
+            super();
+        
+            SPYPayrollRateConversionSetup.Monthly = 1;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+        
+            rangeLegalEntity = this.query().dataSourceName(this.name()).addRange(fieldNum(SPYPayrollRateConversionSetup, LegalEntity));
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            rangeLegalEntity.value(queryValue(selectedDataAreaRecId));
+        
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>LegalEntity</Name>
+				<Type>String</Type>
+				<Methods>
+					<Method>
+						<Name>modified</Name>
+						<Source><![CDATA[
+        public boolean modified()
+        {
+            boolean isValid;
+        
+            isValid = super();
+        
+            selectedDataAreaRecId = CompanyInfo::findDataArea(legalEntity.text()).RecId;
+            selectedLegalEntityDataAreaId = CompanyInfo::findDataArea(legalEntity.text()).DataArea;
+        
+            if (selectedDataAreaRecId)
+            {
+                appl.setDefaultCompany(selectedLegalEntityDataAreaId, false);
+            }
+        
+            element.setControlersContext();
+            SPYPayrollRateConversionSetup_ds.executeQuery();
+        
+            return isValid;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>validate</Name>
+						<Source><![CDATA[
+        public boolean validate()
+        {
+            boolean isValid = true;
+        
+            if (!CompanyInfo::findDataArea(legalEntity.text()).RecId)
+            {
+                isValid = false;
+            }
+        
+            return isValid;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSourceChangeGroupMode>ImplicitInnerOuter</DataSourceChangeGroupMode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYPayrollRateConversionSetup</Name>
+			<Table>SPYPayrollRateConversionSetup</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>Annual</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>BiWeekly</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Daily</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Hourly</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LegalEntity</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Monthly</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Quarterly</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>SemiAnnual</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Weekly</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY468</Caption>
+		<DataSource xmlns="">SPYPayrollRateConversionSetup</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">Custom</Pattern>
+		<SetCompany xmlns="">No</SetCompany>
+		<Style xmlns="">SimpleListDetails</Style>
+		<TitleDataSource xmlns="">SPYPayrollRateConversionSetup</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>MainActionPane</Name>
+				<ElementPosition>671088639</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>ActionPaneTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>FormButtonGroupControl</Name>
+								<Type>ButtonGroup</Type>
+								<Visible>No</Visible>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormDropDialogButtonControl">
+										<Name>FormDropDialogButtonControl</Name>
+										<Type>DropDialogButton</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Text>@SPY0</Text>
+									</AxFormControl>
+								</Controls>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>Pay element</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<DataSource>SPYPayrollRateConversionSetup</DataSource>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>MainGroup</Name>
+				<ElementPosition>1342177278</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormGroupControl">
+						<Name>DetailGroup</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1717986916</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Type>Group</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>LegalEntityGroup</Name>
+								<ElementPosition>1342177278</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>LegalEntity</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<HelpText>@SPY124</HelpText>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<ExtendedDataType>LegalEntityDataAreaId</ExtendedDataType>
+										<Label>@GLS92619</Label>
+										<ViewEditMode>Edit</ViewEditMode>
+									</AxFormControl>
+								</Controls>
+								<Caption>@SYS322242</Caption>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupRates</Name>
+								<ElementPosition>1744830462</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupRates_Hourly</Name>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Hourly</DataField>
+										<DataSource>SPYPayrollRateConversionSetup</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupRates_Daily</Name>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Daily</DataField>
+										<DataSource>SPYPayrollRateConversionSetup</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupRates_Weekly</Name>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Weekly</DataField>
+										<DataSource>SPYPayrollRateConversionSetup</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupRates_BiWeekly</Name>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>BiWeekly</DataField>
+										<DataSource>SPYPayrollRateConversionSetup</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>Group_Monthly</Name>
+										<ElementPosition>1288490184</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Monthly</DataField>
+										<DataSource>SPYPayrollRateConversionSetup</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupRates_Quarterly</Name>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Quarterly</DataField>
+										<DataSource>SPYPayrollRateConversionSetup</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupRates_SemiAnnual</Name>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>SemiAnnual</DataField>
+										<DataSource>SPYPayrollRateConversionSetup</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupRates_Annual</Name>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Annual</DataField>
+										<DataSource>SPYPayrollRateConversionSetup</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+								</Controls>
+								<Columns>2</Columns>
+								<DataGroup>Rates</DataGroup>
+								<DataSource>SPYPayrollRateConversionSetup</DataSource>
+							</AxFormControl>
+						</Controls>
+						<RightMargin>5</RightMargin>
+						<RightMarginMode>Fixed</RightMarginMode>
+						<TopMargin>5</TopMargin>
+						<TopMarginMode>Fixed</TopMarginMode>
+						<FrameType>None</FrameType>
+					</AxFormControl>
+				</Controls>
+				<Columns>3</Columns>
+				<Columnspace>0</Columnspace>
+				<ColumnspaceMode>Fixed</ColumnspaceMode>
+				<FrameType>None</FrameType>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

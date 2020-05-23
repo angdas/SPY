@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYLeaveApplicationSettlement</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYLeaveApplicationSettlement extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<Title>@SPY712</Title>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYLeaveApplicationTable_1</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYLeaveApplicationTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYLeaveApplicationLine_1</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYLeaveApplicationLine</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>HRMAbsenceCode_1</Name>
+							<DynamicFields>Yes</DynamicFields>
+							<Table>HRMAbsenceCode</Table>
+							<DataSources>
+								<AxQuerySimpleEmbeddedDataSource>
+									<Name>SPYBenefitTable_1</Name>
+									<DynamicFields>Yes</DynamicFields>
+									<Table>SPYBenefitTable</Table>
+									<DataSources />
+									<DerivedDataSources />
+									<Fields />
+									<Ranges />
+									<JoinMode>ExistsJoin</JoinMode>
+									<UseRelations>Yes</UseRelations>
+									<Relations />
+								</AxQuerySimpleEmbeddedDataSource>
+							</DataSources>
+							<DerivedDataSources />
+							<Fields />
+							<Ranges />
+							<JoinMode>ExistsJoin</JoinMode>
+							<UseRelations>Yes</UseRelations>
+							<Relations />
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYPayrollLedger_1</Name>
+					<Table>SPYPayrollLedger</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>SPYPayrollJournalLine_1</Name>
+							<Table>SPYPayrollJournalLine</Table>
+							<DataSources>
+								<AxQuerySimpleEmbeddedDataSource>
+									<Name>SPYPayrollJournalTable_1</Name>
+									<Table>SPYPayrollJournalTable</Table>
+									<DataSources />
+									<DerivedDataSources />
+									<Fields />
+									<Ranges>
+										<AxQuerySimpleDataSourceRange>
+											<Name>Posted</Name>
+											<Field>Posted</Field>
+											<Status>Hidden</Status>
+											<Value>Yes</Value>
+										</AxQuerySimpleDataSourceRange>
+									</Ranges>
+									<JoinMode>ExistsJoin</JoinMode>
+									<UseRelations>Yes</UseRelations>
+									<Relations />
+								</AxQuerySimpleEmbeddedDataSource>
+							</DataSources>
+							<DerivedDataSources />
+							<Fields />
+							<Ranges />
+							<JoinMode>ExistsJoin</JoinMode>
+							<UseRelations>Yes</UseRelations>
+							<Relations />
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<JoinMode>NoExistsJoin</JoinMode>
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYBenefitLedger_1</Name>
+					<Table>SPYBenefitLedger</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>SPYPayrollJournalLine_1_1</Name>
+							<Table>SPYPayrollJournalLine</Table>
+							<DataSources>
+								<AxQuerySimpleEmbeddedDataSource>
+									<Name>SPYPayrollJournalTable_1_1</Name>
+									<Table>SPYPayrollJournalTable</Table>
+									<DataSources />
+									<DerivedDataSources />
+									<Fields />
+									<Ranges>
+										<AxQuerySimpleDataSourceRange>
+											<Name>Posted</Name>
+											<Field>Posted</Field>
+											<Status>Hidden</Status>
+											<Value>Yes</Value>
+										</AxQuerySimpleDataSourceRange>
+									</Ranges>
+									<JoinMode>ExistsJoin</JoinMode>
+									<UseRelations>Yes</UseRelations>
+									<Relations />
+								</AxQuerySimpleEmbeddedDataSource>
+							</DataSources>
+							<DerivedDataSources />
+							<Fields />
+							<Ranges />
+							<JoinMode>ExistsJoin</JoinMode>
+							<UseRelations>Yes</UseRelations>
+							<Relations />
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<JoinMode>NoExistsJoin</JoinMode>
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>WorkflowStatus</Name>
+					<Field>WorkflowStatus</Field>
+					<Status>Locked</Status>
+					<Value>Approved</Value>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy>
+				<AxQuerySimpleOrderByField>
+					<Name>LeaveApplicationCode</Name>
+					<DataSource>SPYLeaveApplicationTable_1</DataSource>
+					<Direction>Descending</Direction>
+					<Field>LeaveApplicationCode</Field>
+				</AxQuerySimpleOrderByField>
+			</OrderBy>
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

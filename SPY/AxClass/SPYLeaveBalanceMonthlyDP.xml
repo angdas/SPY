@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveBalanceMonthlyDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SRSReportParameterAttribute(classStr(SPYLeaveBalanceMonthlyContract))
+]
+public class SPYLeaveBalanceMonthlyDP extends SrsReportDataProviderPreProcess
+{
+
+    HcmWorker                       hcmWorker, hcmWorkerName;
+    SPYLeaveBalanceMonthlyTmp       leaveBalanceMonthlyTmp;
+    SPYBenefitLedger                benefitLedger, benefitLedgerOp, benefitLedgerTk, benefitLedgerEn;
+    SPYBenefitTable                 benefitTable;
+    SPYPayrollPeriodLine            payrollPeriodFrom, payrollPeriodTmp;
+    SPYPayrollPeriodLineRecId       payrollPeriodLineFrom;
+    SPYPayrollPeriod                payrollPeriod;
+    RecordInsertList                recordInsertLeaveBal;
+    real                            openBal, leaveTaken, entitlement, closeBal;
+    real                            openBalAmt, leaveTakenAmt, entitlementAmt, closeBalAmt;
+    String50                        payrollPeriodString;
+    RecId                           hcmWorkerRecId;
+
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYLeaveBalanceMonthlyTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYLeaveBalanceMonthlyTmp))]
+    public SPYLeaveBalanceMonthlyTmp getSPYLeaveBalanceMonthlyTmp()
+    {
+        select leaveBalanceMonthlyTmp;
+        return leaveBalanceMonthlyTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYLeaveBalanceMonthlyContract  contract = this.parmDataContract() as SPYLeaveBalanceMonthlyContract;
+        payrollPeriodLineFrom   = contract.parmPayrollPeriodLineFrom();
+        payrollPeriodFrom       = SPYPayrollPeriodLine::find(payrollPeriodLineFrom);
+        payrollPeriod           = SPYPayrollPeriod::find(payrollPeriodFrom.PayrollPeriod);
+        payrollPeriodString     = strFmt("%1 - %2 - %3", payrollPeriod.Description, payrollPeriodFrom.PeriodStartDate, payrollPeriodFrom.PeriodEndDate);
+       
+        recordInsertLeaveBal = new RecordInsertList(tableNum(SPYLeaveBalanceMonthlyTmp));
+        while select hcmWorker order by hcmWorker.PersonnelNumber join benefitLedger group by hcmWorker.RecID where hcmWorker.RecId == benefitLedger.Worker
+        {
+            hcmWorkerRecId                = hcmWorker.RecId;
+            hcmWorkerName                 = HcmWorker::find(hcmWorkerRecId);
+            leaveBalanceMonthlyTmp.clear();
+    
+            select sum(Quantity), sum(TransactionCurrencyAmount) from benefitLedgerOp join payrollPeriodTmp join benefitTable where
+            payrollPeriodTmp.RecId == benefitLedgerOp.PayrollPeriodLine && payrollperiodTmp.PeriodEndDate < payrollPeriodFrom.PeriodStartDate
+            && benefitLedgerOp.Worker == hcmWorker.RecId && benefitLedgerOp.Benefit == benefitTable.RecID && benefitTable.PayElementCode == 'Leave_Provision';
+    
+            openBal                       = benefitLedgerOp.Quantity * -1;
+            openBalAmt                    = benefitLedgerOp.TransactionCurrencyAmount * -1;
+    
+            select Quantity, TransactionCurrencyAmount from benefitLedgerEn join benefitTable where
+            benefitLedgerEn.Worker == hcmWorker.RecId && benefitLedgerEn.Benefit == benefitTable.RecId
+            && benefitTable.PayElementCode == 'Leave_Provision' && benefitLedgerEn.PayrollPeriodLine == payrollPeriodFrom.RecId && benefitLedgerEn.JournalType == SPYBenefitJournalType::Accrual;
+    
+            entitlement                   = benefitLedgerEn.Quantity * -1;
+            entitlementAmt                = benefitLedgerEn.TransactionCurrencyAmount * -1;
+    
+            select Quantity, TransactionCurrencyAmount from benefitLedgerTk join benefitTable where
+            benefitLedgerTk.Worker == hcmWorker.RecId && benefitLedgerTk.Benefit == benefitTable.RecId && benefitTable.PayElementCode == 'Leave_Provision' && benefitLedgerTk.PayrollPeriodLine == payrollPeriodFrom.RecId && benefitLedgerTk.JournalType == SPYBenefitJournalType::Encashment;
+    
+            leaveTaken                    = benefitLedgerTk.Quantity * -1;
+            leaveTakenAmt                 = benefitLedgerTk.TransactionCurrencyAmount * -1;
+    
+            leaveBalanceMonthlyTmp.OpeningBalance               = openBal;
+            leaveBalanceMonthlyTmp.Entitlement                  = entitlement;
+            leaveBalanceMonthlyTmp.DaysTaken                    = leaveTaken;
+            closeBal                                            = (openBal + entitlement) - (leaveTaken * -1);
+            closeBalAmt                                         = (openBalAmt + entitlementAmt) - (leaveTakenAmt * -1);
+            leaveBalanceMonthlyTmp.ClosingBalance               = closeBal;
+            leaveBalanceMonthlyTmp.Liabiility                   = closeBalAmt;
+            leaveBalanceMonthlyTmp.PayrollPeriod                = payrollPeriodString;
+            leaveBalanceMonthlyTmp.EmployeeName                 = hcmWorkerName.PersonnelNumber + " - "+hcmWorkerName.name();
+    
+            recordInsertLeaveBal.add(leaveBalanceMonthlyTmp);   
+        }
+        recordInsertLeaveBal.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

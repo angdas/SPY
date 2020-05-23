@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYSubordinateLookup</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYSubordinateLookup extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>HcmWorker</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>HcmWorker</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>HcmPositionWorkerAssignment</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>HcmPositionWorkerAssignment</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>HcmPositionDetail</Name>
+							<DynamicFields>Yes</DynamicFields>
+							<Table>HcmPositionDetail</Table>
+							<DataSources />
+							<DerivedDataSources />
+							<Fields />
+							<Ranges>
+								<AxQuerySimpleDataSourceRange>
+									<Name>Department</Name>
+									<Field>Department</Field>
+								</AxQuerySimpleDataSourceRange>
+							</Ranges>
+							<Relations>
+								<AxQuerySimpleDataSourceRelation>
+									<Name>Position</Name>
+									<Field>Position</Field>
+									<JoinDataSource>HcmPositionWorkerAssignment</JoinDataSource>
+									<RelatedField>Position</RelatedField>
+								</AxQuerySimpleDataSourceRelation>
+							</Relations>
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges />
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>PersonnelNumber</Name>
+					<Field>PersonnelNumber</Field>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

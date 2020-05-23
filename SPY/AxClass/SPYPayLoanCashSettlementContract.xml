@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanCashSettlementContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayLoanCashSettlementContract
+{
+    container                   loanTableQuery;
+    TransDate                   settlementDate;
+    SPYPayrollPeriodRecId       settlementPeriod;
+    SPYPayLoanRecId             payLoan;
+    Amount                      amount;
+    Description                 description;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAmount</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public Amount parmAmount(Amount _amount = amount)
+    {
+        amount = _amount;
+        return amount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDescription</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public Description parmDescription(Description _description = description)
+    {
+        description = _description;
+        return description;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLoanTableQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmLoanTableQuery(container _loanTableQuery = loanTableQuery)
+    {
+        loanTableQuery = _loanTableQuery;
+        return loanTableQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayLoan</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayLoanRecId parmPayLoan(SPYPayLoanRecId _payLoan = payLoan)
+    {
+        payLoan = _payLoan;
+        return payLoan;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSettlementDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public TransDate parmSettlementDate(TransDate _settlementDate = settlementDate)
+    {
+        settlementDate = _settlementDate;
+        return settlementDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSettlementPeriod</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodRecId parmSettlementPeriod(SPYPayrollPeriodRecId _settlementPeriod = settlementPeriod)
+    {
+        settlementPeriod = _settlementPeriod;
+        return settlementPeriod;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

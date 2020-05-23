@@ -1,0 +1,184 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.DimensionAttributeValueSet_ID(1)
+    
+    // Data source buffers
+    DimensionAttributeValueSet m_DimensionAttributeValueSet;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('DimensionAttributeValueSet'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        throw error("@ApplicationFoundation:DataEntitiesReadOnlyError");
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        throw error("@ApplicationFoundation:DataEntitiesReadOnlyError");
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, DimensionAttributeValueSet _dimensionAttributeValueSet, DimensionSetEntity _dimensionSetEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('LedgerBasic')))
+        {
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _dimensionAttributeValueSet, _dimensionSetEntity);
+            _dimensionAttributeValueSet.trackFieldExternallySet(false);
+        }
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #DimensionAttributeValueSet_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, DimensionAttributeValueSet _dimensionAttributeValueSet, DimensionSetEntity _dimensionSetEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_dimensionAttributeValueSet, fieldnum(DimensionAttributeValueSet, RecId), _dimensionSetEntity, fieldnum(DimensionSetEntity, RecordId), true);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _dimensionAttributeValueSet, _dimensionSetEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _dimensionSetEntity.fromViewDataSource(_dataSourceCtx.id(), _dimensionAttributeValueSet);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #DimensionAttributeValueSet_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #DimensionAttributeValueSet_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(DimensionSetEntity _dimensionSetEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_dimensionSetEntity.isFieldSet(fieldnum(DimensionSetEntity, RecordId)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_dimensionSetEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #DimensionAttributeValueSet_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, DimensionSetEntity _dimensionSetEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, DimensionAttributeValueSet _dimensionAttributeValueSet)
+    {
+        boolean rtrn = true;
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('LedgerBasic')))
+        {
+            rtrn = this.validateDataSourceExtensions(_entityCtx, _dimensionSetEntity, _dataSourceCtx, _dimensionAttributeValueSet) ? rtrn : false;
+        }
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #DimensionAttributeValueSet_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, DimensionAttributeValueSet _dimensionAttributeValueSet, DimensionAttributeValueSet _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(DimensionSetEntity), _dimensionAttributeValueSet, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #DimensionAttributeValueSet_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('LedgerBasic')))
+        {
+            // Root data source configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'DimensionAttributeValueSet','LedgerBasic'));
+        }
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'DimensionAttributeValueSet', m_DimensionAttributeValueSet, this.getDataSourceId('DimensionAttributeValueSet'), this.getDataSourceId('DimensionAttributeValueSet'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private DimensionAttributeValueSet LookForUniqueKeyMatch_DS1(DimensionSetEntity _dimensionSetEntity, DimensionAttributeValueSet _dimensionAttributeValueSet)
+    {
+        DimensionAttributeValueSet dimensionAttributeValueSet_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                dimensionAttributeValueSet_
+        where
+            dimensionAttributeValueSet_.Hash == _dimensionAttributeValueSet.Hash
+        ;
+        
+        if (dimensionAttributeValueSet_)
+        {
+            return dimensionAttributeValueSet_;
+        }
+        
+        return dimensionAttributeValueSet_;
+    }
+
+}
+

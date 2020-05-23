@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntWorkerContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntWorkerContract
+{
+    HcmPersonnelNumberId    personnelNumberId;
+    HcmWorkerName           workerName;
+    OMDepartmentName        departmentName;
+    Transdate               joiningDate;
+    Email                   reportingManager;
+    Name                    initial;
+    Name                    firstName;
+    Name                    lastName;
+    Phone                   phone;
+    Phone                   mobile;
+    Email                   email;
+    Email                   personalEmail;
+    Email                   empId;
+    Description             maritalStatus;
+    Description             nationality;
+    Description             religion;
+    Description             gender;
+    Description             bloodGroup;
+    Description             workExperience;
+    Description             passportNo;
+    date                    passportExpiry;
+    date                    passportIssueDate;
+    Description             passportPlaceOfIssue;
+    Description             education;
+    Description             visaNo;
+    date                    visaExpiry;
+    date                    dateOfBirth;
+    date                    anniversaryDate;
+    //str                     image;
+    Bitmap                 image;
+    LogisticsAddressing     address;
+    Description             civilId;
+    date                    civilIdExpiry;
+    HcmTitleId              jobTitle;
+    Name                    bankName;
+    BankAccount             bankAccountNumber;
+    SPYAmount               salary;
+    List                    absenceContractList;
+    List                    dependantContractList;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPersonnelNumberId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PersonnelNumber")]
+    public HcmPersonnelNumberId parmPersonnelNumberId(HcmPersonnelNumberId _personnelNumberId = personnelNumberId)
+    {
+        personnelNumberId = _personnelNumberId;
+
+        return personnelNumberId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEmpName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Name")]
+    public HcmWorkerName parmEmpName(HcmWorkerName _workerName = workerName)
+    {
+        workerName = _workerName;
+
+        return workerName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmFirstName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("FirstName")]
+    public HcmWorkerName parmFirstName(HcmWorkerName _firstName = firstName)
+    {
+        firstName = _firstName;
+
+        return firstName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLastName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("LastName")]
+    public HcmWorkerName parmLastName(HcmWorkerName _lastName = lastName)
+    {
+        lastName = _lastName;
+
+        return lastName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEmpInitials</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Initial")]
+    public HcmWorkerName parmEmpInitials(HcmWorkerName _initial = initial)
+    {
+        initial = _initial;
+
+        return initial;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPhone</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Phone")]
+    public Phone parmPhone(Phone _phone = phone)
+    {
+        phone = _phone;
+
+        return phone;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmMobile</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Mobile")]
+    public Phone parmMobile(Phone _mobile = mobile)
+    {
+        mobile = _mobile;
+
+        return mobile;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEmpId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("EmpId")]
+    public Email parmEmpId(Email _empId = empId)
+    {
+        empId = _empId;
+
+        return empId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPersonalEmail</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PersonalEmail")]
+    public Email parmPersonalEmail(Email _personalEmail = personalEmail)
+    {
+        personalEmail = _personalEmail;
+
+        return personalEmail;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEmail</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Email")]
+    public Email parmEmail(Email _email = email)
+    {
+        email = _email;
+
+        return email;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmMaritalStatus</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("MaritalStatus")]
+    public Description parmMaritalStatus(Description _maritalStatus = maritalStatus)
+    {
+        maritalStatus = _maritalStatus;
+
+        return maritalStatus;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBloodGroup</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("BloodGroup")]
+    public Description parmBloodGroup(Description _bloodGroup = bloodGroup)
+    {
+        bloodGroup = _bloodGroup;
+
+        return bloodGroup;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkExperience</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("WorkExperience")]
+    public Description parmWorkExperience(Description _workExperience = workExperience)
+    {
+        workExperience = _workExperience;
+
+        return workExperience;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmNationality</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Nationality")]
+    public Description parmNationality(Description _nationality = nationality)
+    {
+        nationality = _nationality;
+
+        return nationality;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDepartmentName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("DepartmentName")]
+    public OMDepartmentName parmDepartmentName(OMDepartmentName _departmentName = departmentName)
+    {
+        departmentName = _departmentName;
+
+        return departmentName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmReligion</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Religion")]
+    public Description parmReligion(Description _religion = religion)
+    {
+        religion = _religion;
+
+        return religion;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmGender</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Gender")]
+    public Description parmGender(Description _gender = gender)
+    {
+        gender = _gender;
+
+        return gender;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPassportNo</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PassportNo")]
+    public Description parmPassportNo(Description _passportNo = passportNo)
+    {
+        passportNo = _passportNo;
+
+        return passportNo;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPassportExpiry</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PassportExpiry")]
+    public date parmPassportExpiry(date _passportExpiry = passportExpiry)
+    {
+        passportExpiry = _passportExpiry;
+
+        return passportExpiry;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPassportIssueDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PassportIssueDate")]
+    public date parmPassportIssueDate(date _passportIssueDate = passportIssueDate)
+    {
+        passportIssueDate = _passportIssueDate;
+
+        return passportIssueDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPassportPlaceOfIssue</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PassportPlaceOfIssue")]
+    public Description parmPassportPlaceOfIssue(Description _passportPlaceOfIssue = passportPlaceOfIssue)
+    {
+        passportPlaceOfIssue = _passportPlaceOfIssue;
+
+        return passportPlaceOfIssue;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEducation</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Education")]
+    public Description parmEducation(Description _education = education)
+    {
+        education = _education;
+
+        return education;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmVisaNo</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("VisaNo")]
+    public Description parmVisaNo(Description _visaNo = visaNo)
+    {
+        visaNo = _visaNo;
+
+        return visaNo;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmVisaExpiry</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("VisaExpiry")]
+    public date parmVisaExpiry(date _visaExpiry = visaExpiry)
+    {
+        visaExpiry = _visaExpiry;
+
+        return visaExpiry;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmJoiningDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("JoiningDate")]
+    public Transdate parmJoiningDate(Transdate _joiningDate = joiningDate)
+    {
+        joiningDate = _joiningDate;
+
+        return joiningDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmReportingManager</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("ReportingManager")]
+    public Email parmReportingManager(Email _reportingManager = reportingManager)
+    {
+        reportingManager = _reportingManager;
+
+        return reportingManager;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDateOfBirth</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("DateOfBirth")]
+    public date parmDateOfBirth(date _dateOfBirth = dateOfBirth)
+    {
+        dateOfBirth = _dateOfBirth;
+
+        return dateOfBirth;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAnniversaryDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("AnniversaryDate")]
+    public date parmAnniversaryDate(date _anniversaryDate = anniversaryDate)
+    {
+        anniversaryDate = _anniversaryDate;
+
+        return anniversaryDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmImage</Name>
+				<Source><![CDATA[
+    //[DataMemberAttribute("Image")]
+    //public str parmImage(str _image = image)
+    //{
+    //    image = _image;
+
+    //    return image;
+    //}
+    [DataMemberAttribute("Image")]
+    public Bitmap parmImage(Bitmap _image = image)
+    {
+        image = _image;
+
+        return image;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAddress</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Address")]
+    public LogisticsAddressing parmAddress(LogisticsAddressing _address = address)
+    {
+        address = _address;
+
+        return address;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCivilId</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("CivilId")]
+    public Description parmCivilId(Description _civilId = civilId)
+    {
+        civilId = _civilId;
+
+        return civilId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmCivilIdExpiry</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("CivilIdExpiry")]
+    public date parmCivilIdExpiry(date _civilIdExpiry = civilIdExpiry)
+    {
+        civilIdExpiry = _civilIdExpiry;
+
+        return civilIdExpiry;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmJobTitle</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("JobTitle")]
+    public HcmTitleId parmJobTitle(HcmTitleId _jobTitle = jobTitle)
+    {
+        jobTitle = _jobTitle;
+
+        return jobTitle;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBankName</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("BankName")]
+    public Name parmBankName(Name _bankName = bankName)
+    {
+        bankName = _bankName;
+
+        return bankName;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmBankAccountNumber</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("BankAccountNumber")]
+    public BankAccount parmBankAccountNumber(BankAccount _bankAccountNumber = bankAccountNumber)
+    {
+        bankAccountNumber = _bankAccountNumber;
+
+        return bankAccountNumber;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSalary</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Salary")]
+    public SPYAmount parmSalary(SPYAmount _salary = salary)
+    {
+        salary = _salary;
+
+        return salary;
+    }
+
+    //[DataMemberAttribute("Absence"),
+    //AifCollectionTypeAttribute('return', Types::Class, classStr(AFZAbsenceContract))]
+    //public List parmAbsenceContractList(List _absenceContractList = absenceContractList)
+    //{
+    //    absenceContractList = _absenceContractList;
+
+    //    return absenceContractList;
+    //}
+
+    //[DataMemberAttribute("Dependant"),
+    //AifCollectionTypeAttribute('return', Types::Class, classStr(AFZWorkerDependentContract))]
+    //public List parmDependantContractList(List _dependantContractList = dependantContractList)
+    //{
+    //    dependantContractList = _dependantContractList;
+
+    //    return dependantContractList;
+    //}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

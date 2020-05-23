@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYBenefitTable</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYBenefitTable extends SPYPayElementTable
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>accruedAccountingCurAmount</Name>
+				<Source><![CDATA[
+    SPYAmount accruedAccountingCurAmount(HcmWorkerRecId _worker,date _asOnDate = DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()))
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+    
+         select sum(AccountingCurrencyAmount) from benefitLedger join payrollPeriodLine
+            where benefitLedger.Worker == _worker &&
+                  benefitLedger.Benefit == this.RecId &&
+                  benefitLedger.JournalType == SPYBenefitJournalType::Accrual &&
+                  payrollPeriodLine.RecId == benefitLedger.PayrollPeriodLine &&
+                  payrollPeriodLine.PeriodStartDate <= _asOnDate;
+    
+        return benefitLedger.AccountingCurrencyAmount;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>accruedQty</Name>
+				<Source><![CDATA[
+    SPYAmount accruedQty(HcmWorkerRecId _worker,date _asOnDate = DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()))
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+    
+        select sum(Quantity) from benefitLedger join payrollPeriodLine
+            where benefitLedger.Worker == _worker &&
+                  benefitLedger.Benefit == this.RecId &&
+                  benefitLedger.JournalType == SPYBenefitJournalType::Accrual &&
+                  payrollPeriodLine.RecId == benefitLedger.PayrollPeriodLine &&
+                  payrollPeriodLine.PeriodStartDate <= _asOnDate;
+    
+        return benefitLedger.Quantity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>balanceAccountingCurAmount</Name>
+				<Source><![CDATA[
+    SPYAmount balanceAccountingCurAmount(HcmWorkerRecId _worker,TransDate _transDate = DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()))
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYAmount               balanceAmt;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+    
+        select sum(AccountingCurrencyAmount),sum(AccountingCurPnLAmount) from benefitLedger join payrollPeriodLine
+            where benefitLedger.Worker == _worker &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine.RecId &&
+                  payrollPeriodLine.PeriodStartDate <= _transDate &&
+                  benefitLedger.Benefit == this.RecId;
+        balanceAmt = benefitLedger.AccountingCurrencyAmount + benefitLedger.AccountingCurPnLAmount;
+    
+        return balanceAmt;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>balanceTransactionCurAmount</Name>
+				<Source><![CDATA[
+    SPYAmount balanceTransactionCurAmount(HcmWorkerRecId _worker,TransDate _transDate = DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()))
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYAmount               balanceAmt;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+    
+        select sum(TransactionCurrencyAmount),sum(TransactionCurPnLAmount) from benefitLedger join payrollPeriodLine
+            where benefitLedger.Worker == _worker &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine.RecId &&
+                  payrollPeriodLine.PeriodStartDate <= _transDate &&
+                  benefitLedger.Benefit == this.RecId;
+        balanceAmt = benefitLedger.TransactionCurrencyAmount + benefitLedger.TransactionCurPnLAmount;
+    
+        return balanceAmt;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>balanceAccountingCurAmtPerQty</Name>
+				<Source><![CDATA[
+    public SPYAmount balanceAccountingCurAmtPerQty(HcmWorkerRecId _worker,TransDate _transDate = DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()),SPYAmount _encashmentQty = 1)
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYAmount               balanceAmtPerQty,roundedQty;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+        //SPYPayrollJournalTable  payrollJournalTable;
+        //SPYPayrollJournalLine   payrollJournalLine;
+    
+         select sum(AccountingCurrencyAmount),sum(AccountingCurPnLAmount),sum(Quantity) from benefitLedger
+            //join RecId from payrollJournalLine join RecId from payrollJournalTable
+            exists join payrollPeriodLine
+            where benefitLedger.Worker == _worker &&
+                  benefitLedger.Benefit == this.RecId &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine.RecId &&
+                  payrollPeriodLine.PeriodStartDate <= _transDate;/* &&
+                  benefitLedger.PayrollJournalLine == payrollJournalLine.RecId &&
+                  payrollJournalLine.PayrollJournal == payrollJournalTable.RecId &&
+                  payrollJournalTable.Posted;*/
+    
+        roundedQty = round(benefitLedger.Quantity,0.01);
+    
+        if(roundedQty)
+            balanceAmtPerQty = (benefitLedger.AccountingCurrencyAmount+benefitLedger.AccountingCurPnLAmount) / benefitLedger.Quantity;
+        else
+            balanceAmtPerQty = (benefitLedger.AccountingCurrencyAmount+benefitLedger.AccountingCurPnLAmount) / _encashmentQty;  //If balance qty is zero
+    
+        return abs(balanceAmtPerQty);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>balanceQty</Name>
+				<Source><![CDATA[
+    SPYAmount balanceQty(HcmWorkerRecId _worker,TransDate _transDate = DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()))
+    {
+        SPYBenefitLedger        benefitLedger;
+        SPYAmount               balanceQty;
+        SPYPayrollPeriodLine    payrollPeriodLine;
+    
+        select sum(Quantity) from benefitLedger join payrollPeriodLine
+            where benefitLedger.Worker == _worker &&
+                  benefitLedger.PayrollPeriodLine == payrollPeriodLine.RecId &&
+                  payrollPeriodLine.PeriodStartDate <= _transDate &&
+                  benefitLedger.Benefit == this.RecId;
+        balanceQty = benefitLedger.Quantity;
+    
+        return balanceQty;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>encashedAccountingCurAmount</Name>
+				<Source><![CDATA[
+    SPYAmount encashedAccountingCurAmount(HcmWorkerRecId _worker)
+    {
+        SPYBenefitLedger        benefitLedger;
+    
+         select sum(AccountingCurrencyAmount),sum(AccountingCurPnLAmount) from benefitLedger
+            where benefitLedger.Worker == _worker &&
+                  benefitLedger.Benefit == this.RecId &&
+                  benefitLedger.JournalType == SPYBenefitJournalType::Accrual;
+    
+        return abs(benefitLedger.AccountingCurrencyAmount + benefitLedger.AccountingCurPnLAmount);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>encashedQty</Name>
+				<Source><![CDATA[
+    SPYAmount encashedQty(HcmWorkerRecId _worker)
+    {
+        SPYBenefitLedger        benefitLedger;
+    
+        select sum(Quantity) from benefitLedger
+            where benefitLedger.Worker == _worker &&
+                  benefitLedger.Benefit == this.RecId &&
+                  benefitLedger.JournalType == SPYBenefitJournalType::Encashment;
+    
+        return abs(benefitLedger.Quantity);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>rateForLeaveApplicationEncashment</Name>
+				<Source><![CDATA[
+    //>>2016-03-03_SNK_START
+    //For the rate to be used for encashment from timesheet the current rate should be used.
+    //
+    //The per qty rate calcualtion logic at Concordia was revised in feb to include the PNL Amount
+    //this resulted in some high values being calculated for encashment and the reversal of the
+    //same was posted in the subsequent accrual entry.
+    //>>2016-03-03_SNK_STOP
+    public SPYAmount rateForLeaveApplicationEncashment(HcmWorkerRecId _worker,SPYPayrollPeriodLineRecId _payrollPeriodLine)
+    {
+        SPYAmount                    balanceAmtPerQty;
+        HcmEmployment                employment;
+        WorkCalendarEmployment       employmentCalendar;
+        TransDateTime                validFrom = DateTimeUtil::minValue(),validTo = DateTimeUtil::maxValue();
+    
+        select validTimeState(ValidFrom,validTo) RecId from employment
+        join CalendarId from employmentCalendar
+        where employmentCalendar.Employment ==  employment.RecId
+        && employment.Worker == _worker;
+        /*
+        balanceAmtPerQty = ( SPYExpressionFunctionMethod::Exp_CurrentEarningAmount(_worker, CompanyInfo::current( curext() ) ,_payrollPeriodLine ) * 12.0 )
+                            / ( SPYExpressionFunctionMethod::Exp_WorkerCalendarWeekDays(employmentCalendar.CalendarId) * 52 );
+        */
+        balanceAmtPerQty = round(balanceAmtPerQty,0.01);
+    
+        return abs(balanceAmtPerQty);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>find</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Finds the specified record in the <c>SPYBenefitTable</c> table.
+    /// </summary>
+    /// /// <param name="_recId">
+    ///    The record ID of the record to find.
+    /// </param>
+    /// <param name="_forUpdate">
+    ///     A Boolean value that indicates whether to read the record for update; optional.
+    /// </param>
+    /// <param name="_concurrencyModel">
+    ///     An enumeration value that indicates the concurrency setting to use on the table; optional.
+    /// </param>
+    /// <returns>
+    ///     A record in the <c>SPYBenefitTable</c> table; otherwise, an empty record.
+    /// </returns>
+    /// <remarks>
+    ///     Finds the specified record in the <c>SPYBenefitTable</c> table.
+    /// </remarks>
+    public static SPYBenefitTable find(
+        SPYPayElementRecId          _recId,
+        boolean                     _forUpdate = false,
+        ConcurrencyModel            _concurrencyModel = ConcurrencyModel::Auto)
+    {
+        SPYBenefitTable benefitTable;
+    
+        benefitTable.selectForUpdate(_forUpdate );
+        if (_forUpdate && _concurrencyModel != ConcurrencyModel::Auto)
+        {
+            benefitTable.concurrencyModel(_concurrencyModel);
+        }
+    
+         select firstonly benefitTable
+             where benefitTable.RecId == _recId;
+    
+        return benefitTable;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY212</DeveloperDocumentation>
+	<Label>@SPY64</Label>
+	<TableGroup>Reference</TableGroup>
+	<CacheLookup>Found</CacheLookup>
+	<Extends>SPYPayElementTable</Extends>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<SupportInheritance>Yes</SupportInheritance>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>BenefitType</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>BenefitType</Name>
+			<ExtendedDataType>SPYBenefitTypeRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes />
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYBenefitTypeTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>SPYBenefitTypeTable</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>BenefitType</Name>
+					<Field>BenefitType</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayElementTable_Benefit</Name>
+			<Cardinality>ZeroOne</Cardinality>
+			<RelatedTable>SPYPayElementTable</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>Benefit</RelatedTableRole>
+			<RelationshipType>Specialization</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>RecId</Name>
+					<Field>RecId</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

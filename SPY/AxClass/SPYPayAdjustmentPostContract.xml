@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayAdjustmentPostContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYPayAdjustmentPostContract
+{
+    container                   adjustmentTableQuery;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmAdjustmentTableQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmAdjustmentTableQuery(container _adjustmentTableQuery = adjustmentTableQuery)
+    {
+        adjustmentTableQuery = _adjustmentTableQuery;
+        return adjustmentTableQuery;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

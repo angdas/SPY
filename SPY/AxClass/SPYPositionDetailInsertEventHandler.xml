@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPositionDetailInsertEventHandler</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPositionDetailInsertEventHandler
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>HcmPositionDetail_onInserting</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Default the Compensation levels on Job card to Positions
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    [DataEventHandler(tableStr(HcmPositionDetail), DataEventType::Inserting)]
+    public static void HcmPositionDetail_onInserting(Common sender, DataEventArgs e)
+    {
+        HcmPositionDetail   hcmPositionDetail = sender as HcmPositionDetail;
+        HcmJob              hcmJob = HcmJob::find(hcmPositionDetail.Job);
+
+        hcmPositionDetail.SPYCompensationLevelGrade = HcmJobDetail::findByJob(hcmJob.RecId).SPYCompensationLevelGrade;
+        hcmPositionDetail.SPYCompensationLevelBand  = HcmJobDetail::findByJob(hcmJob.RecId).SPYCompensationLevelBand;
+        hcmPositionDetail.SPYCompensationLevelStep  = HcmJobDetail::findByJob(hcmJob.RecId).SPYCompensationLevelStep;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveResumptionService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLeaveResumptionService
+{
+    SPYLeaveApplicationRecId        leaveApplication;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>deleteAbsenceLedger</Name>
+				<Source><![CDATA[
+    private void deleteAbsenceLedger()
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        date                        fromDate = dateNull(),toDate = dateMax();
+    
+        while select validTimeState(FromDate,toDate) leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == leaveApplication
+        {
+            if(leaveApplicationLine.ValidFrom == leaveApplicationLine.ActualStartDate &&
+               leaveApplicationLine.ValidTo == leaveApplicationLine.ActualEndDate)
+                continue;
+            else
+                leaveApplicationLine.deleteAbsenceLedger();
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    public void new(SPYLeaveApplicationRecId _leaveApplication)
+    {
+        leaveApplication = _leaveApplication;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processResumption</Name>
+				<Source><![CDATA[
+    public void processResumption()
+    {
+        setPrefix("@SPY705");
+       
+        try
+        {
+            ttsBegin;
+            //this.updateAbsenceLedger();            
+            this.updateLeaveApplication();
+            ttsCommit;
+            info("@SPY706");
+        }
+        catch(Exception::Error)
+        {
+            checkFailed("@SPY252");
+            ttsAbort;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAbsenceLedger</Name>
+				<Source><![CDATA[
+    private void updateAbsenceLedger()
+    {
+        SPYLeaveApplicationTable::find(leaveApplication).updateAbsenceLedger();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefitAccrualAvailQty</Name>
+				<Source><![CDATA[
+    private void updateBenefitAccrualAvailQty()
+    {
+        SPYLeaveApplicationTable::find(leaveApplication).updateBenefitAccrualAvailQty();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateBenefitLedger</Name>
+				<Source><![CDATA[
+    private void updateBenefitLedger()
+    {
+        SPYLeaveApplicationTable::find(leaveApplication).updateBenefitLedger();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLeaveApplication</Name>
+				<Source><![CDATA[
+    private void updateLeaveApplication()
+    {
+        WorkflowWorkItemTable       workItem;
+        WorkflowTrackingStatusTable trackingStatusTable;
+        SPYLeaveApplicationTable    leaveApplicationTable = SPYLeaveApplicationTable::find(leaveApplication,true);
+    
+        if(leaveApplicationTable)
+        { 
+            leaveApplicationTable.ResumptionInitiated = true;            
+            leaveApplicationTable.WorkflowStatus = SPYWorkflowStatus::Submitted;
+            leaveApplicationTable.update();
+            
+            select firstonly CorrelationId from trackingStatusTable
+                where trackingStatusTable.ContextTableId    == leaveApplicationTable.TableId
+                && trackingStatusTable.ContextRecId         == leaveApplicationTable.RecId
+                && trackingStatusTable.TrackingStatus       == WorkflowTrackingStatus::Completed;
+
+            workItem    = WorkflowWorkItemTable::findByCorrelationId(trackingStatusTable.CorrelationId);
+            if(workItem)
+            {
+                //WorkflowWorkItemTable workItem = args.caller().getActiveWorkflowWorkItem();            
+                WorkflowWorkItemActionManager::dispatchWorkItemAction(
+                                                                    workItem,
+                                                                     "Submitted from resumption",
+                                                                     curUserId(),
+                                                                    WorkflowWorkItemActionType::Resubmit,
+                    menuItemActionStr(SPYLeaveApplicationResubmitMenuItem));
+            }
+            else
+            {
+                Workflow::activateFromWorkflowType(workFlowTypeStr(SPYLeaveApplication),
+                                               leaveApplicationTable.RecId,
+                                               "Submitted from resumption",
+                                               false,
+                                               curUserId());
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args args)
+    {
+        SPYLeaveApplicationTable    leaveApplicationTable;
+        SPYLeaveResumptionService   leaveResumptionService;
+    
+        if(args.caller() && args.record() is SPYLeaveApplicationTable)
+            leaveApplicationTable = args.record() as SPYLeaveApplicationTable;
+    
+        leaveResumptionService = new SPYLeaveResumptionService(leaveApplicationTable.RecId);
+        leaveResumptionService.processResumption();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

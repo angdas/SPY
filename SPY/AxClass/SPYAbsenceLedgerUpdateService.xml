@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAbsenceLedgerUpdateService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYAbsenceLedgerUpdateService extends SysOperationServiceBase
+{
+    SPYPayAdjustmentPostContract        contract;
+    SPYAbsenceLedgerUpdateSource        source;
+    QueryRun                            compensationPlanQueryRun;
+    QueryRun                            hcmWorkerQueryRun;
+    RecordInsertList                    absenceLedgerList;
+    boolean                             error;
+    date                                transDate,fromDate,toDate;
+    SPYAmount                           accruedQty;
+    SPYCompensationPlanTable            compensationPlanTable;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>deleteFromAL</Name>
+				<Source><![CDATA[
+    private void deleteFromAL(HcmWorkerRecId _worker,HRMAbsenceCodeId _absenceCode)
+    {
+        SPYAbsenceLedger                absenceLedger;
+    
+        delete_from absenceLedger
+            where absenceLedger.Worker == _worker &&
+                  absenceLedger.HRMAbsenceCodeId == _absenceCode &&
+                  absenceLedger.SourceDocument == tableNum(HcmWorker) &&
+                  absenceLedger.AbsenceDate >= fromDate &&
+                  absenceLedger.AbsenceDate <= toDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2AL</Name>
+				<Source><![CDATA[
+    private void insert2AL(HcmWorkerRecId _worker,HRMAbsenceCodeId _absenceCode)
+    {
+        SPYAbsenceLedger                absenceLedger;
+    
+        absenceLedger.clear();
+        absenceLedger.initValue();
+        absenceLedger.Worker            = _worker;
+        absenceLedger.AbsenceDate       = transDate;
+        absenceLedger.HRMAbsenceCodeId  = _absenceCode;
+        absenceLedger.AbsenceDays       = accruedQty;
+        absenceLedger.SourceDocument    = tableNum(HcmWorker);
+        absenceLedger.Txt               = strFmt("@SPY1421",compensationPlanTable.CompensationPlanCode);
+        absenceLedger.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readFromCompensationPlan</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    private void readFromCompensationPlan()
+    {
+        /*
+        SPYCompensationPlanLevel            compensationPlanLevel;
+        SPYExpressionConditionResultTmp     expressionConditionResultTmp;
+    
+        while(compensationPlanQueryRun.next())
+        {
+            compensationPlanTable = compensationPlanQueryRun.get(tableNum(SPYCompensationPlanTable));
+            while select validTimeState(transDate) compensationPlanLevel
+                where compensationPlanLevel.CompensationPlan == compensationPlanTable.RecId/* &&
+                      compensationPlanLevel.LegalEntity == CompanyInfo::current()*/
+            {
+                expressionConditionResultTmp.clear();
+                expressionConditionResultTmp = compensationPlanLevel.evaluateWorker();
+                while select expressionConditionResultTmp
+                {
+                    this.updateAbsenceLedger(expressionConditionResultTmp.Worker);
+                }
+            }
+        }*/
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readFromHcmWorker</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    private void readFromHcmWorker()
+    {
+        /*
+        HcmWorker                           hcmWorker;
+        HcmCompensationLevelRecId           compensationLevel;
+        SPYCompensationPlanLevel            compensationPlanLevel;
+        SPYExpressionConditionResultTmp     expressionConditionResultTmp;
+    
+        while(hcmWorkerQueryRun.next())
+        {
+            hcmWorker = hcmWorkerQueryRun.get(tableNum(HcmWorker));
+            //TODO UPGRADE
+            /*
+            compensationLevel = HcmJobDetail::findByJob(
+                                HcmPositionDetail::findByPosition(
+                                HcmWorker::getPrimaryPosition(hcmWorker.RecId)).Job
+                                ).CompensationLevel;*/
+            while select validTimeState(transDate) compensationPlanLevel
+                where compensationPlanLevel.CompensationLevel == compensationLevel &&
+                      compensationPlanLevel.LegalEntity == CompanyInfo::current()
+            {
+                expressionConditionResultTmp.clear();
+                expressionConditionResultTmp = compensationPlanLevel.evaluateWorker();
+                while select expressionConditionResultTmp
+                    where expressionConditionResultTmp.Worker == hcmWorker.RecId
+                {
+                    this.updateAbsenceLedger(expressionConditionResultTmp.Worker);
+                }
+            }
+        }*/
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setDateRange</Name>
+				<Source><![CDATA[
+    private void setDateRange()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setQtyNDate</Name>
+				<Source><![CDATA[
+    private void setQtyNDate(SPYCompensationPlanAbsence_old  _compensationPlanAbsence)
+    {
+        SPYPayrollPeriod    payrollPeriod = SPYPayrollPeriod::find(_compensationPlanAbsence.PayrollPeriod);
+    
+        switch(payrollPeriod.PayrollFrequency)
+        {
+            case SPYPayrollFrequency::Daily:
+                accruedQty = _compensationPlanAbsence.QtyDailyMid;
+                fromDate = transDate;
+                toDate = transDate;
+                break;
+            case SPYPayrollFrequency::Weekly:
+                accruedQty = _compensationPlanAbsence.QtyWeeklyMid;
+                break;
+            case SPYPayrollFrequency::Monthly:
+                accruedQty = _compensationPlanAbsence.QtyMonthlyMid;
+                fromDate = mkDate(1,mthOfYr(transDate),year(transDate));
+                toDate = endmth(transDate);
+                break;
+            case SPYPayrollFrequency::Quarterly:
+                accruedQty = _compensationPlanAbsence.QtyQuarterlyMid;
+                break;
+            case SPYPayrollFrequency::Semiannually:
+                accruedQty = _compensationPlanAbsence.QtySemiAnnualMid;
+                break;
+            case SPYPayrollFrequency::Annually:
+                accruedQty = _compensationPlanAbsence.QtyAnnualMid;
+                fromDate = mkDate(1,1,year(transDate));
+                toDate = mkDate(31,12,year(transDate));
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAbsenceLedger</Name>
+				<Source><![CDATA[
+    private void updateAbsenceLedger(HcmWorkerRecId _worker)
+    {
+        SPYCompensationPlanAbsence_old      compensationPlanAbsence;
+    
+        while select compensationPlanAbsence
+            where compensationPlanAbsence.CompensationPlan == compensationPlanTable.RecId
+        {
+            this.setQtyNDate(compensationPlanAbsence);
+            this.deleteFromAL(_worker,compensationPlanAbsence.HRMAbsenceCodeId);
+            this.insert2AL(_worker,compensationPlanAbsence.HRMAbsenceCodeId);
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLedger</Name>
+				<Source><![CDATA[
+    public void updateLedger(SPYAbsenceLedgerUpdateContract _contract)
+    {
+        source = _contract.parmAbsenceLedgerUpdateSource();
+        compensationPlanQueryRun = new QueryRun(_contract.parmCompensationPlanQuery());
+        hcmWorkerQueryRun = new QueryRun(_contract.parmHcmWorkerQuery());
+        absenceLedgerList = new RecordInsertList(tableNum(SPYAbsenceLedger));
+    
+        try
+        {
+            setPrefix("@SPY1417");
+            ttsBegin;
+            if(source == SPYAbsenceLedgerUpdateSource::CompensationPlan)
+                this.readFromCompensationPlan();
+            else
+                this.readFromHcmWorker();
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+            error("@SPY293");
+            error("@SPY252");
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

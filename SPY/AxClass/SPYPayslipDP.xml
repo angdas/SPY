@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayslipDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportParameterAttribute(classStr(SPYPayslipContract)),
+    SRSReportQueryAttribute(queryStr(SPYHcmWorkerNoPosition))
+]
+public class SPYPayslipDP extends SrsReportDataProviderPreProcess
+{
+    SPYPayslipHeaderFooterTmp   payslipHeaderFooterTmp;
+    SPYPaySlipDetailsTmp        payslipDetailsTmp;
+
+    HcmWorker                   hcmWorker;
+    SPYWorkerPositionPayroll    workerPositionPayroll;
+    SPYPayrollLedger            payrollledger;
+    SPYBenefitLedger            benefitLedger;
+
+    SPYPayrollPeriodLineRecId   payrollPeriodLineRecId;
+    SPYPayrollPeriodLine        payrollPeriodLine;
+    CompanyInfo                 companyInfo;
+   
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYPaySlipDetailsTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPaySlipDetailsTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYPaySlipDetailsTmp))]
+    public SPYPaySlipDetailsTmp getSPYPaySlipDetailsTmp()
+    {
+        select paySlipDetailsTmp;
+        return paySlipDetailsTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYPayslipHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </summary>
+    /// <returns>
+    /// The data from the <c>SPYPayslipHeaderFooterTmp</c> table.
+    /// </returns>
+    [SRSReportDataSetAttribute(tableStr(SPYPayslipHeaderFooterTmp))]
+    public SPYPayslipHeaderFooterTmp getSPYPayslipHeaderFooterTmp()
+    {
+        select payslipHeaderFooterTmp;
+        return payslipHeaderFooterTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoPayslipDetailsTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoPayslipDetailsTmp()
+    {
+        SPYPayElementTable          payElementTable;
+        HcmPositionRecId            positionRecId = 0;
+        HcmPositionDetail           hcmPositionDetails;
+        utcDateTime                 validFromDate = DateTimeUtil::newDateTime(payrollPeriodLine.PeriodStartDate, 0);
+        utcDateTime                 validToDate = DateTimeUtil::newDateTime(payrollPeriodLine.PeriodEndDate, 0);
+
+        payElementTable             = SPYPayElementTable::find(payrollledger.Payroll);
+        positionRecId               = HcmPosition::findByPosition(hcmWorker.primaryPositionId()).RecId;
+        hcmPositionDetails          = HcmPositionDetail::findByPosition(positionRecId, validFromDate, validToDate);
+
+        payslipDetailsTmp.clear();
+        payslipDetailsTmp.Worker                    = payrollledger.Worker;
+        payslipDetailsTmp.WorkerName                = hcmWorker.name();
+        payslipDetailsTmp.WorkerPersonnelNumber     = hcmWorker.PersonnelNumber;
+        payslipDetailsTmp.EmpDepartment             = hcmWorker.primaryDepartmentName();
+        payslipDetailsTmp.EmpJoiningDate            = DateTimeUtil::date(HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, companyInfo::current(), validFromDate ,validFromDate).ValidFrom);
+        payslipDetailsTmp.EmpJobTitle               = HcmTitle::find(hcmPositionDetails.Title).TitleId;
+        payslipDetailsTmp.PayrollPeriodLine         = payrollPeriodLineRecId;
+        payslipDetailsTmp.PeriodCode                = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+        payslipDetailsTmp.PeriodStartDate           = payrollPeriodLine.PeriodStartDate;
+        payslipDetailsTmp.PeriodEndDate             = payrollPeriodLine.PeriodEndDate;
+        payslipDetailsTmp.Payroll                   = payrollledger.Payroll;
+        payslipDetailsTmp.PayElementCode            = payElementTable.PayElementCode;
+        payslipDetailsTmp.DisplayOrder              = SPYPayrollTable::find(payElementTable.RecId).DisplayOrder;
+        if(!payrollledger.ArrearPeriodLine)
+            payslipDetailsTmp.PayElementDescription = payElementTable.Description;
+        else
+            payslipDetailsTmp.PayElementDescription = payElementTable.Description + "@SPY1659";
+        payslipDetailsTmp.CalcStartDate             = payrollledger.CalcStartDate;
+        payslipDetailsTmp.CalcEndDate               = payrollledger.CalcEndDate;
+        payslipDetailsTmp.TransDate                 = payrollledger.TransDate;
+        payslipDetailsTmp.Currency                  = payrollledger.Currency;
+        payslipDetailsTmp.TransactionCurrencyAmount = payrollledger.TransactionCurrencyAmount;
+        payslipDetailsTmp.ExchRate                  = payrollledger.ExchRate;
+        payslipDetailsTmp.AccountingCurrencyAmount  = payrollledger.AccountingCurrencyAmount;
+        payslipDetailsTmp.Txt                       = payrollledger.Txt;
+        payslipDetailsTmp.EntryType                 = SPYEntryType::Payroll;
+        this.setEmplBanks();
+        payslipDetailsTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYPayslipHeaderFooterTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYPayslipHeaderFooterTmp()
+    {
+        payslipHeaderFooterTmp.clear();
+        payslipHeaderFooterTmp.CompanyLogo      = FormLetter::companyLogo();
+        payslipHeaderFooterTmp.CompanyAddress   = companyInfo.postalAddress().Address;
+        payslipHeaderFooterTmp.CompanyName      = companyInfo.Name();
+        payslipHeaderFooterTmp.CompanyEmail     = companyInfo.email();
+        payslipHeaderFooterTmp.CompanyPhone     = companyInfo.phone();
+        payslipHeaderFooterTmp.CompanyURL       = companyInfo.url();
+        payslipHeaderFooterTmp.PeriodCode       = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+        payslipHeaderFooterTmp.PeriodStartDate  = payrollPeriodLine.PeriodStartDate;
+        payslipHeaderFooterTmp.PeriodEndDate    = payrollPeriodLine.PeriodEndDate;
+        payslipHeaderFooterTmp.CompanyCurrency  = Ledger::accountingCurrency();
+        payslipHeaderFooterTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertLeaveDetails</Name>
+				<Source><![CDATA[
+    public void insertLeaveDetails()
+    {
+        SPYWorkerPositionBenefit    workerPositionBenefit;
+        SPYBenefitTable             benefitTable;
+        SPYBenefitTypeTable         benefitTypeTable;
+        FromDate                    fromDate = payrollPeriodLine.PeriodStartDate;
+        ToDate                      toDate = payrollPeriodLine.PeriodEndDate;
+        HRMAbsenceCode              hrmAbsenceCode;
+        SPYAbsenceLedger            absenceLedger;
+        SPYPayrollPeriodLine        payrollPeriodLineLoc;
+        RecordInsertList            recordInsertLeaveDetails;
+
+        recordInsertLeaveDetails = new RecordInsertList(tableNum(SPYPaySlipDetailsTmp));
+        while select validTimeState(fromDate, ToDate) workerPositionBenefit
+            join benefitTable
+            where workerPositionBenefit.Worker      == hcmWorker.RecId
+            &&  workerPositionBenefit.Benefit       == benefitTable.RecId
+            &&  workerPositionBenefit.LegalEntity   == CompanyInfo::current()
+            join benefitTypeTable
+            where benefitTable.BenefitType          == benefitTypeTable.RecId
+            && benefitTypeTable.BenefitTypeCode     == "Leave"
+            join hrmAbsenceCode
+            where hrmAbsenceCode.SPYBenefit         == benefitTable.recId
+        {
+            payslipDetailsTmp.clear();
+            payslipDetailsTmp.Worker                    = hcmWorker.RecId;
+            payslipDetailsTmp.WorkerName                = hcmWorker.name();
+            payslipDetailsTmp.WorkerPersonnelNumber     = hcmWorker.PersonnelNumber;
+            payslipDetailsTmp.PayrollPeriodLine         = payrollPeriodLineRecId;
+            payslipDetailsTmp.PeriodCode                = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+            payslipDetailsTmp.PeriodStartDate           = payrollPeriodLine.PeriodStartDate;
+            payslipDetailsTmp.PeriodEndDate             = payrollPeriodLine.PeriodEndDate;
+            payslipDetailsTmp.EntryType                 = SPYEntryType::Leave;
+            payslipDetailsTmp.HRMAbsenceCodeId          = hrmAbsenceCode.hrmAbsenceCodeId;
+            payslipDetailsTmp.AbsenceDescription        = hrmAbsenceCode.hrmAbsenceCodeId;//hrmAbsenceCode.description;
+            payslipDetailsTmp.AnualEntitlement          = workerPositionBenefit.QtyAnnual;
+    
+            select sum(absenceDays) from absenceLedger
+                where absenceLedger.AbsenceDate >= fromDate
+                &&  absenceLedger.AbsenceDate   <= toDate;
+    
+            payslipDetailsTmp.Booked                    = absenceLedger.AbsenceDays;
+
+            select sum(absenceDays) from absenceLedger
+                where absenceLedger.AbsenceDate >= fromDate
+                &&  absenceLedger.AbsenceDate   <= toDate
+                && absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)
+                && absenceLedger.Worker == hcmWorker.RecId
+                && absenceLedger.HRMAbsenceCodeId == hrmAbsenceCode.hrmAbsenceCodeId;
+                
+            payslipDetailsTmp.LeavesTaken               = abs(absenceLedger.AbsenceDays);
+
+            absenceLedger.clear();
+    
+            select sum(absenceDays) from absenceLedger
+                where absenceLedger.AbsenceDate >= fromDate
+                &&  absenceLedger.AbsenceDate   <= toDate
+                && absenceLedger.SourceDocument == tableNum(SPYAbsenceConfigTable)
+                && absenceLedger.Worker == hcmWorker.RecId
+                && absenceLedger.HRMAbsenceCodeId == hrmAbsenceCode.hrmAbsenceCodeId;
+                
+            payslipDetailsTmp.LeavesEarned      = absenceLedger.AbsenceDays;
+    
+            select sum(Quantity) from benefitLedger
+            where benefitLedger.Worker           == hcmWorker.RecId
+            &&  benefitLedger.Benefit            == benefitLedger.Benefit
+            join payrollPeriodLineLoc
+            where payrollPeriodLineLoc.RecId        == benefitLedger.PayrollPeriodLine
+            &&  payrollPeriodLineLoc.PeriodEndDate  <  PayrollPeriodLine.PeriodEndDate
+            &&  payrollPeriodLineLoc.PayrollPeriod  == PayrollPeriodLine.PayrollPeriod;
+    
+            payslipDetailsTmp.OpeningBalance            = benefitLedger.Quantity;
+            payslipDetailsTmp.ClosingBalance            = payslipDetailsTmp.OpeningBalance + payslipDetailsTmp.LeavesEarned - payslipDetailsTmp.LeavesTaken;
+    
+            this.setEmplBanks();
+            recordInsertLeaveDetails.add(payslipDetailsTmp);
+        }
+        recordInsertLeaveDetails.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertOvertimeDetails</Name>
+				<Source><![CDATA[
+    public void insertOvertimeDetails()
+    {
+        SPYOvertimeLedger       overtimeLedger;
+        SPYOvertimeTypeTable    overtimeType;
+        RecordInsertList        recordInsertOvertimeDetails;
+        SPYPayrollPeriodLine    payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLineRecId);
+
+        recordInsertOvertimeDetails = new RecordInsertList(tableNum(SPYPaySlipDetailsTmp));
+        
+        while select OvertimeDate, OvertimeDays, OvertimeHours
+        from overtimeLedger
+        join overtimeType
+        where overtimeLedger.Worker     == hcmWorker.RecId
+        && overtimeLedger.OvertimeDate >= payrollPeriodLineTab.PeriodStartDate
+        && overtimeLedger.OvertimeDate <= payrollPeriodLineTab.PeriodEndDate
+        && overtimeType.RecId == overtimeLedger.OvertimeType
+        {
+            payslipDetailsTmp.clear();
+            payslipDetailsTmp.Worker                    = hcmWorker.RecId;
+            payslipDetailsTmp.WorkerName                = hcmWorker.name();
+            payslipDetailsTmp.WorkerPersonnelNumber     = hcmWorker.PersonnelNumber;
+            payslipDetailsTmp.PayrollPeriodLine         = payrollPeriodLineRecId;
+            payslipDetailsTmp.PeriodCode                = SPYPayrollPeriod::find(payrollPeriodLine.PayrollPeriod).PayrollPeriodCode;
+            payslipDetailsTmp.PeriodStartDate           = payrollPeriodLine.PeriodStartDate;
+            payslipDetailsTmp.PeriodEndDate             = payrollPeriodLine.PeriodEndDate;
+            payslipDetailsTmp.EntryType                 = SPYEntryType::Overtime;
+            payslipDetailsTmp.OvertimeDate              = overtimeLedger.OvertimeDate;
+            payslipDetailsTmp.OvertimeDays              = overtimeLedger.OvertimeDays;
+            payslipDetailsTmp.OvertimeHours             = overtimeLedger.OvertimeHours;
+            payslipDetailsTmp.OvertimeType              = overtimeLedger.OvertimeType;
+            payslipDetailsTmp.OvertimeTypeCode          = overtimeType.OvertimeTypeCode;
+            this.setEmplBanks();
+            recordInsertOvertimeDetails.add(payslipDetailsTmp);
+        }
+        recordInsertOvertimeDetails.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    public void processReport()
+    {
+        SPYPayslipContract      contract = this.parmDataContract() as SPYPayslipContract;
+        Query                   q;
+        QueryRun                qr;
+        QueryBuildDataSource    qbdHcmWorker, qbdPayrollLedger, qbdPayrollJournalLine, qbdPayrollJournal;
+    
+        this.setTableConnections();
+    
+        payrollPeriodLineRecId = contract.parmPayrollPeriodline();
+    
+        companyInfo         = CompanyInfo::find();
+        payrollPeriodLine   = SPYPayrollPeriodLine::find(payrollPeriodLineRecId);
+    
+        this.insertIntoSPYPayslipHeaderFooterTmp();
+    
+        q = this.parmQuery();
+        qbdHcmWorker = q.dataSourceTable(tableNum(HcmWorker));
+        qbdPayrollLedger = qbdHcmWorker.addDataSource(tableNum(SPYPayrollLedger), "SPYPayrollLedger");
+        qbdPayrollLedger.joinMode(JoinMode::InnerJoin);
+        qbdPayrollLedger.fetchMode(QueryFetchMode::One2One);
+        qbdPayrollLedger.Relations(true);
+        qbdPayrollLedger.addRange(fieldNum(SPYPayrollLedger, PayrollPeriodLine)).value(queryValue(payrollPeriodLineRecId));
+        qbdPayrollLedger.addRange(fieldNum(SPYPayrollLedger, IsFinalised)).value(queryValue(1));
+
+        /*
+        if(payslipPJApproval)
+        {
+            qbdPayrollLedger.addRange(fieldNum(SPYPayrollLedger, PayrollJournalLine)).value(SysQuery::valueNot(0));
+            qbdPayrollJournalLine = qbdPayrollLedger.addDataSource(tableNum(SPYPayrollJournalLine), "SPYPayrollJournalLine");
+            qbdPayrollJournalLine.joinMode(JoinMode::InnerJoin);
+            qbdPayrollJournalLine.fetchMode(QueryFetchMode::One2One);
+            qbdPayrollJournalLine.Relations(true);
+            qbdPayrollJournal = qbdPayrollJournalLine.addDataSource(tableNum(SPYPayrollJournalTable), "SPYPayrollJournalTable");
+            qbdPayrollJournal.joinMode(JoinMode::InnerJoin);
+            qbdPayrollJournal.fetchMode(QueryFetchMode::One2One);
+            qbdPayrollJournal.Relations(true);
+            qbdPayrollJournal.addRange(fieldNum(SPYPayrollJournalTable, WorkflowStatus)).value(sysquery::value(SPYWorkflowStatus::Approved));
+        }
+        */
+
+        qr = new QueryRun(q);
+    
+        while(qr.next())
+        {
+            hcmWorker       = qr.get(tableNum(HcmWorker));
+            payrollledger   = qr.get(tableNum(SPYPayrollLedger));
+            this.insertIntoPayslipDetailsTmp();
+        }
+    
+        qr =new QueryRun(this.parmQuery());
+    
+        while(qr.next())
+        {
+            if(qr.changed(tableNum(HcmWorker)))
+            {
+                hcmWorker = qr.get(tableNum(HcmWorker));
+                this.insertOvertimeDetails();
+                this.insertLeaveDetails();
+            }
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEmplBanks</Name>
+				<Source><![CDATA[
+    public void setEmplBanks()
+    {
+        HcmWorkerBankAccount    workerBankAccount;
+    
+        select firstOnly workerBankAccount
+            where workerBankAccount.Worker == hcmWorker.RecId;
+    
+        payslipDetailsTmp.BankName          = workerBankAccount.AccountId;
+        payslipDetailsTmp.BankAccountNumber = workerBankAccount.AccountNum;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTableConnections</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Sets the user connection to use on table.
+    /// </summary>
+    /// <remarks>
+    /// This is required to guarantee that the <c>createdTransactionId</c> ID of inserted record differs
+    /// from default transaction.
+    /// </remarks>
+    public void setTableConnections()
+    {
+        payslipHeaderFooterTmp.setConnection(this.parmUserConnection());
+        payslipDetailsTmp.setConnection(this.parmUserConnection());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

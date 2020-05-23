@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWritePayElementsOfWorker</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWritePayElementsOfWorker
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void main(Args _args)
+    {
+        SPYWritePayElementsOfWorker   writePayElementsOfWorker = SPYWritePayElementsOfWorker::construct();
+        SPYPromotionTable             promotionTable, promotionTableUpdate;
+
+        promotionTable          = _args.record();
+        promotionTableUpdate    = SPYPromotionTable::find(promotionTable.RecId, true);
+
+        writePayElementsOfWorker.updateWorkerPayelementsToExpire(promotionTable.RecId);
+        writePayElementsOfWorker.insertWorkerPayelements(promotionTable.RecId);
+
+        ttsbegin;
+        if(promotionTableUpdate)
+        {
+            promotionTableUpdate.IsPayElementsUpdated = NoYes::Yes;
+            promotionTableUpdate.update();
+            info('Updated the pay elements of workers.');
+        }
+        ttscommit;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static SPYWritePayElementsOfWorker construct()
+    {
+        return new SPYWritePayElementsOfWorker();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateWorkerPayelementsToExpire</Name>
+				<Source><![CDATA[
+    public void updateWorkerPayelementsToExpire(RecId _promotionTableRecId)
+    {
+        SPYPromotionWorkerTable                 promotionWorkerTableExpire;
+        SPYPromotionWorkerProposedPayroll       promotionWorkerProposedPayrollExpire;
+        SPYPromotionWorkerProposedBenefit       promotionWorkerProposedBenefitExpire;
+        SPYWorkerPositionPayroll                workerPositionPayrollExpire;
+        SPYWorkerPositionBenefit                workerPositionBenefitExpire;
+        TransDate                               currentDate;
+
+        SPYPromotionTable                       promotionTableExpire = SPYPromotionTable::find(_promotionTableRecId);
+        if(promotionTableExpire)
+        {
+            currentDate = promotionTableExpire.StartDate;
+            ttsBegin;
+            while select promotionWorkerTableExpire
+                where promotionWorkerTableExpire.Promotion == promotionTableExpire.RecId
+            join promotionWorkerProposedBenefitExpire
+                where promotionWorkerProposedBenefitExpire.PromotionWorker == promotionWorkerTableExpire.RecId
+            {
+                ttsBegin;
+                select forUpdate ValidTimeState(currentDate, currentDate) workerPositionBenefitExpire
+                    where  workerPositionBenefitExpire.Benefit == promotionWorkerProposedBenefitExpire.Benefit
+                                && workerPositionBenefitExpire.Worker == promotionWorkerTableExpire.Worker
+                                && (workerPositionBenefitExpire.ValidTo >= currentDate
+                                      || workerPositionBenefitExpire.ValidTo == datemax())
+                                && (workerPositionBenefitExpire.QtyAnnual != promotionWorkerProposedBenefitExpire.QtyAnnual ||
+                                        workerPositionBenefitExpire.QtyMonthly != promotionWorkerProposedBenefitExpire.QtyMonthly ||
+                                        workerPositionBenefitExpire.AmountAnnual != promotionWorkerProposedBenefitExpire.AmountAnnual ||
+                                        workerPositionBenefitExpire.AmountMonthly != promotionWorkerProposedBenefitExpire.Monthly);
+                
+                if(workerPositionBenefitExpire)
+                {
+                    workerPositionBenefitExpire.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                    workerPositionBenefitExpire.ValidTo = (currentDate - 1);
+                    workerPositionBenefitExpire.LegalEntity = CompanyInfo::current();
+                    workerPositionBenefitExpire.Worker = promotionWorkerTableExpire.Worker;
+                    workerPositionBenefitExpire.update();
+                }
+                ttsCommit;
+            }
+            
+            while select promotionWorkerTableExpire
+                where promotionWorkerTableExpire.Promotion == promotionTableExpire.RecId
+            join promotionWorkerProposedPayrollExpire
+                where promotionWorkerProposedPayrollExpire.PromotionWorker == promotionWorkerTableExpire.RecId
+            {
+                ttsBegin;
+                select forUpdate ValidTimeState(currentDate, currentDate) workerPositionPayrollExpire
+                    where  workerPositionPayrollExpire.Payroll == promotionWorkerProposedPayrollExpire.Payroll
+                            && workerPositionPayrollExpire.Worker == promotionWorkerTableExpire.Worker
+                            && (workerPositionPayrollExpire.ValidTo == datemax() ||
+                                    workerPositionPayrollExpire.ValidTo >= currentDate)
+                            && (workerPositionPayrollExpire.Monthly != promotionWorkerProposedPayrollExpire.Monthly);
+                
+                if(workerPositionPayrollExpire)
+                {
+                    workerPositionPayrollExpire.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                    workerPositionPayrollExpire.Payroll     = promotionWorkerProposedPayrollExpire.Payroll;
+                    workerPositionPayrollExpire.ValidTo     = (currentDate - 1);
+                    workerPositionPayrollExpire.Worker      = promotionWorkerTableExpire.Worker;
+                    workerPositionPayrollExpire.LegalEntity = CompanyInfo::current();
+                    workerPositionPayrollExpire.update();
+                }
+                ttsCommit;
+            }
+            ttsCommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertWorkerPayelements</Name>
+				<Source><![CDATA[
+    public void insertWorkerPayelements(RecId _promotionTableRecId)
+    {
+        SPYPromotionWorkerTable                 promotionWorkerTableInsert;
+        SPYPromotionWorkerProposedPayroll       promotionWorkerProposedPayrollInsert;
+        SPYPromotionWorkerProposedBenefit       promotionWorkerProposedBenefitInsert;
+        SPYWorkerPositionPayroll                workerPositionPayrollInsert, workerPositionPayrollExists;
+        SPYWorkerPositionBenefit                workerPositionBenefitInsert,workerPositionBenefitExists;
+        HcmEmploymentDetail                     hcmEmploymentDetail;    //N Line by Rakesh NOV 12 2018
+        HcmEmployment                           hcmEmployment;
+        TransDate                               currentDate;
+
+        SPYPromotionTable        promotionTableInsert = SPYPromotionTable::find(_promotionTableRecId);
+        if(promotionTableInsert)
+        {
+            currentDate = promotionTableInsert.StartDate;
+            ttsBegin;
+            
+            while select * from promotionWorkerProposedBenefitInsert
+                join promotionWorkerTableInsert
+            where promotionWorkerTableInsert.RecId == promotionWorkerProposedBenefitInsert.PromotionWorker
+                    && promotionWorkerTableInsert.Promotion == promotionTableInsert.RecId
+            {
+                select ValidTimeState(currentDate, currentDate) workerPositionBenefitExists
+                    where  workerPositionBenefitExists.Benefit == promotionWorkerProposedBenefitInsert.Benefit
+                                && workerPositionBenefitExists.ValidTo >= currentDate
+                                && workerPositionBenefitExists.Worker == promotionWorkerTableInsert.Worker;
+
+                //<NS by Rakesh 12 Nov 2018>
+                select ValidTimeState(currentDate, currentDate) hcmEmploymentDetail
+                    join hcmEmployment
+                where  hcmEmployment.RecId == hcmEmploymentDetail.Employment  &&
+                    hcmEmployment.Worker == promotionWorkerTableInsert.Worker;
+                //</NE by Rakesh 12 Nov 2018>
+
+                if(!workerPositionBenefitExists)
+                {
+                    ttsBegin;
+                    workerPositionBenefitInsert.validTimeStateUpdateMode(ValidTimeStateUpdate::CreateNewTimePeriod);
+                    workerPositionBenefitInsert.Benefit = promotionWorkerProposedBenefitInsert.Benefit;
+                    workerPositionBenefitInsert.AmountMonthly = promotionWorkerProposedBenefitInsert.Monthly;
+                    workerPositionBenefitInsert.QtyAnnual = promotionWorkerProposedBenefitInsert.QtyAnnual;
+                    workerPositionBenefitInsert.QtyMonthly = promotionWorkerProposedBenefitInsert.QtyMonthly;
+                    workerPositionBenefitInsert.AmountAnnual = promotionWorkerProposedBenefitInsert.AmountAnnual;
+                    workerPositionBenefitInsert.ValidFrom = currentDate;
+                    workerPositionBenefitInsert.ValidTo = dateMax();
+                    workerPositionBenefitInsert.LegalEntity = CompanyInfo::current();
+                    workerPositionBenefitInsert.Worker = promotionWorkerTableInsert.Worker;
+                    //<NS by Rakesh 12 Nov 2018>
+                    workerPositionBenefitInsert.Currency        = hcmEmploymentDetail.SPYDefaultPayrollCurrency;
+                    workerPositionBenefitInsert.PayrollPeriod   = hcmEmploymentDetail.SPYDefaultPayrollPeriod;
+                    //</NE by Rakesh 12 Nov 2018>
+                    workerPositionBenefitInsert.insert();
+                    ttsCommit;
+                }
+            }
+            
+            while select * from promotionWorkerProposedPayrollInsert
+                join promotionWorkerTableInsert
+            where promotionWorkerTableInsert.RecId == promotionWorkerProposedPayrollInsert.PromotionWorker
+                && promotionWorkerTableInsert.Promotion == promotionTableInsert.RecId
+            {
+                select ValidTimeState(currentDate, currentDate) workerPositionPayrollExists
+                    where  workerPositionPayrollExists.Payroll == promotionWorkerProposedPayrollInsert.Payroll
+                                && workerPositionPayrollExists.ValidTo >= currentDate
+                                && workerPositionPayrollExists.Worker == promotionWorkerTableInsert.Worker;
+                
+                //<NS by Rakesh 12 Nov 2018>
+                if(!hcmEmploymentDetail)
+                {
+                    select ValidTimeState(currentDate, currentDate) hcmEmploymentDetail
+                        join hcmEmployment
+                            where  hcmEmployment.RecId == hcmEmploymentDetail.Employment  &&
+                                hcmEmployment.Worker == promotionWorkerTableInsert.Worker;
+                }
+                //</NE by Rakesh 12 Nov 2018>
+
+                if(!workerPositionPayrollExists)
+                {
+                    ttsBegin;
+                    workerPositionPayrollInsert.validTimeStateUpdateMode(ValidTimeStateUpdate::CreateNewTimePeriod);
+                    workerPositionPayrollInsert.Payroll     = promotionWorkerProposedPayrollInsert.Payroll;
+                    workerPositionPayrollInsert.Monthly     = promotionWorkerProposedPayrollInsert.Monthly;
+                    workerPositionPayrollInsert.ValidFrom   = currentDate;
+                    workerPositionPayrollInsert.ValidTo     = datemax();
+                    workerPositionPayrollInsert.Worker      = promotionWorkerTableInsert.Worker;
+                    workerPositionPayrollInsert.LegalEntity = CompanyInfo::current();
+                    //<NS by Rakesh 12 Nov 2018>
+                    workerPositionPayrollInsert.Currency        = hcmEmploymentDetail.SPYDefaultPayrollCurrency;
+                    workerPositionPayrollInsert.PayrollPeriod   = hcmEmploymentDetail.SPYDefaultPayrollPeriod;
+                    //<NS by Rakesh 12 Nov 2018>
+                    workerPositionPayrollInsert.insert();
+                    ttsCommit;
+                }
+            }
+            ttsCommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

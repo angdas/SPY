@@ -1,0 +1,3374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYEOSRun</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYEOSRun extends FormRun
+{
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canSubmitToWorkflow</Name>
+				<Source><![CDATA[
+    public boolean canSubmitToWorkflow()
+    {
+        boolean ret;
+    
+        ret = SPYEOSRunTable.canSubmitToWorkflow();
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        if(element.args().record())
+        {
+            SPYEOSRunTable  = element.args().record();
+        }
+
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshDataSource</Name>
+				<Source><![CDATA[
+    void refreshDataSource()
+    {
+        SPYEOSRunTable_ds.research(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setEnable</Name>
+				<Source><![CDATA[
+    public void setEnable()
+    {
+        boolean     isEditable;
+    
+        if(SPYEOSRunTable.PostedToLedger)
+            isEditable = false;
+        else
+        {
+            if(SPYEOSRunTable.WorkflowStatus == SPYWorkflowStatus::Created ||
+               SPYEOSRunTable.WorkflowStatus == SPYWorkflowStatus::RequestChange)
+                isEditable = true;
+            else
+                isEditable = false;
+        }
+        SPYEOSRunTable_ds.allowEdit(isEditable);
+        SPYEOSRunTable_ds.allowDelete(isEditable);
+        SPYEOSRunPayroll_ds.allowEdit(isEditable);
+        SPYEOSRunPayroll_ds.allowDelete(isEditable);
+        SPYEOSRunBenefit_ds.allowEdit(isEditable);
+        SPYEOSRunBenefit_ds.allowDelete(isEditable);
+        SPYEOSLedgerUpdateServiceController.enabled(!SPYEOSRunTable.PostedToLedger && SPYEOSRunTable.WorkflowStatus == SPYWorkflowStatus::Approved);
+        SPYPayrollLedger.enabled(SPYEOSRunTable.PostedToLedger);
+        SPYBenefitLedger.enabled(SPYEOSRunTable.PostedToLedger);
+        SPYEOSRunPayrollServiceController.enabled(isEditable);
+        SPYEOSRunBenefitServiceController.enabled(isEditable);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setTitleText</Name>
+				<Source><![CDATA[
+    public void setTitleText()
+    {
+        headerTitle.text(strFmt('%1 : %2', HcmWorker::find(SPYEOSRunTable.worker).name(),
+                                           SPYEOSRunTable.EOSDate));
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYEOSRunTable</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+
+            if(SPYEOSRunTable.RecId)
+            {
+                SPYEOSRunTable_ds.query().dataSourceTable(tableNum(SPYEOSRunTable)).addRange(fieldNum(SPYEOSRunTable, RecId)).value(queryValue(SPYEOSRunTable.RecId));
+            }
+        
+            element.setEnable();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret;
+        
+            ret = super();
+        
+            element.setEnable();
+            element.setTitleText();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+			<DataSource>
+				<Name>SPYEOSRunBenefit</Name>
+				<Methods>
+					<Method>
+						<Name>transactionCurrencyFinalAmount</Name>
+						<Source><![CDATA[
+        edit SPYAmount transactionCurrencyFinalAmount(boolean _set,SPYAmount _finalAmount)
+        {
+            SPYAmount       ret;
+        
+            if(_set)
+            {
+                SPYEOSRunBenefit.AccountingCurPnLAmount = SPYEOSRunBenefit.AccountingCurrencyAmount - _finalAmount * SPYEOSRunBenefit.ExchRate / 100;
+                SPYEOSRunBenefit.TransactionCurPnLAmount = SPYEOSRunBenefit.TransactionCurrencyAmount - _finalAmount;
+                ret = _finalAmount;
+            }
+            else
+            {
+                ret = SPYEOSRunBenefit.TransactionCurrencyAmount;// - SPYEOSRunBenefit.AccountingCurPnLAmount;
+            }
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>write</Name>
+						<Source><![CDATA[
+        public void write()
+        {
+            super();
+            SPYEOSRunPayroll_ds.executeQuery();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>accountingCurrencyFinalAmount</Name>
+						<Source><![CDATA[
+        edit SPYAmount accountingCurrencyFinalAmount(boolean _set,SPYAmount _finalAmount)
+        {
+            SPYAmount       ret;
+        
+            if(_set)
+            {
+                SPYEOSRunBenefit.AccountingCurPnLAmount = SPYEOSRunBenefit.AccountingCurrencyAmount - _finalAmount;
+                SPYEOSRunBenefit.TransactionCurPnLAmount = SPYEOSRunBenefit.TransactionCurrencyAmount - _finalAmount;
+                ret = _finalAmount;
+            }
+            else
+            {
+                ret = SPYEOSRunBenefit.AccountingCurrencyAmount;// - SPYEOSRunBenefit.AccountingCurPnLAmount;
+            }
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>Tab</Name>
+				<Type>Tab</Type>
+				<Methods>
+					<Method>
+						<Name>tabChanged</Name>
+						<Source><![CDATA[
+        public void tabChanged(int _FromTab, int _ToTab)
+        {
+            super(_FromTab, _ToTab);
+        
+        
+            // Buttons to show in Grid View
+            //EditDetailsButton.visible(TabPageGrid.isActivePage());
+            /* TODO: (Code Upgrade) [Action Pane Rule] Please consider moving all references to the form task override method and remove the control: ListGroup */
+            ListGroup.visible(TabPageGrid.isActivePage());
+        
+            // Buttons to show in Details View
+            /* TODO: (Code Upgrade) [Action Pane Rule] Please consider moving all references to the form task override method and remove the control: EditRecordButton */
+            //EditRecordButton.visible(!TabPageGrid.isActivePage());
+            //ShowGroup.visible(!TabPageGrid.isActivePage());
+        
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>TabFinancialDimensionsPayroll</Name>
+				<Type>TabPage</Type>
+				<Methods>
+					<Method>
+						<Name>pageActivated</Name>
+						<Source><![CDATA[
+        public void pageActivated()
+        {
+            /* TODO: (Code Upgrade) [Dimension Entry control] This method can be removed if there is no custom implementation */
+            // dimensionDefaultingControllerPayroll.pageActivated();
+            DimensionEntryControlPayroll.allowEdit(false);
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>TabFinancialDimensionsBenefit</Name>
+				<Type>TabPage</Type>
+				<Methods>
+					<Method>
+						<Name>pageActivated</Name>
+						<Source><![CDATA[
+        public void pageActivated()
+        {
+            /* TODO: (Code Upgrade) [Dimension Entry control] This method can be removed if there is no custom implementation */
+            // dimensionDefaultingControllerBenefit.pageActivated();
+            DimensionEntryControlBenefit.allowEdit(false);
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<AllowPreLoading>No</AllowPreLoading>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYEOSRunTable</Name>
+			<Table>SPYEOSRunTable</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>EOSDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ImmediateDisbursement</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>modifiedDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PostedToLedger</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Remarks</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>WorkflowStatus</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<AllowCreate>No</AllowCreate>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>SPYEOSRunPayroll</Name>
+			<Table>SPYEOSRunPayroll</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>AccountingCurrencyAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>AccountingDistributionTemplate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Currency</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DefaultDimension</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>EOSRun</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ExchRate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>LedgerDimensionCredit</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>LedgerDimensionDebit</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayLedgerSource</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Payroll</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayrollLedger</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayrollPeriodLine</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransactionCurrencyAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Txt</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>UpdateFromBenefit</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>UpdateFromEarningJour</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>SPYEOSRunTable</JoinSource>
+			<AllowCreate>No</AllowCreate>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>SPYEOSRunBenefit</Name>
+			<Table>SPYEOSRunBenefit</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>AccountingCurOutstandingAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>AccountingCurPnLAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>AccountingCurrencyAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>AccountingDistributionTemplate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>Benefit</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>BenefitLedger</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>Currency</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>DefaultDimension</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>EOSRun</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>ExchRate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>JournalType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>LedgerDimensionCredit</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>LedgerDimensionDebit</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>LedgerDimensionPnL</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>PayLedgerSource</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>PayrollPeriodLine</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>Quantity</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>TransactionCurOutstandingAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>TransactionCurPnLAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransactionCurrencyAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>TransDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>Txt</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<AllowEdit>No</AllowEdit>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<JoinSource>SPYEOSRunTable</JoinSource>
+			<AllowCreate>No</AllowCreate>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY655</Caption>
+		<DataSource xmlns="">SPYEOSRunTable</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">DetailsTransaction</Pattern>
+		<PatternVersion xmlns="">1.4</PatternVersion>
+		<ShowNewButton xmlns="">No</ShowNewButton>
+		<Style xmlns="">DetailsFormTransaction</Style>
+		<TitleDataSource xmlns="">SPYEOSRunTable</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<WorkflowDataSource xmlns="">SPYEOSRunTable</WorkflowDataSource>
+		<WorkflowEnabled xmlns="">Yes</WorkflowEnabled>
+		<WorkflowType xmlns="">SPYEOSRun</WorkflowType>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPaneHeader</Name>
+				<ElementPosition>715827882</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>NewGroup</Name>
+						<ElementPosition>920350134</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ButtonGroup</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYEOSRunUpdateServiceController</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>MenuFunctionButton</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Big>Yes</Big>
+								<MenuItemName>SPYEOSRunUpdateServiceController</MenuItemName>
+								<MenuItemType>Action</MenuItemType>
+							</AxFormControl>
+						</Controls>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS2055</Caption>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderHomeTab</Name>
+						<ElementPosition>1193046470</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>ListGroup</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1533916890</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SYS118440</Caption>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>RefreshGroup</Name>
+								<ElementPosition>1687308579</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYEOSRunPayrollServiceController</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<DataSource>SPYEOSRunTable</DataSource>
+										<MenuItemName>SPYEOSRunPayrollServiceController</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYEOSRunBenefitServiceController</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<DataSource>SPYEOSRunTable</DataSource>
+										<MenuItemName>SPYEOSRunBenefitServiceController</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Columns>2</Columns>
+								<Caption>@SYS113222</Caption>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>Print1</Name>
+								<ElementPosition>1968526675</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYEOSRunReport1</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<DataSource>SPYEOSRunTable</DataSource>
+										<MenuItemName>SPYEOSRunReport</MenuItemName>
+										<MenuItemType>Output</MenuItemType>
+										<Text>EOS Report</Text>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SPY:Report</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS9282</Caption>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>HeaderHomeTabPost</Name>
+						<ElementPosition>1789569705</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>MaintainGroupPost</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYEOSLedgerUpdateServiceController</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<MenuItemName>SPYEOSLedgerUpdateServiceController</MenuItemName>
+										<MenuItemType>Action</MenuItemType>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SPY473</Caption>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>MaintainGroupInquiry</Name>
+								<ElementPosition>1610612733</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYPayrollLedger</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<DataSource>SPYEOSRunTable</DataSource>
+										<MenuItemName>SPYPayrollLedger</MenuItemName>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYBenefitLedger</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Big>Yes</Big>
+										<DataSource>SPYEOSRunTable</DataSource>
+										<MenuItemName>SPYBenefitLedger</MenuItemName>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Columns>2</Columns>
+								<Caption>@SYS1657</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>@SYS41360</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>NavigationList</Name>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<Visible>No</Visible>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl>
+						<Name>NavigationListFilter</Name>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension>
+							<Name>QuickFilterControl</Name>
+							<ExtensionComponents />
+							<ExtensionProperties>
+								<AxFormControlExtensionProperty>
+									<Name>targetControlName</Name>
+									<Type>String</Type>
+									<Value>NavigationListGrid</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>defaultColumnName</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>placeholderText</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+							</ExtensionProperties>
+						</FormControlExtension>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGridControl">
+						<Name>NavigationListGrid</Name>
+						<AllowEdit>No</AllowEdit>
+						<Type>Grid</Type>
+						<WidthMode>SizeToContent</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormReferenceGroupControl">
+								<Name>SPYEOSRunTable_Worker1</Name>
+								<Type>ReferenceGroup</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataSource>SPYEOSRunTable</DataSource>
+								<ReferenceField>Worker</ReferenceField>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormComboBoxControl">
+								<Name>SPYEOSRunTable_WorkflowStatus</Name>
+								<Type>ComboBox</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>WorkflowStatus</DataField>
+								<DataSource>SPYEOSRunTable</DataSource>
+								<Items />
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormDateControl">
+								<Name>SPYEOSRunTable_EOSDate1</Name>
+								<Type>Date</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>EOSDate</DataField>
+								<DataSource>SPYEOSRunTable</DataSource>
+							</AxFormControl>
+						</Controls>
+						<MultiSelect>No</MultiSelect>
+						<ShowRowLabels>No</ShowRowLabels>
+						<Style>List</Style>
+					</AxFormControl>
+				</Controls>
+				<FrameType>None</FrameType>
+				<Style>SidePanel</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1431655764</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageDetails</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1073741822</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>HeaderInfo</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>HeaderTitle</Name>
+										<AlignControl>No</AlignControl>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Skip>Yes</Skip>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Border>None</Border>
+										<ColorScheme>WindowsPalette</ColorScheme>
+										<FontSize>11</FontSize>
+										<ForegroundColor>DynTitleGreen</ForegroundColor>
+										<ShowLabel>No</ShowLabel>
+										<Style>TitleField</Style>
+										<ViewEditMode>View</ViewEditMode>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormGroupControl">
+										<Name>StatusGroup</Name>
+										<AllowEdit>No</AllowEdit>
+										<ExtendedStyle>entityStatus</ExtendedStyle>
+										<Type>Group</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormComboBoxControl">
+												<Name>WorkflowStatus</Name>
+												<ElementPosition>1610612733</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<HeightMode>Auto</HeightMode>
+												<LeftMode>RightEdge</LeftMode>
+												<Skip>Yes</Skip>
+												<Type>ComboBox</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<WidthMode>Auto</WidthMode>
+												<FormControlExtension
+													i:nil="true" />
+												<DataField>WorkflowStatus</DataField>
+												<DataSource>SPYEOSRunTable</DataSource>
+												<ShowLabel>No</ShowLabel>
+												<ViewEditMode>View</ViewEditMode>
+												<Items />
+											</AxFormControl>
+										</Controls>
+										<ArrangeMethod>HorizontalRight</ArrangeMethod>
+										<Breakable>No</Breakable>
+										<FrameType>None</FrameType>
+										<ViewEditMode>View</ViewEditMode>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+								<FrameType>None</FrameType>
+								<Style>DetailTitleContainer</Style>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormTabControl">
+								<Name>DetailsTab</Name>
+								<AlignControl>No</AlignControl>
+								<ElementPosition>1610612733</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Tab</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>LineView</Name>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>SizeToAvailable</HeightMode>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>LineViewTab</Name>
+												<AlignControl>No</AlignControl>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Type>Tab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewHeader</Name>
+														<ElementPosition>715827882</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>SizeToAvailable</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupDetails</Name>
+																<ElementPosition>1073741822</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>Group_Worker</Name>
+																		<ElementPosition>1073741822</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYEOSRunTable</DataSource>
+																		<ReferenceField>Worker</ReferenceField>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>Group_EOSDate</Name>
+																		<ElementPosition>1610612733</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>EOSDate</DataField>
+																		<DataSource>SPYEOSRunTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Details</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupPosted</Name>
+																<ElementPosition>1252698792</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>Group1_PostedToLedger</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>PostedToLedger</DataField>
+																		<DataSource>SPYEOSRunTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Posted</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorkflow</Name>
+																<ElementPosition>1431655762</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>Group_WorkflowStatus1</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>WorkflowStatus</DataField>
+																		<DataSource>SPYEOSRunTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Workflow</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupRemarks</Name>
+																<ElementPosition>1610612733</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>Group_Remarks</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Remarks</DataField>
+																		<DataSource>SPYEOSRunTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Remarks</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<Caption>@SPY665</Caption>
+														<FastTabExpanded>No</FastTabExpanded>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewLines</Name>
+														<ElementPosition>1073741823</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>SizeToAvailable</HeightMode>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<Visible>No</Visible>
+														<WidthMode>Auto</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormActionPaneControl">
+																<Name>LinesActionPaneStrip</Name>
+																<ElementPosition>1073741822</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>ActionPane</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormActionPaneTabControl">
+																		<Name>LinesActionPaneTab</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Type>ActionPaneTab</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormButtonGroupControl">
+																				<Name>LinesRecordActions</Name>
+																				<ElementPosition>1431655764</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<HeightMode>Auto</HeightMode>
+																				<Type>ButtonGroup</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<WidthMode>Auto</WidthMode>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCommandButtonControl">
+																						<Name>AddLine</Name>
+																						<ElementPosition>1073741822</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Type>CommandButton</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																						<Command>New</Command>
+																						<MultiSelect>Yes</MultiSelect>
+																						<NormalImage>Add</NormalImage>
+																						<Text>@SYS319116</Text>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormCommandButtonControl">
+																						<Name>RemoveLine</Name>
+																						<ElementPosition>1610612733</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Type>CommandButton</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																						<Command>DeleteRecord</Command>
+																						<MultiSelect>Yes</MultiSelect>
+																						<NormalImage>Delete</NormalImage>
+																						<SaveRecord>No</SaveRecord>
+																						<Text>@SYS135131</Text>
+																					</AxFormControl>
+																				</Controls>
+																				<ArrangeMethod>Vertical</ArrangeMethod>
+																			</AxFormControl>
+																		</Controls>
+																		<AlignChild>No</AlignChild>
+																		<AlignChildren>No</AlignChildren>
+																		<ArrangeMethod>Vertical</ArrangeMethod>
+																	</AxFormControl>
+																</Controls>
+																<AlignChild>No</AlignChild>
+																<AlignChildren>No</AlignChildren>
+																<ArrangeMethod>Vertical</ArrangeMethod>
+																<Style>Strip</Style>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGridControl">
+																<Name>LinesGrid</Name>
+																<ElementPosition>1610612733</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Grid</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls />
+																<Style>Tabular</Style>
+																<VisibleRows>5</VisibleRows>
+																<VisibleRowsMode>Fixed</VisibleRowsMode>
+															</AxFormControl>
+														</Controls>
+														<FastTabExpanded>Always</FastTabExpanded>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>LineViewLineDetailsPayelement</Name>
+														<Type>TabPage</Type>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormTabControl">
+																<Name>FormTabControl1</Name>
+																<Type>Tab</Type>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormTabPageControl">
+																		<Name>LineViewLineDetailsPayroll</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Pattern>Custom</Pattern>
+																		<Type>TabPage</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormTabControl">
+																				<Name>LineDetailsTabsPayroll</Name>
+																				<AlignControl>No</AlignControl>
+																				<ElementPosition>1431655764</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<HeightMode>Auto</HeightMode>
+																				<Type>Tab</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormTabPageControl">
+																						<Name>TabPagePayrollOverview</Name>
+																						<ElementPosition>1073741822</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Pattern>ToolbarList</Pattern>
+																						<PatternVersion>1.2</PatternVersion>
+																						<Type>TabPage</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormActionPaneControl">
+																								<Name>LinesActionPaneStripPayroll</Name>
+																								<ElementPosition>954437176</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>ActionPane</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormActionPaneTabControl">
+																										<Name>LinesActionPaneTabPayroll</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>ActionPaneTab</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls>
+																											<AxFormControl xmlns=""
+																												i:type="AxFormButtonGroupControl">
+																												<Name>LinesRecordActionsPayroll</Name>
+																												<ElementPosition>1431655764</ElementPosition>
+																												<FilterExpression>%1</FilterExpression>
+																												<HeightMode>Auto</HeightMode>
+																												<Type>ButtonGroup</Type>
+																												<VerticalSpacing>-1</VerticalSpacing>
+																												<WidthMode>Auto</WidthMode>
+																												<FormControlExtension
+																													i:nil="true" />
+																												<Controls>
+																													<AxFormControl xmlns=""
+																														i:type="AxFormCommandButtonControl">
+																														<Name>AddLinePayroll</Name>
+																														<ElementPosition>1073741822</ElementPosition>
+																														<FilterExpression>%1</FilterExpression>
+																														<HeightMode>Auto</HeightMode>
+																														<Type>CommandButton</Type>
+																														<VerticalSpacing>-1</VerticalSpacing>
+																														<WidthMode>Auto</WidthMode>
+																														<FormControlExtension
+																															i:nil="true" />
+																														<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																														<Command>New</Command>
+																														<MultiSelect>Yes</MultiSelect>
+																														<NormalImage>Add</NormalImage>
+																														<Text>@SYS319116</Text>
+																													</AxFormControl>
+																													<AxFormControl xmlns=""
+																														i:type="AxFormCommandButtonControl">
+																														<Name>RemoveLinePayroll</Name>
+																														<ElementPosition>1610612733</ElementPosition>
+																														<FilterExpression>%1</FilterExpression>
+																														<HeightMode>Auto</HeightMode>
+																														<Type>CommandButton</Type>
+																														<VerticalSpacing>-1</VerticalSpacing>
+																														<WidthMode>Auto</WidthMode>
+																														<FormControlExtension
+																															i:nil="true" />
+																														<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																														<Command>DeleteRecord</Command>
+																														<MultiSelect>Yes</MultiSelect>
+																														<NormalImage>Delete</NormalImage>
+																														<SaveRecord>No</SaveRecord>
+																														<Text>@SYS135131</Text>
+																													</AxFormControl>
+																												</Controls>
+																												<ArrangeMethod>Vertical</ArrangeMethod>
+																											</AxFormControl>
+																										</Controls>
+																										<AlignChild>No</AlignChild>
+																										<AlignChildren>No</AlignChildren>
+																										<ArrangeMethod>Vertical</ArrangeMethod>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																									</AxFormControl>
+																								</Controls>
+																								<AlignChild>No</AlignChild>
+																								<AlignChildren>No</AlignChildren>
+																								<ArrangeMethod>Vertical</ArrangeMethod>
+																								<Style>Strip</Style>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGridControl">
+																								<Name>GridPayroll</Name>
+																								<ElementPosition>1431655764</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Grid</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>SPYEOSRunPayroll_Payroll</Name>
+																										<ElementPosition>613566756</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>Payroll</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>SPYEOSRunPayroll_PayrollPeriodLine</Name>
+																										<ElementPosition>920350134</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>PayrollPeriodLine</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>SPYEOSRunPayroll_TransactionCurrencyAmount</Name>
+																										<ElementPosition>1227133512</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>TransactionCurrencyAmount</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormStringControl">
+																										<Name>SPYEOSRunPayroll_Currency</Name>
+																										<ElementPosition>1533916890</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>String</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>Currency</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>SPYEOSRunPayroll_AccountingCurrencyAmount</Name>
+																										<ElementPosition>1840700268</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>AccountingCurrencyAmount</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>CopyOfGroup_LedgerDimensionDebit</Name>
+																										<ElementPosition>1942961394</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>LedgerDimensionDebit</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>CopyOfGroup_LedgerDimensionCredit</Name>
+																										<ElementPosition>2045222520</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>LedgerDimensionCredit</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<DataSource>SPYEOSRunPayroll</DataSource>
+																							</AxFormControl>
+																						</Controls>
+																						<Caption>@SYS35894</Caption>
+																						<Scrollbars>Auto</Scrollbars>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormTabPageControl">
+																						<Name>LineGeneralPayroll</Name>
+																						<ElementPosition>1610612734</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Pattern>FieldsFieldGroups</Pattern>
+																						<PatternVersion>1.1</PatternVersion>
+																						<Type>TabPage</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupPayroll</Name>
+																								<ElementPosition>805306366</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>Group_Payroll1</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>Payroll</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>Payroll</DataGroup>
+																								<DataSource>SPYEOSRunPayroll</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupPayrollPeriodPayroll</Name>
+																								<ElementPosition>1207959549</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>Group_PayrollPeriodLine1</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>PayrollPeriodLine</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>PayrollPeriod</DataGroup>
+																								<DataSource>SPYEOSRunPayroll</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupAmountPayroll</Name>
+																								<ElementPosition>1610612733</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>Group_TransactionCurrencyAmount</Name>
+																										<ElementPosition>715827882</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>TransactionCurrencyAmount</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>Group_AccountingCurrencyAmount</Name>
+																										<ElementPosition>1073741823</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>AccountingCurrencyAmount</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormStringControl">
+																										<Name>Group_Currency</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>String</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>Currency</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>Group_ExchRate</Name>
+																										<ElementPosition>1789569705</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>ExchRate</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>Amount</DataGroup>
+																								<DataSource>SPYEOSRunPayroll</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupLedgerAccount</Name>
+																								<ElementPosition>1879048189</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>Group_LedgerDimensionDebit</Name>
+																										<ElementPosition>858993458</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>LedgerDimensionDebit</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>Group_LedgerDimensionCredit</Name>
+																										<ElementPosition>1288490187</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>LedgerDimensionCredit</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>Group_AccountingDistributionTemplate</Name>
+																										<ElementPosition>1717986916</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>AccountingDistributionTemplate</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>LedgerAccount</DataGroup>
+																								<DataSource>SPYEOSRunPayroll</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupTransactionPayroll</Name>
+																								<ElementPosition>2013265917</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormStringControl">
+																										<Name>Group_Txt</Name>
+																										<ElementPosition>1073741822</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>String</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>Txt</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormDateControl">
+																										<Name>Group_TransDate</Name>
+																										<ElementPosition>1610612733</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>Date</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>TransDate</DataField>
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>Transaction</DataGroup>
+																								<DataSource>SPYEOSRunPayroll</DataSource>
+																							</AxFormControl>
+																						</Controls>
+																						<ColumnsMode>Fill</ColumnsMode>
+																						<Caption>@SYS2952</Caption>
+																						<Scrollbars>Auto</Scrollbars>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormTabPageControl">
+																						<Name>TabFinancialDimensionsPayroll</Name>
+																						<AutoDeclaration>Yes</AutoDeclaration>
+																						<ElementPosition>1879048190</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<NeededPermission>Manual</NeededPermission>
+																						<Pattern>DimensionEntryControl</Pattern>
+																						<PatternVersion>1.1</PatternVersion>
+																						<Type>TabPage</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>SizeToAvailable</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>CopyOfAccountDistTemplateDetails</Name>
+																								<ElementPosition>1431655764</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<HeightMode>Auto</HeightMode>
+																								<Pattern>FieldsFieldGroups</Pattern>
+																								<PatternVersion>1.1</PatternVersion>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<WidthMode>Auto</WidthMode>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>AccountDistTemplateDetails_AccountingDistributionTemplate</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunPayroll</DataSource>
+																										<ReferenceField>AccountingDistributionTemplate</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<ColumnsMode>Fill</ColumnsMode>
+																								<DataSource>SPYEOSRunPayroll</DataSource>
+																								<FrameType>None</FrameType>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormContainerControl">
+																								<Name>DimensionEntryControlPayroll</Name>
+																								<AutoDeclaration>Yes</AutoDeclaration>
+																								<Type>Container</Type>
+																								<WidthMode>SizeToAvailable</WidthMode>
+																								<FormControlExtension>
+																									<Name>DimensionEntryControl</Name>
+																									<ExtensionComponents />
+																									<ExtensionProperties>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmControllerClassName</Name>
+																											<Type>ExtendedDataType</Type>
+																											<TypeName>ClassName</TypeName>
+																											<Value>LedgerDefaultDimensionEntryController</Value>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmControlLabelText</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																											<Value>@SYS138487</Value>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmEnumerationName</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmDataSourceName</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																											<Value>SPYEOSRunPayroll</Value>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmValueSetReferenceField</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																											<Value>DefaultDimension</Value>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmEnumValueSetReferenceField</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																										</AxFormControlExtensionProperty>
+																									</ExtensionProperties>
+																								</FormControlExtension>
+																								<Controls />
+																							</AxFormControl>
+																						</Controls>
+																						<HideIfEmpty>No</HideIfEmpty>
+																						<Caption>@SYS101181</Caption>
+																						<Scrollbars>Auto</Scrollbars>
+																					</AxFormControl>
+																				</Controls>
+																				<AlignChild>No</AlignChild>
+																				<ArrangeMethod>Vertical</ArrangeMethod>
+																			</AxFormControl>
+																		</Controls>
+																		<BottomMargin>0</BottomMargin>
+																		<BottomMarginMode>Fixed</BottomMarginMode>
+																		<LeftMargin>0</LeftMargin>
+																		<LeftMarginMode>Fixed</LeftMarginMode>
+																		<RightMargin>0</RightMargin>
+																		<RightMarginMode>Fixed</RightMarginMode>
+																		<TopMargin>0</TopMargin>
+																		<TopMarginMode>Fixed</TopMarginMode>
+																		<Caption>@SPY83</Caption>
+																		<FastTabExpanded>No</FastTabExpanded>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormTabPageControl">
+																		<Name>LineViewLineDetailsBenefit</Name>
+																		<ElementPosition>1789569705</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<HeightMode>Auto</HeightMode>
+																		<Pattern>Custom</Pattern>
+																		<Type>TabPage</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<WidthMode>Auto</WidthMode>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls>
+																			<AxFormControl xmlns=""
+																				i:type="AxFormTabControl">
+																				<Name>LineDetailsTabsBenefit</Name>
+																				<AlignControl>No</AlignControl>
+																				<ElementPosition>1431655764</ElementPosition>
+																				<FilterExpression>%1</FilterExpression>
+																				<HeightMode>Auto</HeightMode>
+																				<Type>Tab</Type>
+																				<VerticalSpacing>-1</VerticalSpacing>
+																				<FormControlExtension
+																					i:nil="true" />
+																				<Controls>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormTabPageControl">
+																						<Name>TabPageBenefitOverview</Name>
+																						<ElementPosition>1073741822</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Pattern>ToolbarList</Pattern>
+																						<PatternVersion>1.2</PatternVersion>
+																						<Type>TabPage</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormActionPaneControl">
+																								<Name>LinesActionPaneStripBenefit</Name>
+																								<ElementPosition>954437176</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>ActionPane</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormActionPaneTabControl">
+																										<Name>LinesActionPaneTabBenefit</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>ActionPaneTab</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls>
+																											<AxFormControl xmlns=""
+																												i:type="AxFormButtonGroupControl">
+																												<Name>LinesRecordActionsBenefit</Name>
+																												<ElementPosition>1431655764</ElementPosition>
+																												<FilterExpression>%1</FilterExpression>
+																												<HeightMode>Auto</HeightMode>
+																												<Type>ButtonGroup</Type>
+																												<VerticalSpacing>-1</VerticalSpacing>
+																												<WidthMode>Auto</WidthMode>
+																												<FormControlExtension
+																													i:nil="true" />
+																												<Controls>
+																													<AxFormControl xmlns=""
+																														i:type="AxFormCommandButtonControl">
+																														<Name>AddLineBenefit</Name>
+																														<ElementPosition>1073741822</ElementPosition>
+																														<FilterExpression>%1</FilterExpression>
+																														<HeightMode>Auto</HeightMode>
+																														<Type>CommandButton</Type>
+																														<VerticalSpacing>-1</VerticalSpacing>
+																														<WidthMode>Auto</WidthMode>
+																														<FormControlExtension
+																															i:nil="true" />
+																														<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																														<Command>New</Command>
+																														<MultiSelect>Yes</MultiSelect>
+																														<NormalImage>Add</NormalImage>
+																														<Text>@SYS319116</Text>
+																													</AxFormControl>
+																													<AxFormControl xmlns=""
+																														i:type="AxFormCommandButtonControl">
+																														<Name>RemoveLineBenefit</Name>
+																														<ElementPosition>1610612733</ElementPosition>
+																														<FilterExpression>%1</FilterExpression>
+																														<HeightMode>Auto</HeightMode>
+																														<Type>CommandButton</Type>
+																														<VerticalSpacing>-1</VerticalSpacing>
+																														<WidthMode>Auto</WidthMode>
+																														<FormControlExtension
+																															i:nil="true" />
+																														<ButtonDisplay>TextWithImageLeft</ButtonDisplay>
+																														<Command>DeleteRecord</Command>
+																														<MultiSelect>Yes</MultiSelect>
+																														<NormalImage>Delete</NormalImage>
+																														<SaveRecord>No</SaveRecord>
+																														<Text>@SYS135131</Text>
+																													</AxFormControl>
+																												</Controls>
+																												<ArrangeMethod>Vertical</ArrangeMethod>
+																											</AxFormControl>
+																										</Controls>
+																										<AlignChild>No</AlignChild>
+																										<AlignChildren>No</AlignChildren>
+																										<ArrangeMethod>Vertical</ArrangeMethod>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																								</Controls>
+																								<AlignChild>No</AlignChild>
+																								<AlignChildren>No</AlignChildren>
+																								<ArrangeMethod>Vertical</ArrangeMethod>
+																								<Style>Strip</Style>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGridControl">
+																								<Name>GridBenefit</Name>
+																								<ElementPosition>1550960411</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Grid</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>SPYEOSRunBenefit_Benefit</Name>
+																										<ElementPosition>536870910</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>Benefit</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormComboBoxControl">
+																										<Name>SPYEOSRunBenefit_JournalType</Name>
+																										<ElementPosition>671088637</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>ComboBox</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>JournalType</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<Items />
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>SPYEOSRunBenefit_PayrollPeriodLine</Name>
+																										<ElementPosition>805306365</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>PayrollPeriodLine</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>disbursementAmount</Name>
+																										<AutoDeclaration>Yes</AutoDeclaration>
+																										<ElementPosition>939524092</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<Visible>No</Visible>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<CacheDataMethod>Yes</CacheDataMethod>
+																										<DataMethod>disbursementAmount</DataMethod>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<Label>@SPY1106</Label>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>SPYEOSRunBenefit_TransactionCurrencyAmount</Name>
+																										<ElementPosition>1073741820</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>TransactionCurrencyAmount</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>SPYEOSRunBenefit_Quantity</Name>
+																										<ElementPosition>1342177275</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>Quantity</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormStringControl">
+																										<Name>SPYEOSRunBenefit_Currency</Name>
+																										<ElementPosition>1610612730</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>String</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>Currency</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>SPYEOSRunBenefit_AccountingCurrencyAmount</Name>
+																										<ElementPosition>1879048185</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>AccountingCurrencyAmount</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>CopyOfGroup_LedgerDimensionDebit1</Name>
+																										<ElementPosition>1968526672</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>LedgerDimensionDebit</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>CopyOfGroup_LedgerDimensionCredit1</Name>
+																										<ElementPosition>2058005159</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<HeightMode>Auto</HeightMode>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<WidthMode>Auto</WidthMode>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>LedgerDimensionCredit</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																						</Controls>
+																						<Caption>@SYS80404</Caption>
+																						<Scrollbars>Auto</Scrollbars>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormTabPageControl">
+																						<Name>LineGeneralBenefit</Name>
+																						<ElementPosition>1610612733</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<Pattern>FieldsFieldGroups</Pattern>
+																						<PatternVersion>1.1</PatternVersion>
+																						<Type>TabPage</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>Auto</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupBenefit</Name>
+																								<ElementPosition>515396074</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>Group_Benefit1</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>Benefit</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>Benefit</DataGroup>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupJournalType</Name>
+																								<ElementPosition>773094111</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormComboBoxControl">
+																										<Name>Group_JournalType</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ComboBox</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>JournalType</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<Items />
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>JournalType</DataGroup>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupPayrollPeriod</Name>
+																								<ElementPosition>1030792148</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>Group_PayrollPeriodLine2</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>PayrollPeriodLine</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>PayrollPeriod</DataGroup>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupAmountBenefit</Name>
+																								<ElementPosition>1288490187</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>GroupAmountBenefit_TransactionCurOutstandingAmount</Name>
+																										<Type>Real</Type>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>TransactionCurOutstandingAmount</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>GroupAmountBenefit_AccountingCurOutstandingAmount</Name>
+																										<Type>Real</Type>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>AccountingCurOutstandingAmount</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormStringControl">
+																										<Name>GroupAmountBenefit_Currency</Name>
+																										<Type>String</Type>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>Currency</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>GroupAmountBenefit_ExchRate</Name>
+																										<Type>Real</Type>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>ExchRate</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>GroupAmountBenefit_TransactionCurPnLAmount</Name>
+																										<Type>Real</Type>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>TransactionCurPnLAmount</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>GroupAmountBenefit_AccountingCurPnLAmount</Name>
+																										<Type>Real</Type>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>AccountingCurPnLAmount</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>Amount</DataGroup>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupQuantityBenefit</Name>
+																								<ElementPosition>1717986916</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>Group_Quantity</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>Real</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>Quantity</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<NoOfDecimals>-1</NoOfDecimals>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>Quantity</DataGroup>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupDisburseAmount</Name>
+																								<ElementPosition>1932735281</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>GroupDisburseAmount_TransactionCurrencyAmount</Name>
+																										<Type>Real</Type>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>TransactionCurrencyAmount</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormRealControl">
+																										<Name>GroupDisburseAmount_AccountingCurrencyAmount</Name>
+																										<Type>Real</Type>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>AccountingCurrencyAmount</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																								</Controls>
+																								<Caption>@SPY686</Caption>
+																								<DataGroup>DisbursementAmount</DataGroup>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupLedgerAccountBenefit</Name>
+																								<ElementPosition>2040109463</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>Group_LedgerDimensionDebit1</Name>
+																										<ElementPosition>715827882</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>LedgerDimensionDebit</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>Group_LedgerDimensionCredit1</Name>
+																										<ElementPosition>1073741823</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>LedgerDimensionCredit</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormSegmentedEntryControl">
+																										<Name>GroupLedgerAccountBenefit_LedgerDimensionPnL</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>SegmentedEntry</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension>
+																											<Name>SegmentedEntryControl</Name>
+																											<ExtensionComponents />
+																											<ExtensionProperties>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmControllerClassName</Name>
+																													<Type>String</Type>
+																													<TypeName>str</TypeName>
+																													<Value>LedgerDimensionDefaultAccountController</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIsDefaultAccount</Name>
+																													<Type>Enum</Type>
+																													<TypeName>boolean</TypeName>
+																													<Value>False</Value>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmValidateBlockedForManualEntry</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmLockMainAccountSegment</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmPostingType</Name>
+																													<Type>Enum</Type>
+																													<TypeName>LedgerPostingType</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeTotalAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmIncludeFinancialAccounts</Name>
+																													<Type>Enum</Type>
+																													<TypeName>NoYes</TypeName>
+																												</AxFormControlExtensionProperty>
+																												<AxFormControlExtensionProperty>
+																													<Name>parmAccountTypeEnumName</Name>
+																													<Type>String</Type>
+																												</AxFormControlExtensionProperty>
+																											</ExtensionProperties>
+																										</FormControlExtension>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>LedgerDimensionPnL</ReferenceField>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>Group_AccountingDistributionTemplate1</Name>
+																										<ElementPosition>1789569705</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>AccountingDistributionTemplate</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>LedgerAccount</DataGroup>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>GroupTransactionBenefit</Name>
+																								<ElementPosition>2093796554</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormStringControl">
+																										<Name>Group_Txt1</Name>
+																										<ElementPosition>1073741822</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>String</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>Txt</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormDateControl">
+																										<Name>Group_TransDate1</Name>
+																										<ElementPosition>1610612733</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>Date</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<DataField>TransDate</DataField>
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																									</AxFormControl>
+																								</Controls>
+																								<DataGroup>Transaction</DataGroup>
+																								<DataSource>SPYEOSRunBenefit</DataSource>
+																							</AxFormControl>
+																						</Controls>
+																						<ColumnsMode>Fill</ColumnsMode>
+																						<Caption>@SYS2952</Caption>
+																						<Scrollbars>Auto</Scrollbars>
+																					</AxFormControl>
+																					<AxFormControl xmlns=""
+																						i:type="AxFormTabPageControl">
+																						<Name>TabFinancialDimensionsBenefit</Name>
+																						<AutoDeclaration>Yes</AutoDeclaration>
+																						<ElementPosition>1879048189</ElementPosition>
+																						<FilterExpression>%1</FilterExpression>
+																						<HeightMode>Auto</HeightMode>
+																						<NeededPermission>Manual</NeededPermission>
+																						<Pattern>DimensionEntryControl</Pattern>
+																						<PatternVersion>1.1</PatternVersion>
+																						<Type>TabPage</Type>
+																						<VerticalSpacing>-1</VerticalSpacing>
+																						<WidthMode>SizeToAvailable</WidthMode>
+																						<FormControlExtension
+																							i:nil="true" />
+																						<Controls>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormGroupControl">
+																								<Name>AccountDistTemplateDetails</Name>
+																								<ElementPosition>1431655764</ElementPosition>
+																								<FilterExpression>%1</FilterExpression>
+																								<HeightMode>Auto</HeightMode>
+																								<Pattern>FieldsFieldGroups</Pattern>
+																								<PatternVersion>1.1</PatternVersion>
+																								<Type>Group</Type>
+																								<VerticalSpacing>-1</VerticalSpacing>
+																								<WidthMode>Auto</WidthMode>
+																								<FormControlExtension
+																									i:nil="true" />
+																								<Controls>
+																									<AxFormControl xmlns=""
+																										i:type="AxFormReferenceGroupControl">
+																										<Name>SPYBenefitLedger_AccountingDistributionTemplate</Name>
+																										<ElementPosition>1431655764</ElementPosition>
+																										<FilterExpression>%1</FilterExpression>
+																										<Type>ReferenceGroup</Type>
+																										<VerticalSpacing>-1</VerticalSpacing>
+																										<FormControlExtension
+																											i:nil="true" />
+																										<Controls />
+																										<DataSource>SPYEOSRunBenefit</DataSource>
+																										<ReferenceField>AccountingDistributionTemplate</ReferenceField>
+																									</AxFormControl>
+																								</Controls>
+																								<ColumnsMode>Fill</ColumnsMode>
+																								<FrameType>None</FrameType>
+																							</AxFormControl>
+																							<AxFormControl xmlns=""
+																								i:type="AxFormContainerControl">
+																								<Name>DimensionEntryControlBenefit</Name>
+																								<AutoDeclaration>Yes</AutoDeclaration>
+																								<Type>Container</Type>
+																								<WidthMode>SizeToAvailable</WidthMode>
+																								<FormControlExtension>
+																									<Name>DimensionEntryControl</Name>
+																									<ExtensionComponents />
+																									<ExtensionProperties>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmControllerClassName</Name>
+																											<Type>ExtendedDataType</Type>
+																											<TypeName>ClassName</TypeName>
+																											<Value>LedgerDefaultDimensionEntryController</Value>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmControlLabelText</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																											<Value>@SYS138487</Value>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmEnumerationName</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmDataSourceName</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																											<Value>SPYEOSRunBenefit</Value>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmValueSetReferenceField</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																											<Value>DefaultDimension</Value>
+																										</AxFormControlExtensionProperty>
+																										<AxFormControlExtensionProperty>
+																											<Name>parmEnumValueSetReferenceField</Name>
+																											<Type>String</Type>
+																											<TypeName>str</TypeName>
+																										</AxFormControlExtensionProperty>
+																									</ExtensionProperties>
+																								</FormControlExtension>
+																								<Controls />
+																							</AxFormControl>
+																						</Controls>
+																						<HideIfEmpty>No</HideIfEmpty>
+																						<Caption>@SYS101181</Caption>
+																						<Scrollbars>Auto</Scrollbars>
+																					</AxFormControl>
+																				</Controls>
+																				<AlignChild>No</AlignChild>
+																				<ArrangeMethod>Vertical</ArrangeMethod>
+																			</AxFormControl>
+																		</Controls>
+																		<BottomMargin>0</BottomMargin>
+																		<BottomMarginMode>Fixed</BottomMarginMode>
+																		<LeftMargin>0</LeftMargin>
+																		<LeftMarginMode>Fixed</LeftMarginMode>
+																		<RightMargin>0</RightMargin>
+																		<RightMarginMode>Fixed</RightMarginMode>
+																		<TopMargin>0</TopMargin>
+																		<TopMarginMode>Fixed</TopMarginMode>
+																		<Caption>@SPY5</Caption>
+																		<DataSource>SPYEOSRunBenefit</DataSource>
+																		<FastTabExpanded>No</FastTabExpanded>
+																	</AxFormControl>
+																</Controls>
+															</AxFormControl>
+														</Controls>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>FastTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<BottomMargin>0</BottomMargin>
+										<BottomMarginMode>Fixed</BottomMarginMode>
+										<LeftMargin>0</LeftMargin>
+										<LeftMarginMode>Fixed</LeftMarginMode>
+										<RightMargin>0</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<TopMargin>0</TopMargin>
+										<TopMarginMode>Fixed</TopMarginMode>
+										<BackgroundColor>DynBackgroundBlue</BackgroundColor>
+										<PanelStyle>DetailsLine</PanelStyle>
+										<Scrollbars>Auto</Scrollbars>
+										<Style>DetailsFormDetails</Style>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormTabPageControl">
+										<Name>HeaderView</Name>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>SizeToAvailable</HeightMode>
+										<Type>TabPage</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>SizeToAvailable</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls>
+											<AxFormControl xmlns=""
+												i:type="AxFormTabControl">
+												<Name>HeaderDetailsTab</Name>
+												<AlignControl>No</AlignControl>
+												<ElementPosition>1431655764</ElementPosition>
+												<FilterExpression>%1</FilterExpression>
+												<Type>Tab</Type>
+												<VerticalSpacing>-1</VerticalSpacing>
+												<FormControlExtension
+													i:nil="true" />
+												<Controls>
+													<AxFormControl xmlns=""
+														i:type="AxFormTabPageControl">
+														<Name>HeaderGeneral</Name>
+														<ElementPosition>1431655764</ElementPosition>
+														<FilterExpression>%1</FilterExpression>
+														<HeightMode>Auto</HeightMode>
+														<Pattern>FieldsFieldGroups</Pattern>
+														<PatternVersion>1.1</PatternVersion>
+														<Type>TabPage</Type>
+														<VerticalSpacing>-1</VerticalSpacing>
+														<WidthMode>SizeToAvailable</WidthMode>
+														<FormControlExtension
+															i:nil="true" />
+														<Controls>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupDetailsRun</Name>
+																<ElementPosition>613566756</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormReferenceGroupControl">
+																		<Name>Group_Worker1</Name>
+																		<ElementPosition>1073741822</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ReferenceGroup</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<Controls />
+																		<DataSource>SPYEOSRunTable</DataSource>
+																		<ReferenceField>Worker</ReferenceField>
+																	</AxFormControl>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormDateControl">
+																		<Name>Group_EOSDate1</Name>
+																		<ElementPosition>1610612733</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>Date</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>EOSDate</DataField>
+																		<DataSource>SPYEOSRunTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Details</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupPostedRun</Name>
+																<ElementPosition>920350134</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormCheckBoxControl">
+																		<Name>Group_PostedToLedger</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>CheckBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>PostedToLedger</DataField>
+																		<DataSource>SPYEOSRunTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Posted</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupWorkflowRun</Name>
+																<ElementPosition>1227133512</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormComboBoxControl">
+																		<Name>Group_WorkflowStatus</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>ComboBox</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>WorkflowStatus</DataField>
+																		<DataSource>SPYEOSRunTable</DataSource>
+																		<Items />
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Workflow</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupLogRun</Name>
+																<ElementPosition>1533916890</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls />
+																<DataGroup>Log</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+															<AxFormControl xmlns=""
+																i:type="AxFormGroupControl">
+																<Name>GroupRemarksRun</Name>
+																<ElementPosition>1840700268</ElementPosition>
+																<FilterExpression>%1</FilterExpression>
+																<Type>Group</Type>
+																<VerticalSpacing>-1</VerticalSpacing>
+																<FormControlExtension
+																	i:nil="true" />
+																<Controls>
+																	<AxFormControl xmlns=""
+																		i:type="AxFormStringControl">
+																		<Name>Group_Remarks1</Name>
+																		<ElementPosition>1431655764</ElementPosition>
+																		<FilterExpression>%1</FilterExpression>
+																		<Type>String</Type>
+																		<VerticalSpacing>-1</VerticalSpacing>
+																		<FormControlExtension
+																			i:nil="true" />
+																		<DataField>Remarks</DataField>
+																		<DataSource>SPYEOSRunTable</DataSource>
+																	</AxFormControl>
+																</Controls>
+																<DataGroup>Remarks</DataGroup>
+																<DataSource>SPYEOSRunTable</DataSource>
+															</AxFormControl>
+														</Controls>
+														<ColumnsMode>Fill</ColumnsMode>
+														<Caption>@SYS2952</Caption>
+														<Scrollbars>Auto</Scrollbars>
+													</AxFormControl>
+												</Controls>
+												<AlignChild>No</AlignChild>
+												<ArrangeMethod>Vertical</ArrangeMethod>
+												<Style>FastTabs</Style>
+											</AxFormControl>
+										</Controls>
+										<BottomMargin>0</BottomMargin>
+										<BottomMarginMode>Fixed</BottomMarginMode>
+										<LeftMargin>0</LeftMargin>
+										<LeftMarginMode>Fixed</LeftMarginMode>
+										<RightMargin>0</RightMargin>
+										<RightMarginMode>Fixed</RightMarginMode>
+										<TopMargin>0</TopMargin>
+										<TopMarginMode>Fixed</TopMarginMode>
+										<BackgroundColor>DynBackgroundBlue</BackgroundColor>
+										<DataSource>SPYEOSRunTable</DataSource>
+										<PanelStyle>DetailsHeader</PanelStyle>
+										<Scrollbars>Auto</Scrollbars>
+										<Style>DetailsFormDetails</Style>
+									</AxFormControl>
+								</Controls>
+								<AlignChild>No</AlignChild>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<ShowTabs>No</ShowTabs>
+							</AxFormControl>
+						</Controls>
+						<BottomMargin>0</BottomMargin>
+						<BottomMarginMode>Fixed</BottomMarginMode>
+						<LeftMargin>0</LeftMargin>
+						<LeftMarginMode>Fixed</LeftMarginMode>
+						<RightMargin>0</RightMargin>
+						<RightMarginMode>Fixed</RightMarginMode>
+						<TopMargin>0</TopMargin>
+						<TopMarginMode>Fixed</TopMarginMode>
+						<BackgroundColor>DynBackgroundBlue</BackgroundColor>
+						<PanelStyle>Details</PanelStyle>
+						<Scrollbars>Auto</Scrollbars>
+						<Style>DetailsFormDetails</Style>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageGrid</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1610612733</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GridGroup1</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Pattern>CustomAndQuickFilters</Pattern>
+								<PatternVersion>1.1</PatternVersion>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl>
+										<Name>GridFilter</Name>
+										<FormControlExtension>
+											<Name>QuickFilterControl</Name>
+											<ExtensionComponents />
+											<ExtensionProperties>
+												<AxFormControlExtensionProperty>
+													<Name>targetControlName</Name>
+													<Type>String</Type>
+													<Value>Grid</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>defaultColumnName</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>placeholderText</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+											</ExtensionProperties>
+										</FormControlExtension>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+								<FrameType>None</FrameType>
+								<Style>CustomFilter</Style>
+								<ViewEditMode>Edit</ViewEditMode>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>HeaderGrid</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYEOSRunTable_Worker</Name>
+										<ElementPosition>1073741822</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYEOSRunTable</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>SPYEOSRunTable_EOSDate</Name>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>EOSDate</DataField>
+										<DataSource>SPYEOSRunTable</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataSource>SPYEOSRunTable</DataSource>
+								<DefaultAction>MainGridDefaultAction</DefaultAction>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormCommandButtonControl">
+								<Name>MainGridDefaultAction</Name>
+								<Type>CommandButton</Type>
+								<Visible>No</Visible>
+								<FormControlExtension
+									i:nil="true" />
+								<Command>DetailsView</Command>
+							</AxFormControl>
+						</Controls>
+						<BottomMargin>0</BottomMargin>
+						<BottomMarginMode>Fixed</BottomMarginMode>
+						<LeftMargin>0</LeftMargin>
+						<LeftMarginMode>Fixed</LeftMarginMode>
+						<RightMargin>0</RightMargin>
+						<RightMarginMode>Fixed</RightMarginMode>
+						<TopMargin>0</TopMargin>
+						<TopMarginMode>Fixed</TopMarginMode>
+						<BackgroundColor>DynBackgroundBlue</BackgroundColor>
+						<DataSource>SPYEOSRunTable</DataSource>
+						<PanelStyle>Grid</PanelStyle>
+						<Scrollbars>Auto</Scrollbars>
+						<Style>DetailsFormGrid</Style>
+						<ViewEditMode>Edit</ViewEditMode>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<ShowTabs>No</ShowTabs>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

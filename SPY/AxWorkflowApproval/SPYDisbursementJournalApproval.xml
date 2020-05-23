@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYDisbursementJournalApproval</Name>
+	<CanceledEventHandler>SPYDisbursementJournalApprovalEventHandler</CanceledEventHandler>
+	<DelegateMenuItem>SPYDisbursementJournalApprovalDelegateMenuItem</DelegateMenuItem>
+	<Document>SPYDisbursementJournalTemplateDocument</Document>
+	<DocumentMenuItem>SPYDisbursementJournal</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>Details</DocumentPreviewFieldGroup>
+	<HelpText>@SPY:ApproveDisbursementJournalHelp</HelpText>
+	<Label>@SPY:ApproveDisbursementJournal</Label>
+	<ResubmitMenuItem>SPYDisbursementJournalApprovalResubmit</ResubmitMenuItem>
+	<StartedEventHandler>SPYDisbursementJournalApprovalEventHandler</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYDisbursementJournalApprovalEventHandler</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYDisbursementJournalApprovalApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYDisbursementJournalApprovalEventHandler</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYDisbursementJournalApprovalReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYDisbursementJournalApprovalEventHandler</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYDisbursementJournalApprovalRequestChange</ActionMenuItem>
+		<Enabled xmlns="">No</Enabled>
+		<EventHandler xmlns="">SPYDisbursementJournalApprovalEventHandler</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

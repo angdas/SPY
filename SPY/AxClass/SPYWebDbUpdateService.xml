@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWebDbUpdateService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWebDbUpdateService extends SysOperationServiceBase
+{
+    TransDate                             transDate;
+    SPYWebDbUpdateContract    contract;
+    URL                                     portalAPIUrl;
+    SPYWebAPI.Service               apiService;
+    str                                       token;
+    PageNo                              messagePageSize;
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>process</Name>
+				<Source><![CDATA[
+    public void process(SPYWebDbUpdateContract _contract)
+    {
+        #AviFiles
+        SysOperationProgress    progress = new SysOperationProgress();
+        int                     progressCount;
+    
+        contract = _contract;
+        apiService = new SPYWebAPI.Service();
+        portalAPIUrl = SPYPayrollParametersShared::find().WebPortalApiURL;
+        messagePageSize = SPYPayrollParametersShared::find().WebPortalMessagePageSize;
+        if(this.validate())
+        {
+            if(contract.parmSyncConfiguration())
+            {
+                this.postConfiguration();
+            }
+            if(contract.parmSyncWorker())
+            {
+                SPYWebDbUpdateServiceWorker     webDbUpdateServiceWorker = new SPYWebDbUpdateServiceWorker(apiService, token, portalAPIUrl, messagePageSize);
+                webDbUpdateServiceWorker.postWorkers();
+                webDbUpdateServiceWorker.postWorkerImage();
+                webDbUpdateServiceWorker.postWorkerIdentification();
+                webDbUpdateServiceWorker.postWorkerEmployment();
+                webDbUpdateServiceWorker.finalize();
+            }
+            if(contract.parmSyncAbsenceConfig())
+            {
+                SPYWebDbUpdateServiceLeaveApplication   webDbUpdateServiceLeaveApplication = new SPYWebDbUpdateServiceLeaveApplication(apiService, token, portalAPIUrl, messagePageSize);
+                webDbUpdateServiceLeaveApplication.postAbsenceMaster();
+                webDbUpdateServiceLeaveApplication.finalize();
+            }
+            if(contract.parmSyncLeaveApplication())
+            {
+                SPYWebDbUpdateServiceLeaveApplication   webDbUpdateServiceLeaveApplication = new SPYWebDbUpdateServiceLeaveApplication(apiService, token, portalAPIUrl, messagePageSize);
+                webDbUpdateServiceLeaveApplication.postWorkerAbsenceLedger();
+                webDbUpdateServiceLeaveApplication.getLeaveApplications();
+                webDbUpdateServiceLeaveApplication.postLeaveApplication();
+                webDbUpdateServiceLeaveApplication.postLeaveApplicationApproval();
+                webDbUpdateServiceLeaveApplication.finalize();
+            }
+            if(contract.parmSyncTimesheetConfig())
+            {
+                SPYWebDbUpdateServiceTimesheet  webDbUpdateServiceTimesheet = new SPYWebDbUpdateServiceTimesheet(apiService, token, portalAPIUrl, messagePageSize);
+                webDbUpdateServiceTimesheet.postWorkerPeriods();
+                webDbUpdateServiceTimesheet.postWorkerProjects();
+                webDbUpdateServiceTimesheet.finalize();
+            }
+            if(contract.parmSyncTimesheet())
+            {
+                SPYWebDbUpdateServiceTimesheet  webDbUpdateServiceTimesheet = new SPYWebDbUpdateServiceTimesheet(apiService, token, portalAPIUrl, messagePageSize);
+                webDbUpdateServiceTimesheet.getTimesheets();
+                webDbUpdateServiceTimesheet.postTimesheets();
+                webDbUpdateServiceTimesheet.postTimesheetApproval();
+                webDbUpdateServiceTimesheet.finalize();
+            }
+            if(contract.parmSyncDocumentRequestConfig())
+            {
+                SPYWebDbUpdateServiceHRRequest  webDbUpdateServiceHRRequest = new SPYWebDbUpdateServiceHRRequest(apiService, token, portalAPIUrl, messagePageSize);
+                webDbUpdateServiceHRRequest.postHRRequestType();
+                webDbUpdateServiceHRRequest.postHRRequestAddress();
+                webDbUpdateServiceHRRequest.finalize();
+            }
+            if(contract.parmSyncDocumentRequest())
+            {
+                SPYWebDbUpdateServiceHRRequest  webDbUpdateServiceHRRequest = new SPYWebDbUpdateServiceHRRequest(apiService, token, portalAPIUrl, messagePageSize);
+                webDbUpdateServiceHRRequest.getHRRequest();
+                webDbUpdateServiceHRRequest.postHRRequest();
+                webDbUpdateServiceHRRequest.postHRRequestApproval();
+                webDbUpdateServiceHRRequest.finalize();
+            }
+            if(contract.parmSyncPayroll())
+            {
+                SPYWebDbUpdateServiceWorker     webDbUpdateServiceWorker = new SPYWebDbUpdateServiceWorker(apiService, token, portalAPIUrl, messagePageSize);
+                webDbUpdateServiceWorker.postWorkerPayslip();
+                webDbUpdateServiceWorker.finalize();
+            }
+            info("@SPY:SyncCompleted");
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    private boolean validate()
+    {
+        boolean ret = true;
+
+        if(!messagePageSize)
+            ret = checkFailed("@SPY:PortalMessagePageSizeNotSet");
+        if(!portalAPIUrl)
+            ret = checkFailed(strFmt("@SPY:WebPortalApiNotDefined"));
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postConfiguration</Name>
+				<Source><![CDATA[
+    private void postConfiguration()
+    {
+        SPYPayrollParametersShared    payrollParametersShared;
+        CLRObject                  erpConfigList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+        SPYWebDocumentLog       webDocumentLog;
+        int     pageNo = 1;
+        boolean     callPending;
+        
+        while select payrollParametersShared
+         join webDocumentLog
+            where webDocumentLog.RefTableId == tableNum(SPYPayrollParametersShared) &&
+            webDocumentLog.RefRecId == payrollParametersShared.RecId
+        {
+            if(pageNo <= messagePageSize)
+            {
+                SPYWebAPI.Model.ErpConfig erpConfigModel = new SPYWebAPI.Model.ErpConfig();
+                erpConfigModel.TenantId = payrollParametersShared.WebTenantId;
+                erpConfigModel.AppId = payrollParametersShared.WebAppId;
+                erpConfigModel.Resource = "https://graph.microsoft.com";
+                erpConfigModel.ClientSecret = payrollParametersShared.WebClientSecret;
+                erpConfigModel.RedirectURL = "https://hcpm.com/";
+                if(payrollParametersShared.WebPortalCompanyLogo)
+                {
+                    BinData   binData = new BinData();
+                    binData.setData(payrollParametersShared.WebPortalCompanyLogo);
+                    erpConfigModel.CompanyLogo = binData.base64Encode();
+                }
+                erpConfigList.Add(erpConfigModel);
+                callPending = true;
+            }
+            if(pageNo == messagePageSize)
+            {
+                ttsbegin;
+                this.callConfigurationAPI(erpConfigList);
+                erpConfigList  = new ClrObject("System.Collections.Generic.List`1[System.Object]");
+                pageNo = 0;
+                callPending = false;
+                ttscommit;
+            }
+            pageNo++;
+        }
+        if(callPending)
+        {
+            ttsbegin;
+            this.callConfigurationAPI(erpConfigList);
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>callConfigurationAPI</Name>
+				<Source><![CDATA[
+    private void callConfigurationAPI(CLRObject _erpConfigList)
+    {
+        str calldescription = "UpdateERPConfig";
+        str callStatus = "Blank";
+        str url = portalApiURL + "/api/HCPM/" + calldescription;
+        str requestStr  = apiService.serialize(_erpConfigList);
+        str responseStr;
+        int counter;
+        boolean  error;
+        str errorStr;
+        
+        ClrObject responseList = apiService.makePost(url, requestStr, token);
+        CLRObject responseListEnumerator = responseList.GetEnumerator();
+        while (responseListEnumerator.MoveNext())
+        {
+            responseStr = responseListEnumerator.get_Current();
+            if(counter == 0)
+            {
+                callStatus = responseStr;
+                if(callStatus == "200")
+                {
+                    info("ERP config sync is done successfully.");
+                }
+                else
+                    error = true;
+            }
+            else
+            {
+                if(error)
+                {
+                    errorStr = strFmt("%1.\n Please check network connection or message page size.", responseStr);
+                }
+                else
+                {
+                    _erpConfigList = apiService.convertToERPConfigList(responseStr);
+                }
+            }
+            counter++;
+        }
+        str  infoERPConfigList, errorERPConfigList;
+        if(error)
+        {
+            error(errorStr);
+            Error("Error occurred while syncing ERP config.");
+        }
+        else
+        {
+            ClrObject erpConfigListEnumerator = _erpConfigList.GetEnumerator();
+            while (erpConfigListEnumerator.MoveNext())
+            {
+                SPYWebAPI.Model.ErpConfig   erpConfigModel = erpConfigListEnumerator.get_Current();
+                SPYPayrollParametersShared       payrollParametersSharedUpdate = SPYPayrollParametersShared::find();
+                if(erpConfigModel.Error == false)
+                {
+                    SPYWebDocumentLog       webDocumentLogUpdate;
+                    infoERPConfigList += strFmt("ERP config synced to portal. \n");
+                    delete_from webDocumentLogUpdate
+                        where webDocumentLogUpdate.RefTableId == payrollParametersSharedUpdate.TableId &&
+                        webDocumentLogUpdate.RefRecId == payrollParametersSharedUpdate.RecId;
+                }
+                else
+                {
+                    errorERPConfigList += strFmt("Error for ERP config. %1.\n", erpConfigModel.ErrorMessage);
+                }
+            }
+            if(infoERPConfigList)
+                info(infoERPConfigList);
+            if(errorERPConfigList)
+                error(errorERPConfigList);
+        }
+        this.updateLog(calldescription, callStatus, url, requestStr, responseStr, infoERPConfigList, errorERPConfigList);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLog</Name>
+				<Source><![CDATA[
+    protected void updateLog(Description _callDescription, Description _callStatus, URL _url, notes _requestMsg, Notes _responseMsg,
+        notes _successMsg, Notes _errorMsg)
+    {
+        SPYWebAPILog    webAPILog;
+
+        webAPILog.CallDescription = _callDescription;
+        webAPILog.CallStatus = _callStatus;
+        webAPILog.ApiURL = _url;
+        webAPILog.Token = token;
+        webAPILog.RequestMessage = _requestMsg;
+        webAPILog.ResponseMessage = _responseMsg;
+        webAPILog.SuccessMessage = _successMsg;
+        webAPILog.ErrorMessage = _errorMsg;
+        webAPILog.insert();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

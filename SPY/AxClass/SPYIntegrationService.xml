@@ -1,0 +1,1307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntegrationService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntegrationService
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>GetEmpPersonalDetails</Name>
+				<Source><![CDATA[
+        public SPYIntWorkerContract GetEmpPersonalDetails(HcmPersonnelNumberId _empId)
+        {
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            SPYIntWorkerContract               workerContract;
+            HcmEmployment                   hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId,CompanyInfo::current());
+            HcmEmploymentDetail             hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId);
+            HRMAbsenceCode                  hrmAbsenceCode;
+            HcmPersonIdentificationNumber   hcmPersonIdentificationNumber;
+            HcmWorkerBankAccount            hcmWorkerBankAccount;
+            DirPerson                       dirPerson = DirPerson::find(worker.Person);
+            HcmPersonPrivateDetails         person = HcmPersonPrivateDetails::findByPerson(worker.Person);
+            HcmPersonDetails                personDetails = HcmPersonDetails::findByPerson(worker.Person);
+            DirPersonName                   dirPersonName = DirPersonName::find(worker.Person);
+            SPYPayrollPeriod                payrollPeriod;
+            SPYPayrollPeriodLine            payrollPeriodLine;
+            LogisticsElectronicAddress      electronicAddress;
+            dirPartyLocation                dirPartyLocation;
+            LogisticsAddressCountryRegionId nationality;
+            HcmPersonImage                  personImage;
+            BinData                         binData = new BinData();
+
+            workerContract = new SPYIntWorkerContract();
+            if(worker.RecId)
+            {
+                workerContract.parmEmpId(_empId);
+                workerContract.parmEmpInitials(dirPerson.Initials);
+                workerContract.parmEmpName(worker.name());
+                workerContract.parmFirstName(dirPersonName.FirstName);
+                workerContract.parmLastName(dirPersonName.LastName);
+                workerContract.parmPhone(worker.phone());
+                workerContract.parmMobile(worker.phoneLocal());
+                workerContract.parmAddress(worker.primaryAddress());
+                workerContract.parmDateOfBirth(person.BirthDate);
+                nationality = HcmPersonPrivateDetails::findByPerson(dirPerson.RecId).CitizenshipCountryRegion;
+                workerContract.parmNationality(LogisticsAddressCountryRegionTranslation::find(nationality,"en-us").ShortName);
+                workerContract.parmMaritalStatus(enum2Str(personDetails.MaritalStatus));
+                workerContract.parmReligion(HcmEthnicOrigin::find(person.EthnicOrigin).EthnicOriginId);
+                workerContract.parmGender(enum2Str(person.Gender));
+                workerContract.parmEmail(worker.email());
+                select firstonly forupdate electronicAddress
+                join dirPartyLocation
+                where electronicAddress.Location == dirPartyLocation.Location &&
+                      dirPartyLocation.Party == dirPerson.RecId &&
+                      electronicAddress.Type == LogisticsElectronicAddressMethodType::Email &&
+                      electronicAddress.IsPrimary == false;
+                workerContract.parmPersonalEmail(electronicAddress.Locator);
+                workerContract.parmJobTitle(worker.title());
+
+                select firstonly hcmWorkerBankAccount
+                where hcmWorkerBankAccount.Worker == worker.RecId;
+
+                workerContract.parmBankName(hcmWorkerBankAccount.Name);
+                workerContract.parmBankAccountNumber(hcmWorkerBankAccount.AccountNum);
+                workerContract.parmJoiningDate(DateTimeUtil::date(hcmEmployment.ValidFrom));
+                workerContract.parmDepartmentName(worker.primaryDepartmentName());
+                workerContract.parmReportingManager(HcmWorker::find(HcmPosition::getReportsToWorker(HcmPosition::findByPosition(worker.primaryPositionId()).RecId)).email());
+
+                /*
+                if(SPYPayrollParameters::find().WorkerIdentificationType1) //Passport
+                {
+                    hcmPersonIdentificationNumber = HcmPersonIdentificationNumber::findByPersonAndType(dirPerson.RecId, SPYPayrollParameters::find().WorkerIdentificationType1);
+                    workerContract.parmPassportNo(hcmPersonIdentificationNumber.IdentificationNumber);
+                    workerContract.parmPassportExpiry(hcmPersonIdentificationNumber.ExpirationDate);
+                    workerContract.parmPassportIssueDate(hcmPersonIdentificationNumber.IssuedDate);
+                    workerContract.parmPassportPlaceOfIssue(hcmPersonIdentificationNumber.Description);
+                }
+                if(SPYPayrollParameters::find().WorkerIdentificationType2) //CIVILID
+                {
+                    hcmPersonIdentificationNumber = HcmPersonIdentificationNumber::findByPersonAndType(dirPerson.RecId, SPYPayrollParameters::find().WorkerIdentificationType2);
+                    workerContract.parmCivilId(hcmPersonIdentificationNumber.IdentificationNumber);
+                    workerContract.parmCivilIdExpiry(hcmPersonIdentificationNumber.ExpirationDate);
+                }
+                if(SPYPayrollParameters::find().WorkerIdentificationType2) //Visa
+                {
+                    hcmPersonIdentificationNumber = HcmPersonIdentificationNumber::findByPersonAndType(dirPerson.RecId, HcmIdentificationType::findByIdentificationType("Visa").RecId);
+                    workerContract.parmVisaNo(hcmPersonIdentificationNumber.IdentificationNumber);
+                    workerContract.parmVisaExpiry(hcmPersonIdentificationNumber.ExpirationDate);
+                }
+                */
+                personImage = HcmPersonImage::findByPerson(worker.Person);
+                if(personImage)
+                {
+                    //binData.setData(personImage.Image);
+                    //workerContract.parmImage(binData.base64Encode());
+                    workerContract.parmImage(personImage.Image);
+                }
+                workerContract.parmEducation(person.Education);                
+                workerContract.parmPersonnelNumberId(worker.PersonnelNumber);
+                workerContract.parmAnniversaryDate(dirPerson.anniversaryDate());
+
+                
+            }
+            return workerContract;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getWorkerTimesheetPeriods</Name>
+				<Source><![CDATA[
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntWorkerPeriodContract))]
+        public List getWorkerTimesheetPeriods(HcmPersonnelNumberId _empId)
+        {
+            List                                list = new List(Types::Class);
+            ProjPeriodEmpl                      projPeriodEmpl;
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            SPYIntWorkerPeriodContract                 workerPeriodList;
+
+            while select projPeriodEmpl
+                order by PeriodFrom asc
+                where projPeriodEmpl.Worker == worker.RecId
+            {
+                workerPeriodList = new SPYIntWorkerPeriodContract();
+                workerPeriodList.parmMonth(mthOfYr(projPeriodEmpl.PeriodFrom));
+                workerPeriodList.parmYear(year(projPeriodEmpl.PeriodFrom));
+                workerPeriodList.parmFromDate(projPeriodEmpl.PeriodFrom);
+                workerPeriodList.parmToDate(projPeriodEmpl.PeriodFrom + 7);
+
+                list.addEnd(workerPeriodList);            
+            }
+            return  list;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmplTSDetails</Name>
+				<Source><![CDATA[
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntTimesheetTableContract))]
+        public List getEmplTSDetails(HcmPersonnelNumberId _empId, Date _periodDate)
+        {
+            TSTimesheetTable                timesheetTable;
+            TSTimesheetLine                 timesheetLine;
+            TSTimesheetLineWeek             timesheetLineWeek;
+            SPYIntTimesheetTableContract       timesheetTableContract;
+            SPYIntTimesheetLineContract        timesheetLineContract;
+            SPYIntTimesheetLineDateContract    timesheetLineDateContract;
+            List                            timesheetList = new List(Types::Class);
+            List                            timesheetLineList = new List(Types::Class);
+            List                            timesheetLineDateList = new List(Types::Class);
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            int                             day;
+            Decimals                        totalHrs;
+            ResourceWorkerView              resourceWorkerView;
+            boolean                         timesheetFound;
+            HcmEmployment                   hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId, CompanyInfo::current());
+            WorkCalendarEmployment          workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+            CalendarId                      calendarId = workCalendarEmployment.CalendarId;
+            SPYAmount                       workingHours;
+            SPYIntTimesheetPeriodDateContract  timesheetPeriodDateContract;
+            List                            timesheetPeriodDateList = new List(Types::Class);
+
+            while select timesheetTable
+            join resourceWorkerView
+            where timesheetTable.Resource == resourceWorkerView.RecId &&
+                  resourceWorkerView.Worker == worker.RecId &&
+                  timesheetTable.PeriodFrom <= _periodDate &&
+                  timesheetTable.PeriodTo >= _periodDate
+            {
+                timesheetFound = true;
+                timesheetTableContract = new SPYIntTimesheetTableContract();
+                timesheetTableContract.parmTimesheetNumber(timesheetTable.TimesheetNbr);
+                timesheetTableContract.parmEmplId(worker.PersonnelNumber);
+                timesheetTableContract.parmPeriodFrom(timesheetTable.PeriodFrom);
+                timesheetTableContract.parmPeriodTo(timesheetTable.PeriodTo);
+                timesheetTableContract.parmApprovalStatus(strFmt("%1",timesheetTable.ApprovalStatus));
+                timesheetTableContract.parmIsEditable(timesheetTable.ApprovalStatus == TSAppStatus::Create);
+                timesheetLineList = new List(Types::Class);
+                while select timesheetLine
+                where timesheetLine.TimesheetNbr == timesheetTable.TimesheetNbr
+                {
+                    timesheetLineContract = new SPYIntTimesheetLineContract();
+                    timesheetLineContract.parmLineNum(timesheetLine.LineNum);
+                    timesheetLineContract.parmProjId(timesheetLine.ProjId);
+                    timesheetLineContract.parmProjDataAreaId(timesheetLine.ProjectDataAreaId);
+                    timesheetLineContract.parmProjName(timesheetLine.projName());
+                    timesheetLineContract.parmActivityNumber(timesheetLine.ActivityNumber);
+                    timesheetLineContract.parmCategoryId(timesheetLine.CategoryId);
+                    timesheetLineContract.parmCategoryName(ProjCategory::find(timesheetLine.CategoryId).Name);
+                    //timesheetLineContract.parmActivityName(smmActivities::find(timesheetLine.ActivityNumber).Purpose);
+                    day = 1;
+                    timesheetLineDateList = new List(Types::Class);
+                    select firstonly timesheetLineWeek
+                    where timesheetLineWeek.TimesheetNbr == timesheetTable.TimesheetNbr &&
+                          timesheetLineWeek.LineNum == timesheetLine.LineNum;
+                    totalHrs=0;
+                    while (day <= timesheetTable.PeriodTo - timesheetTable.PeriodFrom + 1)
+                    {
+                        timesheetLineDateContract = new SPYIntTimesheetLineDateContract();
+                        timesheetLineDateContract.parmLineDate(timesheetTable.PeriodFrom + day - 1);
+                        totalHrs=totalHrs+timesheetLineWeek.Hours[day];
+                        timesheetLineDateContract.parmHours(timesheetLineWeek.Hours[day]);
+                        timesheetLineDateContract.parmExternalComments(timesheetLineWeek.ExternalComments[day]);
+                        timesheetLineDateContract.parmInternalComments(timesheetLineWeek.InternalComments[day]);
+                        timesheetLineDateList.addEnd(timesheetLineDateContract);
+                        day++;
+                    }
+                    timesheetLineContract.parmTotalHours(totalHrs);
+                    timesheetLineContract.parmTimesheetLineDateList(timesheetLineDateList);
+                    timesheetLineList.addEnd(timesheetLineContract);
+                }
+                timesheetTableContract.parmTimesheetLineList(timesheetLineList);
+                day = 1;
+                while (day <= timesheetTable.PeriodTo - timesheetTable.PeriodFrom + 1)
+                {
+                    workingHours = WorkCalendarDate::calcDefinedHours(calendarId,timesheetTable.PeriodFrom+day-1);
+                    timesheetPeriodDateContract = new SPYIntTimesheetPeriodDateContract();
+                    timesheetPeriodDateContract.parmPeriodDate(timesheetTable.PeriodFrom+day-1);
+                    timesheetPeriodDateContract.parmWorkingHours(workingHours);
+                    timesheetPeriodDateList.addEnd(timesheetPeriodDateContract);
+                    day++;
+                }
+                timesheetTableContract.parmTimesheetPeriodDateList(timesheetPeriodDateList);
+                timesheetList.addEnd(timesheetTableContract);
+            }
+
+            if(!timesheetFound)
+            {
+                select firstonly resourceWorkerView
+                    where resourceWorkerView.Worker == worker.RecId &&
+                          resourceWorkerView.ResourceCompanyId == curExt();
+            
+                ProjPeriodLine projPeriodLine = TSTimesheetTable::getValidResourcePeriod(resourceWorkerView.RecId);
+                ProjPeriodTimesheetWeek projPeriodTimesheetWeek = ProjPeriodTimesheetWeek::findFromPeriod(projPeriodLine.PeriodId, _periodDate);
+                timesheetTableContract = new SPYIntTimesheetTableContract();
+                timesheetTableContract.parmEmplId(worker.PersonnelNumber);
+                timesheetTableContract.parmPeriodFrom(projPeriodTimesheetWeek.PeriodFrom);
+                timesheetTableContract.parmPeriodTo(projPeriodTimesheetWeek.PeriodTo);
+                day = 1;
+                while (day <= timesheetTableContract.parmPeriodTo() - timesheetTableContract.parmPeriodFrom() + 1)
+                {
+                    workingHours = WorkCalendarDate::calcDefinedHours(calendarId,timesheetTableContract.parmPeriodFrom()+day-1);
+                    timesheetPeriodDateContract = new SPYIntTimesheetPeriodDateContract();
+                    timesheetPeriodDateContract.parmPeriodDate(timesheetTableContract.parmPeriodFrom()+day-1);
+                    timesheetPeriodDateContract.parmWorkingHours(workingHours);
+                    timesheetPeriodDateList.addEnd(timesheetPeriodDateContract);
+                    day++;
+                }
+                timesheetTableContract.parmTimesheetPeriodDateList(timesheetPeriodDateList);
+                timesheetList.addEnd(timesheetTableContract);
+            }
+            return timesheetList;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateEmplTSDetails</Name>
+				<Source><![CDATA[
+        public SPYIntTimesheetTableContract updateEmplTSDetails(SPYIntTimesheetTableContract _timesheetTableContract)
+        {
+            TSTimesheetTable                timesheetTable = TSTimesheetTable::find(_timesheetTableContract.parmTimesheetNumber(), true);
+            TSTimesheetLine                 timesheetLine;
+            TSTimesheetLineWeek             timesheetLineWeek;
+            ResourceWorkerView              resourceWorkerView;
+            HcmWorker                       hcmWorker = HcmWorker::findByPersonnelNumber(_timesheetTableContract.parmEmplId());
+            ListEnumerator                  timesheetLineListEnum = _timesheetTableContract.parmTimesheetLineList().getEnumerator();
+            SPYIntTimesheetLineContract        timesheetLineContract;
+            ListEnumerator                  timesheetLineDateListEnum = _timesheetTableContract.parmTimesheetLineList().getEnumerator();
+            SPYIntTimesheetLineDateContract    timesheetLineDateContract;
+            int                             day;
+            UserInfo                        userInfo;
+            SPYAmount                       totalHrs;
+            HcmEmployment                   hcmEmployment = HcmEmployment::findByWorkerLegalEntity(hcmWorker.RecId, CompanyInfo::current());
+            WorkCalendarEmployment          workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+            CalendarId                      calendarId = workCalendarEmployment.CalendarId;
+            SPYAmount                       workingHours;
+
+            try
+            {
+                ttsbegin;
+                if(_timesheetTableContract.parmIsDeleted())
+                {
+                    delete_from timesheetLineWeek
+                            where timesheetLineWeek.TimesheetNbr == timesheetTable.TimesheetNbr;
+                    delete_from timesheetLine
+                        where timesheetLine.TimesheetNbr == timesheetTable.TimesheetNbr;
+                    timesheetTable.delete();
+                }
+                else
+                {
+                    if(!timesheetTable)
+                    {
+                        select firstonly resourceWorkerView
+                    join hcmWorker
+                    where resourceWorkerView.Worker == hcmWorker.RecId &&
+                          hcmWorker.PersonnelNumber == _timesheetTableContract.parmEmplId() &&
+                          resourceWorkerView.ResourceCompanyId == curExt();
+                        timesheetTable.initValue();
+                        timesheetTable.Resource = resourceWorkerView.RecId;
+                        ProjPeriodLine projPeriodLine = TSTimesheetTable::getValidResourcePeriod(timesheetTable.Resource);
+                        timesheetTable.ProjPeriodId     = projPeriodLine.PeriodId;
+                        timesheetTable.PeriodFrom       = _timesheetTableContract.parmPeriodFrom();
+                        timesheetTable.PeriodTo         = _timesheetTableContract.parmPeriodTo();
+                        ProjPeriodTimesheetWeek projPeriodTimesheetWeek = ProjPeriodTimesheetWeek::findFromPeriod(projPeriodLine.PeriodId, timesheetTable.PeriodFrom);
+                        timesheetTable.ProjPeriodTimesheetWeek  = projPeriodTimesheetWeek.RecId;
+                        timesheetTable.insert();
+                        _timesheetTableContract.parmTimesheetNumber(timesheetTable.TimesheetNbr);
+                        _timesheetTableContract.parmApprovalStatus(strFmt('%1',timesheetTable.ApprovalStatus));
+                    
+                    }
+                    while (timesheetLineListEnum.moveNext())
+                    {
+                        totalHrs = 0;
+                        timesheetLineContract = timesheetLineListEnum.current();
+                        if(timesheetLineContract.parmIsDeleted())
+                        {
+                            delete_from timesheetLineWeek
+                                where timesheetLineWeek.TimesheetNbr == timesheetTable.TimesheetNbr &&
+                                      timesheetLineWeek.LineNum == timesheetLineContract.parmLineNum();
+                            delete_from timesheetLine
+                            where timesheetLine.TimesheetNbr == timesheetTable.TimesheetNbr &&
+                                  timesheetLine.LineNum == timesheetLineContract.parmLineNum();
+                        }
+                        else
+                        {
+                            select firstonly forupdate timesheetLine
+                            where timesheetLine.TimesheetNbr == timesheetTable.TimesheetNbr &&
+                                  timesheetLine.LineNum == timesheetLineContract.parmLineNum();
+                            timesheetLineDateListEnum = timesheetLineContract.parmTimesheetLineDateList().getEnumerator();
+                            if(!timesheetLine)
+                            {
+                                timesheetLine.TimesheetNbr = timesheetTable.TimesheetNbr;
+                                timesheetLine.initValue();
+                                timesheetLine.initFromResource();
+                                timesheetLine.ProjId = timesheetLineContract.parmProjId();
+                                timesheetLine.initFromProjTable(ProjTable::find(timesheetLine.ProjId));
+                                timesheetLine.LineNum = timesheetLineContract.parmLineNum();
+                                timesheetLine.CategoryId = timesheetLineContract.parmCategoryId();
+                                timesheetLine.ActivityNumber = timesheetLineContract.parmActivityNumber();
+                                timesheetLine.ProjPeriodTimesheetWeek = timesheetTable.ProjPeriodTimesheetWeek;
+                                select firstonly userInfo
+                                where userInfo.id == DirPersonUser::findParty(HcmWorker.Person).User;
+                        
+                                timesheetLine.ProjectDataAreaId = userInfo.company;
+                                timesheetLine.insert();
+
+                                timesheetLineContract.parmCategoryName(ProjCategory::find(timesheetLine.CategoryId).Name);
+                                //timesheetLineContract.parmActivityName(smmActivities::find(timesheetLine.ActivityNumber).Purpose);
+
+                                day = 1;
+                                timesheetLineWeek.initValue();
+                                timesheetLineWeek.initFromTSTimesheetLine(timesheetLine);
+                                timesheetLineWeek.DayFrom = _timesheetTableContract.parmPeriodFrom();
+                                timesheetLineWeek.DayTo = _timesheetTableContract.parmPeriodTo();
+                                timesheetLineWeek.ProjTransDate = _timesheetTableContract.parmPeriodFrom();
+                                timesheetLineWeek.TSTimesheetLine = timesheetLine.RecId;
+                                timesheetLineWeek.ProjPeriodId = timesheetTable.ProjPeriodId;
+                                while (timesheetLineDateListEnum.moveNext())
+                                {
+                                    timesheetLineDateContract = timesheetLineDateListEnum.current();
+                                    timesheetLineWeek.Hours[day] = timesheetLineDateContract.parmHours();
+                                    timesheetLineWeek.InternalComments[day] = timesheetLineDateContract.parmInternalComments();
+                                    timesheetLineWeek.ExternalComments[day] = timesheetLineDateContract.parmExternalComments();
+                                    workingHours = WorkCalendarDate::calcDefinedHours(calendarId,timesheetLineWeek.DayFrom+day-1);
+                                    timesheetLineDateContract.parmWorkingHours(workingHours);
+                                    totalHrs += timesheetLineWeek.Hours[day];
+                                    day++;
+                                }
+                                timesheetLineWeek.insert();
+                            }
+                            else
+                            {
+                                timesheetLine.ProjId = timesheetLineContract.parmProjId();
+                                timesheetLine.initFromProjTable(ProjTable::find(timesheetLine.ProjId));
+                                timesheetLine.CategoryId = timesheetLineContract.parmCategoryId();
+                                timesheetLine.ActivityNumber = timesheetLineContract.parmActivityNumber();
+                                timesheetLine.update();
+
+                                timesheetLineContract.parmCategoryName(ProjCategory::find(timesheetLine.CategoryId).Name);
+                                timesheetLineContract.parmActivityName(smmActivities::find(timesheetLine.ActivityNumber).Purpose);
+
+                                select firstonly forupdate timesheetLineWeek
+                                where timesheetLineWeek.TimesheetNbr == timesheetLine.TimesheetNbr &&
+                                      timesheetLineWeek.LineNum == timesheetLine.LineNum;
+                                day = 1;
+                                timesheetLineWeek.initValue();
+                                timesheetLineWeek.initFromTSTimesheetLine(timesheetLine);
+                                timesheetLineWeek.DayFrom = _timesheetTableContract.parmPeriodFrom();
+                                timesheetLineWeek.DayTo = _timesheetTableContract.parmPeriodTo();
+                                timesheetLineWeek.ProjTransDate = _timesheetTableContract.parmPeriodFrom();
+                                timesheetLineWeek.TSTimesheetLine = timesheetLine.RecId;
+                                timesheetLineWeek.ProjPeriodId = timesheetTable.ProjPeriodId;
+                                while (timesheetLineDateListEnum.moveNext())
+                                {
+                                    timesheetLineDateContract = timesheetLineDateListEnum.current();
+                                    timesheetLineWeek.Hours[day] = timesheetLineDateContract.parmHours();
+                                    timesheetLineWeek.InternalComments[day] = timesheetLineDateContract.parmInternalComments();
+                                    timesheetLineWeek.ExternalComments[day] = timesheetLineDateContract.parmExternalComments();
+                                    workingHours = WorkCalendarDate::calcDefinedHours(calendarId,timesheetLineWeek.DayFrom+day-1);
+                                    timesheetLineDateContract.parmWorkingHours(workingHours);
+                                    totalHrs += timesheetLineWeek.Hours[day];
+                                    day++;
+                                }
+                                if(timesheetLineWeek)
+                                timesheetLineWeek.update();
+                                else
+                                timesheetLineWeek.insert();
+                            }
+                            timesheetLineContract.parmProjName(ProjTable::find(timesheetLineContract.parmProjId()).Name);
+                            timesheetLineContract.parmTotalHours(totalHrs);
+                        }
+                    }
+                }
+                ttscommit;
+            }
+            catch(Exception::Error)
+            {
+                ttsabort;
+            }
+        
+            return _timesheetTableContract;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getWorkerTimesheetProject</Name>
+				<Source><![CDATA[
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntTimesheetProjectContract))]
+        public List getWorkerTimesheetProject()
+        {
+            List                        projList = New List(Types::Class);
+            ProjTable                   projTable;
+            SPYIntTimesheetProjectContract projectContract;
+
+            while select projTable
+            {
+                projectContract = new SPYIntTimesheetProjectContract();
+                projectContract.parmProjId(projTable.ProjId);
+                projectContract.parmName(projTable.Name);
+                projList.addEnd(projectContract);
+            }
+
+            return projList;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getWorkerTimesheetCategory</Name>
+				<Source><![CDATA[
+    /*
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntTimesheetActivityContract))]
+        public List getWorkerTimesheetActivity(ProjId _projId)
+        {
+            List                            activityList = New List(Types::Class);
+            smmActivities                   smmActivities;
+            SPYIntTimesheetActivityContract    activityContract;
+            HierarchyTreeLookup             hierarchyTreeLookup = new HierarchyTreeLookup();
+            ProjTable                       projTable = ProjTable::find(_projId);
+            QueryRun                        queryRun;
+
+            hierarchyTreeLookup.parmRefRecId(projTable.RecId);
+            hierarchyTreeLookup.parmRefTableId(projTable.TableId);
+            queryRun = new QueryRun(hierarchyTreeLookup.buildQueryListView(true));
+
+            while(queryRun.next())
+            {
+                smmActivities = queryRun.get(tableNum(smmActivities));
+                activityContract = new SPYIntTimesheetActivityContract();
+                activityContract.parmActivityNumber(smmActivities.ActivityNumber);
+                activityContract.parmDescription(smmActivities.Purpose);
+                activityList.addEnd(activityContract);
+            }
+
+            return activityList;
+        }
+*/
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntTimesheetCategoryContract))]
+        public List getWorkerTimesheetCategory()
+        {
+            List                            categoryList = New List(Types::Class);
+            ProjCategory                    projCategory;
+            SPYIntTimesheetCategoryContract    categoryContract;
+
+            while select projCategory
+            {
+                categoryContract = new SPYIntTimesheetCategoryContract();
+                categoryContract.parmCategoryId(projCategory.CategoryId);
+                categoryContract.parmDescription(projCategory.Name);
+                categoryList.addEnd(categoryContract);
+            }
+
+            return categoryList;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitEmplTimesheet</Name>
+				<Source><![CDATA[
+        public SPYIntTimesheetTableContract submitEmplTimesheet(SPYIntTimesheetTableContract _timesheetTableContract, str _comments)
+        {
+            TSTimesheetTable        timesheetTable = TSTimesheetTable::find(_timesheetTableContract.parmTimesheetNumber(), true);
+            WorkflowVersionTable    workflowVersionTable = Workflow::findWorkflowConfigToActivateForType(workFlowTypeStr                                                                                  (TSDocumentTemplate),
+                                                                             timesheetTable.RecId,
+                                                                             timesheetTable.TableId);
+            try
+            {
+                ttsbegin;
+                Workflow::activateFromWorkflowConfigurationId(workflowVersionTable.ConfigurationId,
+                                                              timesheetTable.RecId,
+                                                              _comments,
+                                                              NoYes::No);
+                timesheetTable.ApprovalStatus = TSAppStatus::Submitted;
+                timesheetTable.update();
+                ttscommit;
+            }
+            catch (Exception::Error)
+            {
+                ttsabort;
+            }
+            _timesheetTableContract.parmApprovalStatus(strFmt("%1",timesheetTable.ApprovalStatus));
+            _timesheetTableContract.parmIsEditable(timesheetTable.ApprovalStatus == TSAppStatus::Create);
+            return _timesheetTableContract;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmplLeaveAppl</Name>
+				<Source><![CDATA[
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntLeaveApplicationTableContract))]
+        public List getEmplLeaveAppl(Email _empId)
+        {
+            SPYLeaveApplicationTable            leaveApplicationTable;
+            SPYLeaveApplicationLine             leaveApplicationLine;
+            SPYIntLeaveApplicationTableContract    leaveApplicationTableContract;
+            SPYIntLeaveApplicationLineContract     leaveApplicationLineContract;
+            List                                levaeApplList = new List(Types::Class);
+            List                                leaveApplLineList = new List(Types::Class);
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            boolean                             leaveApplFound;
+            HcmEmployment                       hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId, CompanyInfo::current());
+            WorkCalendarEmployment              workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+            CalendarId                          calendarId = workCalendarEmployment.CalendarId;
+            SPYAmount                           workingHours;
+            date                                stratdDate = dateNull(), endDate = dateMax();
+
+            while select validtimestate(stratdDate, endDate) leaveApplicationTable
+            where leaveApplicationTable.Worker == worker.RecId
+            {
+                leaveApplFound = true;
+                leaveApplicationTableContract = new SPYIntLeaveApplicationTableContract();
+                leaveApplicationTableContract.parmLeaveApplicationCode(leaveApplicationTable.LeaveApplicationCode);
+                leaveApplicationTableContract.parmPersonnelNumberId(worker.PersonnelNumber);
+                leaveApplicationTableContract.parmStatus(strFmt("%1",leaveApplicationTable.WorkflowStatus));
+                leaveApplicationTableContract.parmIsEditable(leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created);
+                leaveApplicationTableContract.parmRemarks(leaveApplicationTable.Remarks);
+                leaveApplLineList = new List(Types::Class);
+                while select validtimestate(stratdDate, endDate) leaveApplicationLine
+                where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId
+                {
+                    leaveApplicationLineContract = new SPYIntLeaveApplicationLineContract();
+                    leaveApplicationLineContract.parmAbsenceCode(leaveApplicationLine.HRMAbsenceCode);
+                    leaveApplicationLineContract.parmAbsenceCodeDescription(HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode).description);
+                    leaveApplicationLineContract.parmValidFrom(leaveApplicationLine.ActualStartDate);
+                    leaveApplicationLineContract.parmValidTo(leaveApplicationLine.ActualEndDate);
+                    leaveApplicationLineContract.parmHours(leaveApplicationLine.Hours);
+                    leaveApplicationLineContract.parmLeaveDays(leaveApplicationLine.LeaveApplied);
+                    leaveApplicationLineContract.parmBalanceDays(leaveApplicationLine.LeaveBalance);
+                    leaveApplicationLineContract.parmRemarks(leaveApplicationLine.Remarks);
+
+                    leaveApplLineList.addEnd(leaveApplicationLineContract);
+                }
+                select validtimestate(stratdDate, endDate) maxof(ActualEndDate), minof(ActualStartDate) from leaveApplicationLine
+                where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId;
+                leaveApplicationTableContract.parmPeriodFrom(leaveApplicationLine.ActualStartDate);
+                leaveApplicationTableContract.parmPeriodTo(leaveApplicationLine.ActualEndDate);
+                leaveApplicationTableContract.parmLineList(leaveApplLineList);
+                levaeApplList.addEnd(leaveApplicationTableContract);
+            }
+
+            if(!leaveApplFound)
+            {
+            
+            }
+            return levaeApplList;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateEmplLeaveAppl</Name>
+				<Source><![CDATA[
+        public SPYIntLeaveApplicationTableContract updateEmplLeaveAppl(SPYIntLeaveApplicationTableContract _contract)
+        {
+            SPYLeaveApplicationTable        leaveApplicationTable;
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_contract.parmEmpId());
+            ListEnumerator                  lineListEnum = _contract.parmLineList().getEnumerator();
+            SPYLeaveApplicationLine         leaveApplicationLine;
+            SPYWorkflowStatus               status;
+            boolean                         created;
+            date                            stratdDate = dateNull(), endDate = dateMax();
+
+            ttsbegin;
+            try
+            {
+                select firstonly forupdate leaveApplicationTable
+                where leaveApplicationTable.LeaveApplicationCode == _contract.parmLeaveApplicationCode() &&
+                      _contract.parmLeaveApplicationCode();
+                if(leaveApplicationTable)
+                {
+                    status = str2Enum(status,_contract.parmStatus());
+                    if(status == SPYWorkflowStatus::Created)
+                    {
+                        if(_contract.parmIsDeleted())
+                        {
+                            delete_from leaveApplicationLine
+                            where leaveApplicationLine.leaveApplication == leaveApplicationTable.RecId;
+                            leaveApplicationTable.delete();
+                            created = true;
+                        }
+                        else
+                        {
+                            created = this.updateLeaveLine(leaveApplicationTable, lineListEnum);
+                        }
+                    }
+                }
+                else
+                {
+                    if(_contract.parmIsDeleted())
+                    return _contract;
+                    leaveApplicationTable.initValue();
+                    leaveApplicationTable.LeaveApplicationCode = NumberSeq::newGetNum(SPYPayrollParameters::numRefLeaveApplicationCode()).num();
+                    leaveApplicationTable.Worker = worker.RecId;
+                    leaveApplicationTable.insert();
+
+                    created = this.updateLeaveLine(leaveApplicationTable, lineListEnum);
+                }
+                select validtimestate(stratdDate, endDate) maxof(ActualEndDate), minof(ActualStartDate) from leaveApplicationLine
+                where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId;
+                _contract.parmPeriodFrom(leaveApplicationLine.ActualStartDate);
+                _contract.parmPeriodTo(leaveApplicationLine.ActualEndDate);
+                _contract.parmLeaveApplicationCode(leaveApplicationTable.LeaveApplicationCode);
+                _contract.parmIsEditable(leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created);
+                if(created)
+                {
+                    ttscommit;
+                    _contract.parmStatus(strFmt('%1',leaveApplicationTable.WorkflowStatus));
+                }
+                else
+                {
+                    ttsabort;
+                    _contract.parmRemarks(infolog.text());
+                    _contract.parmError(true);
+                }
+            }
+            catch(Exception::Error)
+            {
+                ttsabort;
+                _contract.parmError(true);
+                _contract.parmRemarks(infolog.text());
+            }
+
+            return _contract;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateLeaveLine</Name>
+				<Source><![CDATA[
+        private boolean updateLeaveLine(SPYLeaveApplicationTable _leaveApplicationTable, ListEnumerator _lineListEnum)
+        {
+            SPYIntLeaveApplicationLineContract lineContract;
+            SPYLeaveApplicationLine         leaveApplicationLine;
+            SPYAmount                       workingHours;
+            boolean                         created = true;
+
+            delete_from leaveApplicationLine
+            where leaveApplicationLine.LeaveApplication == _leaveApplicationTable.RecId;
+            while(_lineListEnum.moveNext())
+            {
+                lineContract = _lineListEnum.current();
+                if(!lineContract.parmIsDeleted())
+                {
+                    leaveApplicationLine.validTimeStateUpdateMode(ValidTimeStateUpdate::CreateNewTimePeriod);
+                    leaveApplicationLine.initValue();
+                    leaveApplicationLine.LeaveApplication   = _leaveApplicationTable.RecId;
+                    leaveApplicationLine.HRMAbsenceCode     = lineContract.parmAbsenceCode();
+                    leaveApplicationLine.ValidFrom          = lineContract.parmValidFrom();
+                    leaveApplicationLine.ValidTo            = lineContract.parmValidTo();
+                    leaveApplicationLine.ActualStartDate    = leaveApplicationLine.ValidFrom;
+                    leaveApplicationLine.ActualEndDate      = leaveApplicationLine.ValidTo;
+                    if(leaveApplicationLine.ValidFrom == leaveApplicationLine.ValidTo)
+                    {
+                        workingHours = this.workingHours(_leaveApplicationTable,leaveApplicationLine.ValidFrom);
+                        if(lineContract.parmHours())
+                        {
+                            leaveApplicationLine.Hours  = lineContract.parmHours();
+                            if(workingHours)
+                            leaveApplicationLine.LeaveApplied = leaveApplicationLine.Hours / workingHours;
+                            else
+                            leaveApplicationLine.LeaveApplied = 1;
+                        }
+                        else
+                        {
+                            leaveApplicationLine.Hours  = workingHours;
+                            leaveApplicationLine.LeaveApplied = 1;
+                        }
+                    }
+                    if(leaveApplicationLine.validateWrite())
+                    {
+                        leaveApplicationLine.insert();
+                        lineContract.parmError(false);
+                    }
+                    else
+                    {
+                        created = false;
+                        lineContract.parmError(true);
+                    }
+                    lineContract.parmAbsenceCodeDescription(HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode).description);
+                    lineContract.parmLeaveDays(leaveApplicationLine.LeaveApplied);
+                    lineContract.parmBalanceDays(leaveApplicationLine.leaveBalance);
+                }
+            }
+            return created;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>submitEmplLeaveAppl</Name>
+				<Source><![CDATA[
+        public SPYIntLeaveApplicationTableContract submitEmplLeaveAppl(SPYIntLeaveApplicationTableContract _contract, str _comments)
+        {
+            SPYLeaveApplicationTable    leaveApplicationTable;
+       
+            select firstonly forupdate leaveApplicationTable
+            where leaveApplicationTable.LeaveApplicationCode == _contract.parmLeaveApplicationCode();
+            try
+            {
+                ttsbegin;
+                Workflow::activateFromWorkflowType(workflowTypeStr(SPYLeaveApplication),leaveApplicationTable.RecId,_comments,false);
+                leaveApplicationTable.WorkflowStatus = SPYWorkflowStatus::Submitted;
+                leaveApplicationTable.update();
+                ttscommit;
+            }
+            catch (Exception::Error)
+            {
+                ttsabort;
+            }
+            _contract.parmStatus(strFmt("%1",leaveApplicationTable.WorkflowStatus));
+            _contract.parmIsEditable(leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created);
+            return _contract;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmpLeaveBalance</Name>
+				<Source><![CDATA[
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntAbsenceContract))]
+        public List getEmpLeaveBalance(HcmPersonnelNumberId _empId)
+        {
+            HRMAbsenceCode          hrmAbsenceCode;
+            SPYAbsenceConfigLine    absenceConfigLine;
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId,CompanyInfo::current());
+            HcmEmploymentDetail     hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId);
+            HcmPosition             hcmPosition = HcmPosition::findByPosition(worker.primaryPositionId());
+            HcmPositionDetail       hcmPositionDetail = HcmPositionDetail::findByPosition(hcmPosition.RecId);
+            SPYIntAbsenceContract      absenceContract;
+            List                    absenceList = new List(types::Class);
+            SPYAbsenceWorkerService absenceWorkerService;
+        
+            while select absenceConfigLine
+            where absenceConfigLine.AbsenceConfig == hcmEmploymentDetail.SPYAbsenceConfig
+            join hrmAbsenceCode
+            where hrmAbsenceCode.hrmAbsenceCodeId == absenceConfigLine.HRMAbsenceCodeId
+            {
+                absenceWorkerService = new SPYAbsenceWorkerService(worker.RecId);
+                absenceContract = new SPYIntAbsenceContract();
+                absenceContract.parmAbsenceCode(hrmAbsenceCode.hrmAbsenceCodeId);
+                absenceContract.parmAbsenceDesc(hrmAbsenceCode.description);
+                absenceContract.parmBalance(absenceWorkerService.balanceDays(systemDateGet(), hrmAbsenceCode.hrmAbsenceCodeId));
+
+                absenceContract.parmEmpName(worker.name());
+                absenceContract.parmDepartmentName(worker.primaryDepartmentName());
+                absenceContract.parmDesignation(HcmJob::find(hcmPositionDetail.Job).description());
+                absenceContract.parmJoiningDate(DateTimeUtil::date(hcmEmployment.ValidFrom));
+                absenceContract.parmReportingManager(HcmWorker::find(HcmPosition::getReportsToWorker(HcmPosition::findByPosition(worker.primaryPositionId()).RecId)).email());
+
+                absenceList.addEnd(absenceContract);
+            }
+            return absenceList;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmpDetails</Name>
+				<Source><![CDATA[
+        public SPYIntWorkerContract getEmpDetails(HcmPersonnelNumberId _empId)
+        {
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            SPYIntWorkerContract               workerContract;
+            HcmEmployment                   hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId,CompanyInfo::current());
+            HcmEmploymentDetail             hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId);
+            HRMAbsenceCode                  hrmAbsenceCode;
+            HcmPersonIdentificationNumber   hcmPersonIdentificationNumber;
+            HcmWorkerBankAccount            hcmWorkerBankAccount;
+            DirPerson                       dirPerson = DirPerson::find(worker.Person);
+            HcmPersonPrivateDetails         person = HcmPersonPrivateDetails::findByPerson(worker.Person);
+            HcmPersonDetails                personDetails = HcmPersonDetails::findByPerson(worker.Person);
+            DirPersonName                   dirPersonName = DirPersonName::find(worker.Person);
+            SPYPayrollPeriod                payrollPeriod;
+            SPYPayrollPeriodLine            payrollPeriodLine;
+            LogisticsElectronicAddress      electronicAddress;
+            dirPartyLocation                dirPartyLocation;
+            LogisticsAddressCountryRegionId nationality;
+            HcmPersonImage                  personImage;
+            BinData                         binData = new BinData();
+
+            workerContract = new SPYIntWorkerContract();
+            if(worker.RecId)
+            {
+                workerContract.parmEmpId(_empId);
+                workerContract.parmEmpInitials(dirPerson.Initials);
+                workerContract.parmEmpName(worker.name());
+                workerContract.parmFirstName(dirPersonName.FirstName);
+                workerContract.parmLastName(dirPersonName.LastName);
+                workerContract.parmPhone(worker.phone());
+                workerContract.parmMobile(worker.phoneLocal());
+                workerContract.parmAddress(worker.primaryAddress());
+                workerContract.parmDateOfBirth(person.BirthDate);
+                nationality = HcmPersonPrivateDetails::findByPerson(dirPerson.RecId).CitizenshipCountryRegion;
+                workerContract.parmNationality(LogisticsAddressCountryRegionTranslation::find(nationality,"en-us").ShortName);
+                workerContract.parmMaritalStatus(enum2Str(personDetails.MaritalStatus));
+                workerContract.parmReligion(HcmEthnicOrigin::find(person.EthnicOrigin).EthnicOriginId);
+                workerContract.parmGender(enum2Str(person.Gender));
+                workerContract.parmEmail(worker.email());
+                select firstonly forupdate electronicAddress
+                join dirPartyLocation
+                where electronicAddress.Location == dirPartyLocation.Location &&
+                      dirPartyLocation.Party == dirPerson.RecId &&
+                      electronicAddress.Type == LogisticsElectronicAddressMethodType::Email &&
+                      electronicAddress.IsPrimary == false;
+                workerContract.parmPersonalEmail(electronicAddress.Locator);
+                workerContract.parmJobTitle(worker.title());
+
+                select firstonly hcmWorkerBankAccount
+            where hcmWorkerBankAccount.Worker == worker.RecId;
+
+                workerContract.parmBankName(hcmWorkerBankAccount.Name);
+                workerContract.parmBankAccountNumber(hcmWorkerBankAccount.AccountNum);
+
+                //workerContract.parmPersonnelNumberId(worker.PersonnelNumber); //Man power number
+                workerContract.parmJoiningDate(DateTimeUtil::date(hcmEmployment.ValidFrom));
+                workerContract.parmDepartmentName(worker.primaryDepartmentName());
+                workerContract.parmReportingManager(HcmWorker::find(HcmPosition::getReportsToWorker(HcmPosition::findByPosition(worker.primaryPositionId()).RecId)).email());
+
+                personImage = HcmPersonImage::findByPerson(worker.Person);
+                if(personImage)
+                {
+                    //binData.setData(personImage.Image);
+                    //workerContract.parmImage(binData.base64Encode());
+                    workerContract.parmImage(personImage.Image);
+                }
+                workerContract.parmEducation(person.Education);
+
+                select firstonly payrollPeriodLine
+            join payrollPeriod
+            where payrollPeriod.RecId == payrollPeriodLine.PayrollPeriod &&
+                  payrollPeriod.PayrollFrequency == SPYPayrollFrequency::Monthly &&
+                  payrollPeriodLine.PeriodStartDate <= today() &&
+                  payrollPeriodLine.PeriodEndDate >= today();
+
+                workerContract.parmSalary(SPYExpressionFunctionMethod::Exp_EmpGrossSalary(worker.RecId, CompanyInfo::find().RecId, payrollPeriodLine.RecId, today()));
+        
+                workerContract.parmPersonnelNumberId(worker.PersonnelNumber);
+                workerContract.parmAnniversaryDate(dirPerson.anniversaryDate());
+
+                hcmPersonIdentificationNumber = HcmPersonIdentificationNumber::findByPersonAndType(dirPerson.RecId, HcmIdentificationType::findByIdentificationType("Visa").RecId);
+                workerContract.parmVisaNo(hcmPersonIdentificationNumber.IdentificationNumber);
+                workerContract.parmVisaExpiry(hcmPersonIdentificationNumber.ExpirationDate);
+            }
+            return workerContract;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmpDetailsByEmail</Name>
+				<Source><![CDATA[
+    public SPYIntWorkerContract getEmpDetailsByEmail(Email _emailId)
+    {
+        HcmWorker                       worker = this.getWorkerByEmail(_emailId);
+        SPYIntWorkerContract               workerContract;
+        HcmEmployment                   hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId,CompanyInfo::current());
+        HcmEmploymentDetail             hcmEmploymentDetail = HcmEmploymentDetail::findByEmployment(hcmEmployment.RecId);
+        HRMAbsenceCode                  hrmAbsenceCode;
+        HcmPersonIdentificationNumber   hcmPersonIdentificationNumber;
+        HcmWorkerBankAccount            hcmWorkerBankAccount;
+        DirPerson                       dirPerson = DirPerson::find(worker.Person);
+        HcmPersonPrivateDetails         person = HcmPersonPrivateDetails::findByPerson(worker.Person);
+        HcmPersonDetails                personDetails = HcmPersonDetails::findByPerson(worker.Person);
+        DirPersonName                   dirPersonName = DirPersonName::find(worker.Person);
+        SPYPayrollPeriod                payrollPeriod;
+        SPYPayrollPeriodLine            payrollPeriodLine;
+        LogisticsElectronicAddress      electronicAddress;
+        dirPartyLocation                dirPartyLocation;
+        LogisticsAddressCountryRegionId nationality;
+        HcmPersonImage                  personImage;
+        BinData                         binData = new BinData();
+
+        workerContract = new SPYIntWorkerContract();
+        if(worker.RecId)
+        {
+            workerContract.parmEmpId(_emailId);
+            workerContract.parmEmpInitials(dirPerson.Initials);
+            workerContract.parmEmpName(worker.name());
+            workerContract.parmFirstName(dirPersonName.FirstName);
+            workerContract.parmLastName(dirPersonName.LastName);
+            workerContract.parmPhone(worker.phone());
+            workerContract.parmMobile(worker.phoneLocal());
+            workerContract.parmAddress(worker.primaryAddress());
+            workerContract.parmDateOfBirth(person.BirthDate);
+            nationality = HcmPersonPrivateDetails::findByPerson(dirPerson.RecId).CitizenshipCountryRegion;
+            workerContract.parmNationality(LogisticsAddressCountryRegionTranslation::find(nationality,"en-us").ShortName);
+            workerContract.parmMaritalStatus(enum2Str(personDetails.MaritalStatus));
+            workerContract.parmReligion(HcmEthnicOrigin::find(person.EthnicOrigin).EthnicOriginId);
+            workerContract.parmGender(enum2Str(person.Gender));
+            workerContract.parmEmail(worker.email());
+            select firstonly forupdate electronicAddress
+                join dirPartyLocation
+                where electronicAddress.Location == dirPartyLocation.Location &&
+                      dirPartyLocation.Party == dirPerson.RecId &&
+                      electronicAddress.Type == LogisticsElectronicAddressMethodType::Email &&
+                      electronicAddress.IsPrimary == false;
+            workerContract.parmPersonalEmail(electronicAddress.Locator);
+            workerContract.parmJobTitle(worker.title());
+
+            select firstonly hcmWorkerBankAccount
+            where hcmWorkerBankAccount.Worker == worker.RecId;
+
+            workerContract.parmBankName(hcmWorkerBankAccount.Name);
+            workerContract.parmBankAccountNumber(hcmWorkerBankAccount.AccountNum);
+
+            //workerContract.parmPersonnelNumberId(worker.PersonnelNumber); //Man power number
+            workerContract.parmJoiningDate(DateTimeUtil::date(hcmEmployment.ValidFrom));
+            workerContract.parmDepartmentName(worker.primaryDepartmentName());
+            workerContract.parmReportingManager(HcmWorker::find(HcmPosition::getReportsToWorker(HcmPosition::findByPosition(worker.primaryPositionId()).RecId)).email());
+
+            personImage = HcmPersonImage::findByPerson(worker.Person);
+            if(personImage)
+            {
+                //binData.setData(personImage.Image);
+                //workerContract.parmImage(binData.base64Encode());
+                workerContract.parmImage(personImage.Image);
+            }
+            workerContract.parmEducation(person.Education);
+
+            select firstonly payrollPeriodLine
+            join payrollPeriod
+            where payrollPeriod.RecId == payrollPeriodLine.PayrollPeriod &&
+                  payrollPeriod.PayrollFrequency == SPYPayrollFrequency::Monthly &&
+                  payrollPeriodLine.PeriodStartDate <= today() &&
+                  payrollPeriodLine.PeriodEndDate >= today();
+
+            workerContract.parmSalary(SPYExpressionFunctionMethod::Exp_EmpGrossSalary(worker.RecId, CompanyInfo::find().RecId, payrollPeriodLine.RecId, today()));
+        
+            workerContract.parmPersonnelNumberId(worker.PersonnelNumber);
+            workerContract.parmAnniversaryDate(dirPerson.anniversaryDate());
+
+            hcmPersonIdentificationNumber = HcmPersonIdentificationNumber::findByPersonAndType(dirPerson.RecId, HcmIdentificationType::findByIdentificationType("Visa").RecId);
+            workerContract.parmVisaNo(hcmPersonIdentificationNumber.IdentificationNumber);
+            workerContract.parmVisaExpiry(hcmPersonIdentificationNumber.ExpirationDate);
+        }
+        return workerContract;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getWorkerByEmail</Name>
+				<Source><![CDATA[
+    private HcmWorker getWorkerByEmail(Email _emailId)
+    {
+        LogisticsElectronicAddress      electronicAddres;
+        DirPerson                       dirPerson;
+        HcmWorker                       hcmWorker;
+        LogisticsLocation       logisticsLocation;
+        DirPartyLocation        dirPartyLocation;
+        /*
+        select firstonly1 hcmWorker
+            where   hcmWorker.PersonnelNumber       != ""
+        join dirPerson
+            where   hcmWorker.Person                == dirPerson.RecId
+        join electronicAddres
+            where   dirPerson.PrimaryContactEmail   == electronicAddres.RecId
+            &&      electronicAddres.Type           == LogisticsElectronicAddressMethodType::Email
+            &&      electronicAddres.Locator        == _emailId;
+    */
+
+        select firstonly electronicAddres
+            where electronicAddres.Locator == _emailId &&
+            electronicAddres.Type == LogisticsElectronicAddressMethodType::Email
+            join dirPartyLocation
+            where dirPartyLocation.Location == electronicAddres.Location
+            join hcmWorker
+            where hcmWorker.Person == dirPartyLocation.Party;
+
+        return hcmWorker;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmpPaySlip</Name>
+				<Source><![CDATA[
+        public str getEmpPaySlip(HcmPersonnelNumberId _empId,TransDate _date)
+        {
+            SPYPayslipContract                   paySlipContract      = new SPYPayslipContract();
+            SPYPayslipController                 payslipController   =new SPYPayslipController();
+            SPYPayrollPeriod                        payrollPeriod;
+            SPYPayrollPeriodLine                payrollPeriodLine;
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            Args                                           args = new Args();
+            SRSPrintDestinationSettings     settings;
+            Array                                          arrayFiles;
+            str                                              base64,base64Str;
+            System.Byte[]                             reportBytes               = new System.Byte[0]();
+            SRSProxy                                    srsProxy;
+            Query                                        baseQuery,reportQuery;
+            QueryBuildDataSource             qbdHcmWorker, qbdPayrollLedger;
+
+            SRSReportRunService srsReportRunService = new SrsReportRunService();
+            Microsoft.Dynamics.AX.Framework.Reporting.Shared.ReportingService.ParameterValue[] parameterValueArray;
+            Map reportParametersMap;
+            SRSReportExecutionInfo executionInfo = new SRSReportExecutionInfo();
+            ;
+        
+            select firstonly payrollPeriodLine
+            join payrollPeriod
+            where payrollPeriod.RecId == payrollPeriodLine.PayrollPeriod &&
+                  payrollPeriod.PayrollFrequency == SPYPayrollFrequency::Monthly &&
+                  payrollPeriodLine.PeriodStartDate <= _date &&
+                  payrollPeriodLine.PeriodEndDate >= _date;
+
+            payslipController.parmArgs(args);
+            payslipController.parmReportName(ssrsReportStr(SPYPaySlip, SPYReport));
+            payslipController.parmShowDialog(false);
+            payslipController.parmLoadFromSysLastValue(false);
+            PaySlipContract.parmPayrollPeriodline(payrollPeriodLine.RecId);
+            PaySlipContract.parmAmountDisplay(SPYAmountDisplay::AccountingCurrency);
+
+        
+            baseQuery = payslipController.parmReportContract().parmQueryContracts().lookup(payslipController.getFirstQueryContractKey());
+            qbdHcmWorker = baseQuery.dataSourceTable(tableNum(HcmWorker));
+            qbdPayrollLedger = qbdHcmWorker.addDataSource(tableNum(SPYPayrollLedger), "SPYPayrollLedger");
+            qbdPayrollLedger.joinMode(JoinMode::ExistsJoin);
+            qbdPayrollLedger.fetchMode(QueryFetchMode::One2One);
+            qbdPayrollLedger.Relations(true);
+            qbdPayrollLedger.addRange(fieldNum(SPYPayrollLedger, PayrollPeriodLine)).value(queryValue(payrollPeriodLine.RecId));
+        
+            reportQuery = new Query(baseQuery);
+
+            //SrsReportHelper::addParameterValueRangeToQuery(payslipController.getFirstQuery(), tableNum(HcmWorker),fieldNum(HcmWorker ,RecId),SysQuery::value(worker.RecId));
+        
+            SrsReportHelper::addParameterValueRangeToQuery(reportQuery, tableNum(HcmWorker),fieldNum(HcmWorker ,RecId),SysQuery::value(worker.RecId));
+            payslipController.parmReportContract().parmQueryContracts().insert(payslipController.getFirstQueryContractKey(), reportQuery);
+
+            PaySlipContract.parmSendMail(false);
+            payslipController.parmReportContract().parmRdpContract(PaySlipContract);
+
+            // Provide printer settings
+            settings = payslipController.parmReportContract().parmPrintSettings();
+            settings.printMediumType(SRSPrintMediumType::File);
+            settings.fileName("PaySlip.PDF");
+            settings.fileFormat(SRSReportFileFormat::PDF);
+
+            // Below is a part of code responsible for rendering the report
+            payslipController.parmReportContract().parmReportServerConfig(SRSConfiguration::getDefaultServerConfiguration());
+            payslipController.parmReportContract().parmReportExecutionInfo(executionInfo);
+
+            reportParametersMap = srsReportRunService.createParamMapFromContract(payslipController.parmReportContract());
+
+            parameterValueArray = SrsReportRunUtil::getParameterValueArray(reportParametersMap);
+            srsProxy = SRSProxy::constructWithConfiguration(payslipController.parmReportContract().parmReportServerConfig());
+            reportBytes = srsproxy.renderReportToByteArray(payslipController.parmreportcontract().parmreportpath(),
+                                                                                  parameterValueArray,
+                                                                                  settings.fileFormat(),
+                                                                                  settings.deviceinfo());
+
+            base64Str = System.Convert::ToBase64String(reportBytes);
+            return  base64Str;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getWorkerTimesheetPeriodsMonthly</Name>
+				<Source><![CDATA[
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntWorkerPeriodContract))]
+        public List getWorkerTimesheetPeriodsMonthly(HcmPersonnelNumberId _empId)
+        {
+            List                                list = new List(Types::Class);
+            ProjPeriodEmpl                      projPeriodEmpl;
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            SPYIntWorkerPeriodContract                 workerPeriodList;
+         
+            while select projPeriodEmpl
+            order by PeriodFrom asc
+            where projPeriodEmpl.Worker == worker.RecId
+            {
+                workerPeriodList = new SPYIntWorkerPeriodContract();
+                workerPeriodList.parmMonth(mthOfYr(projPeriodEmpl.PeriodFrom));
+                workerPeriodList.parmYear(year(projPeriodEmpl.PeriodFrom));
+                workerPeriodList.parmFromDate(projPeriodEmpl.PeriodFrom);
+                workerPeriodList.parmToDate(projPeriodEmpl.PeriodFrom+7);
+
+                list.addEnd(workerPeriodList);
+            
+            }
+            return  list;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getEmplTSDetailsMonthly</Name>
+				<Source><![CDATA[
+        [AifCollectionTypeAttribute('return', Types::Class, classStr(SPYIntTimesheetTableContract))]
+        public List getEmplTSDetailsMonthly(HcmPersonnelNumberId _empId, Date _periodDate)
+        {
+            /*List                            timesheetList = new List(Types::);
+        TransDate   i,periodDate =dateStartMth( _periodDate);
+        Email   emp = _empId;
+        for(i=periodDate;i<endMth(periodDate);i++)
+        {
+            timesheetList.addEnd(this.getEmplTSDetails(emp,periodDate));
+            periodDate += 7;
+        }
+
+        return timesheetList;*/
+        Date                                    periodDate = dateStartMth( _periodDate);
+            TSTimesheetTable                timesheetTable;
+            TSTimesheetLine                 timesheetLine;
+            TSTimesheetLineWeek             timesheetLineWeek;
+            SPYIntTimesheetTableContract       timesheetTableContract;
+            SPYIntTimesheetLineContract        timesheetLineContract;
+            SPYIntTimesheetLineDateContract    timesheetLineDateContract;
+            List                            timesheetList = new List(Types::Class);
+            List                            timesheetLineList = new List(Types::Class);
+            List                            timesheetLineDateList = new List(Types::Class);
+            // List                            timesheetListMonthly = new List(Types::li)
+            HcmWorker                       worker = HcmWorker::findByPersonnelNumber(_empId);
+            int                             day;
+            Decimals                        totalHrs;
+            ResourceWorkerView              resourceWorkerView;
+            boolean                         timesheetFound;
+            HcmEmployment                   hcmEmployment = HcmEmployment::findByWorkerLegalEntity(worker.RecId, CompanyInfo::current());
+            WorkCalendarEmployment          workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+            CalendarId                      calendarId = workCalendarEmployment.CalendarId;
+            SPYAmount                       workingHours;
+            SPYIntTimesheetPeriodDateContract  timesheetPeriodDateContract;
+            List                            timesheetPeriodDateList = new List(Types::Class);
+
+            while(periodDate<endMth(_periodDate))
+            {
+                while select timesheetTable
+                join resourceWorkerView
+                where timesheetTable.Resource == resourceWorkerView.RecId &&
+                      resourceWorkerView.Worker == worker.RecId &&
+                      timesheetTable.PeriodFrom <= periodDate &&
+                      timesheetTable.PeriodTo >= periodDate
+                {
+                    timesheetFound = true;
+                    timesheetTableContract = new SPYIntTimesheetTableContract();
+                    timesheetTableContract.parmTimesheetNumber(timesheetTable.TimesheetNbr);
+                    timesheetTableContract.parmEmplId(worker.PersonnelNumber);
+                    timesheetTableContract.parmPeriodFrom(timesheetTable.PeriodFrom);//(periodDate);
+                    timesheetTableContract.parmPeriodTo(timesheetTable.PeriodTo);//(periodDate+6);
+                    timesheetTableContract.parmApprovalStatus(strFmt("%1",timesheetTable.ApprovalStatus));
+                    timesheetTableContract.parmIsEditable(timesheetTable.ApprovalStatus == TSAppStatus::Create);
+                    timesheetLineList = new List(Types::Class);
+                    while select timesheetLine
+                    where timesheetLine.TimesheetNbr == timesheetTable.TimesheetNbr
+                    {
+                        timesheetLineContract = new SPYIntTimesheetLineContract();
+                        timesheetLineContract.parmLineNum(timesheetLine.LineNum);
+                        timesheetLineContract.parmProjId(timesheetLine.ProjId);
+                        timesheetLineContract.parmProjDataAreaId(timesheetLine.ProjectDataAreaId);
+                        timesheetLineContract.parmProjName(timesheetLine.projName());
+                        timesheetLineContract.parmActivityNumber(timesheetLine.ActivityNumber);
+                        timesheetLineContract.parmCategoryId(timesheetLine.CategoryId);
+                        timesheetLineContract.parmCategoryName(ProjCategory::find(timesheetLine.CategoryId).Name);
+                        timesheetLineContract.parmActivityName(smmActivities::find(timesheetLine.ActivityNumber).Purpose);
+                        day = 1;
+                        timesheetLineDateList = new List(Types::Class);
+                        select firstonly timesheetLineWeek
+                        where timesheetLineWeek.TimesheetNbr == timesheetTable.TimesheetNbr &&
+                              timesheetLineWeek.LineNum == timesheetLine.LineNum;
+                        totalHrs=0;
+                        while (day <= timesheetTable.PeriodTo - timesheetTable.PeriodFrom + 1)
+                        {
+                            timesheetLineDateContract = new SPYIntTimesheetLineDateContract();
+                            timesheetLineDateContract.parmLineDate(timesheetTable.PeriodFrom + day - 1);
+                            totalHrs=totalHrs+timesheetLineWeek.Hours[day];
+                            timesheetLineDateContract.parmHours(timesheetLineWeek.Hours[day]);
+                            timesheetLineDateContract.parmExternalComments(timesheetLineWeek.ExternalComments[day]);
+                            timesheetLineDateContract.parmInternalComments(timesheetLineWeek.InternalComments[day]);
+                            timesheetLineDateList.addEnd(timesheetLineDateContract);
+                            day++;
+                        }
+                        timesheetLineContract.parmTotalHours(totalHrs);
+                        timesheetLineContract.parmTimesheetLineDateList(timesheetLineDateList);
+                        timesheetLineList.addEnd(timesheetLineContract);
+                    }
+                    timesheetTableContract.parmTimesheetLineList(timesheetLineList);
+                    day = 1;
+                    while (day <= timesheetTable.PeriodTo - timesheetTable.PeriodFrom + 1)
+                    {
+                        workingHours = WorkCalendarDate::calcDefinedHours(calendarId,timesheetTable.PeriodFrom+day-1);
+                        timesheetPeriodDateContract = new SPYIntTimesheetPeriodDateContract();
+                        timesheetPeriodDateContract.parmPeriodDate(timesheetTable.PeriodFrom+day-1);
+                        timesheetPeriodDateContract.parmWorkingHours(workingHours);
+                        timesheetPeriodDateList.addEnd(timesheetPeriodDateContract);
+                        day++;
+                    }
+                    timesheetTableContract.parmTimesheetPeriodDateList(timesheetPeriodDateList);
+                    timesheetList.addEnd(timesheetTableContract);
+                }
+
+                if(!timesheetFound)
+                {
+                    select firstonly resourceWorkerView
+                        where resourceWorkerView.Worker == worker.RecId &&
+                              resourceWorkerView.ResourceCompanyId == curExt();
+            
+                    ProjPeriodLine projPeriodLine = TSTimesheetTable::getValidResourcePeriod(resourceWorkerView.RecId);
+                    ProjPeriodTimesheetWeek projPeriodTimesheetWeek = ProjPeriodTimesheetWeek::findFromPeriod(projPeriodLine.PeriodId, periodDate);
+                    timesheetTableContract = new SPYIntTimesheetTableContract();
+                    timesheetTableContract.parmEmplId(worker.PersonnelNumber);
+                    timesheetTableContract.parmPeriodFrom(projPeriodTimesheetWeek.PeriodFrom);
+                    timesheetTableContract.parmPeriodTo(projPeriodTimesheetWeek.PeriodTo);
+                    day = 1;
+                    while (day <= timesheetTableContract.parmPeriodTo() - timesheetTableContract.parmPeriodFrom() + 1)
+                    {
+                        workingHours = WorkCalendarDate::calcDefinedHours(calendarId,timesheetTableContract.parmPeriodFrom()+day-1);
+                        timesheetPeriodDateContract = new SPYIntTimesheetPeriodDateContract();
+                        timesheetPeriodDateContract.parmPeriodDate(timesheetTableContract.parmPeriodFrom()+day-1);
+                        timesheetPeriodDateContract.parmWorkingHours(workingHours);
+                        timesheetPeriodDateList.addEnd(timesheetPeriodDateContract);
+                        day++;
+                    }
+                    timesheetTableContract.parmTimesheetPeriodDateList(timesheetPeriodDateList);
+                    timesheetList.addEnd(timesheetTableContract);
+                }
+                PeriodDate = PeriodDate + 7;
+            }
+            return timesheetList;
+        }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>workingHours</Name>
+				<Source><![CDATA[
+    private SPYAmount workingHours(SPYLeaveApplicationTable _leaveApplicationTable,TransDate _date = dateNull())
+    {
+        CalendarId              calendarId;
+        Hours                   workingHours;
+        TransDateTime           transDateTime = DateTimeUtil::newDateTime(_date,00-00);
+        HcmEmployment           hcmEmployment = HcmEmployment::findByWorkerLegalEntity(_leaveApplicationTable.Worker,CompanyInfo::current(),transDateTime);
+        WorkCalendarEmployment  workCalendarEmployment = WorkCalendarEmployment::findByEmploymentRecId(hcmEmployment.RecId);
+    
+        calendarId = workCalendarEmployment.CalendarId;
+        if ( _date == dateNull() )
+            workingHours = WorkCalendarTable::find( calendarId ).StandardWorkDayHours;
+        else
+            workingHours = WorkCalendarDate::calcDefinedHours(calendarId,_date);
+    
+        return workingHours;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>hello</Name>
+				<Source><![CDATA[
+    public str hello()
+    {
+        return "Hello World";
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

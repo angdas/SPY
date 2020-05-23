@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxQuery xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns=""
+	i:type="AxQuerySimple">
+	<Name>SPYOvertimeLedger</Name>
+	<SourceCode>
+		<Methods>
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Query]
+public class SPYOvertimeLedger extends QueryRun
+{
+}
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<DataSources>
+		<AxQuerySimpleRootDataSource>
+			<Name>SPYOvertimeTypeTable</Name>
+			<DynamicFields>Yes</DynamicFields>
+			<Table>SPYOvertimeTypeTable</Table>
+			<DataSources>
+				<AxQuerySimpleEmbeddedDataSource>
+					<Name>SPYOvertimeLedger</Name>
+					<DynamicFields>Yes</DynamicFields>
+					<Table>SPYOvertimeLedger</Table>
+					<DataSources>
+						<AxQuerySimpleEmbeddedDataSource>
+							<Name>HcmWorker</Name>
+							<DynamicFields>Yes</DynamicFields>
+							<Table>HcmWorker</Table>
+							<DataSources />
+							<DerivedDataSources />
+							<Fields />
+							<Ranges>
+								<AxQuerySimpleDataSourceRange>
+									<Name>PersonnelNumber</Name>
+									<Field>PersonnelNumber</Field>
+								</AxQuerySimpleDataSourceRange>
+							</Ranges>
+							<UseRelations>Yes</UseRelations>
+							<Relations />
+						</AxQuerySimpleEmbeddedDataSource>
+					</DataSources>
+					<DerivedDataSources />
+					<Fields />
+					<Ranges>
+						<AxQuerySimpleDataSourceRange>
+							<Name>OvertimeDate</Name>
+							<Field>OvertimeDate</Field>
+						</AxQuerySimpleDataSourceRange>
+					</Ranges>
+					<UseRelations>Yes</UseRelations>
+					<Relations />
+				</AxQuerySimpleEmbeddedDataSource>
+			</DataSources>
+			<DerivedDataSources />
+			<Fields />
+			<Ranges>
+				<AxQuerySimpleDataSourceRange>
+					<Name>OvertimeTypeCode</Name>
+					<Field>OvertimeTypeCode</Field>
+				</AxQuerySimpleDataSourceRange>
+			</Ranges>
+			<GroupBy />
+			<Having />
+			<OrderBy />
+		</AxQuerySimpleRootDataSource>
+	</DataSources>
+</AxQuery>

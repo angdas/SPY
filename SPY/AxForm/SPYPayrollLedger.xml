@@ -1,0 +1,1323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYPayrollLedger</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYPayrollLedger extends FormRun
+{
+    boolean                                      EOSRunCaller;
+    SPYEOSRunRecId                         EOSRun;
+    QueryBuildRange                         EOSRunRange;
+
+    boolean                                      masterProcessCaller;
+    HcmWorkerRecId                         worker;
+    SPYPayrollPeriodLineRecId            payrollPeriodLine;
+    QueryBuildRange                         workerRange;
+    QueryBuildRange                         payrollPeriodLineRange;
+
+    SPYPayrollEarningsJournalTable    payrollEarningsJournalTable;
+    QueryBuildRange                         payrollEarningsJournalRange;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        SPYEOSRunTable      EOSRunTable;
+        FormRun                  formRun;
+        container                 argsCon;
+    
+        if(element.args().record() is SPYPayrollEarningsJournalTable)
+            payrollEarningsJournalTable = element.args().record() as SPYPayrollEarningsJournalTable;
+        else if(element.args().caller() && element.args().record() is SPYEOSRunTable)
+        {
+            EOSRunTable = element.args().record() as SPYEOSRunTable;
+            EOSRun = EOSRunTable.RecId;
+            EOSRunCaller = true;
+        }
+        else if(element.args().caller())
+        {
+            formRun = element.args().caller();
+            if(formRun.name() == formStr(SPYMasterProcess) || formRun.name() == formStr(SPYPayArrearProcess))
+            {
+                masterProcessCaller = true;
+                argsCon = str2con(element.args().parm());
+                worker = conPeek(argsCon,1);
+                payrollPeriodLine = conPeek(argsCon,2);
+            }
+        }
+    
+        super();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYPayrollLedger</Name>
+				<Methods>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            if(payrollEarningsJournalTable)
+                payrollEarningsJournalRange.value(queryValue(payrollEarningsJournalTable.RecId));
+            else if(EOSRunCaller)
+                EOSRunRange.value(queryValue(EOSRun));
+            if(masterProcessCaller)
+            {
+                workerRange.value(queryValue(worker));
+                payrollPeriodLineRange.value(queryValue(payrollPeriodLine));
+            }
+            super();
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            QueryBuildDataSource    EOSPayrollDataSource;
+            QueryBuildDataSource    payrollLedgerDS;
+            QueryBuildDataSource    payrollEarningsJournalTransDS;
+        
+            super();
+        
+            if(payrollEarningsJournalTable)
+            {
+                payrollLedgerDS = this.query().dataSourceTable(tableNum(SPYPayrollLedger));
+                payrollEarningsJournalTransDS = payrollLedgerDS.addDataSource(tableNum(SPYPayrollEarningsJournalTrans));
+                payrollEarningsJournalTransDS.addLink(fieldnum(SPYPayrollLedger,PayrollEarningsJournalTrans),fieldNum(SPYPayrollEarningsJournalTrans,RecId));
+                payrollEarningsJournalRange = payrollEarningsJournalTransDS.addRange(fieldNum(SPYPayrollEarningsJournalTrans,PayrollEarningsJournal));
+            }
+            else if(EOSRunCaller)
+            {
+                EOSPayrollDataSource = this.query().dataSourceTable(tableNum(SPYPayrollLedger)).addDataSource(tableNum(SPYEOSRunPayroll));
+                EOSPayrollDataSource.addLink(fieldNum(SPYPayrollLedger,RecId),fieldNum(SPYEOSRunPayroll,PayrollLedger));
+                EOSRunRange = EOSPayrollDataSource.addRange(fieldNum(SPYEOSRunPayroll,EOSRun));
+            }
+            if(masterProcessCaller)
+            {
+                workerRange = this.query().dataSourceTable(tableNum(SPYPayrollLedger)).addRange(fieldNum(SPYPayrollLedger,Worker));
+                payrollPeriodLineRange = this.query().dataSourceTable(tableNum(SPYPayrollLedger)).addRange(fieldNum(SPYPayrollLedger,PayrollPeriodLine));
+            }
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields>
+					<Field>
+						<DataField>PayrollJournalLine</DataField>
+						<Methods>
+							<Method>
+								<Name>jumpRef</Name>
+								<Source><![CDATA[
+            /// <summary>
+            ///
+            /// </summary>
+            public void jumpRef()
+            {
+                Args    args = new Args();
+                SPYPayrollJournalTable       payrollJournalTable = SPYPayrollJournalLine::find(SPYPayrollLedger.PayrollJournalLine).payrollJournalTable();
+                args.record(payrollJournalTable);
+                args.lookupRecord(payrollJournalTable);
+
+                //super();
+                new MenuFunction(menuitemDisplayStr(SPYPayrollJournal), MenuItemType::Display).run(args);
+            }
+
+]]></Source>
+							</Method>
+						</Methods>
+					</Field>
+				</Fields>
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>SPYExpressionTrace</Name>
+				<Type>MenuFunctionButton</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        /// <summary>
+        ///
+        /// </summary>
+        public void clicked()
+        {
+            Args args = new Args(formstr(SPYExpressionTrace));
+            FormRun formRun;
+            args.caller(this);
+            args.record(SPYExpressionTraceTable::find(SPYPayrollLedger.ExpressionTrace));
+
+            formRun = classFactory.formRunClass(args);
+            formRun.init();
+            formRun.run();
+            formRun.wait();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>TabFinancialDimensions</Name>
+				<Type>TabPage</Type>
+				<Methods>
+					<Method>
+						<Name>pageActivated</Name>
+						<Source><![CDATA[
+        public void pageActivated()
+        {
+            /* TODO: (Code Upgrade) [Dimension Entry control] This method can be removed if there is no custom implementation */
+            // dimensionDefaultingController.pageActivated();
+            DimensionEntryControl.allowEdit(false);
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYPayrollLedger</Name>
+			<Table>SPYPayrollLedger</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>AccountingCurrencyAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>AccountingDistributionTemplate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ArrearPeriodLine</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>BenefitJournalTrans</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CalcEndDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CalcStartDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Currency</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DefaultDimension</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>DistributeCost</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ExchRate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ExpressionTrace</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ImmediateDisbursement</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>IsFinalised</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LeaveApplication</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LedgerDimensionCredit</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LedgerDimensionDebit</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayLedgerSource</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayLoanLine</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Payroll</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayrollEarningsJournalTrans</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayrollJournalLine</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PayrollPeriodLine</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>SourceDocument</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransactionCurrencyAmount</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Txt</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY85</Caption>
+		<DataSource xmlns="">SPYPayrollLedger</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">Task</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<TitleDataSource xmlns="">SPYPayrollLedger</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormButtonGroupControl">
+						<Name>FormButtonGroupControl</Name>
+						<Type>ButtonGroup</Type>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormMenuFunctionButtonControl">
+								<Name>SPYExpressionTrace</Name>
+								<Type>MenuFunctionButton</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<MenuItemName>SPYExpressionTrace</MenuItemName>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SPYExpression:ExpressionTrace</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>CustomFilterGroup</Name>
+				<ElementPosition>1288490187</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Pattern>CustomFilters</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls />
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+				<FrameType>None</FrameType>
+				<Style>CustomFilter</Style>
+				<ViewEditMode>Edit</ViewEditMode>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1717986916</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageOverview</Name>
+						<ElementPosition>894784852</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Pattern>ToolbarList</Pattern>
+						<PatternVersion>1.2</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>Grid</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYPayrollLedger_PayrollPeriodLine</Name>
+										<ElementPosition>613566756</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>PayrollPeriodLine</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYPayrollLedger_Worker</Name>
+										<ElementPosition>920350134</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+										<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYPayrollLedger_Payroll</Name>
+										<ElementPosition>1227133512</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>Payroll</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>SPYPayrollLedger_TransactionCurrencyAmount</Name>
+										<ElementPosition>1533916890</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>TransactionCurrencyAmount</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYPayrollLedger_CurrencyCode</Name>
+										<ElementPosition>1840700268</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Currency</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormSegmentedEntryControl">
+										<Name>SPYPayrollLedger_LedgerDimensionDebit</Name>
+										<ElementPosition>1942961394</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>SegmentedEntry</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension>
+											<Name>SegmentedEntryControl</Name>
+											<ExtensionComponents />
+											<ExtensionProperties>
+												<AxFormControlExtensionProperty>
+													<Name>parmControllerClassName</Name>
+													<Type>String</Type>
+													<TypeName>str</TypeName>
+													<Value>LedgerDimensionDefaultAccountController</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIsDefaultAccount</Name>
+													<Type>Enum</Type>
+													<TypeName>boolean</TypeName>
+													<Value>False</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmValidateBlockedForManualEntry</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmLockMainAccountSegment</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmPostingType</Name>
+													<Type>Enum</Type>
+													<TypeName>LedgerPostingType</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIncludeTotalAccounts</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIncludeFinancialAccounts</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmAccountTypeEnumName</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+											</ExtensionProperties>
+										</FormControlExtension>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>LedgerDimensionDebit</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormSegmentedEntryControl">
+										<Name>SPYPayrollLedger_LedgerDimensionCredit</Name>
+										<ElementPosition>2045222520</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>SegmentedEntry</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension>
+											<Name>SegmentedEntryControl</Name>
+											<ExtensionComponents />
+											<ExtensionProperties>
+												<AxFormControlExtensionProperty>
+													<Name>parmControllerClassName</Name>
+													<Type>String</Type>
+													<TypeName>str</TypeName>
+													<Value>LedgerDimensionDefaultAccountController</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIsDefaultAccount</Name>
+													<Type>Enum</Type>
+													<TypeName>boolean</TypeName>
+													<Value>False</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmValidateBlockedForManualEntry</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmLockMainAccountSegment</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmPostingType</Name>
+													<Type>Enum</Type>
+													<TypeName>LedgerPostingType</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIncludeTotalAccounts</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIncludeFinancialAccounts</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmAccountTypeEnumName</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+											</ExtensionProperties>
+										</FormControlExtension>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>LedgerDimensionCredit</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>SPYPayrollLedger_IsFinalised</Name>
+										<Type>ComboBox</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>IsFinalised</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<Items />
+									</AxFormControl>
+								</Controls>
+								<AlternateRowShading>No</AlternateRowShading>
+								<DataSource>SPYPayrollLedger</DataSource>
+								<MultiSelect>No</MultiSelect>
+								<ShowRowLabels>No</ShowRowLabels>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SYS50012</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageDetails</Name>
+						<ElementPosition>1319807657</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Pattern>FieldsFieldGroups</Pattern>
+						<PatternVersion>1.1</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupWorker</Name>
+								<ElementPosition>390451572</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYPayrollLedger_Worker1</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+										<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Worker</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupPayElement</Name>
+								<ElementPosition>585677358</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYPayrollLedger_Payroll1</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>Payroll</ReferenceField>
+										<ReplacementFieldGroup>Identification</ReplacementFieldGroup>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Payroll</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupPeriod</Name>
+								<ElementPosition>780903144</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYPayrollLedger_PayrollPeriodLine1</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>PayrollPeriodLine</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>GroupPeriod_ArrearPeriodLine</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>ArrearPeriodLine</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>PayrollPeriod</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupTransaction</Name>
+								<ElementPosition>976128930</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>SPYPayrollLedger_TransDate</Name>
+										<ElementPosition>1610612733</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>TransDate</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupTransaction_Txt</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Txt</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Transaction</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupCalcDate</Name>
+								<ElementPosition>1171354716</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>GroupCalcDate_CalcStartDate</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>CalcStartDate</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>GroupCalcDate_CalcEndDate</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>CalcEndDate</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>CalcDate</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupAmount</Name>
+								<ElementPosition>1366580502</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>SPYPayrollLedger_TransactionCurrencyAmount1</Name>
+										<ElementPosition>715827882</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>TransactionCurrencyAmount</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>SPYPayrollLedger_AccountingCurrencyAmount</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>AccountingCurrencyAmount</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYPayrollLedger_CurrencyCode1</Name>
+										<ElementPosition>1073741823</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Currency</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>SPYPayrollLedger_ExchRate</Name>
+										<ElementPosition>1789569705</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>ExchRate</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Amount</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupAccount</Name>
+								<ElementPosition>1561806288</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormSegmentedEntryControl">
+										<Name>CopyOfSPYPayrollLedger_LedgerDimensionDebit</Name>
+										<ElementPosition>1942961394</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>SegmentedEntry</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension>
+											<Name>SegmentedEntryControl</Name>
+											<ExtensionComponents />
+											<ExtensionProperties>
+												<AxFormControlExtensionProperty>
+													<Name>parmControllerClassName</Name>
+													<Type>String</Type>
+													<TypeName>str</TypeName>
+													<Value>LedgerDimensionDefaultAccountController</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIsDefaultAccount</Name>
+													<Type>Enum</Type>
+													<TypeName>boolean</TypeName>
+													<Value>False</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmValidateBlockedForManualEntry</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmLockMainAccountSegment</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmPostingType</Name>
+													<Type>Enum</Type>
+													<TypeName>LedgerPostingType</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIncludeTotalAccounts</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIncludeFinancialAccounts</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmAccountTypeEnumName</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+											</ExtensionProperties>
+										</FormControlExtension>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>LedgerDimensionDebit</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormSegmentedEntryControl">
+										<Name>CopyOfSPYPayrollLedger_LedgerDimensionCredit</Name>
+										<ElementPosition>2045222520</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>SegmentedEntry</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension>
+											<Name>SegmentedEntryControl</Name>
+											<ExtensionComponents />
+											<ExtensionProperties>
+												<AxFormControlExtensionProperty>
+													<Name>parmControllerClassName</Name>
+													<Type>String</Type>
+													<TypeName>str</TypeName>
+													<Value>LedgerDimensionDefaultAccountController</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIsDefaultAccount</Name>
+													<Type>Enum</Type>
+													<TypeName>boolean</TypeName>
+													<Value>False</Value>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmValidateBlockedForManualEntry</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmLockMainAccountSegment</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmPostingType</Name>
+													<Type>Enum</Type>
+													<TypeName>LedgerPostingType</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIncludeTotalAccounts</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmIncludeFinancialAccounts</Name>
+													<Type>Enum</Type>
+													<TypeName>NoYes</TypeName>
+												</AxFormControlExtensionProperty>
+												<AxFormControlExtensionProperty>
+													<Name>parmAccountTypeEnumName</Name>
+													<Type>String</Type>
+												</AxFormControlExtensionProperty>
+											</ExtensionProperties>
+										</FormControlExtension>
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>LedgerDimensionCredit</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>GroupAccount_AccountingDistributionTemplate</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>AccountingDistributionTemplate</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>LedgerAccount</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupPayrollJournal</Name>
+								<ElementPosition>1757032074</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYPayrollLedger_PayrollJournalLine</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>PayrollJournalLine</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>PayrollJournal</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupSource</Name>
+								<ElementPosition>1854644967</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>Group_M_Source</Name>
+										<AllowEdit>No</AllowEdit>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<CacheDataMethod>Yes</CacheDataMethod>
+										<DataMethod>Source</DataMethod>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Source</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupPayrollEarningJournal</Name>
+								<ElementPosition>1879048190</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>Group_PayrollEarningsJournalTrans</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>PayrollEarningsJournalTrans</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>PayrollEarningJournal</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupBenefitJournal</Name>
+								<ElementPosition>1903451413</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>Group_BenefitJournalTrans</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>BenefitJournalTrans</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>BenefitJournal</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupDistribution</Name>
+								<ElementPosition>390451572</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>GroupDistribution_DistributeCost</Name>
+										<Type>CheckBox</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>DistributeCost</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Distribution</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupDisbursement</Name>
+								<ElementPosition>1927854636</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>Group_ImmediateDisbursement</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>CheckBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>ImmediateDisbursement</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>GroupDisbursement_IsFinalised</Name>
+										<Type>CheckBox</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>IsFinalised</DataField>
+										<DataSource>SPYPayrollLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Disbursement</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>LeaveApplication</Name>
+								<Type>Group</Type>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>LeaveApplication_LeaveApplication</Name>
+										<Type>ReferenceGroup</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>LeaveApplication</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>LeaveApplication</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupLog</Name>
+								<ElementPosition>1952257860</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataGroup>Log</DataGroup>
+								<DataSource>SPYPayrollLedger</DataSource>
+							</AxFormControl>
+						</Controls>
+						<ColumnsMode>Fill</ColumnsMode>
+						<Caption>@SYS318405</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabFinancialDimensions</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1744830462</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<NeededPermission>Manual</NeededPermission>
+						<Pattern>DimensionEntryControl</Pattern>
+						<PatternVersion>1.1</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormContainerControl">
+								<Name>DimensionEntryControl</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<Type>Container</Type>
+								<WidthMode>SizeToAvailable</WidthMode>
+								<FormControlExtension>
+									<Name>DimensionEntryControl</Name>
+									<ExtensionComponents />
+									<ExtensionProperties>
+										<AxFormControlExtensionProperty>
+											<Name>parmControllerClassName</Name>
+											<Type>ExtendedDataType</Type>
+											<TypeName>ClassName</TypeName>
+											<Value>LedgerDefaultDimensionEntryController</Value>
+										</AxFormControlExtensionProperty>
+										<AxFormControlExtensionProperty>
+											<Name>parmControlLabelText</Name>
+											<Type>String</Type>
+											<TypeName>str</TypeName>
+											<Value>@SYS138487</Value>
+										</AxFormControlExtensionProperty>
+										<AxFormControlExtensionProperty>
+											<Name>parmEnumerationName</Name>
+											<Type>String</Type>
+											<TypeName>str</TypeName>
+										</AxFormControlExtensionProperty>
+										<AxFormControlExtensionProperty>
+											<Name>parmDataSourceName</Name>
+											<Type>String</Type>
+											<TypeName>str</TypeName>
+											<Value>SPYPayrollLedger</Value>
+										</AxFormControlExtensionProperty>
+										<AxFormControlExtensionProperty>
+											<Name>parmValueSetReferenceField</Name>
+											<Type>String</Type>
+											<TypeName>str</TypeName>
+											<Value>DefaultDimension</Value>
+										</AxFormControlExtensionProperty>
+										<AxFormControlExtensionProperty>
+											<Name>parmEnumValueSetReferenceField</Name>
+											<Type>String</Type>
+											<TypeName>str</TypeName>
+										</AxFormControlExtensionProperty>
+									</ExtensionProperties>
+								</FormControlExtension>
+								<Controls />
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>AccountDistTemplateDetails</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Pattern>FieldsFieldGroups</Pattern>
+								<PatternVersion>1.1</PatternVersion>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>AccountDistTemplateDetails_AccountingDistributionTemplate</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYPayrollLedger</DataSource>
+										<ReferenceField>AccountingDistributionTemplate</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<ColumnsMode>Fill</ColumnsMode>
+								<DataSource>SPYPayrollLedger</DataSource>
+								<FrameType>None</FrameType>
+							</AxFormControl>
+						</Controls>
+						<HideIfEmpty>No</HideIfEmpty>
+						<Caption>@SYS101181</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

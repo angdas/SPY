@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYDocumentRequestCancelManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+///    The <c>SPYDocumentRequestCancelManager</c> class is used to cancel a pay adjustment journal workflow.
+/// </summary>
+/// <remarks>
+///    This class inherits from the <c>WorkflowCancelManager</c> class and handles the update of the
+///    document request record when the cancel button has been pressed. The default dialog and cancel
+///    functionality from the <c>WorkflowCancelManager</c> class is reused.
+/// </remarks>
+public class    SPYDocumentRequestCancelManager
+extends         WorkflowCancelManager
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    private void  new()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDocument</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    The <c>updateDocument</c> method executes the business logic when the workflow is canceled.
+    /// </summary>
+    /// <param name="_args">
+    ///    The arguments of the <c>SPYDocumentRequestCancelManager</c> class.
+    /// </param>
+    /// <remarks>
+    ///    If the change management flag on the pay adjustment has been switched to no, the document request
+    ///    are set to approved; otherwise, the user must submit the adjustment again.
+    /// </remarks>
+    public void updateDocument(Args _args)
+    {
+        if (_args.record()  &&  _args.record().TableId == tablenum(SPYDocumentRequestTable))
+            SPYDocumentRequestTable::updateWorkflowStatus(_args.record().RecId, SPYWorkflowStatus::Cancelled);
+    
+        super(_args);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static SPYDocumentRequestCancelManager  construct()
+    {
+        return new SPYDocumentRequestCancelManager();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void  main(Args _args)
+    {
+        SPYDocumentRequestCancelManager   documentRequestCancelManager = SPYDocumentRequestCancelManager::construct();
+    
+        documentRequestCancelManager.run(_args);
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

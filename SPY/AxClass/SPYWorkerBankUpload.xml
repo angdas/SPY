@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerBankUpload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYWorkerBankUpload extends RunBaseBatch
+{
+    // Packed variables
+    FileName        fileName;
+
+    // Dialog fields
+    DialogField     dlgFileName;
+
+    #define.CurrentVersion(1)
+    #define.Version1(1)
+    #localmacro.CurrentList
+        fileName
+    #endmacro
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>canGoBatchJournal</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Indicates whether the class is shown in the list of <c>Journal</c> types.
+    /// </summary>
+    /// <returns>
+    ///    true if the class is shown in the list of <c>Journal</c> types; otherwise, false.
+    /// </returns>
+    /// <remarks>
+    ///    A class that can be used in a batch journal is a class where the same parameters can be used
+    ///    repeatedly. The dialog box can be shown and the parameters can be changed, but parameters of some
+    ///    classes might build on data that is only valid for a short time. Running a class two times with the
+    ///    same parameters is not always possible. If the <c>RunBaseBatch.canGoBatch</c> method is false, this
+    ///    method will not have any effect.
+    /// </remarks>
+    public boolean canGoBatchJournal()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialog</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Returns a class that contains the methods that are described by the <c>RunBaseDialogable</c>
+    ///    interface.
+    /// </summary>
+    /// <returns>
+    ///    A class that contains the methods that are described by the <c>RunBaseDialogable</c> interface.
+    /// </returns>
+    /// <remarks>
+    ///    A dialog box can be either built by using the <c>Dialog</c> class or by using a class that is
+    ///    created in the Application Object Tree (AOT).
+    /// </remarks>
+    public Object dialog()
+    {
+        DialogRunbase       dialog = super();
+        #resAppl
+    
+        dialog.addImage(#ImageExcel_Dyn01);
+        dialog.addInfoImage();
+        dlgFileName = dialog.addFieldValue(extendedTypeStr(FileNameOpen),fileName);
+    
+        return dialog;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>dialogPostRun</Name>
+				<Source><![CDATA[
+    public void dialogPostRun(DialogRunbase dialog)
+    {
+    ;
+        super(dialog);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getFromDialog</Name>
+				<Source><![CDATA[
+    public boolean getFromDialog()
+    {
+        fileName   = dlgFileName.value();
+    
+        return super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public boolean init()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    protected void new()
+    {
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>pack</Name>
+				<Source><![CDATA[
+    public container pack()
+    {
+        return [#CurrentVersion,#CurrentList];
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>readExcel</Name>
+				<Source><![CDATA[
+    private void readExcel()
+    {
+        /*
+        SysExcelApplication                 application;
+        SysExcelWorkbooks                   workbooks;
+        SysExcelWorkbook                    workbook;
+        SysExcelWorksheets                  worksheets;
+        SysExcelWorksheet                   worksheet;
+        SysExcelCells                       cells;
+        COMVariantType                      type;
+        int                                 row = 1;
+        HcmPersonnelNumberId                personnelNumber;
+        Name                                name;
+        name                                bankName;
+        HcmWorkerBankAccount                workerBankAccount;
+        BankAccount                         bankAccount;
+        Description                         bankBranch;
+        LogisticsLocation                   logisticsLocation;
+        LogisticsPostalAddress              logisticsPostalAddress;
+        HcmWorkerRecId                      worker;
+        PayrollBankAccountDisbursement      payrollBankAccountDisbursement;
+        str                                 accountType;
+        BankAccountID                       bankCode;
+    
+        application = SysExcelApplication::construct();
+        workbooks = application.workbooks();
+        try
+        {
+            workbooks.open(fileName);
+        }
+        catch (Exception::Error)
+        {
+            throw error("@SYS19358");
+        }
+        workbook = workbooks.item(1);
+        worksheets = workbook.worksheets();
+        worksheet = worksheets.itemFromNum(1);
+        cells = worksheet.cells();
+        do
+        {
+            row++;
+            personnelNumber = cells.item(row, 1).value().bStr();
+            bankCode        = cells.item(row, 2).value().bStr();
+            bankName        = cells.item(row, 3).value().bStr();
+            bankBranch      = cells.item(row, 4).value().bStr();
+            accountType     = cells.item(row, 6).value().bStr();
+            bankAccount     = cells.item(row, 7).value().bStr();
+            worker = HcmWorker::findByPersonnelNumber(personnelNumber).RecId;
+            if(accountType != "Cash")
+            {
+                delete_from workerBankAccount
+                    where workerBankAccount.Worker == worker &&
+                          ( workerBankAccount.AccountId == bankName || workerBankAccount.AccountId == bankCode )  ;
+    
+                logisticsLocation.initValue();
+                logisticsLocation.Description      = "Bank - "+bankName;
+                logisticsLocation.insert();
+    
+                logisticsPostalAddress.validTimeStateUpdateMode(ValidTimeStateUpdate::Correction);
+                logisticsPostalAddress.Street       = bankBranch;
+                logisticsPostalAddress.Address      = bankBranch;
+                logisticsPostalAddress.Location     = logisticsLocation.RecId;
+                logisticsPostalAddress.ValidFrom    = DateTimeUtil::newDateTime(mkDate(01,01,2000),00-00);
+                logisticsPostalAddress.ValidTo      = DateTimeUtil::maxValue();
+                logisticsPostalAddress.insert();
+    
+                workerBankAccount.initValue();
+                workerBankAccount.AccountId             = cells.item(row, 2).value().bStr();
+                workerBankAccount.AccountNum            = bankAccount;
+                workerBankAccount.BankGroupId           = cells.item(row, 5).value().bStr();
+                workerBankAccount.BankGroupDataAreaId   = curext();
+                workerBankAccount.Worker                = worker;
+                workerBankAccount.Name                  = bankName;
+                workerBankAccount.Location              = logisticsLocation.RecId;
+                workerBankAccount.insert();
+    
+                delete_from payrollBankAccountDisbursement
+                    where payrollBankAccountDisbursement.WorkerBankAccount == workerBankAccount.RecId &&
+                          payrollBankAccountDisbursement.LegalEntity == CompanyInfo::current();
+                payrollBankAccountDisbursement.initValue();
+                payrollBankAccountDisbursement.WorkerBankAccount    = workerBankAccount.RecId;
+                payrollBankAccountDisbursement.LegalEntity          = CompanyInfo::current();
+                payrollBankAccountDisbursement.IsRemainder          = true;
+                payrollBankAccountDisbursement.insert();
+    
+                info(strFmt("@SPY1320",personnelNumber));
+            }
+    
+            type = cells.item(row+1, 1).value().variantType();
+        }
+        while (type != COMVariantType::VT_EMPTY);
+        application.quit();*/
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    Contains the code that does the actual job of the class.
+    /// </summary>
+    public void run()
+    {
+        #OCCRetryCount
+        if (! this.validate())
+            throw error("");
+    
+        try
+        {
+            ttsbegin;
+    
+            this.readExcel();
+    
+            ttscommit;
+        }
+        catch (Exception::Deadlock)
+        {
+            retry;
+        }
+        catch (Exception::UpdateConflict)
+        {
+            if (appl.ttsLevel() == 0)
+            {
+                if (xSession::currentRetryCount() >= #RetryNum)
+                {
+                    throw Exception::UpdateConflictNotRecovered;
+                }
+                else
+                {
+                    retry;
+                }
+            }
+            else
+            {
+                throw Exception::UpdateConflict;
+            }
+        }
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>runsImpersonated</Name>
+				<Source><![CDATA[
+    public boolean runsImpersonated()
+    {
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>unpack</Name>
+				<Source><![CDATA[
+    public boolean unpack(container packedClass)
+    {
+        Version version = RunBase::getVersion(packedClass);
+    ;
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version,#CurrentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    public boolean validate(Object _calledFrom = null)
+    {
+        if (false)
+            return checkFailed("");
+    
+        return true;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    server static SPYWorkerBankUpload construct()
+    {
+        return new SPYWorkerBankUpload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>description</Name>
+				<Source><![CDATA[
+    // Here goes a description of the class
+    static ClassDescription description()
+    {
+        return "@SPY1319";
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    static void main(Args args)
+    {
+        SPYWorkerBankUpload    workerBankUpload;
+    
+        workerBankUpload = SPYWorkerBankUpload::construct();
+    
+        if (workerBankUpload.prompt())
+            workerBankUpload.runOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>canRunInNewSession</Name>
+				<Source><![CDATA[
+    protected boolean canRunInNewSession()
+    {
+        return false;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

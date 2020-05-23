@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanHistory</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYPayLoanHistory extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>createHistory</Name>
+				<Source><![CDATA[
+    public static void createHistory(SPYPayLoanLineRecId _payLoanLine)
+    {
+        SPYPayLoanLine                  payLoanLine = SPYPayLoanLine::find(_payLoanLine);
+        SPYPayLoanLedger                payLoanLedger;
+        SPYPayLoanHistory               payLoanHistory;
+        SPYPayLoanHistoryInstallment    payLoanHistoryInstallment;
+        boolean                         installmentCreated;
+    
+        payLoanHistory.initValue();
+        payLoanHistory.PayLoanLine          = _payLoanLine;
+        payLoanHistory.InstallmentStartDate = payLoanLine.InstallmentStartDate;
+        payLoanHistory.InstallmentEndDate   = payLoanLine.InstallmentEndDate;
+        payLoanHistory.InstallmentPeriod    = payLoanLine.InstallmentPeriod;
+        payLoanHistory.NoOfInstallment      = payLoanLine.NoOfInstallment;
+        payLoanHistory.Worker               = SPYPayLoanTable::find(payLoanLine.PayLoan).Worker;
+        payLoanHistory.LoanType             = payLoanLine.LoanType;
+        payLoanHistory.insert();
+    
+        while select payLoanLedger
+            where payLoanLedger.PayLoanLine == _payLoanLine &&
+                  payLoanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+        {
+            if(!payLoanLedger.amountRecovered())
+            {
+                payLoanHistoryInstallment.initValue();
+                payLoanHistoryInstallment.PayLoanHistory            = payLoanHistory.RecId;
+                payLoanHistoryInstallment.PayrollPeriodLine         = payLoanLedger.PayrollPeriodLine;
+                payLoanHistoryInstallment.TransDate                 = payLoanLedger.TransDate;
+                payLoanHistoryInstallment.AccountingCurrencyAmount  = payLoanLedger.AccountingCurrencyAmount;
+                payLoanHistoryInstallment.TransactionCurrencyAmount = payLoanLedger.TransactionCurrencyAmount;
+                payLoanHistoryInstallment.ExchRate                  = payLoanLedger.ExchRate;
+                payLoanHistoryInstallment.Currency                  = payLoanLedger.Currency;
+                payLoanHistoryInstallment.DefaultDimension          = payLoanLedger.DefaultDimension;
+                payLoanHistoryInstallment.Txt                       = payLoanLedger.Txt;
+                payLoanHistoryInstallment.insert();
+                installmentCreated = true;
+            }
+        }
+    
+        if(!installmentCreated)
+            delete_from payLoanHistory
+                where payLoanHistory.RecId == payLoanHistory.RecId;
+    
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY795</DeveloperDocumentation>
+	<Label>@SPY793</Label>
+	<TableGroup>WorksheetHeader</TableGroup>
+	<TitleField1>PayLoanLine</TitleField1>
+	<TitleField2>createdDateTime</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<CreatedBy>Yes</CreatedBy>
+	<CreatedDateTime>Yes</CreatedDateTime>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayLoanLine</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>createdDateTime</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Details</Name>
+			<Label>@SYS318405</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>PayLoanLine</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>InstallmentDetails</Name>
+			<Label>@SPY796</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>InstallmentStartDate</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>InstallmentEndDate</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>InstallmentPeriod</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>NoOfInstallment</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>LoanDetails</Name>
+			<Label>@SPY580</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>LoanType</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Log</Name>
+			<Label>@SYS2515</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>createdBy</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>createdDateTime</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Worker</Name>
+			<Label>@SYS80745</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>Worker</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>InstallmentEndDate</Name>
+			<ExtendedDataType>TransDate</ExtendedDataType>
+			<HelpText>@SPY722</HelpText>
+			<Label>@SPY721</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>InstallmentPeriod</Name>
+			<ExtendedDataType>SPYPayrollPeriodRecId</ExtendedDataType>
+			<HelpText>@SPY723</HelpText>
+			<Label>@SPY370</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldDate">
+			<Name>InstallmentStartDate</Name>
+			<ExtendedDataType>TransDate</ExtendedDataType>
+			<HelpText>@SPY720</HelpText>
+			<Label>@SPY719</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LoanType</Name>
+			<ExtendedDataType>SPYLoanTypeRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>NoOfInstallment</Name>
+			<ExtendedDataType>NumberOf</ExtendedDataType>
+			<HelpText>@SPY724</HelpText>
+			<Label>@SPY364</Label>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayLoanLine</Name>
+			<ExtendedDataType>SPYPayLoanLineRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes />
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYLoanTypeTable</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYLoanTypeTable</RelatedTable>
+			<RelatedTableCardinality>ZeroOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LoanType</Name>
+					<Field>LoanType</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayLoanLine</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayLoanLine</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayLoanLine</Name>
+					<Field>PayLoanLine</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYPayrollPeriod</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>SPYPayrollPeriod</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>InstallmentPeriod</Name>
+					<Field>InstallmentPeriod</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

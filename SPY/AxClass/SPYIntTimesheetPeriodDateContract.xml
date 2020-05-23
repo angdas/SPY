@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYIntTimesheetPeriodDateContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYIntTimesheetPeriodDateContract
+{
+    date                    periodDate;
+    Qty                     workingHours;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmPeriodDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("PeriodDate")]
+    public date parmPeriodDate(date _periodDate = periodDate)
+    {
+        periodDate = _periodDate;
+
+        return periodDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmWorkingHours</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("WorkingHours")]
+    public Qty parmWorkingHours(Qty _workingHours = workingHours)
+    {
+        workingHours = _workingHours;
+
+        return workingHours;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

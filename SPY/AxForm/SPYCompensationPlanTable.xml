@@ -1,0 +1,847 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYCompensationPlanTable</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYCompensationPlanTable extends FormRun implements IDateEffectivenessPaneCaller
+{
+    QueryBuildRange                                             rangeLegalEntity;
+
+
+    RefRecId                                                    selectedDataAreaRecId;
+    SelectableDataArea                                          selectedLegalEntityDataAreaId;
+
+    DateEffectivenessPaneController                             dateEffectivenessPaneController;
+
+    boolean                                                     isRecordSaved;
+    //Microsoft.Dynamics.Framework.Expression.AxExpressionBuilder expressionBuilder;
+    ExpressionTable                                             expressionTable;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getDateEffectivenessController</Name>
+				<Source><![CDATA[
+    //
+    public DateEffectivenessPaneController getDateEffectivenessController()
+    {
+        return dateEffectivenessPaneController;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    //
+    public void init()
+    {
+        super();
+    
+        /*
+        expressionBuilder = ManagedHost.control();
+        expressionBuilder.add_FieldLookup(new ManagedEventHandler(this, 'ManagedHost_FieldLookup'));
+        expressionBuilder.add_FieldValidate(new ManagedEventHandler(this, 'ManagedHost_FieldValidate'));
+        expressionBuilder.add_FieldBinding(new ManagedEventHandler(this, 'ManagedHost_FieldBinding'));
+        */
+        legalEntity.text(curext());
+        selectedDataAreaRecId = CompanyInfo::findDataArea(legalEntity.text()).RecId;
+        selectedLegalEntityDataAreaId = CompanyInfo::findRecId(selectedDataAreaRecId).DataArea;
+        dateEffectivenessPaneController = DateEffectivenessPaneController::constructWithForm(element, SPYCompensationPlanTable_ds, false, true, true);
+        element.setControlersContext();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeExpression</Name>
+				<Source><![CDATA[
+    void initializeExpression()
+    {
+        /*
+        Microsoft.Dynamics.AX.Framework.Expression.Model.ExpressionModel model =
+        Microsoft.Dynamics.AX.Framework.Expression.Model.ExpressionModel::Create();
+        Microsoft.Dynamics.AX.Framework.Expression.Model.ExpressionProjection projection =
+        SysExpression::getDesignTimeProjectionModel(classStr(SPYExpressionConditionDocument));
+    
+        if(ExpressionTable::findRecId(SPYCompensationPlanTable.SysExpressionRecId))
+        {
+            model = ExpressionTable::loadExpression(ExpressionTable::findRecId(SPYCompensationPlanTable.SysExpressionRecId));
+        }
+    
+        expressionBuilder.Initialize(model,projection);
+        */
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>refreshDatasource</Name>
+				<Source><![CDATA[
+    /*
+    void ManagedHost_FieldBinding(System.Object sender, Microsoft.Dynamics.Framework.Expression.ExpressionFieldEventArgs e)
+    {
+        Microsoft.Dynamics.AX.Framework.Expression.Model.Field field = e.get_Field();
+        Microsoft.Dynamics.AX.Framework.Expression.Model.Datasource datasource = field.get_Parent();
+    
+        tableName tableName = datasource.get_TableName();
+        fieldName fieldName = field.get_Name();
+        str recIDStr = e.get_FieldValue();
+        recId recId = str2int64(recIDStr);
+    
+        e.set_ValidatedField(SysExpression::getDisplayValuesFromRecID(tableName, fieldName, recId));
+    }
+
+    void ManagedHost_FieldLookup(System.Object sender, Microsoft.Dynamics.Framework.Expression.ExpressionFieldEventArgs e)
+    {
+        e.set_FieldValue(SysExpression::fieldLookup(e, element.hWnd()));
+    }
+
+    void ManagedHost_FieldValidate(System.Object sender, Microsoft.Dynamics.Framework.Expression.ExpressionFieldEventArgs e)
+    {
+        e.set_ValidatedField(SysExpression::fieldValidate(e.get_Field(), e.get_FieldValue()));
+    }
+    */
+
+    public void refreshDatasource()
+    {
+        SPYCompensationPlanTable_ds.research(true);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    public void run()
+    {
+        element.initializeExpression();
+    
+        super();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>saveExpression</Name>
+				<Source><![CDATA[
+    public void saveExpression()
+    {
+        /*
+        ExpressionTable                                                     expressionTableFind;
+        Microsoft.Dynamics.AX.Framework.Expression.Model.ExpressionModel    model;
+    
+        model = expressionBuilder.GetExpressionModel();
+        expressionTableFind = ExpressionTable::saveExpression(SPYCompensationPlanTable.SysExpressionRecId,model);
+        SPYCompensationPlanTable.SysExpressionRecId = expressionTableFind.RecId;
+        */
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setControlersContext</Name>
+				<Source><![CDATA[
+    public void setControlersContext()
+    {
+        if(!selectedDataAreaRecId)
+        {
+            selectedDataAreaRecId = CompanyInfo::findDataArea(curext()).RecId;
+            selectedLegalEntityDataAreaId = CompanyInfo::findRecId(selectedDataAreaRecId).DataArea;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYCompensationPlanTable</Name>
+				<Methods>
+					<Method>
+						<Name>validateWrite</Name>
+						<Source><![CDATA[
+        public boolean validateWrite()
+        {
+            boolean ret;
+        
+            ret = super();
+        
+            if(ret)
+                element.saveExpression();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>active</Name>
+						<Source><![CDATA[
+        public int active()
+        {
+            int ret;
+        
+            ret = super();
+        
+            element.initializeExpression();
+        
+            return ret;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            super();
+        
+            rangeLegalEntity = this.query().dataSourceName(this.name()).addRange(fieldNum(SPYCompensationPlanTable, LegalEntity));
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            rangeLegalEntity.value(queryValue(selectedDataAreaRecId));
+        
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="">
+			<Control>
+				<Name>Button_Save</Name>
+				<Type>Button</Type>
+				<Methods>
+					<Method>
+						<Name>clicked</Name>
+						<Source><![CDATA[
+        void clicked()
+        {
+            /*
+            ExpressionTable                                                     expressionTableFind;
+            Microsoft.Dynamics.AX.Framework.Expression.Model.ExpressionModel    model;
+        
+            super();
+        
+            model = expressionBuilder.GetExpressionModel();
+            expressionTableFind = ExpressionTable::saveExpression(SPYCompensationPlanTable.SysExpressionRecId,model);
+            SPYCompensationPlanTable.SysExpressionRecId = expressionTableFind.RecId;
+            */
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+			<Control>
+				<Name>LegalEntity</Name>
+				<Type>String</Type>
+				<Methods>
+					<Method>
+						<Name>modified</Name>
+						<Source><![CDATA[
+        public boolean modified()
+        {
+            boolean isValid;
+        
+            isValid = super();
+        
+            selectedDataAreaRecId = CompanyInfo::findDataArea(legalEntity.text()).RecId;
+            selectedLegalEntityDataAreaId = CompanyInfo::findDataArea(legalEntity.text()).DataArea;
+        
+            if (selectedDataAreaRecId)
+            {
+                appl.setDefaultCompany(selectedLegalEntityDataAreaId, false);
+            }
+        
+            element.setControlersContext();
+            SPYCompensationPlanTable_ds.executeQuery();
+        
+            return isValid;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>validate</Name>
+						<Source><![CDATA[
+        public boolean validate()
+        {
+            boolean isValid = true;
+        
+            if (!CompanyInfo::findDataArea(legalEntity.text()).RecId)
+            {
+                isValid = false;
+            }
+        
+            return isValid;
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+			</Control>
+		</DataControls>
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSourceChangeGroupMode>ImplicitInnerOuter</DataSourceChangeGroupMode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYCompensationPlanTable</Name>
+			<Table>SPYCompensationPlanTable</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>AbsenceConfig</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CompensationLevelBand</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CompensationLevelGrade</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CompensationLevelStep</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>CompensationPlanCode</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Description</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LegalEntity</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>SysExpressionRecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidFrom</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>ValidTo</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<Index>CompensationPlanCode_AK</Index>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<ValidTimeStateUpdate>Correction</ValidTimeStateUpdate>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+		<AxFormDataSource xmlns="">
+			<Name>SPYExpressionConditionResultTmp</Name>
+			<Table>SPYExpressionConditionResultTmp</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Name</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>PersonnelNumber</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY441</Caption>
+		<DataSource xmlns="">SPYCompensationPlanTable</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">SimpleListDetails</Pattern>
+		<PatternVersion xmlns="">1.3</PatternVersion>
+		<SetCompany xmlns="">No</SetCompany>
+		<Style xmlns="">SimpleListDetails</Style>
+		<TitleDataSource xmlns="">SPYCompensationPlanTable</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>671088639</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>ActionPaneTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormButtonGroupControl">
+								<Name>RecordBasics</Name>
+								<AutoDeclaration>Yes</AutoDeclaration>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>ButtonGroup</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormButtonControl">
+										<Name>Button_Save</Name>
+										<ElementPosition>1789569704</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<HelpText>@SPY232</HelpText>
+										<Type>Button</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<Visible>No</Visible>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<NormalImage>Edit</NormalImage>
+										<Text>@SPY231</Text>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYCompensationPlanPayroll</Name>
+										<ElementPosition>1789569704</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataSource>SPYCompensationPlanTable</DataSource>
+										<MenuItemName>SPYCompensationPlanPayroll</MenuItemName>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormMenuFunctionButtonControl">
+										<Name>SPYCompensationPlanBenefit</Name>
+										<ElementPosition>1789569705</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>MenuFunctionButton</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataSource>SPYCompensationPlanTable</DataSource>
+										<MenuItemName>SPYCompensationPlanBenefit</MenuItemName>
+									</AxFormControl>
+								</Controls>
+								<ArrangeMethod>Vertical</ArrangeMethod>
+								<Caption>@SYS106702</Caption>
+							</AxFormControl>
+						</Controls>
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<Caption>Pay element</Caption>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+				<DataSource>SPYCompensationPlanTable</DataSource>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>GridContainer</Name>
+				<AutoDeclaration>Yes</AutoDeclaration>
+				<ElementPosition>858993458</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>SizeToAvailable</HeightMode>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl>
+						<Name>QuickFilterControl</Name>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension>
+							<Name>QuickFilterControl</Name>
+							<ExtensionComponents />
+							<ExtensionProperties>
+								<AxFormControlExtensionProperty>
+									<Name>targetControlName</Name>
+									<Type>String</Type>
+									<TypeName>str</TypeName>
+									<Value>MainGrid</Value>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>defaultColumnName</Name>
+									<Type>String</Type>
+									<TypeName>str</TypeName>
+								</AxFormControlExtensionProperty>
+								<AxFormControlExtensionProperty>
+									<Name>placeholderText</Name>
+									<Type>String</Type>
+								</AxFormControlExtensionProperty>
+							</ExtensionProperties>
+						</FormControlExtension>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormGridControl">
+						<Name>MainGrid</Name>
+						<AllowEdit>No</AllowEdit>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<Type>Grid</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToContent</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormStringControl">
+								<Name>SPYCompensationPlanTable_CompensationPlanCode</Name>
+								<ElementPosition>715827882</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>String</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>CompensationPlanCode</DataField>
+								<DataSource>SPYCompensationPlanTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormStringControl">
+								<Name>SPYCompensationPlanTable_Description</Name>
+								<ElementPosition>1073741823</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>String</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>Description</DataField>
+								<DataSource>SPYCompensationPlanTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormDateControl">
+								<Name>SPYCompensationPlanTable_ValidFrom</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>Date</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>ValidFrom</DataField>
+								<DataSource>SPYCompensationPlanTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormDateControl">
+								<Name>SPYCompensationPlanTable_ValidTo</Name>
+								<ElementPosition>1789569705</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<HeightMode>Auto</HeightMode>
+								<Type>Date</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<WidthMode>Auto</WidthMode>
+								<FormControlExtension
+									i:nil="true" />
+								<DataField>ValidTo</DataField>
+								<DataSource>SPYCompensationPlanTable</DataSource>
+							</AxFormControl>
+						</Controls>
+						<AlternateRowShading>No</AlternateRowShading>
+						<DataSource>SPYCompensationPlanTable</DataSource>
+						<GridLinesStyle>Vertical</GridLinesStyle>
+						<MultiSelect>No</MultiSelect>
+						<ShowRowLabels>No</ShowRowLabels>
+						<Style>List</Style>
+					</AxFormControl>
+				</Controls>
+				<RightMargin>0</RightMargin>
+				<RightMarginMode>Fixed</RightMarginMode>
+				<FrameType>None</FrameType>
+				<Style>SidePanel</Style>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>DetailsHeaderGroup</Name>
+				<ElementPosition>1073741822</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Pattern>FieldsFieldGroups</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls />
+				<ColumnsMode>Fill</ColumnsMode>
+				<FrameType>None</FrameType>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<Type>Tab</Type>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageDetails</Name>
+						<AutoDeclaration>Yes</AutoDeclaration>
+						<ElementPosition>894784852</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Pattern>FieldsFieldGroups</Pattern>
+						<PatternVersion>1.1</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>LegalEntityGroup</Name>
+								<ElementPosition>1342177278</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>LegalEntity</Name>
+										<AutoDeclaration>Yes</AutoDeclaration>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HelpText>@SPY1425</HelpText>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<ExtendedDataType>LegalEntityDataAreaId</ExtendedDataType>
+										<Label>@GLS92619</Label>
+										<ViewEditMode>Edit</ViewEditMode>
+									</AxFormControl>
+								</Controls>
+								<FrameType>None</FrameType>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupDetails</Name>
+								<ElementPosition>858993458</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupDetails_CompensationPlanCode</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>CompensationPlanCode</DataField>
+										<DataSource>SPYCompensationPlanTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupDetails_Description</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Description</DataField>
+										<DataSource>SPYCompensationPlanTable</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Details</DataGroup>
+								<DataSource>SPYCompensationPlanTable</DataSource>
+								<FrameType>None</FrameType>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupAbsence</Name>
+								<ElementPosition>1073741822</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>Group_AbsenceConfig</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYCompensationPlanTable</DataSource>
+										<ReferenceField>AbsenceConfig</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Absence</DataGroup>
+								<DataSource>SPYCompensationPlanTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupCompensationLevel</Name>
+								<ElementPosition>1288490187</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>Group_CompensationLevelGrade</Name>
+										<ElementPosition>858993458</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYCompensationPlanTable</DataSource>
+										<ReferenceField>CompensationLevelGrade</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>Group_CompensationLevelBand</Name>
+										<ElementPosition>1288490187</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYCompensationPlanTable</DataSource>
+										<ReferenceField>CompensationLevelBand</ReferenceField>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>Group_CompensationLevelStep</Name>
+										<ElementPosition>1717986916</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYCompensationPlanTable</DataSource>
+										<ReferenceField>CompensationLevelStep</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>CompensationLevel</DataGroup>
+								<DataSource>SPYCompensationPlanTable</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupValidDates</Name>
+								<ElementPosition>1717986916</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>GroupValidDates_ValidFrom</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>ValidFrom</DataField>
+										<DataSource>SPYCompensationPlanTable</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>GroupValidDates_ValidTo</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>ValidTo</DataField>
+										<DataSource>SPYCompensationPlanTable</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Dates</DataGroup>
+								<DataSource>SPYCompensationPlanTable</DataSource>
+							</AxFormControl>
+						</Controls>
+						<ColumnsMode>Fill</ColumnsMode>
+						<BackgroundColor>WindowBackground</BackgroundColor>
+						<Caption>@SYS318405</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+				</Controls>
+				<Style>FastTabs</Style>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

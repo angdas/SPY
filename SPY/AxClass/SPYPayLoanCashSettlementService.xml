@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayLoanCashSettlementService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYPayLoanCashSettlementService extends SysOperationServiceBase
+{
+    SPYPayAdjustmentPostContract        contract;
+    RecordInsertList                    loanLedgerList,payrollLedgerList;
+    boolean                             callFromPost;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>commitLedger</Name>
+				<Source><![CDATA[
+    private void commitLedger()
+    {
+        loanLedgerList.insertDatabase();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insert2Ledger</Name>
+				<Source><![CDATA[
+    private void insert2Ledger(SPYPayLoanTable _payLoanTable, spypayloancashsettlementcontract _contract)
+    {
+        SPYPayLoanLine              payLoanLine;
+        SPYPayLoanLedger            payLoanLedger;
+        ExchangeRateHelper          exchangeRateHelper;
+
+        select payLoanLine
+        where payLoanLine.PayLoan == _payLoanTable.RecId;
+
+        exchangeRateHelper = ExchangeRateHelper::newCurrency(Ledger::current(),payLoanLine.Currency);
+        exchangeRateHelper.parmExchangeDate(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()));
+
+        payLoanLedger.PayLoanLine               = payLoanLine.RecId;
+        payLoanLedger.Worker                    = payLoanLine.payLoanTable().Worker;
+        payLoanLedger.LoanType                  = payLoanLine.LoanType;
+        payLoanLedger.PayrollPeriodLine         = _contract.parmSettlementPeriod();
+        payLoanLedger.TransDate                 = _contract.parmSettlementDate();
+        payLoanLedger.Txt                       = _contract.parmDescription();
+        payLoanLedger.DefaultDimension          = payLoanLine.DefaultDimension;
+        payLoanLedger.TransactionCurrencyAmount = _contract.parmAmount();
+        payLoanLedger.Currency                  = payLoanLine.Currency;
+        payLoanLedger.ExchRate                  = exchangeRateHelper.getExchangeRate1();
+        payLoanLedger.AccountingCurrencyAmount  = _contract.parmAmount() * payLoanLedger.ExchRate / 100;
+        payLoanLedger.PayLoanTransType          = SPYPayLoanTransType::CashSettlement;
+        loanLedgerList.add(payLoanLedger);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>post</Name>
+				<Source><![CDATA[
+    public void post(SPYPayLoanCashSettlementContract _contract)
+    {
+        SPYPayLoanTable         payLoanTable;
+
+        payLoanTable = SPYPayLoanTable::find(_contract.parmPayLoan());
+        loanLedgerList = new RecordInsertList(tableNum(SPYPayLoanLedger));
+
+        try
+        {
+            setPrefix("@SPY1981");
+            ttsBegin;
+            if(payLoanTable && this.validateAmount(payLoanTable, _contract))
+            {
+                this.insert2Ledger(payLoanTable, _contract);
+                this.updateInstallments(payLoanTable, _contract);
+                this.commitLedger();
+            }
+            ttsCommit;
+        }
+        catch(Exception::Error)
+        {
+            ttsAbort;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateInstallments</Name>
+				<Source><![CDATA[
+    public void updateInstallments(SPYPayLoanTable _payLoanTable, spypayloancashsettlementcontract _contract)
+    {
+        SPYPayLoanLedger    payLoanLedger;
+        SPYPayLoanLine      payLoanLine;
+        Amount              amountRecoveredCash,advanceAmount;
+
+        select RecId from payLoanLine
+        where payLoanLine.PayLoan == _contract.parmPayLoan();
+
+        select sum(TransactionCurrencyAmount) from payLoanLedger
+            where payLoanLedger.PayLoanLine == payLoanLine.RecId
+               && payLoanLedger.PayLoanTransType == SPYPayLoanTransType::CashSettlement;
+
+        amountRecoveredCash = payLoanLedger.TransactionCurrencyAmount;
+
+        advanceAmount = _contract.parmAmount();
+
+        while select forUpdate payLoanLedger order by PayrollPeriodLine asc
+        where payLoanLedger.PayLoanLine == payLoanLine.RecId &&
+              payLoanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+        {
+            if(!payLoanLedger.amountRecoveredTransCur())
+            {
+                if((advanceAmount - payLoanLedger.TransactionCurrencyAmount) > 0)
+                {
+                    advanceAmount = advanceAmount - payLoanLedger.TransactionCurrencyAmount;
+                    payLoanLedger.delete();
+                }
+                else if((advanceAmount - payLoanLedger.TransactionCurrencyAmount) == 0)
+                {
+                    ttsBegin;
+                    payLoanLedger.delete();
+                    ttsCommit;
+                    break;
+                }
+                else if((advanceAmount - payLoanLedger.TransactionCurrencyAmount) < 0)
+                {
+                    ttsBegin;
+                    payLoanLedger.TransactionCurrencyAmount = payLoanLedger.TransactionCurrencyAmount - advanceAmount;
+                    payLoanLedger.update();
+                    ttsCommit;
+                    break;
+                }
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validateAmount</Name>
+				<Source><![CDATA[
+    public boolean validateAmount(SPYPayLoanTable _payLoanTable, spypayloancashsettlementcontract _contract)
+    {
+        SPYPayLoanLedger    payLoanLedger;
+        SPYPayLoanLine      payLoanLine;
+        Amount              amountRecoveredCash,amountRecoveredPayroll;
+        boolean ret = true;
+
+        select RecId, Amount from payLoanLine
+        where payLoanLine.PayLoan == _contract.parmPayLoan();
+
+        select sum(TransactionCurrencyAmount) from payLoanLedger
+            where payLoanLedger.PayLoanLine == payLoanLine.RecId
+               && payLoanLedger.PayLoanTransType == SPYPayLoanTransType::CashSettlement;
+
+        amountRecoveredCash = payLoanLedger.TransactionCurrencyAmount;
+
+        while select payLoanLedger order by PayrollPeriodLine asc
+        where payLoanLedger.PayLoanLine == payLoanLine.RecId &&
+              payLoanLedger.PayLoanTransType == SPYPayLoanTransType::Recovery
+        {
+            if(payLoanLedger.amountRecoveredTransCur())
+            {
+                amountRecoveredPayroll = amountRecoveredPayroll + payLoanLedger.TransactionCurrencyAmount;
+            }
+        }
+        if((payLoanLine.Amount - (amountRecoveredCash + amountRecoveredPayroll)) == 0)
+        {
+            ret = checkFailed(strFmt("@SPY1982"));
+            return ret;
+        }
+
+        if((payLoanLine.Amount - (amountRecoveredCash + amountRecoveredPayroll)) <  _contract.parmAmount())
+        {
+            ret = checkFailed(strFmt("@SPY1983",(payLoanLine.Amount - (amountRecoveredCash + amountRecoveredPayroll))));
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayslipContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// Data Contract class for <c>Payslip</c> SSRS report
+/// </summary>
+/// <remarks>
+/// This is the Data Contract class for the <c>payslip</c> SSRS Report.
+/// </remarks>
+[
+    DataContractAttribute,
+    SysOperationGroupAttribute('PayrollPeriod','Payroll period','1'),
+    SysOperationLabelAttribute(literalStr('@SYS745')),
+    SysOperationGroupAttribute('Details','Details','2')
+]
+public class SPYPayslipContract
+{
+    SPYPayrollPeriodLineRecId   payrollPeriodline;
+    SPYAmountDisplay            amountDisplay;
+    Str1260                     footerTxt;
+
+    //--> Additional info
+    boolean                     showOvertime;
+    boolean                     showLeave;
+    boolean                     sendMail;
+    //<-- Additional info
+  
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmFooterTxt</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('FooterTxt'),
+        SysOperationLabelAttribute(literalStr('@SYS108923')),
+        SysOperationHelpTextAttribute(literalStr('@SYS98640')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('4')
+    ]
+    public Str1260 parmFooterTxt(Str1260 _footerTxt = footerTxt)
+    {
+        footerTxt = _footerTxt;
+        return footerTxt;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriodline</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Gets or sets the value of the datacontract parameter payrollPeriodline.
+    /// </summary>
+    /// <param name="_payrollPeriodLine">
+    /// The new value of the datacontract parameter payrollPeriodline
+    /// </param>
+    /// <returns>
+    /// The current value of datacontract parameter payrollPeriodline
+    /// </returns>
+    /// <remarks>
+    /// Payroll period line parameter
+    /// </remarks>
+    [
+        DataMemberAttribute('PayrollPeriodLine'),
+        SysOperationLabelAttribute(literalStr('@SPY25')),
+        SysOperationHelpTextAttribute(literalStr('@SPY168')),
+        SysOperationGroupMemberAttribute('PayrollPeriod'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYPayrollPeriodLineRecId parmPayrollPeriodline(SPYPayrollPeriodLineRecId    _payrollPeriodLine = payrollPeriodline)
+    {
+        payrollPeriodline = _payrollPeriodLine;
+    
+        return payrollPeriodline;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSendMail</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('SendMail'),
+        SysOperationLabelAttribute(literalStr('@SYS97769')),
+        SysOperationHelpTextAttribute(literalStr('@SYS97769')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('4')
+    ]
+    public boolean parmSendMail(boolean _sendMail = sendMail)
+    {
+        sendMail = _sendMail;
+    
+        return sendMail;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowLeave</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('ShowLeave'),
+        SysOperationLabelAttribute(literalStr('@SPY911')),
+        SysOperationHelpTextAttribute(literalStr('@SPY911')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('3')
+    ]
+    public boolean parmShowLeave(boolean _showLeave = showLeave)
+    {
+        showLeave = _showLeave;
+    
+        return showLeave;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmShowOvertime</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('ShowOvertime'),
+        SysOperationLabelAttribute(literalStr('@SPY910')),
+        SysOperationHelpTextAttribute(literalStr('@SPY910')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('2')
+    ]
+    public boolean parmShowOvertime(boolean _showOvertime = showOvertime)
+    {
+        showOvertime = _showOvertime;
+    
+        return showOvertime;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAmountDisplay</Name>
+				<Source><![CDATA[
+    [
+        DataMemberAttribute('AmountDisplay'),
+        SysOperationLabelAttribute(literalStr('@SYS91075')),
+        SysOperationHelpTextAttribute(literalStr('@SYS91075')),
+        SysOperationGroupMemberAttribute('Details'),
+        SysOperationDisplayOrderAttribute('1')
+    ]
+    public SPYAmountDisplay parmAmountDisplay(SPYAmountDisplay _amountDisplay = amountDisplay)
+    {
+        amountDisplay = _amountDisplay;
+    
+        return amountDisplay;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

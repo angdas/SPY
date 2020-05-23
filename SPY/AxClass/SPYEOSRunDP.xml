@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYEOSRunDP</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+    SRSReportQueryAttribute(queryStr(SPYEOSRunReportQuery))
+]
+class SPYEOSRunDP extends SRSReportDataProviderBase
+{
+    SPYEOSRunTableTmp           eOSRunTableTmp;
+    SPYEOSRunBenefitTmp         eOSRunBenefitTmp;
+    SPYEOSRunPayrollTmp         eOSRunPayrollTmp;
+    SPYWorkerPositionPayrollTmp sPYWorkerPositionPayrollTmp;
+
+    SPYEOSRunTable              eOSRunTable;
+    SPYEOSRunBenefit            eOSRunBenefit;
+    SPYEOSRunBenefit            eOSRunBenefitGr;
+    SPYEOSRunBenefit            eOSRunBenefitLv;
+    SPYEOSRunBenefit            eosRunBenefitLve;
+    SPYEOSRunPayroll            eOSRunPayroll;
+    SPYEOSRunPayroll            eOSRunPayrollAmt;
+    SPYEOSRunPayroll            eOSRunPayrollAmtD;
+    SPYWorkerPositionPayroll    sPYWorkerPositionPayroll;
+
+    HcmWorker                   hcmWorker;
+    SPYPayrollTable             sPYPayrollTable;
+    SPYPayrollPeriodLine        sPYPayrollPeriodLine;
+    SPYPayrollPeriod            sPYPayrollPeriod;
+
+    HcmEmployment               hcmEmployment;
+    HcmEmployment               hcmEmploymentVal;
+    HcmEmploymentDetail         hcmEmploymentDetail;
+    HcmWorkerTitle              hcmWorkerTitle;
+    HcmTitle                    hcmTitle;
+    SPYAbsenceLedger            sPYAbsenceLedger;
+    SPYBenefitTable             sPYBenefitTable;
+    SPYBenefitTable             sPYBenefitTableLv;
+
+
+
+    str 50                      paylineTmp;
+    RecId                       employmentRecId;
+    date                        fromDate;
+    date                        toDate;
+    utcdatetime                 validTo;
+    utcdatetime                 validFrom;
+    utcdatetime                 empStartDate;
+    utcdatetime                 empEndDate;
+    int64                       noOfDays;
+    real                        openBal;
+
+    
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>getSPYEOSRunBenefitTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYEOSRunBenefitTmp))]
+    public SPYEOSRunBenefitTmp getSPYEOSRunBenefitTmp()
+    {
+        select eOSRunBenefitTmp;
+        return eOSRunBenefitTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYEOSRunPayrollTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYEOSRunPayrollTmp))]
+    public SPYEOSRunPayrollTmp getSPYEOSRunPayrollTmp()
+    {
+        select eOSRunPayrollTmp;
+        return eOSRunPayrollTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYEOSRunTableTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYEOSRunTableTmp))]
+    public SPYEOSRunTableTmp getSPYEOSRunTableTmp()
+    {
+        select eOSRunTableTmp;
+        return eOSRunTableTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getSPYWorkerPositionPayrollTmp</Name>
+				<Source><![CDATA[
+    [SRSReportDataSetAttribute(tableStr(SPYWorkerPositionPayrollTmp))]
+    public SPYWorkerPositionPayrollTmp getSPYWorkerPositionPayrollTmp()
+    {
+        select sPYWorkerPositionPayrollTmp;
+        return sPYWorkerPositionPayrollTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYEOSRunPayrollTmp</Name>
+				<Source><![CDATA[
+    // Code for inserting overtime, leave and absence deduction to SPYEOSRunPayrollTmp table
+    public void insertIntoSPYEOSRunPayrollTmp()
+    {
+        eOSRunPayrollTmp.Description                            = 'Overtime';
+        eOSRunPayrollTmp.TransactionCurrencyAmount              = eOSRunTableTmp.Overtime;
+        eOSRunPayrollTmp.PayrollType                            = SPYPayrollType::Earning;
+        eOSRunPayrollTmp.insert();
+    
+        eOSRunPayrollTmp.Description                            = 'Leave';
+        eOSRunPayrollTmp.TransactionCurrencyAmount              = eOSRunTableTmp.LeaveEncashment;
+        eOSRunPayrollTmp.PayrollType                            = SPYPayrollType::Earning;
+        eOSRunPayrollTmp.insert();
+    
+        eOSRunPayrollTmp.Description                            = 'Absence deduction';
+        eOSRunPayrollTmp.TransactionCurrencyAmount              = eOSRunTableTmp.Absence;
+        eOSRunPayrollTmp.PayrollType                            = SPYPayrollType::Deduction;
+        eOSRunPayrollTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>insertIntoSPYEOSRunTableTmp</Name>
+				<Source><![CDATA[
+    public void insertIntoSPYEOSRunTableTmp()
+    {
+        // clear records
+        eOSRunTableTmp.clear();
+    
+        // copying
+        hcmWorker                       = HcmWorker::find(eOSRunTable.Worker);
+        eOSRunTableTmp.PersonnelNumber  = hcmWorker.PersonnelNumber;
+        eOSRunTableTmp.Name             = hcmWorker.PersonnelNumber + " - " + hcmWorker.name();
+        eOSRunTableTmp.EOSDate          = eOSRunTable.EOSDate;
+        eOSRunTableTmp.PostedToLedger   = eOSRunTable.PostedToLedger;
+        eOSRunTableTmp.Remarks          = eOSRunTable.Remarks;
+        eOSRunTableTmp.TransDate        = eOSRunTable.TransDate;
+        eOSRunTableTmp.Worker           = eOSRunTable.Worker;
+        eOSRunTableTmp.WorkflowStatus   = eOSRunTable.WorkflowStatus;
+    
+    
+        empStartDate                    = utcdatetimenull();
+        empEndDate                      = DateTimeUtil::maxValue();
+    
+        select validTimeState(empStartDate, empEndDate) hcmEmployment
+        where hcmEmployment.Worker == hcmWorker.RecId;
+    
+        validTo                         = hcmEmployment.ValidTo;
+        validFrom                       = hcmEmployment.validFrom;
+        noOfDays                        = DateTimeutil::getDifference(validTo, validFrom)/ 86400;
+        eOSRunTableTmp.NoOfDays         = noOfDays + 1;
+        eOSRunTableTmp.JoiningDate      = hcmEmployment.validFrom;
+    
+        select validTimeState(EmpStartDate, EmpEndDate) hcmWorkerTitle
+        where hcmWorkerTitle.Worker == hcmWorker.RecId;
+        select hcmTitle where hcmTitle.RecId == hcmWorkerTitle.Title;
+        eOSRunTableTmp.JobTitle         = hcmTitle.TitleId;
+    
+        //Unpaid
+        select sum(AbsenceDays) from sPYAbsenceLedger
+            where sPYAbsenceLedger.Worker == eOSRunTable.Worker && 
+            sPYAbsenceLedger.HRMAbsenceCodeId == SPYExpressionConfigurationTable::findByKey("UnpaidLeave").Value;
+        eOSRunTableTmp.AbsenceDays      = sPYAbsenceLedger.AbsenceDays;
+    
+        //Gratuity_Provision
+        select RecId from sPYBenefitTable 
+            where sPYBenefitTable.PayElementCode == SPYExpressionConfigurationTable::findByKey("GratuityProvision").Value;
+        select eOSRunBenefitGr
+            where eOSRunBenefitGr.EOSRun    == eOSRunTable.RecId && eOSRunBenefitGr.Benefit == sPYBenefitTable.RecId && 
+            eOSRunBenefitGr.JournalType == SPYBenefitJournalType::Encashment;
+        eOSRunTableTmp.GratuityAmount   = eOSRunBenefitGr.disbursementAmount();
+        eOSRunTableTmp.GratuityDays     = eOSRunBenefitGr.Quantity;
+    
+        //Leave_Provision
+        select RecId from sPYBenefitTableLv 
+            where sPYBenefitTableLv.PayElementCode ==  SPYExpressionConfigurationTable::findByKey("LeaveProvision").Value;
+        select Quantity from eOSRunBenefitLv
+            where eOSRunBenefitLv.EOSRun    == eOSRunTable.RecId && 
+            eOSRunBenefitLv.Benefit == sPYBenefitTableLv.RecId && eOSRunBenefitLv.JournalType == SPYBenefitJournalType::Accrual;
+        eOSRunTableTmp.LeaveEntitlement  = eOSRunBenefitLv.Quantity;
+    
+        select eOSRunBenefitLve
+            where eOSRunBenefitLve.EOSRun    == eOSRunTable.RecId && 
+            eOSRunBenefitLve.Benefit == sPYBenefitTableLv.RecId && 
+            eOSRunBenefitLve.JournalType == SPYBenefitJournalType::Encashment;
+    
+        eOSRunTableTmp.LeaveDaysEncashed = eosRunBenefitLve.Quantity;
+        eOSRunTableTmp.LeaveEncashment   = eosRunBenefitLve.TransactionCurrencyAmount;
+    
+        openBal                          = eosRunBenefitLve.Quantity - (-eOSRunBenefitLv.Quantity);
+        eOSRunTableTmp.LeaveOpenBal      = openBal;
+    
+        // insert data
+    
+        eOSRunTableTmp.insert();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>processReport</Name>
+				<Source><![CDATA[
+    [SuppressBPWarningAttribute("BPCheckNestedLoopinCode","some processes need to be excuted in outer while loop before runing another while loop")]
+    public void processReport()
+    {
+    
+        Query                       q;
+        QueryRun                    qr;
+    
+        q = this.parmQuery();
+        qr = new QueryRun(q);
+    
+        while(qr.next())
+        {    
+            eOSRunTable     = qr.get(tableNum(SPYEOSRunTable));
+            this.insertIntoSPYEOSRunTableTmp();    
+            while select eOSRunPayroll where eOSRunPayroll.EOSRun == eOSRunTable.RecId
+            {
+    
+                sPYPayrollTable                   = SPYPayrollTable::find(eOSRunPayroll.Payroll);
+                sPYPayrollPeriodLine              = SPYPayrollPeriodLine::find(eOSRunPayroll.PayrollPeriodLine);
+                sPYPayrollPeriod                  = SPYPayrollPeriod::find(sPYPayrollPeriodLine.PayrollPeriod);
+    
+                paylineTmp  = strFmt("%1 - %2 - %3", sPYPayrollPeriod.PayrollPeriodCode, sPYPayrollPeriodLine.PeriodStartDate, sPYPayrollPeriodLine.PeriodEndDate);
+    
+                eOSRunPayrollTmp.clear();
+                eOSRunPayrollTmp.AccountingCurrencyAmount               = eOSRunPayroll.AccountingCurrencyAmount;
+                eOSRunPayrollTmp.AccountingDistributionTemplate         = eOSRunPayroll.AccountingDistributionTemplate;
+                eOSRunPayrollTmp.Currency                               = eOSRunPayroll.Currency;
+                eOSRunPayrollTmp.DefaultDimension                       = eOSRunPayroll.DefaultDimension;
+                eOSRunPayrollTmp.EOSRun                                 = eOSRunPayroll.EOSRun;
+                eOSRunPayrollTmp.ExchRate                               = eOSRunPayroll.ExchRate;
+                eOSRunPayrollTmp.LedgerDimensionCredit                  = eOSRunPayroll.LedgerDimensionCredit;
+                eOSRunPayrollTmp.LedgerDimensionDebit                   = eOSRunPayroll.LedgerDimensionDebit;
+                eOSRunPayrollTmp.PayLedgerSource                        = eOSRunPayroll.PayLedgerSource;
+                eOSRunPayrollTmp.Payroll                                = eOSRunPayroll.Payroll;
+                eOSRunPayrollTmp.Description                            = sPYPayrollTable.Description;
+                eOSRunPayrollTmp.PayrollLedger                          = eOSRunPayroll.PayrollLedger;
+                eOSRunPayrollTmp.PayrollPeriodLine                      = eOSRunPayroll.PayrollPeriodLine;
+                eOSRunPayrollTmp.TransactionCurrencyAmount              = eOSRunPayroll.TransactionCurrencyAmount;
+                eOSRunPayrollTmp.TransDate                              = eOSRunPayroll.TransDate;
+                eOSRunPayrollTmp.Txt                                    = eOSRunPayroll.Txt;
+                eOSRunPayrollTmp.Worker                                 = eOSRunPayroll.Worker;
+                eOSRunPayrollTmp.PaylineTmp                             = paylineTmp;
+                eOSRunPayrollTmp.PayrollType                            = sPYPayrollTable.PayrollType;
+                eOSRunPayrollTmp.insert();
+            }
+    
+            // Code for inserting overtime, leave and absence deduction to SPYEOSRunPayrollTmp table
+            this.insertIntoSPYEOSRunPayrollTmp();
+    
+            while select eOSRunBenefit where eOSRunBenefit.EOSRun == eOSRunTable.RecId
+            {
+                eOSRunBenefitTmp.clear();
+    
+                eOSRunBenefitTmp.AccountingCurPnLAmount                 = eOSRunBenefit.AccountingCurPnLAmount;
+                eOSRunBenefitTmp.AccountingCurrencyAmount               = eOSRunBenefit.AccountingCurrencyAmount;
+                eOSRunBenefitTmp.AccountingDistributionTemplate         = eOSRunBenefit.AccountingDistributionTemplate;
+                eOSRunBenefitTmp.Benefit                                = eOSRunBenefit.Benefit;
+                eOSRunBenefitTmp.BenefitLedger                          = eOSRunBenefit.BenefitLedger;
+                eOSRunBenefitTmp.Currency                               = eOSRunBenefit.Currency;
+                eOSRunBenefitTmp.DefaultDimension                       = eOSRunBenefit.DefaultDimension;
+                eOSRunBenefitTmp.EOSRun                                 = eOSRunBenefit.EOSRun;
+                eOSRunBenefitTmp.ExchRate                               = eOSRunBenefit.ExchRate;
+                eOSRunBenefitTmp.JournalType                            = eOSRunBenefit.JournalType;
+                eOSRunBenefitTmp.LedgerDimensionCredit                  = eOSRunBenefit.LedgerDimensionCredit;
+                eOSRunBenefitTmp.LedgerDimensionDebit                   = eOSRunBenefit.LedgerDimensionDebit;
+                eOSRunBenefitTmp.LedgerDimensionPnL                     = eOSRunBenefit.LedgerDimensionPnL;
+                eOSRunBenefitTmp.PayLedgerSource                        = eOSRunBenefit.PayLedgerSource;
+                eOSRunBenefitTmp.PayrollPeriodLine                      = eOSRunBenefit.PayrollPeriodLine;
+                eOSRunBenefitTmp.Quantity                               = eOSRunBenefit.Quantity;
+                eOSRunBenefitTmp.TransactionCurPnLAmount                = eOSRunBenefit.TransactionCurPnLAmount;
+                eOSRunBenefitTmp.TransactionCurrencyAmount              = eOSRunBenefit.TransactionCurrencyAmount;
+                eOSRunBenefitTmp.TransDate                              = eOSRunBenefit.TransDate;
+                eOSRunBenefitTmp.Txt                                    = eOSRunBenefit.Txt;
+                eOSRunBenefitTmp.Worker                                 = eOSRunBenefit.Worker;    
+    
+                eOSRunBenefitTmp.insert();
+            }
+    
+            fromDate = dateNull();
+            toDate   = dateMax();
+    
+            while select validTimeState(fromDate, toDate) sPYWorkerPositionPayroll
+                where sPYWorkerPositionPayroll.Worker == eOSRunTable.Worker && 
+                      sPYWorkerPositionPayroll.Monthly != 0 && 
+                      sPYWorkerPositionPayroll.ValidTo == DateTimeUtil::date(validTo)
+            {    
+                sPYPayrollTable                   = SPYPayrollTable::find(sPYWorkerPositionPayroll.Payroll);    
+                sPYWorkerPositionPayrollTmp.clear();    
+                sPYWorkerPositionPayrollTmp.Payroll                   = sPYWorkerPositionPayroll.Payroll;
+                sPYWorkerPositionPayrollTmp.Description               = sPYPayrollTable.Description;
+                sPYWorkerPositionPayrollTmp.Monthly                   = sPYWorkerPositionPayroll.Monthly;
+                sPYWorkerPositionPayrollTmp.Daily                     = sPYWorkerPositionPayroll.Daily;
+    
+                sPYWorkerPositionPayrollTmp.insert();
+            }    
+        }
+     }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

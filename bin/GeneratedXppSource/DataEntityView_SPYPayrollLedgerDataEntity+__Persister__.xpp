@@ -1,0 +1,439 @@
+Private class __Persister__
+extends SysDataEntityPersister
+{
+    // Data source ID macros
+    #define.SPYPayrollLedger_ID(1)
+    
+    // Data source buffers
+    SPYPayrollLedger m_SPYPayrollLedger;
+    
+    protected void mapEntityToDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.validateFieldFailed = false;
+        this.mapEntityToDataSource(_entityCtx, _entityCtx.getRuntimeContextByName('SPYPayrollLedger'));
+        this.mapEntityToDataSourcesExtensions(_entityCtx);
+        if(this.validateFieldFailed)
+        {
+            throw Exception::ViewDataSourceValidation;
+        }
+    }
+    protected boolean saveDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // save data sources in topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [SPYPayrollLedger]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollLedger'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollLedger');
+            // propagates foreign key values from referenced data sources which are part of extensions.
+            this.foreignKeyPropagationExtensions(_entityCtx, _dataSourceCtx);
+            // inserts/updates data source [SPYPayrollLedger].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    protected boolean deleteDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        boolean rtrn = true;
+        DataEntityDataSourceRuntimeContext _dataSourceCtx = null;
+        // delete data sources in reverse topological order.
+        {
+            // handle datasources which are part of extensions and need to be saved before [SPYPayrollLedger]
+            if(!this.preSaveDataSource(_entityCtx, 'SPYPayrollLedger'))
+            {
+                return false;
+            }
+            _dataSourceCtx = _entityCtx.getRuntimeContextByName('SPYPayrollLedger');
+            // deletes data source [SPYPayrollLedger].
+            if(!this.saveDataSource(_entityCtx, _dataSourceCtx))
+            {
+                // returns from here if the root data source fails to be saved.
+                return false;
+            }
+            this.postSaveDataSource();
+        }
+        // handle datasources which are part of extensions and need to be saved in last 
+        this.preSaveDataSource(_entityCtx, '');
+        return rtrn;
+    }
+    private void mapToDataSource_DS1(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollLedger _sPYPayrollLedger, SPYPayrollLedgerDataEntity _sPYPayrollLedgerDataEntity)
+    {
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, AccountingCurrencyAmount), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, AccountingCurrencyAmount), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, AccountingDistributionTemplate), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, AccountingDistributionTemplate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ArrearPeriodLine), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ArrearPeriodLine), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, BenefitJournalTrans), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, BenefitJournalTrans), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, CalcEndDate), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, CalcEndDate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, CalcStartDate), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, CalcStartDate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Currency), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Currency), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, DefaultDimension), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, DefaultDimension), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LedgerDimensionDebit), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LedgerDimensionDebit), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ImmediateDisbursement), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ImmediateDisbursement), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ExpressionTrace), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ExpressionTrace), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ExchRate), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ExchRate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, DistributeCost), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, DistributeCost), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, IsFinalised), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, IsFinalised), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LeaveApplication), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LeaveApplication), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LedgerDimensionCredit), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LedgerDimensionCredit), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayLedgerSource), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayLedgerSource), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayLoanLine), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayLoanLine), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Payroll), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Payroll), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollEarningsJournalTrans), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollEarningsJournalTrans), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollJournalLine), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollJournalLine), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, SourceDocument), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, SourceDocument), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, TransactionCurrencyAmount), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, TransactionCurrencyAmount), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, TransDate), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, TransDate), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Txt), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Txt), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Worker), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Worker), 1);
+            this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollPeriodLine), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollPeriodLine), 1);
+            
+            this.mapToDataSourceExtensions(_dataSourceCtx, _sPYPayrollLedger, _sPYPayrollLedgerDataEntity);
+            _sPYPayrollLedger.trackFieldExternallySet(false);
+        }
+    }
+    protected void doMapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollLedger_ID:
+                this.mapToDataSource_DS1(_entityCtx, _dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapEntityToDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    private void mapFromDataSource_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollLedger _sPYPayrollLedger, SPYPayrollLedgerDataEntity _sPYPayrollLedgerDataEntity)
+    {
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, AccountingCurrencyAmount), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, AccountingCurrencyAmount), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, AccountingDistributionTemplate), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, AccountingDistributionTemplate), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, ArrearPeriodLine), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ArrearPeriodLine), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, BenefitJournalTrans), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, BenefitJournalTrans), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, CalcEndDate), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, CalcEndDate), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, CalcStartDate), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, CalcStartDate), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, Currency), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Currency), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, DefaultDimension), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, DefaultDimension), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, LedgerDimensionDebit), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LedgerDimensionDebit), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, ImmediateDisbursement), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ImmediateDisbursement), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, ExpressionTrace), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ExpressionTrace), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, ExchRate), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ExchRate), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, DistributeCost), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, DistributeCost), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, IsFinalised), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, IsFinalised), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, LeaveApplication), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LeaveApplication), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, LedgerDimensionCredit), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LedgerDimensionCredit), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayLedgerSource), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayLedgerSource), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayLoanLine), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayLoanLine), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, Payroll), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Payroll), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollEarningsJournalTrans), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollEarningsJournalTrans), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollJournalLine), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollJournalLine), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, SourceDocument), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, SourceDocument), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, TransactionCurrencyAmount), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, TransactionCurrencyAmount), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, TransDate), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, TransDate), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, Txt), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Txt), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, Worker), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Worker), false);
+        this.mapDataSourceFieldToEntityField(_sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollPeriodLine), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollPeriodLine), false);
+        this.mapFromDataSourceExtensions(_dataSourceCtx, _sPYPayrollLedger, _sPYPayrollLedgerDataEntity);
+        // map system fields (e.g. recid and recversion) from data source buffer to view record.
+        _sPYPayrollLedgerDataEntity.fromViewDataSource(_dataSourceCtx.id(), _sPYPayrollLedger);
+    }
+    protected void doMapDataSourceToEntity(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollLedger_ID:
+                this.mapFromDataSource_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _entityCtx.getEntityRecord());
+                break;
+            default :
+                this.doMapDataSourceToEntityExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+    }
+    protected Common doFindDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        Common rtrn = null;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollLedger_ID:
+                rtrn = this.LookForUniqueKeyMatch_DS1(_entityCtx.getEntityRecord(), _dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.doFindDataSourceExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet_DS1(SPYPayrollLedgerDataEntity _sPYPayrollLedgerDataEntity, str disabledConfigKey = null)
+    {
+        boolean rtrn = false;
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, AccountingCurrencyAmount)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, AccountingDistributionTemplate)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, ArrearPeriodLine)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, BenefitJournalTrans)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, CalcEndDate)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, CalcStartDate)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, Currency)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, DefaultDimension)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, LedgerDimensionDebit)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, ImmediateDisbursement)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, ExpressionTrace)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, ExchRate)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, DistributeCost)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, IsFinalised)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, LeaveApplication)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, LedgerDimensionCredit)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, PayLedgerSource)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, PayLoanLine)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, Payroll)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, PayrollEarningsJournalTrans)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, PayrollJournalLine)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, SourceDocument)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, TransactionCurrencyAmount)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, TransDate)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, Txt)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, Worker)))
+        {
+            return true;
+        }
+        if(_sPYPayrollLedgerDataEntity.isFieldSet(fieldnum(SPYPayrollLedgerDataEntity, PayrollPeriodLine)))
+        {
+            return true;
+        }
+        rtrn = this.isAnyMappedDataSourceFieldSetExtensions(_sPYPayrollLedgerDataEntity, disabledConfigKey);
+        return rtrn;
+    }
+    protected boolean isAnyMappedDataSourceFieldSet(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = false;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollLedger_ID:
+                rtrn = this.isAnyMappedDataSourceFieldSet_DS1(_entityCtx.getEntityRecord());
+                break;
+            default :
+                rtrn = this.isAnyMappedDataSourceFieldSet_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private boolean validateDataSource_DS1(DataEntityRuntimeContext _entityCtx, SPYPayrollLedgerDataEntity _sPYPayrollLedgerDataEntity, DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollLedger _sPYPayrollLedger)
+    {
+        boolean rtrn = true;
+        if(isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, AccountingCurrencyAmount), 'SPYPayrollLedgerDataEntity.AccountingCurrencyAmount', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, AccountingCurrencyAmount), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, AccountingDistributionTemplate), 'SPYPayrollLedgerDataEntity.AccountingDistributionTemplate', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, AccountingDistributionTemplate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ArrearPeriodLine), 'SPYPayrollLedgerDataEntity.ArrearPeriodLine', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ArrearPeriodLine), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, BenefitJournalTrans), 'SPYPayrollLedgerDataEntity.BenefitJournalTrans', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, BenefitJournalTrans), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, CalcEndDate), 'SPYPayrollLedgerDataEntity.CalcEndDate', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, CalcEndDate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, CalcStartDate), 'SPYPayrollLedgerDataEntity.CalcStartDate', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, CalcStartDate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Currency), 'SPYPayrollLedgerDataEntity.Currency', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Currency), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, DefaultDimension), 'SPYPayrollLedgerDataEntity.DefaultDimension', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, DefaultDimension), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LedgerDimensionDebit), 'SPYPayrollLedgerDataEntity.LedgerDimensionDebit', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LedgerDimensionDebit), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ImmediateDisbursement), 'SPYPayrollLedgerDataEntity.ImmediateDisbursement', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ImmediateDisbursement), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ExpressionTrace), 'SPYPayrollLedgerDataEntity.ExpressionTrace', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ExpressionTrace), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, ExchRate), 'SPYPayrollLedgerDataEntity.ExchRate', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ExchRate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, DistributeCost), 'SPYPayrollLedgerDataEntity.DistributeCost', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, DistributeCost), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, IsFinalised), 'SPYPayrollLedgerDataEntity.IsFinalised', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, IsFinalised), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LeaveApplication), 'SPYPayrollLedgerDataEntity.LeaveApplication', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LeaveApplication), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, LedgerDimensionCredit), 'SPYPayrollLedgerDataEntity.LedgerDimensionCredit', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LedgerDimensionCredit), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayLedgerSource), 'SPYPayrollLedgerDataEntity.PayLedgerSource', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayLedgerSource), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayLoanLine), 'SPYPayrollLedgerDataEntity.PayLoanLine', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayLoanLine), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Payroll), 'SPYPayrollLedgerDataEntity.Payroll', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Payroll), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollEarningsJournalTrans), 'SPYPayrollLedgerDataEntity.PayrollEarningsJournalTrans', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollEarningsJournalTrans), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollJournalLine), 'SPYPayrollLedgerDataEntity.PayrollJournalLine', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollJournalLine), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, SourceDocument), 'SPYPayrollLedgerDataEntity.SourceDocument', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, SourceDocument), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, TransactionCurrencyAmount), 'SPYPayrollLedgerDataEntity.TransactionCurrencyAmount', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, TransactionCurrencyAmount), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, TransDate), 'SPYPayrollLedgerDataEntity.TransDate', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, TransDate), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Txt), 'SPYPayrollLedgerDataEntity.Txt', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Txt), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, Worker), 'SPYPayrollLedgerDataEntity.Worker', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Worker), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateMappedDataSourceField(_entityCtx, _dataSourceCtx, '', '', conNull(), _sPYPayrollLedgerDataEntity, fieldnum(SPYPayrollLedgerDataEntity, PayrollPeriodLine), 'SPYPayrollLedgerDataEntity.PayrollPeriodLine', _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollPeriodLine), false/*disallowEditOnCreate*/, false/*disallowEdit*/, true/*callValidateField*/, 1) ? rtrn : false;
+            rtrn = this.validateDataSourceExtensions(_entityCtx, _sPYPayrollLedgerDataEntity, _dataSourceCtx, _sPYPayrollLedger) ? rtrn : false;
+        }
+        return rtrn;
+    }
+    protected boolean validateDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        boolean rtrn = true;
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollLedger_ID:
+                rtrn = this.validateDataSource_DS1(_entityCtx,_entityCtx.getEntityRecord(),_dataSourceCtx,_dataSourceCtx.getBuffer());
+                break;
+            default :
+                rtrn = this.validateDataSourceExtensions_DSExtensions(_entityCtx, _dataSourceCtx);
+                break;
+        }
+        return rtrn;
+    }
+    private void mapToMatchingRecord_DS1(DataEntityDataSourceRuntimeContext _dataSourceCtx, SPYPayrollLedger _sPYPayrollLedger, SPYPayrollLedger _matchingRecord)
+    {
+        // map data changes in bound fields.
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, AccountingCurrencyAmount), _matchingRecord, fieldnum(SPYPayrollLedger, AccountingCurrencyAmount), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, AccountingDistributionTemplate), _matchingRecord, fieldnum(SPYPayrollLedger, AccountingDistributionTemplate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ArrearPeriodLine), _matchingRecord, fieldnum(SPYPayrollLedger, ArrearPeriodLine), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, BenefitJournalTrans), _matchingRecord, fieldnum(SPYPayrollLedger, BenefitJournalTrans), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, CalcEndDate), _matchingRecord, fieldnum(SPYPayrollLedger, CalcEndDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, CalcStartDate), _matchingRecord, fieldnum(SPYPayrollLedger, CalcStartDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Currency), _matchingRecord, fieldnum(SPYPayrollLedger, Currency), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, DefaultDimension), _matchingRecord, fieldnum(SPYPayrollLedger, DefaultDimension), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LedgerDimensionDebit), _matchingRecord, fieldnum(SPYPayrollLedger, LedgerDimensionDebit), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ImmediateDisbursement), _matchingRecord, fieldnum(SPYPayrollLedger, ImmediateDisbursement), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ExpressionTrace), _matchingRecord, fieldnum(SPYPayrollLedger, ExpressionTrace), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, ExchRate), _matchingRecord, fieldnum(SPYPayrollLedger, ExchRate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, DistributeCost), _matchingRecord, fieldnum(SPYPayrollLedger, DistributeCost), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, IsFinalised), _matchingRecord, fieldnum(SPYPayrollLedger, IsFinalised), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LeaveApplication), _matchingRecord, fieldnum(SPYPayrollLedger, LeaveApplication), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, LedgerDimensionCredit), _matchingRecord, fieldnum(SPYPayrollLedger, LedgerDimensionCredit), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayLedgerSource), _matchingRecord, fieldnum(SPYPayrollLedger, PayLedgerSource), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayLoanLine), _matchingRecord, fieldnum(SPYPayrollLedger, PayLoanLine), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Payroll), _matchingRecord, fieldnum(SPYPayrollLedger, Payroll), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollEarningsJournalTrans), _matchingRecord, fieldnum(SPYPayrollLedger, PayrollEarningsJournalTrans), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollJournalLine), _matchingRecord, fieldnum(SPYPayrollLedger, PayrollJournalLine), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, SourceDocument), _matchingRecord, fieldnum(SPYPayrollLedger, SourceDocument), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, TransactionCurrencyAmount), _matchingRecord, fieldnum(SPYPayrollLedger, TransactionCurrencyAmount), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, TransDate), _matchingRecord, fieldnum(SPYPayrollLedger, TransDate), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Txt), _matchingRecord, fieldnum(SPYPayrollLedger, Txt), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, Worker), _matchingRecord, fieldnum(SPYPayrollLedger, Worker), 1);
+        this.mapEntityFieldToDataSourceField(_dataSourceCtx.getDatabaseOperation(), _sPYPayrollLedger, fieldnum(SPYPayrollLedger, PayrollPeriodLine), _matchingRecord, fieldnum(SPYPayrollLedger, PayrollPeriodLine), 1);
+        this.mapToMatchingRecordExtensions(_dataSourceCtx, tablestr(SPYPayrollLedgerDataEntity), _sPYPayrollLedger, _matchingRecord);
+    }
+    protected void mapDataSourceToMatchingRecord(DataEntityDataSourceRuntimeContext _dataSourceCtx, Common _matchingRecord)
+    {
+        switch(_dataSourceCtx.id())
+        {
+            case #SPYPayrollLedger_ID:
+                this.mapToMatchingRecord_DS1(_dataSourceCtx, _dataSourceCtx.getBuffer(), _matchingRecord);
+                break;
+            default :
+                this.mapDataSourceToMatchingRecordExtensions(_dataSourceCtx, _matchingRecord);
+                break;
+        }
+    }
+    protected void validateConfigurationKeys(DataEntityRuntimeContext _entityCtx)
+    {
+        // Ensure that the entity configuration key is enabled
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYExpression')))
+        {
+            // Entity configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityConfigKeyDisabled",'SPYExpression'));
+        }
+        if(!isConfigurationKeyEnabled(configurationKeyName2Id('SPYPayroll')))
+        {
+            // Root data source configuration key is disabled
+            throw error(strfmt("@ApplicationPlatform:DataEntityDataSourceConfigKeyDisabled",'SPYPayrollLedger','SPYPayroll'));
+        }
+    }
+    protected void initializeDataSources(DataEntityRuntimeContext _entityCtx)
+    {
+        this.initializeDataSource(_entityCtx, 'SPYPayrollLedger', m_SPYPayrollLedger, this.getDataSourceId('SPYPayrollLedger'), this.getDataSourceId('SPYPayrollLedger'), false/* optional */, false/* readonly */, false/* oneToMany */, false/* dateEffective */, false/* applyDateFilter */);
+        this.initializeDataSourcesExtensions(_entityCtx);
+    }
+    private SPYPayrollLedger LookForUniqueKeyMatch_DS1(SPYPayrollLedgerDataEntity _sPYPayrollLedgerDataEntity, SPYPayrollLedger _sPYPayrollLedger)
+    {
+        SPYPayrollLedger sPYPayrollLedger_ = null;
+        
+        select
+            forUpdate
+            firstOnly
+                sPYPayrollLedger_
+        where
+            sPYPayrollLedger_.RecId == _sPYPayrollLedger.RecId && sPYPayrollLedger_.Worker == _sPYPayrollLedger.Worker
+        ;
+        
+        if (sPYPayrollLedger_)
+        {
+            return sPYPayrollLedger_;
+        }
+        
+        return sPYPayrollLedger_;
+    }
+
+}
+

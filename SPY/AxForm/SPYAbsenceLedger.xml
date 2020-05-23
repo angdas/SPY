@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxForm xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V6">
+	<Name>SPYAbsenceLedger</Name>
+	<SourceCode>
+		<Methods xmlns="">
+			<Method>
+				<Name>classDeclaration</Name>
+				<Source><![CDATA[
+[Form]
+public class SPYAbsenceLedger extends FormRun
+{
+    SPYLeaveApplicationTable                leaveApplicationTable;
+    SPYAbsenceJournalTable                  absenceJournalTable;
+
+    boolean                                 masterProcessCaller;
+    HcmWorkerRecId                          worker;
+    SPYPayrollPeriodLineRecId               payrollPeriodLine;
+    QueryBuildRange                         workerRange;
+    QueryBuildRange                         absenceDateRange;
+    date                                    periodStart, periodEnd;
+    HcmWorker       hcmWorker;
+
+}
+]]></Source>
+			</Method>
+			<Method>
+				<Name>init</Name>
+				<Source><![CDATA[
+    public void init()
+    {
+        FormRun                 formRun;
+        container               argsCon;
+        SPYPayrollPeriodLine    payrollPeriodLineTab;
+
+        if(element.args().caller() && element.args().record() is SPYLeaveApplicationTable)
+            leaveApplicationTable = element.args().record() as SPYLeaveApplicationTable;
+        else if(element.args().caller() && element.args().record() is SPYAbsenceJournalTable)
+            absenceJournalTable = element.args().record() as SPYAbsenceJournalTable;
+        else if(element.args().caller() && element.args().record() is HcmWorker)
+            hcmWorker = element.args().record() as HcmWorker;
+        else if(element.args().caller())
+        {
+            formRun = element.args().caller();
+            if(formRun.name() == formStr(SPYMasterProcess))
+            {
+                masterProcessCaller = true;
+                argsCon = str2con(element.args().parm());
+                worker = conPeek(argsCon,1);
+                payrollPeriodLine = conPeek(argsCon,2);
+                payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
+                periodStart = payrollPeriodLineTab.PeriodStartDate;
+                periodEnd = payrollPeriodLineTab.PeriodEndDate;
+            }
+        }
+    
+        super();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+		<DataSources xmlns="">
+			<DataSource>
+				<Name>SPYAbsenceLedger</Name>
+				<Methods>
+					<Method>
+						<Name>init</Name>
+						<Source><![CDATA[
+        public void init()
+        {
+            QueryBuildDataSource        ledgerDS;
+            
+            super();
+            if(leaveApplicationTable)
+            {
+                ledgerDS = this.query().dataSourceTable(tableNum(SPYAbsenceLedger));
+                
+                ledgerDS.addRange(fieldNum(SPYAbsenceLedger,LeaveApplicationLine)).value(this.findRecIdsFromLine());
+                ledgerDS.addOrderByField(fieldNum(SPYAbsenceLedger, TransDate),SortOrder::Ascending);
+            }
+            else if(absenceJournalTable)
+            {
+                ledgerDS = this.query().dataSourceTable(tableNum(SPYAbsenceLedger));                
+                ledgerDS.addRange(fieldNum(SPYAbsenceLedger,AbsenceJournalTrans)).value(this.findRecIdsFromTrans());
+                ledgerDS.addOrderByField(fieldNum(SPYAbsenceLedger, TransDate),SortOrder::Ascending);
+            }
+            else if(hcmWorker)
+            {
+                ledgerDS = this.query().dataSourceTable(tableNum(SPYAbsenceLedger));
+                ledgerDS.addRange(fieldNum(SPYAbsenceLedger, Worker)).value(queryValue(hcmWorker.RecId));
+                ledgerDS.addOrderByField(fieldNum(SPYAbsenceLedger, TransDate),SortOrder::Ascending);
+            }
+            else if(masterProcessCaller)
+            {
+                workerRange = this.query().dataSourceTable(tableNum(SPYAbsenceLedger)).addRange(fieldNum(SPYAbsenceLedger,Worker));
+                absenceDateRange = this.query().dataSourceTable(tableNum(SPYAbsenceLedger)).addRange(fieldNum(SPYAbsenceLedger,AbsenceDate));
+                ledgerDS.addOrderByField(fieldNum(SPYAbsenceLedger, TransDate),SortOrder::Ascending);
+            }
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>findRecIdsFromLine</Name>
+						<Source><![CDATA[
+        public str findRecIdsFromLine()
+        {
+            str                         lineRecId;
+            SPYLeaveApplicationLine     leaveApplicationLine;            
+            TransDate                   validFrom = dateNull();
+            TransDate                   validTo = dateMax();
+
+            while select validTimeState(validFrom,validTo) RecId from leaveApplicationLine
+                where leaveApplicationLine.LeaveApplication == leaveApplicationTable.RecId
+            {
+                if(lineRecId)
+                    lineRecId += strFmt(",%1",leaveApplicationLine.RecId);
+                else
+                    lineRecId = strFmt("%1",leaveApplicationLine.RecId);
+            }
+
+            return lineRecId;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>findRecIdsFromTrans</Name>
+						<Source><![CDATA[
+        public str findRecIdsFromTrans()
+        {
+            str                         lineRecId;
+            SPYAbsenceJournalTrans      absenceJournalTrans;
+            TransDate                   validFrom = dateNull();
+            TransDate                   validTo = dateMax();
+
+            while select * from absenceJournalTrans
+                    where absenceJournalTrans.AbsenceJournal == absenceJournalTable.RecId
+            {
+                if(lineRecId)
+                        lineRecId += strFmt(",%1",absenceJournalTrans.RecId);
+                else
+                        lineRecId = strFmt("%1",absenceJournalTrans.RecId);
+            }
+
+            return lineRecId;
+        }
+
+]]></Source>
+					</Method>
+					<Method>
+						<Name>executeQuery</Name>
+						<Source><![CDATA[
+        public void executeQuery()
+        {
+            if(masterProcessCaller)
+            {
+                workerRange.value(queryValue(worker));
+                absenceDateRange.value(strFmt("%1..%2",periodStart,PeriodEnd));
+            }
+            super();
+        }
+
+]]></Source>
+					</Method>
+				</Methods>
+				<Fields />
+			</DataSource>
+		</DataSources>
+		<DataControls xmlns="" />
+		<Members xmlns="" />
+	</SourceCode>
+	<DataSources>
+		<AxFormDataSource xmlns="">
+			<Name>SPYAbsenceLedger</Name>
+			<Table>SPYAbsenceLedger</Table>
+			<Fields>
+				<AxFormDataSourceField>
+					<DataField>AbsenceDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>AbsenceDays</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>AbsenceHours</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>AbsenceJournalTrans</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>BenefitJournalTrans</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>BenefitLedger</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdBy</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>createdDateTime</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>dataAreaId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>EntryType</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>HRMAbsenceCodeId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>LeaveApplicationLine</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Partition</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>RecId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>SourceDocument</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TableId</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>TransDate</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Txt</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>UtilityUpload</DataField>
+				</AxFormDataSourceField>
+				<AxFormDataSourceField>
+					<DataField>Worker</DataField>
+				</AxFormDataSourceField>
+			</Fields>
+			<ReferencedDataSources />
+			<AllowCreate>No</AllowCreate>
+			<AllowDelete>No</AllowDelete>
+			<AllowEdit>No</AllowEdit>
+			<Index>Ledger_CK</Index>
+			<InsertIfEmpty>No</InsertIfEmpty>
+			<DataSourceLinks />
+			<DerivedDataSources />
+		</AxFormDataSource>
+	</DataSources>
+	<Design>
+		<Caption xmlns="">@SPY61</Caption>
+		<DataSource xmlns="">SPYAbsenceLedger</DataSource>
+		<HeightMode xmlns="">Column</HeightMode>
+		<Pattern xmlns="">Task</Pattern>
+		<PatternVersion xmlns="">1.2</PatternVersion>
+		<TitleDataSource xmlns="">SPYAbsenceLedger</TitleDataSource>
+		<WidthMode xmlns="">Column</WidthMode>
+		<Controls xmlns="">
+			<AxFormControl xmlns=""
+				i:type="AxFormActionPaneControl">
+				<Name>ActionPane</Name>
+				<ElementPosition>429496729</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<HeightMode>Auto</HeightMode>
+				<Type>ActionPane</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormActionPaneTabControl">
+						<Name>ActionPaneTab</Name>
+						<ElementPosition>1431655764</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Type>ActionPaneTab</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls />
+						<AlignChild>No</AlignChild>
+						<AlignChildren>No</AlignChildren>
+						<ArrangeMethod>Vertical</ArrangeMethod>
+						<DataSource>SPYAbsenceLedger</DataSource>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<AlignChildren>No</AlignChildren>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormGroupControl">
+				<Name>CustomFilterGroup</Name>
+				<ElementPosition>1288490187</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Pattern>CustomFilters</Pattern>
+				<PatternVersion>1.1</PatternVersion>
+				<Type>Group</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<WidthMode>SizeToAvailable</WidthMode>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls />
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>HorizontalLeft</ArrangeMethod>
+				<FrameType>None</FrameType>
+				<Style>CustomFilter</Style>
+				<ViewEditMode>Edit</ViewEditMode>
+			</AxFormControl>
+			<AxFormControl xmlns=""
+				i:type="AxFormTabControl">
+				<Name>Tab</Name>
+				<AlignControl>No</AlignControl>
+				<ElementPosition>1717986916</ElementPosition>
+				<FilterExpression>%1</FilterExpression>
+				<Type>Tab</Type>
+				<VerticalSpacing>-1</VerticalSpacing>
+				<FormControlExtension
+					i:nil="true" />
+				<Controls>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageOverview</Name>
+						<ElementPosition>894784852</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>SizeToAvailable</HeightMode>
+						<Pattern>ToolbarList</Pattern>
+						<PatternVersion>1.2</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>SizeToAvailable</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGridControl">
+								<Name>Grid</Name>
+								<ElementPosition>1431655764</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Grid</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>SPYAbsenceLedger_Worker</Name>
+										<ElementPosition>613566756</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+										<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>SPYAbsenceLedger_HRMAbsenceCodeId</Name>
+										<ElementPosition>715827882</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>HRMAbsenceCodeId</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>SPYAbsenceLedger_EntryType</Name>
+										<ElementPosition>818089008</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>ComboBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>EntryType</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<Items />
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>SPYAbsenceLedger_AbsenceDate</Name>
+										<ElementPosition>920350134</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>AbsenceDate</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>SPYAbsenceLedger_TransDate</Name>
+										<Type>Date</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>TransDate</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>SPYAbsenceLedger_AbsenceDays</Name>
+										<ElementPosition>1227133512</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>AbsenceDays</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>SPYAbsenceLedger_AbsenceHours</Name>
+										<ElementPosition>1533916890</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>AbsenceHours</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>Source</Name>
+										<ElementPosition>1840700268</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<HeightMode>Auto</HeightMode>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<WidthMode>Auto</WidthMode>
+										<FormControlExtension
+											i:nil="true" />
+										<CacheDataMethod>Yes</CacheDataMethod>
+										<DataMethod>Source</DataMethod>
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<Label>@SPY13</Label>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormCheckBoxControl">
+										<Name>SPYAbsenceLedger_UtilityUpload</Name>
+										<Type>CheckBox</Type>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>UtilityUpload</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<AlternateRowShading>No</AlternateRowShading>
+								<DataSource>SPYAbsenceLedger</DataSource>
+								<MultiSelect>No</MultiSelect>
+								<ShowRowLabels>No</ShowRowLabels>
+							</AxFormControl>
+						</Controls>
+						<Caption>@SYS50012</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+					<AxFormControl xmlns=""
+						i:type="AxFormTabPageControl">
+						<Name>TabPageDetails</Name>
+						<ElementPosition>1521134249</ElementPosition>
+						<FilterExpression>%1</FilterExpression>
+						<HeightMode>Auto</HeightMode>
+						<Pattern>FieldsFieldGroups</Pattern>
+						<PatternVersion>1.1</PatternVersion>
+						<Type>TabPage</Type>
+						<VerticalSpacing>-1</VerticalSpacing>
+						<WidthMode>Auto</WidthMode>
+						<FormControlExtension
+							i:nil="true" />
+						<Controls>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupWorker</Name>
+								<ElementPosition>858993458</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>GroupWorker_Worker</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<ReferenceField>Worker</ReferenceField>
+										<ReplacementFieldGroup>PersonAndPersonnelNumber</ReplacementFieldGroup>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Worker</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupAbsenceDetasils</Name>
+								<ElementPosition>1288490187</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormDateControl">
+										<Name>GroupBenefit_AbsenceDate</Name>
+										<ElementPosition>858993458</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Date</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>AbsenceDate</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupBenefit_AbsenceDays</Name>
+										<ElementPosition>1288490187</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>AbsenceDays</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormRealControl">
+										<Name>GroupBenefit_AbsenceHours</Name>
+										<ElementPosition>1717986916</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>Real</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>AbsenceHours</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<NoOfDecimals>-1</NoOfDecimals>
+									</AxFormControl>
+									<AxFormControl xmlns=""
+										i:type="AxFormComboBoxControl">
+										<Name>GroupAbsenceDetasils_EntryType</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ComboBox</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>EntryType</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<Items />
+									</AxFormControl>
+								</Controls>
+								<DataGroup>AbsenceDetasils</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupPeriod</Name>
+								<ElementPosition>1717986916</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupPeriod_HRMAbsenceCodeId</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>HRMAbsenceCodeId</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>AbsenceCode</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupSource</Name>
+								<ElementPosition>1753778310</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>Group_M_Source</Name>
+										<AllowEdit>No</AllowEdit>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<CacheDataMethod>Yes</CacheDataMethod>
+										<DataMethod>Source</DataMethod>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Source</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupTransaction</Name>
+								<ElementPosition>1771674007</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>Group_Txt</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<DataField>Txt</DataField>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>Transaction</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupLeaveApplication</Name>
+								<ElementPosition>1789569704</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormStringControl">
+										<Name>GroupLeaveApplication_M_LeaveApplicationCode</Name>
+										<AllowEdit>No</AllowEdit>
+										<FilterExpression>%1</FilterExpression>
+										<Type>String</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<CacheDataMethod>Yes</CacheDataMethod>
+										<DataMethod>LeaveApplicationCode</DataMethod>
+										<DataSource>SPYAbsenceLedger</DataSource>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>LeaveApplication</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupBenefitLedger</Name>
+								<ElementPosition>1825361098</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>GroupBenefitLedger_BenefitLedger</Name>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<ReferenceField>BenefitLedger</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>BenefitLedger</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupAbsenceJournal</Name>
+								<ElementPosition>1879048189</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>GroupAbsenceJournal_AbsenceJournalTrans1</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<ReferenceField>AbsenceJournalTrans</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>AbsenceJournal</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupBenefitJournal</Name>
+								<ElementPosition>1905891735</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls>
+									<AxFormControl xmlns=""
+										i:type="AxFormReferenceGroupControl">
+										<Name>Group_BenefitJournalTrans</Name>
+										<ElementPosition>1431655764</ElementPosition>
+										<FilterExpression>%1</FilterExpression>
+										<Type>ReferenceGroup</Type>
+										<VerticalSpacing>-1</VerticalSpacing>
+										<FormControlExtension
+											i:nil="true" />
+										<Controls />
+										<DataSource>SPYAbsenceLedger</DataSource>
+										<ReferenceField>BenefitJournalTrans</ReferenceField>
+									</AxFormControl>
+								</Controls>
+								<DataGroup>BenefitJournal</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+							<AxFormControl xmlns=""
+								i:type="AxFormGroupControl">
+								<Name>GroupLog</Name>
+								<ElementPosition>1932735281</ElementPosition>
+								<FilterExpression>%1</FilterExpression>
+								<Type>Group</Type>
+								<VerticalSpacing>-1</VerticalSpacing>
+								<FormControlExtension
+									i:nil="true" />
+								<Controls />
+								<DataGroup>Log</DataGroup>
+								<DataSource>SPYAbsenceLedger</DataSource>
+							</AxFormControl>
+						</Controls>
+						<ColumnsMode>Fill</ColumnsMode>
+						<Caption>@SYS318405</Caption>
+						<Scrollbars>Auto</Scrollbars>
+					</AxFormControl>
+				</Controls>
+				<AlignChild>No</AlignChild>
+				<ArrangeMethod>Vertical</ArrangeMethod>
+			</AxFormControl>
+		</Controls>
+	</Design>
+	<Parts />
+</AxForm>

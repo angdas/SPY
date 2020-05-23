@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAppFCMTokenContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYAppFCMTokenContract
+{
+    SPYAppFCMToken      fCMToken;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmFCMToken</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute("Token")]
+    public SPYAppFCMToken parmFCMToken(SPYAppFCMToken _fCMToken = fCMToken)
+    {
+        fCMToken = _fCMToken;
+    
+        return fCMToken;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

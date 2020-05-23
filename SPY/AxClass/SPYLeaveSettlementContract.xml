@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveSettlementContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYLeaveSettlementContract extends SPYPayProcessContract
+{
+    SPYPayrollPeriodRecId                           payrollPeriod;
+    TransDate                                               startDate;
+    TransDate                                               endDate;
+    container                                               leaveApplQuery;
+    SPYLeaveSettlementParameterState    parameterState;
+    SPYPayrollPeriodLineRecId                   settlementPeriod;
+    boolean                                                settlementStartDateAsPeriodDate;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmEndDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public TransDate parmEndDate(TransDate _endDate = endDate)
+    {
+        endDate = _endDate;
+        return endDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLeaveApplQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmLeaveApplQuery(container _leaveApplQuery = leaveApplQuery)
+    {
+        leaveApplQuery = _leaveApplQuery;
+        return leaveApplQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmParameterState</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYLeaveSettlementParameterState parmParameterState(SPYLeaveSettlementParameterState _parameterState = parameterState)
+    {
+        parameterState = _parameterState;
+    
+        return parameterState;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPayrollPeriod</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodRecId parmPayrollPeriod(SPYPayrollPeriodRecId _payrollPeriod = payrollPeriod)
+    {
+        payrollPeriod = _payrollPeriod;
+        return payrollPeriod;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSettlementPeriod</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYPayrollPeriodLineRecId parmSettlementPeriod(SPYPayrollPeriodLineRecId _settlementPeriod = settlementPeriod)
+    {
+        settlementPeriod = _settlementPeriod;
+        return settlementPeriod;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmStartDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public TransDate parmStartDate(TransDate _startDate = startDate)
+    {
+        startDate = _startDate;
+        return startDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmSettlementStartDateAsPeriodDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmSettlementStartDateAsPeriodDate(boolean _settlementStartDateAsPeriodDate = settlementStartDateAsPeriodDate)
+    {
+        settlementStartDateAsPeriodDate = _settlementStartDateAsPeriodDate;
+        return settlementStartDateAsPeriodDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

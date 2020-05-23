@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAccPolicyPayrollJournal</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[
+SourceDocumentEnumExtensionAttribute(enumStr(SPYBusinessEvent_PayrollJournal),SPYBusinessEvent_PayrollJournal::Journal)
+]
+class SPYAccPolicyPayrollJournal extends AccountingPolicy
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>determineDocumentRecordsActual</Name>
+				<Source><![CDATA[
+    protected boolean determineDocumentRecordsActual()
+    {
+        boolean ret;
+
+        ret = (LedgerParameters::find().JournalizingDefinitionEnableValue == NoYes::Yes);
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>determineIsAccountingRequired</Name>
+				<Source><![CDATA[
+    protected boolean determineIsAccountingRequired()
+    {
+        boolean  ret;
+
+        ret = super();
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAccountingRequired</Name>
+				<Source><![CDATA[
+    public boolean parmAccountingRequired()
+    {
+        boolean ret;
+
+        ret = super();
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDocumentRecordsActual</Name>
+				<Source><![CDATA[
+    public boolean parmDocumentRecordsActual()
+    {
+        boolean ret;
+
+        ret = super();
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

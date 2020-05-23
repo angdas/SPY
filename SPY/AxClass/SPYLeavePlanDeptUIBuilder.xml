@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeavePlanDeptUIBuilder</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+class SPYLeavePlanDeptUIBuilder extends SysOperationAutomaticUIBuilder
+{
+    SPYLeavePlanDeptContract     leavePlanDeptContract;
+    DialogField                          subordinates;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>build</Name>
+				<Source><![CDATA[
+    public void build()
+    {
+       leavePlanDeptContract      = this.dataContractObject();
+    
+     //  this.addDialogField(methodStr(SPYLeavePlanSubordinatesContract,parmIdentificationTypeList), leavePlanSubordinatesContract);
+       this.addDialogField(methodStr(SPYLeavePlanDeptContract,parmFromDate), leavePlanDeptContract);
+       this.addDialogField(methodStr(SPYLeavePlanDeptContract,parmToDate), leavePlanDeptContract);
+       this.addDialogField(methodStr(SPYLeavePlanDeptContract,parmDepartment), leavePlanDeptContract);
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>departmentLookup</Name>
+				<Source><![CDATA[
+    private void departmentLookup(FormStringControl _control)
+    {
+        Query                   query;
+        QueryBuildDataSource    qbds_OMOperatingUnit;
+        QueryBuildRange         qbr_Department;
+        SysTableLookup          sysTableLookup;
+    
+        query                   = new Query();
+        qbds_OMOperatingUnit    = query.addDataSource(tableNum(OMOperatingUnit));
+        qbds_OMOperatingUnit.addRange(
+            fieldNum(OMOperatingUnit, OMOperatingUnitType)).value("Department");
+    
+        sysTableLookup = SysTableLookup::newParameters(tableNum(OMOperatingUnit), _control);
+        sysTableLookup.addLookupfield(fieldNum(OMOperatingUnit, Name));
+        sysTableLookup.addLookupfield(fieldNum(OMOperatingUnit, OMOperatingUnitNumber), true);
+        sysTableLookup.parmQuery(query);
+        sysTableLookup.performFormLookup();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>lookup</Name>
+				<Source><![CDATA[
+    public void lookup(FormStringControl _control)
+    {
+        Query                   query = new Query(queryStr(SPYSubordinatesLookup));
+        QueryBuildDataSource    qbd;
+        container   cnt;
+    
+        //qbd = query.dataSourceName("HcmPositionWorkerAssignment_1");
+        //qbd.addRange(fieldNum(HcmPositionWorkerAssignment, worker)).value(SysQuery::value(SysQueryRangeUtil::currentWorker()));
+    
+        //qbd = query.dataSourceTable(tableNum(HcmPositionHierarchy));
+        //qbd.addRange(fieldNum(HcmPositionHierarchy, PositionHierarchyType)).value(SysQuery::value(HcmPositionHierarchyType::lineHierarchyType()));
+    
+        SysLookupMultiSelectGrid::lookup(query, _control, _control, _control, cnt);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postBuild</Name>
+				<Source><![CDATA[
+    public void postBuild()
+    {
+        DialogField dialogEntity, dlgDepartment;
+    
+        super();
+    
+        /*
+        dialogEntity= this.bindInfo().getDialogField(this.dataContractObject(), methodStr(SPYLeavePlanSubordinatesContract, parmSubordinates));
+    
+        dialogEntity.registerOverrideMethod(methodStr(FormStringControl, lookup), methodStr(SPYLeavePlanSubordinatesUIBuilder, lookup), this);
+    
+        if (dialogEntity)
+        {
+            dialogEntity.lookupButton(2);
+        }
+    
+        */
+    
+        dlgDepartment = this.bindInfo().getDialogField(this.dataContractObject(),
+                    methodStr(SPYLeavePlanDeptContract,parmDepartment));
+    
+        dlgDepartment.registerOverrideMethod(
+              methodStr(FormStringControl, lookup),
+              methodStr(SPYLeavePlanDeptUIBuilder,departmentLookup),
+              this);
+    
+    
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>postRun</Name>
+				<Source><![CDATA[
+    public void postRun()
+    {
+        //super();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

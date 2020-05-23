@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxWorkflowApproval xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V2">
+	<Name>SPYDocumentRequest</Name>
+	<CanceledEventHandler>SPYDocumentRequestEventHandler1</CanceledEventHandler>
+	<ConfigurationKey>SPYDocumentRequest</ConfigurationKey>
+	<DelegateMenuItem>SPYDocumentRequestDelegateMenuItem</DelegateMenuItem>
+	<Document>SPYDocumentRequestDocument</Document>
+	<DocumentMenuItem>SPYDocumentRequest</DocumentMenuItem>
+	<DocumentPreviewFieldGroup>Details</DocumentPreviewFieldGroup>
+	<HelpText>@SPY:HRRequestWorkflowApproval</HelpText>
+	<Label>@SPY:HRRequestApproval</Label>
+	<ResubmitMenuItem>SPYDocumentRequestResubmitMenuItem</ResubmitMenuItem>
+	<StartedEventHandler>SPYDocumentRequestEventHandler1</StartedEventHandler>
+	<WorkItemsCreatedEventHandler>SPYDocumentRequestEventHandler1</WorkItemsCreatedEventHandler>
+	<Approve>
+		<Name xmlns="">Approve</Name>
+		<ActionMenuItem xmlns="">SPYDocumentRequestApprove</ActionMenuItem>
+		<EventHandler xmlns="">SPYDocumentRequestEventHandler1</EventHandler>
+	</Approve>
+	<Deny>
+		<Name xmlns="">Deny</Name>
+		<Enabled xmlns="">No</Enabled>
+		<Type xmlns="">Deny</Type>
+	</Deny>
+	<Reject>
+		<Name xmlns="">Reject</Name>
+		<ActionMenuItem xmlns="">SPYDocumentRequestReject</ActionMenuItem>
+		<EventHandler xmlns="">SPYDocumentRequestEventHandler1</EventHandler>
+		<Type xmlns="">Return</Type>
+	</Reject>
+	<RequestChange>
+		<Name xmlns="">RequestChange</Name>
+		<ActionMenuItem xmlns="">SPYDocumentRequestRequestChange</ActionMenuItem>
+		<EventHandler xmlns="">SPYDocumentRequestEventHandler1</EventHandler>
+		<Type xmlns="">RequestChange</Type>
+	</RequestChange>
+</AxWorkflowApproval>

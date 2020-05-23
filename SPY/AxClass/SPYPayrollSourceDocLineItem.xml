@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYPayrollSourceDocLineItem</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[SourceDocumentEnumExtensionAttribute(enumStr(SPYSourceDocumentLine_PayrollJournal), SPYSourceDocumentLine_PayrollJournal::JournalLine)]
+public class SPYPayrollSourceDocLineItem extends SourceDocumentLineItem
+    implements  SourceDocumentIDataProvider,
+                SourceDocumentLineItemIDescription,
+                SPYSourceDocumentLineItemIPayroll
+{
+    SPYPayrollJournalTable                    payrollJournalTable;
+    SPYPayrollJournalLine                     payrollJournalLine;
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>calculateLegalEntityRecId</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///     Calculates the legal entity record id from the payroll journal
+    /// </summary>
+    /// <returns>
+    ///     A legal entity record id.
+    /// </returns>
+    protected LegalEntityRecId calculateLegalEntityRecId()
+    {
+        return CompanyInfo::findDataArea(payrollJournalLine.DataAreaId).RecId;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calculateSourceDocumentAmountMap</Name>
+				<Source><![CDATA[
+    protected SourceDocumentAmountMap calculateSourceDocumentAmountMap()
+    {
+        SourceDocumentAmountMap     sourceDocumentAmountMap;
+        SourceDocumentLine          sourceDocumentLineValue;
+
+        // Create map
+        sourceDocumentAmountMap = SourceDocumentAmountMap::construct();
+
+        sourceDocumentLineValue = this.parmSourceDocumentLine();
+
+        sourceDocumentAmountMap.insert(SourceDocumentAmount::newFromParameters(sourceDocumentLineValue, payrollJournalLine.amount(),
+            MonetaryAmount::PayrollCost, false));
+
+        return sourceDocumentAmountMap;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>documentsBusinessEvent</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Indicates whether the <c>SourceDocumentLineItem</c> class documents a business event.
+    /// </summary>
+    /// <returns>
+    /// true if the <c>SourceDocumentLineItem</c> documents a business event; otherwise, false.
+    /// </returns>
+
+    public BusinessEvent documentsBusinessEvent()
+    {
+        BusinessEvent       businessEvent;
+
+        businessEvent = new BusinessEvent(enumNum(SPYBusinessEvent_PayrollJournal), SPYBusinessEvent_PayrollJournal::Journal);
+
+        return businessEvent;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>initializeImplementation</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Initializes the instance variables.
+    /// </summary>
+    /// <param name="_sourceDocumentLineImplementation">
+    /// A source document line implementation table.
+    /// </param>
+    /// <param name="_additionalInformation">
+    /// A map to hold buffers of pre initiliazed objects needed by the framework to the source document.
+    /// </param>
+    protected void initializeImplementation(SourceDocumentLineImplementation _sourceDocumentLineImplementation, Map _additionalInformation = null)
+    {
+        payrollJournalLine    = _sourceDocumentLineImplementation;
+
+        payrollJournalTable   = payrollJournalLine.payrollJournalTable();
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAccount</Name>
+				<Source><![CDATA[
+    public LedgerDimensionAccount parmAccount()
+    {
+        return payrollJournalLine.LedgerDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAccountingDate</Name>
+				<Source><![CDATA[
+    public AccountingDate parmAccountingDate()
+    {
+        return payrollJournalLine.TransDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDefaultDimension</Name>
+				<Source><![CDATA[
+    public DimensionDefault parmDefaultDimension()
+    {
+        return payrollJournalLine.DefaultDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDescription</Name>
+				<Source><![CDATA[
+    public Description parmDescription()
+    {
+        return payrollJournalLine.Txt;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDistributionTemplateRecId</Name>
+				<Source><![CDATA[
+    public AccountingDistributionTemplateRecId parmDistributionTemplateRecId()
+    {
+        return payrollJournalLine.AccountingDistributionTemplate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmExchangeRate1</Name>
+				<Source><![CDATA[
+    public ExchRate parmExchangeRate1()
+    {
+        return payrollJournalLine.ExchRate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLedgerDimensionDefaultAccount</Name>
+				<Source><![CDATA[
+    public LedgerDimensionDefaultAccount parmLedgerDimensionDefaultAccount(LegalEntityRecId _legalEntityRecId = this.parmLegalEntityRecId())
+    {
+        return payrollJournalLine.LedgerDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmOffsetAccount</Name>
+				<Source><![CDATA[
+    public LedgerDimensionAccount parmOffsetAccount()
+    {
+        return payrollJournalLine.OffsetLedgerDimension;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmQuantity</Name>
+				<Source><![CDATA[
+    public Qty parmQuantity()
+    {
+        return 1;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTransactionCurrencyCode</Name>
+				<Source><![CDATA[
+    public CurrencyCode parmTransactionCurrencyCode()
+    {
+        return payrollJournalLine.Currency;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

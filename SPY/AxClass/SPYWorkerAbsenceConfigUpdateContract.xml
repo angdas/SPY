@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYWorkerAbsenceConfigUpdateContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+[DataContractAttribute]
+class SPYWorkerAbsenceConfigUpdateContract
+{
+    container                                   hcmWorkerQuery;
+    LegalEntityRecId                        legalEntity;
+    SPYAbsenceConfigRecId           absenceConfig;
+    TransDate                                  transDate;
+    boolean                                     effectiveFromJoiningDate;
+    boolean                                     effectiveFromOrigHiringDate;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmWorkerQuery</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public container parmWorkerQuery(container _hcmWorkerQuery = hcmWorkerQuery)
+    {
+        hcmWorkerQuery = _hcmWorkerQuery;
+        return hcmWorkerQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmLegalEntity</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public LegalEntityRecId parmLegalEntity(LegalEntityRecId _legalEntity = legalEntity)
+    {
+        legalEntity = _legalEntity;
+        return legalEntity;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmAbsenceConfig</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public SPYAbsenceConfigRecId parmAbsenceConfig(SPYAbsenceConfigRecId _absenceConfig = absenceConfig)
+    {
+        absenceConfig = _absenceConfig;
+        return absenceConfig;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmTransDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public TransDate parmTransDate(TransDate _transDate = transDate)
+    {
+        transDate = _transDate;
+        return transDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEffectiveFromJoiningDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmEffectiveFromJoiningDate(boolean _effectiveFromJoiningDate = effectiveFromJoiningDate)
+    {
+        effectiveFromJoiningDate = _effectiveFromJoiningDate;
+        return effectiveFromJoiningDate;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmEffectiveFromOrigHiringDate</Name>
+				<Source><![CDATA[
+    [DataMemberAttribute]
+    public boolean parmEffectiveFromOrigHiringDate(boolean _effectiveFromOrigHiringDate = effectiveFromOrigHiringDate)
+    {
+        effectiveFromOrigHiringDate = _effectiveFromOrigHiringDate;
+        return effectiveFromOrigHiringDate;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,615 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYAttendenceRegister</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYAttendenceRegister extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>initValue</Name>
+				<Source><![CDATA[
+    public void initValue()
+    {
+        super();
+    
+        this.Year = year(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createAttendenceRegister</Name>
+				<Source><![CDATA[
+    public static void createAttendenceRegister(HcmWorkerRecId _worker)
+    {
+        SPYAttendenceRegister   AttendenceRegister, checkattnRegister, checkAttendenceRegister;
+        int                     yearDate;
+        int                     i;
+    
+        yearDate = year(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone()));
+        select firstOnly RecId from checkattnRegister
+            where checkattnRegister.Worker == _worker &&
+                  checkattnRegister.Year == yearDate;
+        if(!checkattnRegister.RecId)
+        {
+            for( i= 1; i <= 12 ; i++)
+            {
+                AttendenceRegister.Worker   = _worker;
+                AttendenceRegister.MonthOfYearId    = i;
+                AttendenceRegister.Year             = yearDate;
+    
+                select firstOnly RecId from checkAttendenceRegister
+                    where checkAttendenceRegister.Worker == _worker &&
+                          checkAttendenceRegister.MonthOfYearId == i &&
+                          checkAttendenceRegister.year ==  yearDate;
+                if(!checkAttendenceRegister.RecId)
+                    AttendenceRegister.insert();
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>isAbsent</Name>
+				<Source><![CDATA[
+    public static boolean isAbsent(HcmWorkerRecId _worker, TransDate _date)
+    {
+        TransDate               onDate = _date;
+        Boolean                 ret;
+        int                     day;
+        int                     month;
+        int                     onYear;
+        SPYAttendenceRegister   attnRegister;
+    
+        day  = dayOfMth(onDate);
+        month = mthOfYr(onDate);
+        Onyear = year(onDate);
+        select firstonly attnRegister
+            where attnRegister.Worker == _worker &&
+                  attnRegister.Year == onYear &&
+                  attnRegister.MonthOfYearId == month;
+        switch (day)
+        {
+            case 1:
+                ret = attnRegister.Day1;
+                break;
+            case 2:
+                ret = attnRegister.Day2;
+                break;
+            case 3:
+                ret = attnRegister.Day3;
+                break;
+            case 4:
+                ret = attnRegister.Day4;
+                break;
+            case 5:
+                ret = attnRegister.Day5;
+                break;
+            case 6:
+                ret = attnRegister.Day6;
+                break;
+            case 7:
+                ret = attnRegister.Day7;
+                break;
+            case 8:
+                ret = attnRegister.Day8;
+                break;
+            case 9:
+                ret = attnRegister.Day9;
+                break;
+            case 10:
+                ret = attnRegister.Day10;
+                break;
+            case 11:
+                ret = attnRegister.Day11;
+                break;
+            case 12:
+                ret = attnRegister.Day12;
+                break;
+            case 13:
+                ret = attnRegister.Day13;
+                break;
+            case 14:
+                ret = attnRegister.Day14;
+                break;
+            case 15:
+                ret = attnRegister.Day15;
+                break;
+            case 16:
+                ret = attnRegister.Day16;
+                break;
+            case 17:
+                ret = attnRegister.Day17;
+                break;
+            case 18:
+                ret = attnRegister.Day18;
+                break;
+            case 19:
+                ret = attnRegister.Day19;
+                break;
+            case 20:
+                ret = attnRegister.Day20;
+                break;
+            case 21:
+                ret = attnRegister.Day21;
+                break;
+            case 22:
+                ret = attnRegister.Day22;
+                break;
+            case 23:
+                ret = attnRegister.Day23;
+                break;
+            case 24:
+                ret = attnRegister.Day24;
+                break;
+            case 25:
+                ret = attnRegister.Day25;
+                break;
+            case 26:
+                ret = attnRegister.Day26;
+                break;
+            case 27:
+                ret = attnRegister.Day27;
+                break;
+            case 28:
+                ret = attnRegister.Day28;
+                break;
+            case 29:
+                ret = attnRegister.Day29;
+                break;
+            case 30:
+                ret = attnRegister.Day30;
+                break;
+            case 31:
+                ret = attnRegister.Day31;
+                break;
+            default:
+                ret = false;
+                break;
+        }
+    
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>mapToProjPeriodTS</Name>
+				<Source><![CDATA[
+    public static refRecID mapToProjPeriodTS(HcmWorkerRecId _worker,int _month = mthOfYr(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone())), int _year = year(DateTimeUtil::getToday(DateTimeUtil::getUserPreferredTimeZone())))
+    {
+        SPYAttendenceRegister   attendenceRegister;
+        ProjPeriodTimesheetWeek projTSWeek;
+    
+        select firstOnly attendenceRegister
+            where attendenceRegister.Worker == _worker &&
+                  attendenceRegister.MonthOfYearId == _month &&
+                  attendenceRegister.Year == _year;
+    
+        return 0;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateAttendenceRegister</Name>
+				<Source><![CDATA[
+    public static void updateAttendenceRegister(HcmWorkerRecId _worker, TransDate _date, NoYes isPresent)
+    {
+        TransDate               onDate = _date;
+        Boolean                 ret;
+        int                     day;
+        int                     month;
+        int                     onYear;
+        SPYAttendenceRegister   attnRegister;
+    
+        day  = dayOfMth(onDate);
+        month = mthOfYr(onDate);
+        Onyear = year(onDate);
+        ttsbegin;
+        select firstonly forUpdate attnRegister
+            where attnRegister.Worker == _worker &&
+                  attnRegister.Year == onYear &&
+                  attnRegister.MonthOfYearId == month;
+        if(attnRegister.RecId)
+        {
+            switch (day)
+            {
+                case 1:
+                    attnRegister.Day1 = isPresent;
+                    break;
+                case 2:
+                    attnRegister.Day2 = isPresent;
+                    break;
+                case 3:
+                    attnRegister.Day3 = isPresent;
+                    break;
+                case 4:
+                    attnRegister.Day4 = isPresent;
+                    break;
+                case 5:
+                    attnRegister.Day5 = isPresent;
+                    break;
+                case 6:
+                    attnRegister.Day6 = isPresent;
+                    break;
+                case 7:
+                    attnRegister.Day7 = isPresent;
+                    break;
+                case 8:
+                    attnRegister.Day8 = isPresent;
+                    break;
+                case 9:
+                    attnRegister.Day9 = isPresent;
+                    break;
+                case 10:
+                    attnRegister.Day10 = isPresent;
+                    break;
+                case 11:
+                    attnRegister.Day11 = isPresent;
+                    break;
+                case 12:
+                    attnRegister.Day12 = isPresent;
+                    break;
+                case 13:
+                    attnRegister.Day13 = isPresent;
+                    break;
+                case 14:
+                    attnRegister.Day14 = isPresent;
+                    break;
+                case 15:
+                    attnRegister.Day15 = isPresent;
+                    break;
+                case 16:
+                    attnRegister.Day16 = isPresent;
+                    break;
+                case 17:
+                    attnRegister.Day17 = isPresent;
+                    break;
+                case 18:
+                    attnRegister.Day18 = isPresent;
+                    break;
+                case 19:
+                    attnRegister.Day19 = isPresent;
+                    break;
+                case 20:
+                    attnRegister.Day20 = isPresent;
+                    break;
+                case 21:
+                    attnRegister.Day21 = isPresent;
+                    break;
+                case 22:
+                    attnRegister.Day22 = isPresent;
+                    break;
+                case 23:
+                    attnRegister.Day23 = isPresent;
+                    break;
+                case 24:
+                    attnRegister.Day24 = isPresent;
+                    break;
+                case 25:
+                    attnRegister.Day25 = isPresent;
+                    break;
+                case 26:
+                    attnRegister.Day26 = isPresent;
+                    break;
+                case 27:
+                    attnRegister.Day27 = isPresent;
+                    break;
+                case 28:
+                    attnRegister.Day28 = isPresent;
+                    break;
+                case 29:
+                    attnRegister.Day29 = isPresent;
+                    break;
+                case 30:
+                    attnRegister.Day30 = isPresent;
+                    break;
+                case 31:
+                    attnRegister.Day31 = isPresent;
+                    break;
+                default:
+                    break;
+            }
+            attnRegister.update();
+        }
+        ttsCommit;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<ConfigurationKey>SPYPayroll</ConfigurationKey>
+	<DeveloperDocumentation>@SPY1325</DeveloperDocumentation>
+	<Label>@SPY1322</Label>
+	<TableGroup>Transaction</TableGroup>
+	<TitleField1>Worker</TitleField1>
+	<TitleField2>MonthOfYearId</TitleField2>
+	<CacheLookup>NotInTTS</CacheLookup>
+	<ClusteredIndex>PrimaryIdx</ClusteredIndex>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day1</Name>
+			<Label>@SPY:Day1</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day10</Name>
+			<Label>@SPY:Day10</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day11</Name>
+			<Label>@SPY:Day11</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day12</Name>
+			<Label>@SPY:Day12</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day13</Name>
+			<Label>@SPY:Day13</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day14</Name>
+			<Label>@SPY:Day14</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day15</Name>
+			<Label>@SPY:Day15</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day16</Name>
+			<Label>@SPY:Day16</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day17</Name>
+			<Label>@SPY:Day17</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day18</Name>
+			<Label>@SPY:Day18</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day19</Name>
+			<Label>@SPY:Day19</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day2</Name>
+			<Label>@SPY:Day2</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day20</Name>
+			<Label>@SPY:Day20</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day21</Name>
+			<Label>@SPY:Day21</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day22</Name>
+			<Label>@SPY:Day22</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day23</Name>
+			<Label>@SPY:Day23</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day24</Name>
+			<Label>@SPY:Day24</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day25</Name>
+			<Label>@SPY:Day25</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day26</Name>
+			<Label>@SPY:Day26</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day27</Name>
+			<Label>@SPY:Day27</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day28</Name>
+			<Label>@SPY:Day28</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day29</Name>
+			<Label>@SPY:Day29</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day3</Name>
+			<Label>@SPY:Day3</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day30</Name>
+			<Label>@SPY:Day30</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day31</Name>
+			<Label>@SPY:Day31</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day4</Name>
+			<Label>@SPY:Day1</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day5</Name>
+			<Label>@SPY:Day1</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day6</Name>
+			<Label>@SPY:Day1</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day7</Name>
+			<Label>@SPY:Day1</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day8</Name>
+			<Label>@SPY:Day1</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>Day9</Name>
+			<Label>@SPY:Day1</Label>
+			<EnumType>NoYes</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldEnum">
+			<Name>MonthOfYearId</Name>
+			<ExtendedDataType>MonthOfYearId</ExtendedDataType>
+			<EnumType>MonthsOfYear</EnumType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>Worker</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt">
+			<Name>Year</Name>
+			<ExtendedDataType>Year</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>PrimaryIdx</Name>
+			<AlternateKey>Yes</AlternateKey>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>Worker</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>MonthOfYearId</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Year</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+		<AxTableIndex>
+			<Name>WorkerYearIdx</Name>
+			<AllowDuplicates>Yes</AllowDuplicates>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>Worker</DataField>
+				</AxTableIndexField>
+				<AxTableIndexField>
+					<DataField>Year</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>Worker</Name>
+					<Field>Worker</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>

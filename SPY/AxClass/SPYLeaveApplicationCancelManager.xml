@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYLeaveApplicationCancelManager</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+///    The <c>SPYLeaveApplicationCancelManager</c> class is used to cancel a pay adjustment journal workflow.
+/// </summary>
+/// <remarks>
+///    This class inherits from the <c>WorkflowCancelManager</c> class and handles the update of the
+///    leave application record when the cancel button has been pressed. The default dialog and cancel
+///    functionality from the <c>WorkflowCancelManager</c> class is reused.
+/// </remarks>
+public class    SPYLeaveApplicationCancelManager
+extends         WorkflowCancelManager
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    private void  new()
+    {
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>updateDocument</Name>
+				<Source><![CDATA[
+    /// <summary>
+    ///    The <c>updateDocument</c> method executes the business logic when the workflow is canceled.
+    /// </summary>
+    /// <param name="_args">
+    ///    The arguments of the <c>SPYLeaveApplicationCancelManager</c> class.
+    /// </param>
+    /// <remarks>
+    ///    If the change management flag on the leave application has been switched to no, the leave application
+    ///    are set to approved; otherwise, the user must submit the leave application again.
+    /// </remarks>
+    public void updateDocument(Args _args)
+    {
+        SPYLeaveApplicationLine     leaveApplicationLine;
+        SPYAbsenceLedger            absenceLedger;
+        SPYBenefitLedger            benefitLedger;
+        date                        fromDate = dateNull(),toDate = dateMax();
+    
+        if (_args.record()  &&  _args.record().TableId == tablenum(SPYLeaveApplicationTable))
+        {
+            try
+            {
+                ttsBegin;
+                select firstonly validTimeState(fromDate,toDate) absenceLedger
+                        join RecId from leaveApplicationLine
+                        join RecId from benefitLedger
+                        where leaveApplicationLine.RecId == absenceLedger.LeaveApplicationLine &&
+                              absenceLedger.BenefitLedger == benefitLedger.RecId &&
+                              benefitLedger.PayrollJournalLine &&
+                              leaveApplicationLine.LeaveApplication == _args.record().RecId;
+                if(absenceLedger)
+                    throw error("@SPY1232");
+                SPYLeaveApplicationTable::updateWorkflowStatus(_args.record().RecId, SPYWorkflowStatus::Created);
+                ttsCommit;
+            }
+            catch(Exception::Error)
+            {
+                ttsAbort;
+                error("@SPY252");
+            }
+        }
+    
+        super(_args);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    public static SPYLeaveApplicationCancelManager  construct()
+    {
+        return new SPYLeaveApplicationCancelManager();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    public static void  main(Args _args)
+    {
+        SPYLeaveApplicationCancelManager   leaveApplicationCancelManager = SPYLeaveApplicationCancelManager::construct();
+    
+        switch (_args.menuItemName())
+        {
+            case webActionItemStr(SPYEPLeaveApplicationCancelManager) :
+            case menuitemActionStr(SPYLeaveApplicationCancelMenuItem) :
+                leaveApplicationCancelManager.run(_args);
+                break;
+    
+            case menuitemActionStr(SPYLeaveApplicationCancel) :
+                leaveApplicationCancelManager.updateDocument(_args);
+                break;
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxTable xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>SPYMyTeamMember</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+public class SPYMyTeamMember extends common
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>xds</Name>
+				<Source><![CDATA[
+    public RefreshFrequency xds()
+    {
+        SPYMyTeamMember             teamMember;
+        SPYWorkerTeamMember         workerTeamMember;
+        TransDate                   transDate = today();
+        HcmEmployment               hcmEmployment;
+          
+        while select validtimestate(transDate) hcmEmployment
+            where hcmEmployment.Worker == HcmWorkerLookup::currentWorker()
+            && hcmEmployment.LegalEntity == CompanyInfo::find().RecId
+        {
+            teamMember.TeamMember   = HcmWorkerLookup::currentWorker();
+            teamMember.LegalEntity  =hcmEmployment.LegalEntity;
+            teamMember.insert();
+        }
+
+        while select validTimeState(transDate) workerTeamMember
+            where workerTeamMember.Worker == HcmWorkerLookup::currentWorker()
+        {
+            if(workerTeamMember.LegalEntity)
+            {
+                teamMember.TeamMember   = workerTeamMember.TeamMember;
+                teamMember.LegalEntity  = workerTeamMember.LegalEntity;
+                teamMember.insert();
+            }
+            else
+            {
+                while select validtimestate(transDate) hcmEmployment
+                    where hcmEmployment.Worker == workerTeamMember.TeamMember
+                    && hcmEmployment.LegalEntity == CompanyInfo::find().RecId
+                {
+                    teamMember.TeamMember   = workerTeamMember.TeamMember;
+                    teamMember.LegalEntity  = hcmEmployment.LegalEntity;
+                    teamMember.insert();
+                }
+            }
+        }
+            
+        return RefreshFrequency::PerSession;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+	<TitleField1>TeamMember</TitleField1>
+	<TitleField2>LegalEntity</TitleField2>
+	<SaveDataPerCompany>No</SaveDataPerCompany>
+	<TableType>TempDB</TableType>
+	<DeleteActions />
+	<FieldGroups>
+		<AxTableFieldGroup>
+			<Name>AutoReport</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoLookup</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoIdentification</Name>
+			<AutoPopulate>Yes</AutoPopulate>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoSummary</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>AutoBrowse</Name>
+			<Fields />
+		</AxTableFieldGroup>
+		<AxTableFieldGroup>
+			<Name>Overview</Name>
+			<Label>@ElectronicReporting:Overview</Label>
+			<Fields>
+				<AxTableFieldGroupField>
+					<DataField>TeamMember</DataField>
+				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>LegalEntity</DataField>
+				</AxTableFieldGroupField>
+			</Fields>
+		</AxTableFieldGroup>
+	</FieldGroups>
+	<Fields>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>TeamMember</Name>
+			<ExtendedDataType>HcmWorkerRecId</ExtendedDataType>
+		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>LegalEntity</Name>
+			<ExtendedDataType>LegalEntityRecId</ExtendedDataType>
+		</AxTableField>
+	</Fields>
+	<FullTextIndexes />
+	<Indexes>
+		<AxTableIndex>
+			<Name>LegalEntity</Name>
+			<AllowDuplicates>Yes</AllowDuplicates>
+			<Fields>
+				<AxTableIndexField>
+					<DataField>LegalEntity</DataField>
+				</AxTableIndexField>
+			</Fields>
+		</AxTableIndex>
+	</Indexes>
+	<Mappings />
+	<Relations>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>HcmWorker</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<OnDelete>Restricted</OnDelete>
+			<RelatedTable>HcmWorker</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelationshipType>Association</RelationshipType>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>TeamMember1</Name>
+					<Field>TeamMember</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>CompanyInfo</Name>
+			<Cardinality>ZeroMore</Cardinality>
+			<RelatedTable>CompanyInfo</RelatedTable>
+			<RelatedTableCardinality>ExactlyOne</RelatedTableCardinality>
+			<RelatedTableRole>LegalEntity</RelatedTableRole>
+			<RelationshipType>Association</RelationshipType>
+			<UseDefaultRoleNames>No</UseDefaultRoleNames>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>LegalEntity</Name>
+					<Field>LegalEntity</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+	</Relations>
+	<StateMachines />
+</AxTable>
