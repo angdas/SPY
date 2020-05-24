@@ -37,7 +37,7 @@ class SPYReportConfigService extends SysOperationServiceBase
 
         //once the data has been filled the html genreation can begin         
         bindata bin = new bindata();
-        str background, reportText;
+        str background, reportText, htmlWrapper;
         container image;
 
         //fetch the image for the export and then place the html on it
@@ -66,10 +66,49 @@ class SPYReportConfigService extends SysOperationServiceBase
                 }
             }
             SysEmailContents reportBody = SysEmailMessage::stringExpand(reportConfigTable.ReportDesign, SysEmailTable::htmlEncodeParameters(mappings));
-            reportText = strReplace(reportBody, '\n', '<br>');            
+            reportText += '<div class="page">' + reportBody + '</div>';
         }
 
-        SPYPayService::saveOpen("", reportText);
+        htmlWrapper += num2Char(13) +  ' <!doctype html>';
+        htmlWrapper += num2Char(13) +  ' <html lang="en">';
+        htmlWrapper += num2Char(13) +  ' 	<head>';
+        htmlWrapper += num2Char(13) +  ' 		<meta charset="UTF-8">';
+        htmlWrapper += num2Char(13) +  ' 	</head>';
+        htmlWrapper += num2Char(13) +  ' 	<style type="text/css">';
+        htmlWrapper += num2Char(13) +  ' 		.page-header, .page-header-space { height: 0px; }';
+        htmlWrapper += num2Char(13) +  ' 		.page-footer, .page-footer-space { height: 0px; }';
+        htmlWrapper += num2Char(13) +  ' 		.page-footer { position: fixed; bottom: 0; width: 100%; }';
+        htmlWrapper += num2Char(13) +  ' 		.page-header { position: fixed; top: 0mm; width: 100%; }';
+        htmlWrapper += num2Char(13) +  ' 		.page { page-break-after: always; }		';
+        htmlWrapper += num2Char(13) +  ' 		@page { size:auto; margin: auto; }';
+        htmlWrapper += num2Char(13) +  ' 		@media print { thead {display: table-header-group;} tfoot {display: table-footer-group;} body {margin: 0;}  button {display: none;} }';
+        htmlWrapper += num2Char(13) +  ' 	</style>';
+
+        htmlWrapper += num2Char(13) +  ' 	<body>	';
+        htmlWrapper += num2Char(13) +  ' 				<table>';
+        htmlWrapper += num2Char(13) +  ' 					<thead>';
+        htmlWrapper += num2Char(13) +  ' 						<tr><td>';
+        htmlWrapper += num2Char(13) +  ' 							<div class="page-header-space"> <img src= "data:image/png;base64,' + strRem( strRem(background, "\n"), "\r") + '"/>';
+        htmlWrapper += num2Char(13) +  ' 						</td></tr>';
+        htmlWrapper += num2Char(13) +  ' 					</thead>';
+
+        htmlWrapper += num2Char(13) +  ' 					<tbody>';
+        htmlWrapper += num2Char(13) +  ' 						<tr><td>';
+        //htmlWrapper += ' 							<div class="page">This is a line on the first page</div>';
+        htmlWrapper += num2Char(13) +   reportText;
+        htmlWrapper += num2Char(13) +  ' 						</td></tr>';
+        htmlWrapper += num2Char(13) +  ' 					</tbody>';
+
+        htmlWrapper += num2Char(13) +  ' 					<tfoot>';
+        htmlWrapper += num2Char(13) +  ' 						<tr><td>';
+        htmlWrapper += num2Char(13) +  ' 							<div class="page-footer-space"></div>';
+        htmlWrapper += num2Char(13) +  ' 						</td></tr>';
+        htmlWrapper += num2Char(13) +  ' 					</tfoot>';
+        htmlWrapper += num2Char(13) +  ' 				</table>';
+
+        htmlWrapper += num2Char(13) +  ' 	</body>';
+        htmlWrapper += num2Char(13) +  ' </html>';
+        SPYPayService::saveOpen( strFmt("Report_%1.html",  xGlobal::randomPositiveInt32() ), htmlWrapper);
         info("Completed");
     }
 
@@ -102,7 +141,7 @@ class SPYReportConfigService extends SysOperationServiceBase
         select firstonly reportConfigTable where reportConfigTable.RecId == contract.parmReportConfigRecId();
         useTransactionCurrency = reportConfigTable.UseTransactionCurr;
         groupByWorker   = reportConfigTable.GroupByWorker;
-
+        spyRReportsTmp.setTempDB();
         Query q = contract.getQuery();
         Query qCopy = new Query(q); //create a copy for the employee loop                      
                        
