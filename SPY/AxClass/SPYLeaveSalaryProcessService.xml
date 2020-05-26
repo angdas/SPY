@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
-	<Name>SPYLeaveEligibilityProcessService</Name>
+	<Name>SPYLeaveSalaryProcessService</Name>
 	<SourceCode>
 		<Declaration><![CDATA[
-class SPYLeaveEligibilityProcessService extends SysOperationServiceBase implements SPYIObservable
+class SPYLeaveSalaryProcessService extends SysOperationServiceBase implements SPYIObservable
 {
     SPYLeaveApplicationTable        leaveApplicationTable;
     SPYLeaveApplicationLine         leaveApplicationLine;
@@ -21,7 +21,8 @@ class SPYLeaveEligibilityProcessService extends SysOperationServiceBase implemen
     CalendarId                      workerCalendarId;
     HcmEmployment                   hcmEmployment;
     HcmEmploymentDetail             hcmEmploymentDetail;
-    HRMAbsenceCode            hrmAbsenceCode;
+    SPYPayElementTable      payElement;
+    
     date                            employmentStartDate,employmentEndDate;
 
     SPYExpressionEvaluationMap      expressionEvaluationMap;
@@ -38,22 +39,22 @@ class SPYLeaveEligibilityProcessService extends SysOperationServiceBase implemen
 			<Method>
 				<Name>new</Name>
 				<Source><![CDATA[
-    public void new(SPYLeaveApplicationLine _leaveApplicationLine)
+    //2020-05-24_SNK
+    //new function added to initialize during the absence process to encash leaves
+    public void new(LegalEntityRecId _legalEntity, HcmWorker _worker, SPYPayrollPeriodLine _payrollPeriodline, TransDate _transDate, SPYPayElementRecId _payElement)
     {
-        leaveApplicationLine = _leaveApplicationLine;
-        leaveApplicationTable = leaveApplicationLine.leaveApplicationTable();
-        worker = HcmWorker::find(leaveApplicationTable.Worker);
-        legalEntity = CompanyInfo::current();
-        //payrollPeriodLine = 
-        payrollPeriodLineTab = SPYPayrollPeriodLine::find(payrollPeriodLine);
-        transDate = leaveApplicationLine.ActualStartDate;
+        legalEntity = _legalEntity;
+        worker = _worker;     
+        payrollPeriodLine = _payrollPeriodline.RecId;
+        payrollPeriodLineTab = _payrollPeriodline;
+        transDate = _transDate;
         periodStart = payrollPeriodLineTab.PeriodStartDate;
         periodEnd = payrollPeriodLineTab.PeriodEndDate;
         calcStart = payrollPeriodLineTab.PeriodStartDate;
         calcEnd = payrollPeriodLineTab.PeriodEndDate;
         timesheetStart = SPYPayrollPeriodLine::findPrevPeriodLine(payrollPeriodLine).PayrollDate + 1;
-        timesheetEnd = payrollPeriodLineTab.PayrollDate;
-        hrmAbsenceCode = HRMAbsenceCode::find(leaveApplicationLine.HRMAbsenceCode);
+        timesheetEnd = payrollPeriodLineTab.PayrollDate;        
+        payElement = SPYPayElementTable::find(_payElement);
 
         this.initialize();
         this.addObserver(tracer,1);
@@ -86,6 +87,7 @@ class SPYLeaveEligibilityProcessService extends SysOperationServiceBase implemen
         expressionContext.legalEntity(legalEntity);
         expressionContext.payrollPeriodLine(payrollPeriodLine);
         expressionContext.transDate(transDate);
+        expressionContext.payElement(payElement.RecId);
         expressionContext.calcFromDate(calcStart);
         expressionContext.calcToDate(calcEnd);
         expressionContext.timesheetFromDate(timesheetStart);
@@ -157,17 +159,19 @@ class SPYLeaveEligibilityProcessService extends SysOperationServiceBase implemen
 ]]></Source>
 			</Method>
 			<Method>
-				<Name>leaveBalanceFromExpression</Name>
+				<Name>leaveSalaryFromExpression</Name>
 				<Source><![CDATA[
-    public  SPYAmount  leaveBalanceFromExpression()
+    //2020-05-24_SNK
+    //function added to calculate the per day leave salary for encashment during timesheet process
+    public  SPYAmount  leaveSalaryFromExpression(SPYExpressionRecId _expressionRecId, SPYAmount _absentDays)
     {
         SPYAmount   ret;
-
+        
         this.notifyObserver("@SYS80745",worker.name(),3);
-        this.notifyObserver("@SPY847","",4,1);
-        ret = hrmAbsenceCode.SPYLeaveBalanceExpression ? this.leaveExpression(hrmAbsenceCode.SPYLeaveBalanceExpression) : 0;
-        this.notifyObserver(strFmt("@SPY:EligibleLeaveBalance1",ret),"",5,2);
-
+        this.notifyObserver("@SPY:PayElement",strFmt("%1", payElement.PayElementCode), 4, 1);
+        ret = this.leaveExpression(_expressionRecId) * _absentDays;
+        this.notifyObserver(strFmt("@SYS90673", payElement.PayElementCode), strFmt("%1",abs(ret)), 5, 2);
+      
         return ret;
     }
 

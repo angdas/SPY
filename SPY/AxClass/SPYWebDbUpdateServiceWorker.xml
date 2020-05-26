@@ -57,7 +57,7 @@ class SPYWebDbUpdateServiceWorker extends SPYWebDbUpdateService
                 workerModel.Gender          = enum2Str(HcmPersonPrivateDetails::findByPerson(hcmWorker.Person).Gender);
                 workerModel.MaritalStatus = enum2Str(HcmPersonDetails::findByPerson(hcmWorker.Person).MaritalStatus);
                 workerModel.JobTitle        = HcmPositionDetail::findByPosition(HcmPosition::findByPosition(hcmWorker.primaryPositionId()).RecId).Description;
-                workerModel.JoiningDate     = hcmEmployment.ValidFrom;
+                workerModel.JoiningDate     = HcmWorkerTitle::findByWorker(hcmWorker.RecId).OriginalHireDateTime;//hcmEmployment.ValidFrom;
                 workermodel.Mobile          = hcmWorker.phone();
                 workerModel.Name            = hcmWorker.name();
                 workerModel.Department = hcmWorker.primaryDepartmentName();
@@ -380,6 +380,7 @@ class SPYWebDbUpdateServiceWorker extends SPYWebDbUpdateService
                 workerPayslipModel.PeriodStartDate = payrollPeriodLine.PeriodStartDate;
                 workerPayslipModel.PeriodEndDate = payrollPeriodLine.PeriodEndDate;
                 workerPayslipModel.Payslip = this.getEmpPaySlip(worker, payrollPeriodLine);
+                workerPayslipModel.DataArea = curExt();
                 workerPayslipList.Add(workerPayslipModel);
                 callPending = true;
             }
@@ -485,7 +486,7 @@ class SPYWebDbUpdateServiceWorker extends SPYWebDbUpdateService
                 }
                 else
                 {
-                    errorWorkerPayslipList += strFmt("Error for payslip of worker %1, period %2 - %3", hcmWorkerUpdate.PersonnelNumber,
+                    errorWorkerPayslipList += strFmt("Error for payslip of worker %1, period %2 - %3. %4. \n", hcmWorkerUpdate.PersonnelNumber,
                     periodStartDate, periodEndDate, workerPayslipModel.ErrorMessage);
                 }
             }

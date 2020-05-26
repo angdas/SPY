@@ -22,6 +22,9 @@
 				<AxTableFieldGroupField>
 					<DataField>SPYLeaveBalanceExpression</DataField>
 				</AxTableFieldGroupField>
+				<AxTableFieldGroupField>
+					<DataField>SPYLeaveSalaryExpression</DataField>
+				</AxTableFieldGroupField>
 			</Fields>
 		</AxTableFieldGroup>
 	</FieldGroups>
@@ -64,6 +67,13 @@
 			<ExtendedDataType>SPYExpressionRecId</ExtendedDataType>
 			<Label>@SPY:LeaveBalanceExpression</Label>
 		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>SPYLeaveSalaryExpression</Name>
+			<ConfigurationKey>SPYPayroll</ConfigurationKey>
+			<ExtendedDataType>SPYExpressionRecId</ExtendedDataType>
+			<Label>@SPY:LeaveSal</Label>
+		</AxTableField>
 	</Fields>
 	<Indexes />
 	<Mappings />
@@ -99,6 +109,18 @@
 				</AxTableRelationConstraint>
 			</Constraints>
 			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation>
+			<Name>SPYLeaveSalExpression</Name>
+			<RelatedTable>SPYExpressionTable</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>SPYLeaveSalaryExpression</Name>
+					<Field>SPYLeaveSalaryExpression</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
 		</AxTableRelation>
 	</Relations>
 </AxTableExtension>

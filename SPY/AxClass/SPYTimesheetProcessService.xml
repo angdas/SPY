@@ -32,13 +32,17 @@ class SPYTimesheetProcessService
     boolean                             traceEnabled;
     boolean                             absenceLogCreated,overtimeLogCreated,benefitLogCreated;
 
+
+
+
+
 }
 ]]></Declaration>
 		<Methods>
 			<Method>
 				<Name>calcAbsence</Name>
 				<Source><![CDATA[
-    private void calcAbsence(Date _timesheetDate,Hours _timesheetHours,Hours _workingHours)
+        private void calcAbsence(Date _timesheetDate,Hours _timesheetHours,Hours _workingHours)
     {
         SPYAbsenceLedger        absenceLedger;
         Hours                   leaveApplHours;
@@ -90,6 +94,9 @@ class SPYTimesheetProcessService
 			<Method>
 				<Name>calcBenefitLedger</Name>
 				<Source><![CDATA[
+    //>>2020-05-24_START
+    //This process generates the leave encashment enteries to pass the financial imapct of the 
+    //leaves availed into the benfit ledger. 
     private void calcBenefitLedger()
     {
         SPYAbsenceLedger            absenceLedger,absenceLedgeUpd;
@@ -104,6 +111,11 @@ class SPYTimesheetProcessService
         SPYAmount                   exchRate,transCurAmt;
         CurrencyCode                transCur;
     
+        SPYPayrollLedgerRecID       payrollLedgerRecId;
+        SPYPayrollLedger            payrollLedger;
+        SPYExpressionRecId          leaveSalExpressionRecId;        
+        HRMAbsenceCode              hrmAbsence;
+
         if(traceEnabled && benefitLogCreated == false)
         {
             payProcessLog.PayProcessSteps = SPYPayProcessSteps::TimesheetBenefit;
@@ -112,11 +124,38 @@ class SPYTimesheetProcessService
             benefitLogCreated = true;
             benefitLogRecId = payProcessLog.RecId;
         }
+
+        update_recordset absenceLedger
+            setting BenefitLedger = 0
+        join benefitLedger
+            where benefitLedger.SourceDocument == tableNum(SPYAbsenceLedger) &&
+                benefitLedger.Worker == hcmWorker.RecId &&
+                benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
+                !benefitLedger.IsFinalised &&
+                absenceLedger.BenefitLedger == benefitLedger.RecId;
+
         delete_from benefitLedger
         where benefitLedger.SourceDocument == tableNum(SPYAbsenceLedger) &&
                 benefitLedger.Worker == hcmWorker.RecId &&
                 benefitLedger.PayrollPeriodLine == payrollPeriodLine &&
                 !benefitLedger.IsFinalised;
+
+        //2020-05024_SNK
+        //delete entries to payroll ledger 
+        update_recordset absenceLedger
+            setting PayrollLedger = 0
+        join payrollLedger
+            where payrollLedger.SourceDocument == tableNum(SPYAbsenceLedger) &&
+                payrollLedger.Worker == hcmWorker.RecId &&
+                payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+                !payrollLedger.IsFinalised &&
+                absenceLedger.PayrollLedger == payrollLedger.RecId;
+
+        delete_from payrollLedger
+        where payrollLedger.SourceDocument == tableNum(SPYAbsenceLedger) &&
+                payrollLedger.Worker == hcmWorker.RecId &&
+                payrollLedger.PayrollPeriodLine == payrollPeriodLine &&
+                !payrollLedger.IsFinalised;
 
         //Entries from leave application
         while select sum(absenceDays) from absenceLedger group by HRMAbsenceCodeId
@@ -131,12 +170,30 @@ class SPYTimesheetProcessService
             benefit = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId).SPYBenefit;
             if(benefit)
             {
-                absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,toDate,absentDays) * absentDays;
+                //2020-05-25_START_SNK
+                //the per day salary woudl be picked from expression if specified else the avg rate woudl be taken 
+                //if the systme is configured to create encashment payroll then create the same
+                benefitLedger.initValue();
+                hrmAbsence = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId);
+                leaveSalExpressionRecId = hrmAbsence.SPYLeaveSalaryExpression ;
+                SPYExpressionTraceRecId     expressionTrace;
+                if (leaveSalExpressionRecId )  
+                {         
+                    SPYLeaveSalaryProcessService   leaveSalaryService = new SPYLeaveSalaryProcessService(legalEntity, hcmWorker, 
+                        SPYPayrollPeriodLine::find(payrollPeriodLine), transDate, benefit);
+                    absentAmount = leaveSalaryService.leaveSalaryFromExpression(leaveSalExpressionRecId, absentDays);
+                    expressionTrace = leaveSalaryService.getExpressionTrace();
+                }
+                else                
+                    absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,toDate,absentDays) * absentDays;                
+
+                benefitLedger.EncashmentPayout = SPYPayrollParameters::find().EncashLeavesAvailed;
+                //<<2020-05-24_STOP
+                                
                 transCur = this.benefitCurrency(benefit);
                 exchRate = currencyExchangeHelper.calculateTransactionToAccounting(transCur,1,false);
                 transCurAmt = exchRate ? absentAmount / exchRate : absentAmount;
-            
-                benefitLedger.initValue();
+
                 benefitLedger.JournalType               = SPYBenefitJournalType::Encashment;
                 benefitLedger.SourceDocument            = tableNum(SPYAbsenceLedger);
                 benefitLedger.Worker                    = hcmWorker.RecId;
@@ -151,7 +208,10 @@ class SPYTimesheetProcessService
                 benefitLedger.Txt                       = strFmt("@SPY374",SPYPayElementTable::find(benefit).PayElementCode,
                                                              hcmWorker.name(),fromDate,toDate);
                 benefitLedger.setAccount(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),CompanyInfo::current(),payrollPeriodLine,true);
+                benefitLedger.ExpressionTrace           = expressionTrace;
                 benefitLedger.insert();
+
+                payrollLedgerRecId = this.createPayrollLedgerFromBenefitLedger( benefitLedger );  //>>2020-05-24_START
 
                 while select forUpdate absenceLedgeUpd
                 where absenceLedgeUpd.Worker == hcmWorker.RecId &&
@@ -163,6 +223,7 @@ class SPYTimesheetProcessService
                 where benefitLedgerJoin.RecId == absenceLedgeUpd.BenefitLedger
                 {
                     absenceLedgeUpd.BenefitLedger = benefitLedger.RecId;
+                    absenceLedgeUpd.PayrollLedger = payrollLedgerRecId; //2020-05-24_SNK
                     absenceLedgeUpd.update();
                 }
                 payProcessLogReference.clear();
@@ -187,12 +248,30 @@ class SPYTimesheetProcessService
             benefit = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId).SPYBenefit;
             if(benefit)
             {
+                //2020-05-25_START_SNK
+                //the per day salary woudl be picked from expression if specified else the avg rate woudl be taken
+                benefitLedger.initValue();
+                hrmAbsence = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId);
+                leaveSalExpressionRecId = hrmAbsence.SPYLeaveSalaryExpression ;
+                SPYExpressionTraceRecId     expressionTrace;
+                if (leaveSalExpressionRecId )
+                {
+                    SPYLeaveSalaryProcessService   leaveSalaryService = new SPYLeaveSalaryProcessService(legalEntity, hcmWorker,
+                        SPYPayrollPeriodLine::find(payrollPeriodLine), transDate, benefit);
+                    absentAmount = leaveSalaryService.leaveSalaryFromExpression(leaveSalExpressionRecId,  absentDays) ;
+                    expressionTrace = leaveSalaryService.getExpressionTrace();
+                }
+                else
+                    absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,toDate,absentDays) * absentDays;
+
+                benefitLedger.EncashmentPayout = SPYPayrollParameters::find().EncashLeavesAvailed;
+                //<<2020-05-24_STOP
+
                 absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,toDate,absentDays) * absentDays;
                 transCur = this.benefitCurrency(benefit);
                 exchRate = currencyExchangeHelper.calculateTransactionToAccounting(transCur,1,false);
                 transCurAmt = exchRate ? absentAmount / exchRate : absentAmount;
-            
-                benefitLedger.initValue();
+                               
                 benefitLedger.JournalType               = SPYBenefitJournalType::Encashment;
                 benefitLedger.SourceDocument            = tableNum(SPYAbsenceLedger);
                 benefitLedger.Worker                    = hcmWorker.RecId;
@@ -207,7 +286,10 @@ class SPYTimesheetProcessService
                 benefitLedger.Txt                       = strFmt("@SPY:PeriodClose",SPYPayElementTable::find(benefit).PayElementCode,
                                                              hcmWorker.name(),fromDate,toDate);
                 benefitLedger.setAccount(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),CompanyInfo::current(),payrollPeriodLine,true);
+                benefitLedger.ExpressionTrace           = expressionTrace;
                 benefitLedger.insert();
+
+                payrollLedgerRecId = this.createPayrollLedgerFromBenefitLedger( benefitLedger );  //>>2020-05-24_START
 
                 while select forUpdate absenceLedgeUpd
                 where absenceLedgeUpd.Worker == hcmWorker.RecId &&
@@ -219,6 +301,7 @@ class SPYTimesheetProcessService
                 where benefitLedgerJoin.RecId == absenceLedgeUpd.BenefitLedger
                 {
                     absenceLedgeUpd.BenefitLedger = benefitLedger.RecId;
+                    absenceLedgeUpd.PayrollLedger = payrollLedgerRecId;
                     absenceLedgeUpd.update();
                 }
                 payProcessLogReference.clear();
@@ -233,7 +316,7 @@ class SPYTimesheetProcessService
 
 
         if(contract.parmProcessClosedPeriodAL())
-    while select sum(absenceDays) from absenceLedger group by HRMAbsenceCodeId
+        while select sum(absenceDays) from absenceLedger group by HRMAbsenceCodeId
         where absenceLedger.Worker == hcmWorker.RecId &&
               absenceLedger.TransDate <= fromDate &&
               absenceLedger.SourceDocument == tableNum(SPYLeaveApplicationTable)
@@ -249,13 +332,30 @@ class SPYTimesheetProcessService
             benefit = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId).SPYBenefit;
             if(benefit)
             {
-                //absentAmount = SPYBenefitTable::find(benefit).rateForLeaveApplicationEncashment(hcmWorker.RecId,payrollPeriodLine) * absentDays;
-                absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,fromDate,absentDays) * absentDays;
+                //2020-05-25_START_SNK
+                //the per day salary woudl be picked from expression if specified else the avg rate woudl be taken
+                benefitLedger.initValue();
+                hrmAbsence = HRMAbsenceCode::find(absenceLedger.HRMAbsenceCodeId);
+                leaveSalExpressionRecId = hrmAbsence.SPYLeaveSalaryExpression ;
+                SPYExpressionTraceRecId     expressionTrace;
+                if (leaveSalExpressionRecId )
+                {
+                    SPYLeaveSalaryProcessService   leaveSalaryService = new SPYLeaveSalaryProcessService(legalEntity, hcmWorker,
+                        SPYPayrollPeriodLine::find(payrollPeriodLine), transDate, benefit);
+                    absentAmount = leaveSalaryService.leaveSalaryFromExpression(leaveSalExpressionRecId, absentDays );
+                    expressionTrace = leaveSalaryService.getExpressionTrace();
+                }
+                else
+                    absentAmount = SPYBenefitTable::find(benefit).balanceAccountingCurAmtPerQty(hcmWorker.RecId,toDate,absentDays) * absentDays;
+
+                benefitLedger.EncashmentPayout = SPYPayrollParameters::find().EncashLeavesAvailed;
+                //<<2020-05-24_STOP
+
+                //absentAmount = SPYBenefitTable::find(benefit).rateForLeaveApplicationEncashment(hcmWorker.RecId,payrollPeriodLine) * absentDays;                
                 transCur = this.benefitCurrency(benefit);
                 exchRate = currencyExchangeHelper.calculateTransactionToAccounting(transCur,1,false);
-                transCurAmt = exchRate ? absentAmount / exchRate : absentAmount;
-            
-                benefitLedger.initValue();
+                transCurAmt = exchRate ? absentAmount / exchRate : absentAmount;            
+
                 benefitLedger.JournalType               = SPYBenefitJournalType::Encashment;
                 benefitLedger.SourceDocument            = tableNum(SPYAbsenceLedger);
                 benefitLedger.Worker                    = hcmWorker.RecId;
@@ -270,7 +370,10 @@ class SPYTimesheetProcessService
                 benefitLedger.Txt                       = strFmt("@SPY1318",SPYPayElementTable::find(benefit).PayElementCode,
                                                              hcmWorker.name(),fromDate,toDate);
                 benefitLedger.setAccount(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()),CompanyInfo::current(),payrollPeriodLine,true);
+                benefitLedger.ExpressionTrace           = expressionTrace;
                 benefitLedger.insert();
+
+                payrollLedgerRecId = this.createPayrollLedgerFromBenefitLedger(benefitLedger);
 
                 while select forUpdate absenceLedgeUpd
                 where absenceLedgeUpd.Worker == hcmWorker.RecId &&
@@ -286,6 +389,7 @@ class SPYTimesheetProcessService
                 where benefitLedgerJoin.RecId == absenceLedgeUpd.BenefitLedger
                 {
                     absenceLedgeUpd.BenefitLedger = benefitLedger.RecId;
+                    absenceLedgeUpd.PayrollLedger = payrollLedgerRecId;
                     absenceLedgeUpd.update();
                 }
                 payProcessLogReference.clear();
@@ -1221,6 +1325,58 @@ class SPYTimesheetProcessService
             isHoliday = true;
 
         return isHoliday;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>createPayrollLedgerFromBenefitLedger</Name>
+				<Source><![CDATA[
+    private SPYPayrollLedgerRecID createPayrollLedgerFromBenefitLedger( SPYBenefitLedger benefitLedger)
+    {
+        SPYPayrollLedger        payrollLedger;
+        SPYPayrollLedgerRecId   payrollLedgerRecId;
+
+        if ( benefitLedger.EncashmentPayout )
+        {
+            SPYPayrollRecId     payroll = SPYBenefitDetails::findByBenefit(benefitLedger.Benefit,CompanyInfo::current()).EncashmentPayroll;
+            SPYPayrollTable     payrollTable = SPYPayrollTable::find( payroll );
+
+            if ( payroll ) 
+            {
+                payrollLedger.clear();
+                payrollLedger.initValue();
+                payrollLedger.Worker                    = benefitLedger.Worker;
+                payrollLedger.Payroll                   = payroll;
+                payrollLedger.PayrollPeriodLine         = benefitLedger.PayrollPeriodLine;
+                payrollLedger.Currency                  = benefitLedger.Currency;
+                payrollLedger.TransactionCurrencyAmount = -benefitLedger.TransactionCurrencyAmount;
+                payrollLedger.ExchRate                  = benefitLedger.ExchRate;
+                payrollLedger.AccountingCurrencyAmount  = -benefitLedger.AccountingCurrencyAmount;
+                payrollLedger.TransDate                 = benefitLedger.TransDate;
+                payrollLedger.Txt                       = benefitLedger.Txt ? benefitLedger.Txt :
+                                                                  strFmt("@SPY967",
+                                                                  payrollTable.PayElementCode ,
+                                                                  HcmWorker::find(benefitLedger.Worker).name(),
+                                                                  SPYPayrollPeriodLine::find(benefitLedger.PayrollPeriodLine).PeriodStartDate,
+                                                                  SPYPayrollPeriodLine::find(benefitLedger.PayrollPeriodLine).PeriodEndDate,
+                                                                  SPYBenefitJournalType::Encashment);
+                payrollLedger.SourceDocument            = tableNum(SPYAbsenceLedger);
+                payrollLedger.setAccount(benefitLedger.TransDate,CompanyInfo::current(),benefitLedger.PayrollPeriodLine);
+                if(benefitLedger.DefaultDimension)
+                                payrollLedger.DefaultDimension      = benefitLedger.DefaultDimension;
+                payrollLedger.ImmediateDisbursement     = benefitLedger.ImmediateDisbursement;
+                payrollLedger.DistributeCost            = benefitLedger.DistributeCost;
+                payrollLedger.IsFinalised = benefitLedger.ImmediateDisbursement;
+                payrollLedger.ExpressionTrace           = benefitLedger.ExpressionTrace;
+                payrollLedger.insert();
+                payrollLedgerRecId = payrollLedger.RecId;
+            }
+            else
+                warning(strFmt("@SPY1240",SPYPayElementTable::find(benefitLedger.Benefit).PayElementCode));
+        }
+
+        return( payrollLedgerRecId );
     }
 
 ]]></Source>

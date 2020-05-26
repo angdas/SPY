@@ -66,7 +66,7 @@ class SPYReportConfigService extends SysOperationServiceBase
                 }
             }
             SysEmailContents reportBody = SysEmailMessage::stringExpand(reportConfigTable.ReportDesign, SysEmailTable::htmlEncodeParameters(mappings));
-            reportText += '<div class="page">' + reportBody + '</div>';
+            reportText += ' 							<div class="page">' + reportBody + '</div>' + num2Char(13);
         }
 
         htmlWrapper += num2Char(13) +  ' <!doctype html>';
@@ -77,9 +77,9 @@ class SPYReportConfigService extends SysOperationServiceBase
         htmlWrapper += num2Char(13) +  ' 	<style type="text/css">';
         htmlWrapper += num2Char(13) +  ' 		.page-header, .page-header-space { height: 0px; }';
         htmlWrapper += num2Char(13) +  ' 		.page-footer, .page-footer-space { height: 0px; }';
-        htmlWrapper += num2Char(13) +  ' 		.page-footer { position: fixed; bottom: 0; width: 100%; }';
-        htmlWrapper += num2Char(13) +  ' 		.page-header { position: fixed; top: 0mm; width: 100%; }';
-        htmlWrapper += num2Char(13) +  ' 		.page { page-break-after: always; }		';
+        htmlWrapper += num2Char(13) +  ' 		.page-footer { position: relative; bottom: 0; width: 100%; }';
+        htmlWrapper += num2Char(13) +  ' 		.page-header { position: relative; top: 0mm; width: 100%; }';
+        htmlWrapper += num2Char(13) +  ' 		.page { page-break-after: always; position: static; width: 210mm; height: 297mm }';
         htmlWrapper += num2Char(13) +  ' 		@page { size:auto; margin: auto; }';
         htmlWrapper += num2Char(13) +  ' 		@media print { thead {display: table-header-group;} tfoot {display: table-footer-group;} body {margin: 0;}  button {display: none;} }';
         htmlWrapper += num2Char(13) +  ' 	</style>';
@@ -108,8 +108,10 @@ class SPYReportConfigService extends SysOperationServiceBase
 
         htmlWrapper += num2Char(13) +  ' 	</body>';
         htmlWrapper += num2Char(13) +  ' </html>';
-        SPYPayService::saveOpen( strFmt("Report_%1.html",  xGlobal::randomPositiveInt32() ), htmlWrapper);
-        info("Completed");
+       
+        
+        str pdfString = SPYReportWriterPdf.reportWriter::PdfConvert(htmlWrapper);
+        SPYPayService::saveOpen( strFmt("Report_%1.pdf", xGlobal::randomPositiveInt32() ), pdfString);        
     }
 
 ]]></Source>

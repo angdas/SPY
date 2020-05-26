@@ -2764,6 +2764,177 @@ final class SPYExpressionSystemFunctionMethod_Extension
 
 ]]></Source>
 			</Method>
+			<Method>
+				<Name>EMP_ELEMENT_AMT</Name>
+				<Source><![CDATA[
+    //this function woudl reutrn the amount for a given pay elments from the employe salalry structure 
+    public SPYAmount EMP_ELEMENT_AMT()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        RecId payElement = expressionContext.payElement();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        SPYExpressionFunctionParameter expressionFunctionParameter2 = expressionContext.expressionFunctionParameter2();
+
+        SPYWorkerPositionPayroll spyWorkerPositionPayroll;
+        SPYWorkerPositionBenefit    spyWorkerPositionBenefit;
+        SPYPayElementTable spyPayElementTable;
+        SPYAmount       elementAmount;
+
+        select firstonly spyPayElementTable
+            where spyPayElementTable.RecId == payElement;
+
+        if ( spyPayElementTable.PayElementType == SPYPayElementType::Payroll )
+        {
+            select firstonly validtimestate(calcFromDate) *
+            from spyWorkerPositionPayroll
+            join spyPayElementTable
+            where spyPayElementTable.RecId == payElement
+            && spyPayElementTable.RecId == spyWorkerPositionPayroll.Payroll
+            && spyWorkerPositionPayroll.Worker == worker
+            && spyWorkerPositionPayroll.LegalEntity == legalEntity
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1;
+
+            switch (expressionFunctionParameter2)
+            {
+                case "Monthly":
+                    elementAmount = spyWorkerPositionPayroll.Monthly;
+                    break;
+                case "Annual" :
+                    elementAmount = spyWorkerPositionPayroll.Annual;
+                    break;
+                case "SemiAnnual" :
+                    elementAmount = spyWorkerPositionPayroll.SemiAnnual;
+                    break;
+                case "Daily" :
+                    elementAmount = spyWorkerPositionPayroll.Daily;
+                    break;
+                case "Quarterly" :
+                    elementAmount = spyWorkerPositionPayroll.Quarterly;
+                    break;
+                case "BiWeekly" :
+                    elementAmount = spyWorkerPositionPayroll.BiWeekly;
+                    break;
+                case "Weekly" :
+                    elementAmount = spyWorkerPositionPayroll.Weekly;
+                    break;
+                case "Hourly" :
+                    elementAmount = spyWorkerPositionPayroll.Hourly;
+                    break;
+                default:
+                    elementAmount = spyWorkerPositionPayroll.Monthly;
+            }
+        }
+        else
+        {
+            select firstonly validtimestate(calcFromDate) *
+            from spyWorkerPositionBenefit
+            join spyPayElementTable
+            where spyPayElementTable.RecId == payElement
+            && spyPayElementTable.RecId == spyWorkerPositionBenefit.Benefit
+            && spyWorkerPositionBenefit.Worker == worker
+            && spyWorkerPositionBenefit.LegalEntity == legalEntity
+            && spyPayElementTable.PayElementCode == expressionFunctionParameter1;
+
+            switch (expressionFunctionParameter2)
+            {
+                case "Monthly":
+                    elementAmount = spyWorkerPositionBenefit.AmountMonthly;
+                    break;
+                case "Annual" :
+                    elementAmount = spyWorkerPositionBenefit.AmountAnnual;
+                    break;
+                case "SemiAnnual" :
+                    elementAmount = spyWorkerPositionBenefit.AmountSemiAnnual;
+                    break;
+                case "Daily" :
+                    elementAmount = spyWorkerPositionBenefit.AmountDaily;
+                    break;
+                case "Quarterly" :
+                    elementAmount = spyWorkerPositionBenefit.AmountQuarterly;
+                    break;
+                case "BiWeekly" :
+                    elementAmount = spyWorkerPositionBenefit.AmountBiWeekly;
+                    break;
+                case "Weekly" :
+                    elementAmount = spyWorkerPositionBenefit.AmountWeekly;
+                    break;
+                case "Hourly" :
+                    elementAmount = spyWorkerPositionBenefit.AmountHourly;
+                    break;
+                default:
+                    elementAmount = spyWorkerPositionBenefit.AmountMonthly;
+            }
+        }
+
+        return( elementAmount );
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>EMP_ELEMENT_QTY</Name>
+				<Source><![CDATA[
+    //this function woudl reutrn the amount for a given pay elments from the employe salalry structure
+    public SPYAmount EMP_ELEMENT_QTY()
+    {
+        HcmWorkerRecId worker = expressionContext.worker();
+        LegalEntityRecId legalEntity = expressionContext.legalEntity();
+        FromDate calcFromDate = expressionContext.calcFromDate();
+        RecId payElement = expressionContext.payElement();
+        SPYExpressionFunctionParameter expressionFunctionParameter1 = expressionContext.expressionFunctionParameter1();
+        SPYExpressionFunctionParameter expressionFunctionParameter2 = expressionContext.expressionFunctionParameter2();
+
+        SPYWorkerPositionPayroll spyWorkerPositionPayroll;
+        SPYWorkerPositionBenefit    spyWorkerPositionBenefit;
+        SPYPayElementTable spyPayElementTable;
+        SPYAmount       elementQty;
+
+        select firstonly validtimestate(calcFromDate) *
+        from spyWorkerPositionBenefit
+        join spyPayElementTable
+        where spyPayElementTable.RecId == payElement
+        && spyPayElementTable.RecId == spyWorkerPositionBenefit.Benefit
+        && spyWorkerPositionBenefit.Worker == worker
+        && spyWorkerPositionBenefit.LegalEntity == legalEntity
+        && spyPayElementTable.PayElementCode == expressionFunctionParameter1;
+
+        switch (expressionFunctionParameter2)
+        {
+            case "Monthly":
+                elementQty = spyWorkerPositionBenefit.QtyMonthly;
+                break;
+            case "Annual" :
+                elementQty = spyWorkerPositionBenefit.QtyAnnual;
+                break;
+            case "SemiAnnual" :
+                elementQty = spyWorkerPositionBenefit.QtySemiAnnual;
+                break;
+            case "Daily" :
+                elementQty = spyWorkerPositionBenefit.QtyDaily;
+                break;
+            case "Quarterly" :
+                elementQty = spyWorkerPositionBenefit.QtyQuarterly;
+                break;
+            case "BiWeekly" :
+                elementQty = spyWorkerPositionBenefit.QtyBiWeekly;
+                break;
+            case "Weekly" :
+                elementQty = spyWorkerPositionBenefit.QtyWeekly;
+                break;
+            case "Hourly" :
+                elementQty = spyWorkerPositionBenefit.QtyHourly;
+                break;
+            default:
+                elementQty = spyWorkerPositionBenefit.QtyMonthly;
+        }
+
+        return( elementQty );
+    }
+
+]]></Source>
+			</Method>
 		</Methods>
 	</SourceCode>
 </AxClass>

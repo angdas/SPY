@@ -462,7 +462,10 @@ class SPYWebDocumentLogUpdate
     [DataEventHandler(tableStr(SPYLeaveApplicationTable), DataEventType::Inserted)]
     public static void SPYLeaveApplicationTable_onInserted(Common sender, DataEventArgs e)
     {
-        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+        SPYLeaveApplicationTable     leaveApplicationTable = sender as SPYLeaveApplicationTable;
+        if(leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created && !leaveApplicationTable.ResumptionInitiated)
+            return;
+        SPYWebDocumentLog::updateLog(leaveApplicationTable.TableId, leaveApplicationTable.RecId);
     }
 
 ]]></Source>
@@ -473,7 +476,10 @@ class SPYWebDocumentLogUpdate
     [DataEventHandler(tableStr(SPYLeaveApplicationTable), DataEventType::Updated)]
     public static void SPYLeaveApplicationTable_onUpdated(Common sender, DataEventArgs e)
     {
-        SPYWebDocumentLog::updateLog(sender.TableId, sender.RecId);
+        SPYLeaveApplicationTable     leaveApplicationTable = sender as SPYLeaveApplicationTable;
+        if(leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created && !leaveApplicationTable.ResumptionInitiated)
+            return;
+        SPYWebDocumentLog::updateLog(leaveApplicationTable.TableId, leaveApplicationTable.RecId);
     }
 
 ]]></Source>
@@ -485,7 +491,10 @@ class SPYWebDocumentLogUpdate
     public static void SPYLeaveApplicationLine_onInserted(Common sender, DataEventArgs e)
     {
         SPYLeaveApplicationLine     leaveApplicationLine = sender as SPYLeaveApplicationLine;
-        SPYWebDocumentLog::updateLog(leaveApplicationLine.leaveApplicationTable().TableId, leaveApplicationLine.leaveApplicationTable().RecId);
+        SPYLeaveApplicationTable     leaveApplicationTable = leaveApplicationLine.leaveApplicationTable();
+        if(leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created && !leaveApplicationTable.ResumptionInitiated)
+            return;
+        SPYWebDocumentLog::updateLog(leaveApplicationTable.TableId, leaveApplicationTable.RecId);
     }
 
 ]]></Source>
@@ -497,7 +506,10 @@ class SPYWebDocumentLogUpdate
     public static void SPYLeaveApplicationLine_onUpdated(Common sender, DataEventArgs e)
     {
         SPYLeaveApplicationLine     leaveApplicationLine = sender as SPYLeaveApplicationLine;
-        SPYWebDocumentLog::updateLog(leaveApplicationLine.leaveApplicationTable().TableId, leaveApplicationLine.leaveApplicationTable().RecId);
+        SPYLeaveApplicationTable     leaveApplicationTable = leaveApplicationLine.leaveApplicationTable();
+        if(leaveApplicationTable.WorkflowStatus == SPYWorkflowStatus::Created && !leaveApplicationTable.ResumptionInitiated)
+            return;
+        SPYWebDocumentLog::updateLog(leaveApplicationTable.TableId, leaveApplicationTable.RecId);
     }
 
 ]]></Source>

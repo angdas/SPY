@@ -452,6 +452,11 @@ public class SPYAbsenceLedger extends common
 			<ExtendedDataType>TransDate</ExtendedDataType>
 			<Label>@SPY:TransDate</Label>
 		</AxTableField>
+		<AxTableField xmlns=""
+			i:type="AxTableFieldInt64">
+			<Name>PayrollLedger</Name>
+			<ExtendedDataType>SPYPayrollLedgerRecId</ExtendedDataType>
+		</AxTableField>
 	</Fields>
 	<FullTextIndexes />
 	<Indexes>
@@ -568,6 +573,20 @@ public class SPYAbsenceLedger extends common
 					i:type="AxTableRelationConstraintField">
 					<Name>LeaveApplicationLine</Name>
 					<Field>LeaveApplicationLine</Field>
+					<RelatedField>RecId</RelatedField>
+				</AxTableRelationConstraint>
+			</Constraints>
+			<Index>RecId</Index>
+		</AxTableRelation>
+		<AxTableRelation xmlns=""
+			i:type="AxTableRelationForeignKey">
+			<Name>SPYPayrollLedger</Name>
+			<RelatedTable>SPYPayrollLedger</RelatedTable>
+			<Constraints>
+				<AxTableRelationConstraint xmlns=""
+					i:type="AxTableRelationConstraintField">
+					<Name>PayrollLedger</Name>
+					<Field>PayrollLedger</Field>
 					<RelatedField>RecId</RelatedField>
 				</AxTableRelationConstraint>
 			</Constraints>
