@@ -16,7 +16,7 @@ final class AccountingDistribution_Extension
     public static display  SPYAmount distributionAmount(AccountingDistribution  _accountingDistribution)
     {
         SPYPayrollJournalLine   SPYPayrollJournalLine;
-        //SPYAmount               amount;
+        //SPYAmount               amount; //comment from Angshuman
 
         select AmountCurDebit, AmountCurCredit from SPYPayrollJournalLine
             where SPYPayrollJournalLine.SourceDocumentLine  == _accountingDistribution.SourceDocumentLine;
